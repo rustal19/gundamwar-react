@@ -1,0 +1,144 @@
+.app-shell {
+  padding-bottom: 2rem;
+}
+
+.app-shell-deck {
+  --deck-right-rail: calc(1.25rem + 0.85rem);
+  height: 100dvh;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.app-shell-deck .app-header-inner {
+  padding-right: var(--deck-right-rail);
+}
+
+.app-header {
+  border-bottom: 1px solid #d8dee8;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.app-header-inner {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0.55rem 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  box-sizing: border-box;
+}
+
+.app-header-main {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.app-brand-link {
+  color: #253042;
+  text-decoration: none;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.app-nav {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.app-nav-link,
+.app-auth-button {
+  border: 1px solid #d8dee8;
+  background: #f8fafc;
+  color: #4b5a6c;
+  padding: 0.38rem 0.7rem;
+  text-decoration: none;
+  font: inherit;
+  cursor: pointer;
+  min-height: 2.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.app-nav-link.active {
+  border-color: #253042;
+  background: #253042;
+  color: #fff;
+}
+
+.app-auth {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+.app-auth-status {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  text-align: right;
+}
+
+.app-auth-label {
+  font-size: 0.75rem;
+  color: #6b7787;
+}
+
+.app-auth-status strong {
+  color: #253042;
+  font-size: 0.88rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-auth-button {
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .app-header-inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .app-header-main {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .app-auth {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .app-auth-status {
+    text-align: left;
+  }
+}
+
+@media (max-width: 1100px) {
+  .app-shell-deck {
+    height: auto;
+    overflow: visible;
+    padding-bottom: 2rem;
+  }
+
+  .app-shell-deck .app-header-inner {
+    padding-right: 0.85rem;
+  }
+}

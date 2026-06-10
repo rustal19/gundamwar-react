@@ -1,38 +1,296 @@
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+/* グリッドフォーム全体のコンテナ */
+.grid-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #ebffe3;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* 各行：ラベルと入力グループを2列に配置 */
+.form-row {
+  display: grid;
+  grid-template-columns: 100px auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-row:not(:last-child) {
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 10px;
+  margin-bottom: 0px;
+}
+
+/* 右カラム内のレイアウトを2カラムにするラッパー */
+.color-wrapper {
+  display: flex;
+  flex-wrap: nowrap; /* 横並び */
+  align-items: flex-start;
+  gap: 10px;
+}
+
+/* 左側：チェックボックス群を2段グリッドにする */
+.checkbox-container {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr); /* 7列に均等分割 */
+  grid-template-rows: repeat(2, auto);    /* 2段 */
+  gap: 5px;
+  flex: 1 1 auto;
+  align-items: center;    /* 各セル内を縦方向中央に */
+  justify-items: center;  /* 各セル内を横方向中央に */
+}
+/* 2行×8列のグリッドで配置 */
+.grid-2row-8col {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr) auto; /* 前7列=1fr、最後1列=auto */
+  grid-template-rows: repeat(2, auto);       /* 2行 */
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 各チェックボックスセル */
+.color-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ドロップダウンセル */
+.dropdown-cell {
+  display: flex;
+  align-items: center; 
+  justify-content: flex-start; 
+  /* 縦中央にしたい場合: justify-content: center; 
+     gridRow: '1 / span 2' と組み合わせる */
+}
+
+/* 各 color-group を横並びにする（チェックボックス群） */
+.color-group {
+  display: flex;
+  flex-wrap: wrap; /* 必要に応じて改行 */
+  gap: 5px;
+}
+
+/* 各チェックボックスアイテム */
+.color-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* 右側：ドロップダウンコンテナ */
+.dropdown-container {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  /* 必要に応じて幅を指定 */
+  min-width: 150px;
+}
+
+/* inline-container：該当行内の全要素を1行にまとめる */
+.inline-container {
+  display: flex;
+  flex-wrap: nowrap;  /* 折り返さず1行に */
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  overflow-x: auto;  /* 横幅が足りない場合に横スクロール */
+}
+
+
+/* inline-group：各グループ内も横並びにし、折り返さない */
+.inline-group {
   display: flex;
-  flex-direction: column;
+  flex-wrap: nowrap;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  gap: 5px;
+  white-space: nowrap;
 }
 
-.App-link {
-  color: #61dafb;
+.deck-range-group > label:nth-of-type(1) {
+  order: 1;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.deck-range-group > label:nth-of-type(2) {
+  order: 2;
+}
+
+.deck-range-group > select[name="deckRangeDetail"] {
+  order: 3;
+}
+
+.deck-range-group > label:nth-of-type(3) {
+  order: 4;
+}
+
+.deck-range-group > label:nth-of-type(4) {
+  order: 5;
+}
+
+/* inline-container を横並びにし、必要に応じて折り返す */
+.inline-container.four-col {
+  display: flex;
+  flex-wrap: wrap;  /* nowrap ではなく wrap にする */
+  gap: 13px;
+  width: 100%;
+}
+
+/* inline-container 内の各 inline-group を均等に分割する */
+/* flex: 1 1 25% で基本的に4等分になりますが、gap分を差し引くため calc() を利用 */
+.inline-container.four-col > .inline-group {
+  flex: 1 1 calc(25% - 10px);
+  box-sizing: border-box;
+  /* 必要に応じて min-width を設定（例：150px） */
+  min-width: 150px;
+}
+
+/* 既存の各種グループ設定 */
+.input-group,
+.checkbox-group,
+.select-group,
+.color-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ボタングループ */
+.button-group {
+  display: flex;
+  justify-content: flex-end; /* 右詰めに配置 */
+  gap: 10px;               /* ボタン間の隙間 */
+}
+
+.button-group button {
+  flex: 0 0 120px;         /* 両方120pxの固定幅に */
+  padding: 12px 20px;
+  text-align: center;      /* テキストを中央揃え */
+  box-sizing: border-box;
+}
+
+.number-select {
+  width: 80px;
+}
+
+/* 6列のグリッドでチェックボックスを並べる */
+.checkbox-grid6 {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr); /* 8等分 */
+  gap: 10px;
+  margin-bottom: 10px; /* 下に少し余白 */
+}
+
+
+/* 各チェックボックスアイテム */
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 5px; /* チェックボックスとラベルの隙間 */
+}
+
+/* セレクトボックスを横に並べる */
+.select-row {
+  display: flex;
+  flex-wrap: wrap; /* 画面幅が狭い場合は折り返す */
+  gap: 10px;
+}
+
+/* react-select のコンテナ調整 (必要に応じて) */
+.select-row .css-1s2u09g-control {
+  min-width: 150px; /* セレクトボックスの最小幅などを設定 */
+}
+
+/* スマホ対応 */
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  .inline-container {
+    flex-wrap: nowrap;
+  }
+  .inline-container.four-col > .inline-group {
+    flex: 1 1 100%;
+  }
+  
+  /* 全体のフォームコンテナの余白・パディングを縮小 */
+  .grid-form {
+    max-width: 100%;
+    margin: 10px auto;
+    padding: 10px;
+    gap: 10px;
+  }
+
+  /* 各行を1カラム表示に変更 */
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 5px;
+    /* 必要に応じてフォントサイズも調整 */
+  }
+
+  /* 色：チェックボックス群を1列に */
+  .color-group {
+    grid-template-columns: 1fr; /* 1列に変更 */
+  }
+  
+  /* 色ラッパー：チェックボックス群とドロップダウンを縦に積む */
+  .color-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* チェックボックス群：グリッドの余白や列数はそのままでもOKですが、
+     必要に応じて gap を少し小さく */
+  .checkbox-container {
+    grid-template-columns: repeat(1, 1fr);
+    gap: 4px;
+  }
+  .checkbox-group,
+  .checkbox-grid6
+   {
+    grid-template-columns: repeat(2, 1fr); /* 2列に変更 */
+    gap: 8px;
+  }
+  /* 2行×8列のグリッド（色チェックボックス＋ドロップダウン）の場合も余白を縮小 */
+  .grid-2row-8col {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto !important;
+  }
+  /* 各チェックボックスセルの配置指定を解除 */
+  .color-cell {
+    grid-column: auto !important;
+    grid-row: auto !important;
+  }
+  /* ドロップダウンセルも1列目に配置 */
+  .dropdown-cell {
+    grid-column: auto !important;
+    grid-row: auto !important;
+  }
+
+  /* inline-container での4カラムの設定を1カラムに変更 */
+  .inline-container.four-col > .inline-group {
+    flex: 1 1 100%;
+  }
+
+  /* ボタン群は横幅が狭い場合は縦並びにする */
+  .button-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .button-group button {
+    flex: 1 1 auto;   /* 固定幅を解除して幅いっぱいに */
+    width: 100%;
+    padding: 10px;    /* 少しパディングを減らす */
+  }
+
+  /* セレクトボックス群を縦に並べる場合 */
+  .select-row {
+    flex-direction: column;
+  }
 }

@@ -1,28 +1,64 @@
-import React, { useState } from "react";
-import SearchForm from "./components/SearchForm"; // ここで SearchForm を読み込む
+import React from "react";
+import { Route, Routes, useLocation } from "react-router-dom";
+import AppHeader from "./components/AppHeader";
+import Home from "./components/Home";
+import MobileAppHeader from "./components/MobileAppHeader";
+import MobileSearchForm from "./components/MobileSearchForm";
+import RouteAnalyticsTracker from "./components/RouteAnalyticsTracker";
+import SearchForm from "./components/SearchForm";
+import { AuthProvider } from "./context/AuthContext";
+import { DeckProvider } from "./context/DeckContext";
+import MobileDeckBuilder from "./pages/MobileDeckBuilder";
+import MobileSearchResults from "./pages/MobileSearchResults";
+import DeckBuilder from "./pages/DeckBuilder";
+import SearchResults from "./pages/SearchResults";
+import { useLayoutTier } from "./utils/deviceLayout";
+import "./mobile.css";
 
-const App = () => {
-  const [searchParams, setSearchParams] = useState(null);
+const AppContent = () => {
+  const location = useLocation();
+  const isDeckRoute = location.pathname.startsWith("/deck");
+  const { isCompactDesktop, isCompactLayout, isMobileOs, isIos, isAndroid } =
+    useLayoutTier(location.search);
 
-  // SearchForm から受け取った検索条件を保存
-  const handleSearch = (params) => {
-    console.log("検索条件:", params);
-    setSearchParams(params);
-  };
+  const shellClassName = [
+    "app-shell",
+    isDeckRoute ? "app-shell-deck" : "",
+    isCompactLayout ? "app-shell-mobile" : "",
+    isCompactDesktop ? "app-shell-compact-desktop" : "",
+    isMobileOs ? "app-shell-mobile-os" : "",
+    isIos ? "app-shell-ios" : "",
+    isAndroid ? "app-shell-android" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const HeaderComponent = isCompactLayout ? MobileAppHeader : AppHeader;
+  const SearchFormComponent = isCompactLayout ? MobileSearchForm : SearchForm;
+  const SearchResultsComponent = isCompactLayout ? MobileSearchResults : SearchResults;
+  const DeckBuilderComponent = isCompactLayout ? MobileDeckBuilder : DeckBuilder;
 
   return (
-    <div style={{ padding: "1rem" }}>
-      <h1>カード検索</h1>
-
-      <SearchForm onSearch={handleSearch} />
-
-      {searchParams && (
-        <div style={{ marginTop: "1rem" }}>
-          <h2>検索条件:</h2>
-          <pre>{JSON.stringify(searchParams, null, 2)}</pre>
-        </div>
-      )}
+    <div className={shellClassName}>
+      <RouteAnalyticsTracker />
+      <HeaderComponent />
+      {location.pathname === "/" ? <SearchFormComponent /> : null}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/search" element={<SearchResultsComponent />} />
+        <Route path="/deck" element={<DeckBuilderComponent />} />
+      </Routes>
     </div>
+  );
+};
+
+const App = () => {
+  return (
+    <AuthProvider>
+      <DeckProvider>
+        <AppContent />
+      </DeckProvider>
+    </AuthProvider>
   );
 };
 

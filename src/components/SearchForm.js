@@ -1,1049 +1,1138 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo  } from 'react';
+import Select from 'react-select';
+import { useNavigate, useLocation  } from 'react-router-dom';
+import '../App.css';
+import { trackEvent } from "../utils/analytics";
 
-// 初期状態（すべてのフィールドを網羅）
-const initialState = {
-  // エキスパンション（複数選択：name="or60"）
-  or60: [],
-  // 勢力（複数選択：name="or1"）
-  or1: [],
-  // カード種（複数選択：name="or2,64"）
-  "or2,64": [],
-  // レアリティ（複数選択：name="or4"）
-  or4: [],
-  // 指定国力
-  up5: "",
-  down5: "",
-  // 格闘
-  up38: "",
-  down38: "",
-  // 合計国力
-  up6: "",
-  down6: "",
-  // 射撃
-  up39: "",
-  down39: "",
-  // 資源コスト
-  up7: "",
-  down7: "",
-  // 防御
-  up40: "",
-  down40: "",
-  // 性別・年齢・特徴
-  keys57: "",
-  keys58: "",
-  keys59: "",
-  // 地形適性（複数選択：name="or8"）
-  or8: [],
-  // 特殊テキスト選択（and検索：各項目は単一チェックボックス、true/false）
-  keys9: false,
-  keys10: false,
-  keys18: false,
-  keys11: false,
-  keys27: false,
-  keys15: false,
-  keys16: false,
-  "keys13,53": false,
-  keys14: false,
-  "keys19,51": false,
-  "keys20,54": false,
-  keys23: false,
-  "keys26,48": false,
-  "keys21,52": false,
-  "keys22,49": false,
-  keys17: false,
-  keys25: false,
-  "keys30,46": false,
-  keys12: false,
-  keys24: false,
-  "keys31,55": false,
-  keys28: false,
-  keys29: false,
-  keys33: false,
-  keys34: false,
-  keys35: false,
-  keys32: false,
-  // カード名称から検索
-  keys3: "",
-  // カードテキストから検索
-  "keys36,42": "",
-  // キーワードで検索
-  IDv001: "",
-  IDn001: "and",
-  // 検索条件
-  word: "0",
-  // 表示件数
-  print: "20",
-  // 再録（ラジオ：""=表示, "O"=非表示, "R"=再録のみ表示）
-  keys63: ""
+const DECK_RANGE_PRESET_CUTOFFS = {
+  classic: "2006-01-01",
+  rising: "2009-11-20",
 };
 
 const SearchForm = ({ onSearch }) => {
-  const [formValues, setFormValues] = useState(initialState);
-
-  // 共通の onChange ハンドラ
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    // 複数選択のチェックボックスの場合（name が or60, or1, or2,64, or4, or8）
-    if (type === "checkbox" && ["or60", "or1", "or2,64", "or4", "or8"].includes(name)) {
-      setFormValues((prev) => {
-        const current = prev[name] || [];
-        if (checked) {
-          return { ...prev, [name]: [...current, value] };
-        } else {
-          return { ...prev, [name]: current.filter((v) => v !== value) };
-        }
-      });
+  // 各入力項目の初期状態を定義
+  const initialState = useMemo(() => ({
+    // カード名検索
+    name: "",
+    name_forward: false,       // 前方一致チェックボックス
+
+    // カードタイプ（複数選択）
+    cardType: [],              // UNIT, CHARACTER, COMMAND, OPERATION, Generation, ACE
+
+    // 色（含む側と「～でない」側）
+    colorInclude: [],          // 青, 緑, 黒, 赤, 茶, 白, 紫
+    colorExclude: [],          // 青でない, 緑でない, 黒でない, 赤でない, 茶でない, 白でない, 紫でない
+    colorMulti: "able",        // セレクト： "多色を含んでもよい" / "多色を除く"
+
+    // コスト
+    spCostMin: "",
+    spCostMax: "",
+    totalCostMin: "",
+    totalCostMax: "",
+    resourceCostMin: "",
+    resourceCostMax: "",
+    includeUndecided: false,
+
+    // カードテキスト検索（スペース区切りで AND 検索）
+    text: "",
+
+    // 格闘、射撃、防御（min～max）
+    fightMin: "",
+    fightMax: "",
+    shootMin: "",
+    shootMax: "",
+    defenseMin: "",
+    defenseMax: "",
+    includeAltStats: true, // ← 変形状態のステータスを含めるかどうか
+
+    // 地形適正
+    terrain: [],               // 「宇宙」「地球」
+
+    // UNIT特徴指定
+    unitFeature: [],
+    unitFeatureExtra: [],
+
+    // CHARACTER特徴指定
+    charFeature: [],
+    charFeatureExtra: [],
+
+    // その他特徴指定
+    otherFeature: [],
+
+    // 所属、系統特徴指定
+    traitText: "",
+
+    // 特徴系、AND/OR指定
+    traits_logic: "and", 
+
+    // 専用機指定
+    exclusivePilotText: [],
+
+    // 構築範囲（内容は後で記載）
+    deckRangeType: "none",
+    deckRangeDetail: "",
+
+    // 禁止制限（ラジオボタン）
+    exclude: "no",             // "banned", "restricted", "no"（すべて表示）
+
+    // 収録弾（後で指定：例として dummy 項目）
+    setIncluded: [],
+    setFeatureExtraBB: [],
+    setFeatureExtraST: [],
+    setFeatureExtraDB: [],
+    setFeatureExtraEX: [],
+
+    // 表示件数
+    page: 1,
+    pageSize: 50,
+
+    // ソート方法
+    sortMethod: "発行順",      // 発行順、カード名順、合計国力順
+    sortOrder: "asc"           // "asc" or "desc"
+  }), []); // 依存配列を空にすることで、一度だけ生成される
+
+  const [formValues, setFormValues] = useState(initialState);
+  const navigate = useNavigate();  // navigate を useNavigate で初期化
+  const location = useLocation();
+
+  // URL のクエリパラメータがある場合、フォームの state を更新する
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const multiSelectKeys = [
+      "cardType",
+      "colorInclude",
+      "colorExclude",
+      "terrain",
+      "unitFeature",
+      "unitFeatureExtra",
+      "charFeature",
+      "charFeatureExtra",
+      "otherFeature",
+      "setIncluded",
+      "setFeatureExtraBB",
+      "setFeatureExtraST",
+      "setFeatureExtraDB",
+      "setFeatureExtraEX"
+    ];
+    const newState = { ...initialState };
+    for (const [key, value] of params.entries()) {
+      if (multiSelectKeys.includes(key)) {
+        try {
+          // 1つだけ値がある場合、JSON 文字列と仮定してパースする
+          newState[key] = JSON.parse(value);
+        } catch (e) {
+          newState[key] = [];
+        }
+      } else {
+        newState[key] = value;
+      }
+    }
+    // 必要に応じて数値や boolean への変換を追加することも可能
+    setFormValues(newState);
+  }, [location.search, initialState]);
+
+  // 共通の onChange ハンドラ
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    // 複数選択用（配列で管理）の場合
+    const multiSelectNames = [
+      "cardType", "colorInclude", "colorExclude",
+      "terrain", "unitFeature", "charFeature",
+      "otherFeature", "setIncluded"
+    ];
+    if (type === "checkbox" && multiSelectNames.includes(name)) {
+      setFormValues(prev => ({
+        ...prev,
+        [name]: checked 
+          ? [...prev[name], value]
+          : prev[name].filter(v => v !== value)
+      }));
+    } else if (name === "deckRangeType") {
+      setFormValues(prev => ({
+        ...prev,
+        deckRangeType: value,
+        deckRangeDetail:
+          DECK_RANGE_PRESET_CUTOFFS[value]
+            ? DECK_RANGE_PRESET_CUTOFFS[value]
+            : value === "tensaku" && prev.deckRangeType === "tensaku"
+              ? prev.deckRangeDetail
+              : ""
+      }));
     } else if (type === "checkbox") {
-      // 単一チェックボックス（true/false）
-      setFormValues((prev) => ({ ...prev, [name]: checked }));
-    } else {
-      // テキスト、select、radio
-      setFormValues((prev) => ({ ...prev, [name]: value }));
-    }
-  };
-
+      // 単一のチェックボックス（例：name_forward）
+      setFormValues(prev => ({ ...prev, [name]: checked }));
+    } else {
+      setFormValues(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  // react-select 用 onChange ハンドラ
+  const handleSelectChange = (name, selectedOptions) => {
+    setFormValues(prev => ({
+      ...prev,
+      [name]: selectedOptions || []
+    }));
+  };
+
+  const buildQueryString = (params) => {
+    const query = new URLSearchParams();
+    const multiSelectKeys = [
+      "cardType",
+      "colorInclude",
+      "colorExclude",
+      "terrain",
+      "unitFeature",
+      "unitFeatureExtra",
+      "charFeature",
+      "charFeatureExtra",
+      "otherFeature",
+      "setIncluded",
+      "setFeatureExtraBB",
+      "setFeatureExtraST",
+      "setFeatureExtraDB",
+      "setFeatureExtraEX",
+    ];
+    
+    Object.entries(params).forEach(([key, value]) => {
+      // 値が null, undefined, 空文字の場合はスキップ
+      if (value === null || value === undefined || value === "") return;
+      
+      if (multiSelectKeys.includes(key)) {
+        // multiSelectKeys に含まれるキーは、配列でなければ配列に変換する
+        const arr = Array.isArray(value) ? value : [value];
+        // オブジェクトの場合はその value プロパティだけを抽出（なければそのまま）
+        const mapped = arr.map(item => {
+          if (typeof item === "object" && item !== null && item.value !== undefined) {
+            return item.value;
+          }
+          return item;
+        });
+        // 配列全体を JSON.stringify して1つの値としてセットする
+        query.set(key, JSON.stringify(mapped));
+      } else {
+        query.set(key, value);
+      }
+    });
+    return query.toString();
+  };
+  
   const handleSubmit = (e) => {
     e.preventDefault();
-    // 検索条件を JSON 表現として親コンポーネントに渡す
-    onSearch(formValues);
+    const params = {
+      ...formValues,
+      page: 1,
+    };
+    trackEvent("search_submit", {
+      search_context: "main",
+      has_name: Boolean(params.name),
+      has_text: Boolean(params.text),
+      card_type_count: Array.isArray(params.cardType) ? params.cardType.length : 0,
+      include_color_count: Array.isArray(params.colorInclude) ? params.colorInclude.length : 0,
+      exclude_color_count: Array.isArray(params.colorExclude) ? params.colorExclude.length : 0,
+      deck_range_type: params.deckRangeType || "none",
+      page_size: Number(params.pageSize || 0),
+    });
+    const queryString = buildQueryString(params);
+    if (typeof onSearch === "function") {
+      onSearch({ params, queryString });
+      return;
+    }
+    navigate(`/search?${queryString}`);
   };
-
-  const handleReset = () => {
+
+  // リセット処理
+  const handleReset = () => {
+    console.log("Resetting to:", initialState);
     setFormValues(initialState);
-  };
+    if (typeof onSearch === "function") {
+      onSearch({ params: initialState, queryString: "" });
+      return;
+    }
+    // クエリパラメータを含まない URL に置き換える
+    navigate("/", { replace: true });
+  };
+
+  // 検索フォームの選択肢
+  const numericOptions = [
+    { label: "*", value: "*" },
+    { label: "-2", value: -2 },
+    { label: "-1", value: -1 },
+    { label: "0", value: 0 },
+    { label: "1", value: 1 },
+    { label: "2", value: 2 },
+    { label: "3", value: 3 },
+    { label: "4", value: 4 },
+    { label: "5", value: 5 },
+    { label: "6", value: 6 },
+    { label: "7", value: 7 },
+    { label: "8", value: 8 },
+    { label: "9", value: 9 },
+    { label: "10", value: 10 }
+  ];
+
+  const numericOptions1 = [
+    { label: "0", value: 0 },
+    { label: "1", value: 1 },
+    { label: "2", value: 2 },
+    { label: "3", value: 3 },
+    { label: "4", value: 4 },
+    { label: "5", value: 5 },
+    { label: "6", value: 6 },
+    { label: "7", value: 7 },
+    { label: "8", value: 8 },
+    { label: "9", value: 9 },
+    { label: "10", value: 10 }
+  ];
+
+  const numericOptions2 = [
+    { label: "0", value: 0 },
+    { label: "1", value: 1 },
+    { label: "2", value: 2 },
+    { label: "3", value: 3 },
+    { label: "4", value: 4 },
+    { label: "5", value: 5 },
+    { label: "6", value: 6 },
+    { label: "7", value: 7 },
+    { label: "8", value: 8 },
+    { label: "9", value: 9 },
+    { label: "10", value: 10 }
+  ];
+
+  const numericOptions3 = [
+    { label: "0", value: 0 },
+    { label: "1", value: 1 },
+    { label: "2", value: 2 },
+    { label: "3", value: 3 },
+    { label: "4", value: 4 },
+    { label: "5", value: 5 },
+    { label: "6", value: 6 },
+    { label: "7", value: 7 },
+    { label: "8", value: 8 },
+    { label: "9", value: 9 },
+    { label: "10", value: 10 }
+  ];
+
+  const characterExtraOptions = [
+    { value: "boostedMan", label: "ブーステッドマン" },
+    { value: "extended", label: "エクステンデッド" },
+    { value: "innovator", label: "イノベイター" },
+    { value: "superSoldier", label: "超兵" },
+    { value: "observer", label: "監視者" }
+  ];
+  
+  const unitExtraOptions = [
+    { value: "mobileDoll", label: "MD" },
+    { value: "superDeformed", label: "SD" },
+    { value: "bike", label: "バイク" },
+    { value: "mobileHorse", label: "モビルホース" },
+    { value: "tank", label: "戦車" },
+    { value: "flagship", label: "旗艦" },
+    { value: "supplyShip", label: "補給艦" },
+    { value: "transportShip", label: "輸送艦" },
+    { value: "dockShip", label: "ドッグ艦" },
+    { value: "fighter", label: "戦闘機" },
+    { value: "recon", label: "偵察機" },
+    { value: "transport", label: "輸送機" },
+    { value: "airship", label: "飛行船" },
+    { value: "orbitalElevator", label: "軌道エレベーター" }
+  ];
+
+  const setIncludeExtraOptionsBB = [
+    { label: "ベースドブースター", value: "BB1" },
+    { label: "ベースドブースター2", value: "BB2" },
+    { label: "ベースドブースター3", value: "BB3" },
+    { label: "エクステンションブースター", value: "EB1" },
+    { label: "エクステンションブースター2", value: "EB2" },
+    { label: "エクステンションブースター3", value: "EB3" }
+  ];
+
+  const setIncludeExtraOptionsST = [
+    { label: "決戦！星一号作戦", value: "DS1_1" },
+    { label: "宇宙要塞ア・バオア・クー", value: "DS1_2" },
+    { label: "正義の創痕", value: "DS2_1" },
+    { label: "黒い覇道", value: "DS2_2" },
+    { label: "赤き脅威", value: "DS2_3" },
+    { label: "ギレンの野望編", value: "DS3" },
+    { label: "ガンダムSEED編「栄光のザフト」", value: "DS4" },
+    { label: "ガンダムSEED DESTINY編「閃光のミネルバ」", value: "DS5" },
+    { label: "疾風の砲火", value: "TS1_1" },
+    { label: "戦乱の兇刃", value: "TS1_2" },
+    { label: "爆炎の決闘場", value: "TS2" },
+    { label: "知略の猛将", value: "TS3_1" },
+    { label: "迅雷の騎兵", value: "TS3_2" },
+    { label: "破壊と再生の剣", value: "TS4_1" },
+    { label: "異世界からの使者", value: "TS4_2" },
+    { label: "白き光芒", value: "TR1_1" },
+    { label: "猛き濁流", value: "TR1_2" },
+    { label: "蒼空の覇者", value: "WS1" },
+    { label: "純白の鋼翼", value: "WS2" }
+  ];
+
+  const setIncludeExtraOptionsDB = [
+    { label: "一年戦争編", value: "DB1" },
+    { label: "ウイング", value: "DB2" },
+    { label: "ガンダムSEED編", value: "DB3" },
+    { label: "戦場の女神", value: "DB4" },
+    { label: "ガンダムSEED DESTINY編", value: "DB5" },
+    { label: "機動戦士ZガンダムTHE Movie", value: "DB6" },
+    { label: "ガンダム・ザ・ガンダム編", value: "DB7" },
+    { label: "前線のフォトグラフ", value: "DB8" },
+    { label: "戦場の女神2", value: "DB9" },
+    { label: "乱世に生きる漢たち", value: "DB10" },
+    { label: "戦場の女神ADVENT", value: "DB11" },
+    { label: "ウィナーズブースター01", value: "WB" },
+    { label: "赤い彗星シャア編", value: "SB" },
+    { label: "ガンダムエース編", value: "CB1" },
+    { label: "ガンプラ30thメモリアルエディション", value: "CB2" }
+  ];
+
+  const setIncludeExtraOptionsEX = [
+    { label: "拡張シート", value: "EX1" },
+    { label: "拡張シートVer.2", value: "EX2" },
+    { label: "覇王の紋章 ジャンボカードダスVer.", value: "EX3" },
+    { label: "入門用スターター", value: "BS" },
+    { label: "オールウェイズビギニングセット", value: "EV" },
+    { label: "BIGガンスリンガーカード", value: "BG" },
+    { label: "コラボカード", value: "joke" }
+  ];
+
+  return (
+    <form onSubmit={handleSubmit} className="grid-form">
+      {/* ① カード名検索 */}
+      <div className="form-row">
+        <th htmlFor="name">カード名</th>
+        <div className="input-group">
+          <input 
+            type="text" 
+            name="name" 
+            id="name"
+            className="ntext" 
+            value={formValues.name}
+            onChange={handleChange}
+            size="50"
+          />
+          <div className="checkbox-inline">
+            <input 
+              type="checkbox" 
+              name="name_forward" 
+              id="box_name_forward" 
+              value="forward"
+              checked={formValues.name_forward}
+              onChange={handleChange}
+            />
+            <label htmlFor="box_name_forward">前方一致</label>
+          </div>
+        </div>
+      </div>
+
+      {/* ② カードタイプ */}
+      <div className="form-row">
+        <th>カードタイプ</th>
+        <div className="checkbox-group">
+          {[
+            { label: "UNIT", value: 1 },
+            { label: "CHARACTER", value: 2 },
+            { label: "COMMAND", value: 3 },
+            { label: "OPERATION", value: 4 },
+            { label: "Generation", value: 10 },
+            { label: "ACE", value: 11 },
+          ].map(({ label, value }) => (
+            <label key={value}>
+              <input
+                type="checkbox"
+                name="cardType"
+                value={value}
+                checked={formValues.cardType.includes(String(value))}
+                onChange={handleChange}
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+      </div>
+
+{/* ③ 色 */}
+<div className="form-row">
+  <th>色</th>
+  <td className="c1">
+    <div className="grid-2row-8col">
+      {/* --- 上段（colorInclude 7個） --- */}
+      {[
+        { label: "青", value: 1 },
+        { label: "緑", value: 2 },
+        { label: "黒", value: 3 },
+        { label: "赤", value: 4 },
+        { label: "茶", value: 5 },
+        { label: "白", value: 6 },
+        { label: "紫", value: 7 },
+      ].map(({ label, value }, idx) => (
+        <label key={`include-${value}`} className="color-cell" 
+          style={{ gridColumn: (idx + 1), gridRow: 1 }}
+        >
+          <input 
+            type="checkbox"
+            name="colorInclude"
+            value={value}
+            checked={formValues.colorInclude.includes(String(value))}
+            onChange={handleChange}
+          />
+          {label}
+        </label>
+      ))}
+
+      {/* --- 下段（colorExclude 7個） --- */}
+      {[
+        { label: "青でない", value: 1 },
+        { label: "緑でない", value: 2 },
+        { label: "黒でない", value: 3 },
+        { label: "赤でない", value: 4 },
+        { label: "茶でない", value: 5 },
+        { label: "白でない", value: 6 },
+        { label: "紫でない", value: 7 },
+      ].map(({ label, value }, idx) => (
+        <label key={`exclude-${value}`} className="color-cell" 
+          style={{ gridColumn: (idx + 1), gridRow: 2 }}
+        >
+          <input 
+            type="checkbox"
+            name="colorExclude"
+            value={value}
+            checked={formValues.colorExclude.includes(String(value))}
+            onChange={handleChange}
+          />
+          {label}
+        </label>
+      ))}
+
+      {/* --- 右側：ドロップダウンを column 8 に配置 --- */}
+      <div className="dropdown-cell" style={{ gridColumn: 8, gridRow: '1 / span 2' }}>
+        <select
+          name="colorMulti"
+          className="nselect"
+          value={formValues.colorMulti}
+          onChange={handleChange}
+        >
+          <option value="able">多色を含んでもよい</option>
+          <option value="not">多色を除く</option>
+        </select>
+      </div>
+    </div>
+  </td>
+</div>
+
+      {/* ④ カードテキスト検索 */}
+      <div className="form-row">
+        <th>カード<br />テキスト</th>
+        <input 
+          type="text" 
+          name="text" 
+          className="ntext" 
+          placeholder="スペース区切りでAND検索"
+          value={formValues.text}
+          onChange={handleChange}
+        />
+      </div>
+
+{/* ⑤ 国力 */}
+<div className="form-row">
+  <th>国力</th>
+  <div className="inline-container four-col">
+    <div className="inline-group">
+      <select 
+        name="spCostMin" 
+        className="nselect number-select" 
+        value={formValues.spCostMin}
+        onChange={handleChange}
+      >
+        <option value="">指定なし</option>
+        {numericOptions1.map(n => (
+          <option key={n.value} value={n.value}>{n.label}</option>
+        ))}
+      </select>
+      <span>≦ 指定 ≦</span>
+      <select 
+        name="spCostMax" 
+        className="nselect number-select" 
+        value={formValues.spCostMax}
+        onChange={handleChange}
+      >
+        <option value="">指定なし</option>
+        {numericOptions1.map(n => (
+          <option key={n.value} value={n.value}>{n.label}</option>
+        ))}
+      </select>
+    </div>
+    <div className="inline-group">
+      <select 
+        name="totalCostMin" 
+        className="nselect number-select" 
+        value={formValues.totalCostMin}
+        onChange={handleChange}
+      >
+        <option value="">指定なし</option>
+        {numericOptions2.map(n => (
+          <option key={n.value} value={n.value}>{n.label}</option>
+        ))}
+      </select>
+      <span>≦ 合計 ≦</span>
+      <select 
+        name="totalCostMax" 
+        className="nselect number-select" 
+        value={formValues.totalCostMax}
+        onChange={handleChange}
+      >
+        <option value="">指定なし</option>
+        {numericOptions2.map(n => (
+          <option key={n.value} value={n.value}>{n.label}</option>
+        ))}
+      </select>
+    </div>
+    <div className="inline-group">
+      <select 
+        name="resourceCostMin" 
+        className="nselect number-select" 
+        value={formValues.resourceCostMin}
+        onChange={handleChange}
+      >
+        <option value="">指定なし</option>
+        {numericOptions3.map(n => (
+          <option key={n.value} value={n.value}>{n.label}</option>
+        ))}
+      </select>
+      <span>≦ 資源 ≦</span>
+      <select 
+        name="resourceCostMax" 
+        className="nselect number-select" 
+        value={formValues.resourceCostMax}
+        onChange={handleChange}
+      >
+        <option value="">指定なし</option>
+        {numericOptions3.map(n => (
+          <option key={n.value} value={n.value}>{n.label}</option>
+        ))}
+      </select>
+    </div>
+    <div className="inline-group">
+      <label className="checkbox-inline">
+        <input 
+          type="checkbox"
+          name="includeUndecided"
+          checked={formValues.includeUndecided}
+          onChange={handleChange}
+        />
+        Xも含む
+      </label>
+    </div>
+  </div>
+</div>
+
+{/* ⑤ 格闘、射撃、防御 */}
+<div className="form-row">
+  <th>戦闘修正</th>
+  <div className="inline-container four-col">
+    <div className="inline-group">
+      <select 
+        name="fightMin" 
+        className="nselect number-select" 
+        value={formValues.fightMin}
+        onChange={handleChange}
+      >
+        <option value="">指定なし</option>
+        {numericOptions.map(n => (
+          <option key={n.value} value={n.value}>{n.label}</option>
+        ))}
+      </select>
+      <span>≦ 格闘 ≦</span>
+      <select 
+        name="fightMax" 
+        className="nselect number-select" 
+        value={formValues.fightMax}
+        onChange={handleChange}
+      >
+        <option value="">指定なし</option>
+        {numericOptions.map(n => (
+          <option key={n.value} value={n.value}>{n.label}</option>
+        ))}
+      </select>
+    </div>
+    <div className="inline-group">
+      <select 
+        name="shootMin" 
+        className="nselect number-select" 
+        value={formValues.shootMin}
+        onChange={handleChange}
+      >
+        <option value="">指定なし</option>
+        {numericOptions.map(n => (
+          <option key={n.value} value={n.value}>{n.label}</option>
+        ))}
+      </select>
+      <span>≦ 射撃 ≦</span>
+      <select 
+        name="shootMax" 
+        className="nselect number-select" 
+        value={formValues.shootMax}
+        onChange={handleChange}
+      >
+        <option value="">指定なし</option>
+        {numericOptions.map(n => (
+          <option key={n.value} value={n.value}>{n.label}</option>
+        ))}
+      </select>
+    </div>
+    <div className="inline-group">
+      <select 
+        name="defenseMin" 
+        className="nselect number-select" 
+        value={formValues.defenseMin}
+        onChange={handleChange}
+      >
+        <option value="">指定なし</option>
+        {numericOptions.map(n => (
+          <option key={n.value} value={n.value}>{n.label}</option>
+        ))}
+      </select>
+      <span>≦ 防御 ≦</span>
+      <select 
+        name="defenseMax" 
+        className="nselect number-select" 
+        value={formValues.defenseMax}
+        onChange={handleChange}
+      >
+        <option value="">指定なし</option>
+        {numericOptions.map(n => (
+          <option key={n.value} value={n.value}>{n.label}</option>
+        ))}
+      </select>
+    </div>
+    <div className="inline-group">
+      <label className="checkbox-inline">
+        <input 
+          type="checkbox"
+          name="includeAltStats"
+          checked={formValues.includeAltStats}
+          onChange={handleChange}
+        />
+        変形状態を含める
+      </label>
+    </div>
+  </div>
+</div>
+
+      {/* ⑦ 地形適正 */}
+      <div className="form-row">
+        <th>地形適正</th>
+        <div className="checkbox-group">
+          {["宇宙", "地球"].map((terrain) => (
+            <label key={terrain}>
+              <input 
+                type="checkbox" 
+                name="terrain" 
+                value={terrain}
+                checked={formValues.terrain.includes(terrain)}
+                onChange={handleChange}
+              />
+              {terrain}
+            </label>
+          ))}
+        </div>
+      </div>
+
+{/* ⑦ UNIT特徴指定 */}
+      <div className="form-row">
+  <th>UNIT<br />特徴指定</th>
+  <td
+    className="c1"
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '1em' // チェックボックス行とセレクトボックス行の余白
+    }}
+  >
+    {/* 1行目: チェックボックス群 */}
+    <div className="checkbox-group">
+      {[{ label: "MS", value: "mobileSuits" },
+        { label: "MA", value: "mobileArmor" },
+        { label: "MF", value: "mobileFighter" },
+        { label: "コンビ", value: "combi" },
+        { label: "Lサイズ", value: "largeSize" },
+        { label: "艦艇", value: "warship" }
+      ].map(({ label, value }) => (
+        <label key={value} style={{ marginRight: "1em" }}>
+          <input 
+            type="checkbox" 
+            name="unitFeature" 
+            value={value}
+            checked={formValues.unitFeature.includes(String(value))}
+            onChange={handleChange}
+          />
+          {label}
+        </label>
+      ))}
+    </div>
+
+    {/* 2行目: 複数選択ボックス（react-select） */}
+    <div className="select-group">
+      <Select
+        isMulti
+        name="unitFeatureExtra"
+        options={unitExtraOptions}
+        value={formValues.unitFeatureExtra}
+        onChange={(selectedOptions) =>
+          setFormValues(prev => ({ ...prev, unitFeatureExtra: selectedOptions || [] }))
+        }
+        placeholder="追加特徴を選択"
+      />
+    </div>
+  </td>
+</div>
+      {/* ⑨ CHARACTER特徴指定 */}
+      <div className="form-row">
+        <th>CHARACTER<br />特徴指定</th>
+        <td
+          className="c1"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1em' // チェックボックス行とセレクトボックス行の余白
+          }}
+          >
+        <div className="checkbox-group">
+          {[
+            { label: "男性", value: "male" },
+            { label: "女性", value: "female" },
+            { label: "大人", value: "adult" },
+            { label: "子供", value: "child" },
+            { label: "NT", value: "newType" },
+            { label: "CO", value: "coordinator" },
+            { label: "GF", value: "gundamFighter" }
+          ].map(({ label, value }) => (
+            <label key={value} style={{ marginRight: "1em" }}>
+              <input 
+                type="checkbox" 
+                name="charFeature" 
+                value={value}
+                checked={formValues.charFeature.includes(String(value))}
+                onChange={handleChange}
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+        <div className="select-group">
+          <Select
+            isMulti
+            name="charFeatureExtra"
+            options={characterExtraOptions}
+            value={formValues.charFeatureExtra}
+            onChange={(selectedOptions) => handleSelectChange("charFeatureExtra", selectedOptions)}
+            placeholder="追加特徴を選択"
+          />
+        </div>
+        </td>
+      </div>
+
+      {/* ⑩ その他特徴指定 */}
+      <div className="form-row">
+        <th>その他<br />特徴指定</th>
+        <div className="checkbox-group">
+          {[
+            { label: "移動", value: "move" },
+            { label: "回復", value: "recover" },
+            { label: "強化", value: "enhance" },
+            { label: "再生", value: "regenerate" },
+            { label: "支配", value: "control" },
+            { label: "束縛", value: "bind" },
+            { label: "対抗", value: "counter" },
+            { label: "展開", value: "deploy" },
+            { label: "破壊", value: "destroy" },
+            { label: "補強", value: "reinforce" },
+            { label: "兵装", value: "equipment" }
+          ].map(({ label, value }) => (
+            <label key={value}>
+              <input 
+                type="checkbox" 
+                name="otherFeature" 
+                value={value}
+                checked={formValues.otherFeature.includes(String(value))}
+                onChange={handleChange}
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* ⑪ 所属/系統指定 */}
+      <div className="form-row">
+        <th>所属/系統</th>
+        <input 
+          type="text" 
+          name="traitText" 
+          className="ntext" 
+          placeholder="スペース区切りでAND検索（例：〇〇系 ジオン）"
+          value={formValues.traitText}
+          onChange={handleChange}
+        />
+      </div>
+
+      {/* ⑫ 特徴の一致条件 */}
+      <div className="form-row">
+        <th>特徴の<br />一致条件</th>
+        <select
+          name="traits_logic"
+          className="nselect"
+          value={formValues.traits_logic}
+          onChange={handleChange}
+        >
+          <option value="and">すべての特徴を含む</option>
+          <option value="or">いずれかの特徴を含む</option>
+        </select>
+      </div>
+
+      {/* ⑬ 専用検索 */}
+      <div className="form-row">
+        <th>専用</th>
+        <input 
+          type="text" 
+          name="exclusivePilotText" 
+          className="ntext" 
+          placeholder="パイロット名"
+          value={formValues.exclusivePilotText}
+          onChange={handleChange}
+        />
+      </div>
+
+      {/* ⑭ 構築範囲（placeholder） */}
+      <div className="form-row">
+        <th>構築範囲</th>
+        <div className="inline-group deck-range-group">
+          <label>
+            <input
+              type="radio"
+              name="deckRangeType"
+              value="none"
+              checked={formValues.deckRangeType === 'none'}
+              onChange={handleChange}
+            />
+            指定なし
+          </label>
+
+          <label>
+            <input
+              type="radio"
+              name="deckRangeType"
+              value="tensaku"
+              checked={formValues.deckRangeType === 'tensaku'}
+              onChange={handleChange}
+            />
+            添削杯
+          </label>
+
+          {/* ドロップダウンは「添削杯」が選ばれているときのみ表示 */}
+          <label>
+            <input
+              type="radio"
+              name="deckRangeType"
+              value="classic"
+              checked={formValues.deckRangeType === 'classic'}
+              onChange={handleChange}
+            />
+            クラシック
+          </label>
 
-  return (
-    <div id="container">
-      {/* ヘッダー部（画像、戻るリンク、hr など） */}
+          <label>
+            <input
+              type="radio"
+              name="deckRangeType"
+              value="rising"
+              checked={formValues.deckRangeType === 'rising'}
+              onChange={handleChange}
+            />
+            ライジング
+          </label>
 
-      <hr color="#009563" noshade="noshade" width="92%" size="14" />
-
-      <a name="#database" />
-      <div className="sub_tit">■GUNDAM WAR DATABASE■</div>
-
-      {/* フォーム全体 */}
-      <form onSubmit={handleSubmit}>
-        {/* ※ form をテーブルの外側に配置して、内部にテーブルレイアウトを使用 */}
-        <table align="center" width="85%" cellPadding="4">
-          <tbody>
-            {/* エキスパンション */}
-            <tr>
-              <td className="cell_b">
-                エキスパンション
-                <br />
-                （or検索）
-              </td>
-              <td colSpan="3">
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="01"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("01")}
-                  />
-                  第一弾
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="02"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("02")}
-                  />
-                  撃墜王出撃！
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="04"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("04")}
-                  />
-                  宇宙の記憶
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="06"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("06")}
-                  />
-                  新しき翼
-                </label>
-                <br />
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="08"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("08")}
-                  />
-                  永久の絆
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="10"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("10")}
-                  />
-                  新世紀の鼓動
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="12"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("12")}
-                  />
-                  革新の波濤
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="14"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("14")}
-                  />
-                  月下の戦塵
-                </label>
-                <br />
-                {/* 以下、省略せず全て追加 */}
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="16"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("16")}
-                  />
-                  相克の軌跡
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="18"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("18")}
-                  />
-                  刻の末裔
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="21"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("21")}
-                  />
-                  蒼海の死闘
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="23"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("23")}
-                  />
-                  宿命の螺旋
-                </label>
-                <br />
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="25"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("25")}
-                  />
-                  烈火の咆哮
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="29"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("29")}
-                  />
-                  果てなき運命
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="32"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("32")}
-                  />
-                  禁忌の胎動
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="36"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("36")}
-                  />
-                  覇王の紋章
-                </label>
-                <br />
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="13"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("13")}
-                  />
-                  BB
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="17"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("17")}
-                  />
-                  BB 2
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="24"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("24")}
-                  />
-                  BB 3
-                </label>
-                <br />
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="09"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("09")}
-                  />
-                  一年戦争編
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="11"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("11")}
-                  />
-                  Ｗ/∀編
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="20"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("20")}
-                  />
-                  SEED編
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="27"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("27")}
-                  />
-                  戦場の女神
-                </label>
-                <br />
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="31"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("31")}
-                  />
-                  DESTINY編
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="22"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("22")}
-                  />
-                  エース編
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="33"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("33")}
-                  />
-                  劇場版Z編
-                </label>
-                <br />
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="26"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("26")}
-                  />
-                  拡張シート1
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="28"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("28")}
-                  />
-                  拡張シート2
-                </label>
-                <br />
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="03"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("03")}
-                  />
-                  DS 1
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="07"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("07")}
-                  />
-                  DS 2
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="15"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("15")}
-                  />
-                  DS ギレンの野望編
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="19"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("19")}
-                  />
-                  DS 栄光のザフト
-                </label>
-                <br />
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="30"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("30")}
-                  />
-                  DS 閃光のミネルバ
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="34"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("34")}
-                  />
-                  TS 疾風の砲火
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="35"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("35")}
-                  />
-                  TS 戦乱の兇刃
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or60"
-                    value="05"
-                    onChange={handleChange}
-                    checked={formValues.or60.includes("05")}
-                  />
-                  プロモ
-                </label>
-              </td>
-            </tr>
-
-            {/* 勢力 */}
-            <tr>
-              <td className="cell_a">
-                勢力
-                <br />
-                （or検索）
-              </td>
-              <td colSpan="3">
-                {["連邦", "ジオン公国", "ティターンズ", "ザンスカール", "ネオジオン", "クロスボーン", "∀", "Ｘ", "Ｇ", "Ｗ", "SEED", "その他"].map((faction) => (
-                  <label key={faction}>
-                    <input
-                      type="checkbox"
-                      name="or1"
-                      value={faction}
-                      onChange={handleChange}
-                      checked={formValues.or1.includes(faction)}
-                    />
-                    {faction}
-                  </label>
-                ))}
-              </td>
-            </tr>
-
-            {/* カード種 */}
-            <tr>
-              <td className="cell_b">
-                カード種
-                <br />
-                （or検索）
-              </td>
-              <td colSpan="3">
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or2,64"
-                    value="U- SP- OL-"
-                    onChange={handleChange}
-                    checked={formValues["or2,64"].includes("U- SP- OL-")}
-                  />
-                  ユニット
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or2,64"
-                    value="CH-"
-                    onChange={handleChange}
-                    checked={formValues["or2,64"].includes("CH-")}
-                  />
-                  キャラクター
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or2,64"
-                    value="C-"
-                    onChange={handleChange}
-                    checked={formValues["or2,64"].includes("C-")}
-                  />
-                  コマンド
-                </label>
-                <br />
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or2,64"
-                    value="O-"
-                    onChange={handleChange}
-                    checked={formValues["or2,64"].includes("O-")}
-                  />
-                  オペレーション
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    name="or2,64"
-                    value="G-"
-                    onChange={handleChange}
-                    checked={formValues["or2,64"].includes("G-")}
-                  />
-                  ジェネレーション
-                </label>
-              </td>
-            </tr>
-
-            {/* レアリティ */}
-            <tr>
-              <td className="cell_a">
-                レアリティ
-                <br />
-                （or検索）
-              </td>
-              <td colSpan="3">
-                {["Rare", "Un", "Common", "SP", "SR"].map((r) => (
-                  <label key={r}>
-                    <input
-                      type="checkbox"
-                      name="or4"
-                      value={r}
-                      onChange={handleChange}
-                      checked={formValues.or4.includes(r)}
-                    />
-                    {r === "Rare" ? "レア" : r === "Un" ? "アンコモン" : r === "Common" ? "コモン" : r === "SP" ? "プロモ" : "シークレットレア"}
-                  </label>
-                ))}
-              </td>
-            </tr>
-
-            {/* 指定国力 */}
-            <tr>
-              <td className="cell_b">指定国力</td>
-              <td>
-                <select name="up5" size="1" value={formValues.up5} onChange={handleChange}>
-                  <option value=""></option>
-                  {["1", "2", "3", "4"].map((n) => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
-                以上
-                <select name="down5" size="1" value={formValues.down5} onChange={handleChange}>
-                  <option value=""></option>
-                  {["1", "2", "3", "4"].map((n) => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
-                以下
-              </td>
-
-              <td className="cell_b">格闘</td>
-              <td>
-                <select name="up38" size="1" value={formValues.up38} onChange={handleChange}>
-                  <option value=""></option>
-                  {["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"].map((n) => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
-                以上
-                <select name="down38" size="1" value={formValues.down38} onChange={handleChange}>
-                  <option value=""></option>
-                  {["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"].map((n) => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
-                以下
-              </td>
-            </tr>
-
-            {/* 合計国力 / 射撃 */}
-            <tr>
-              <td className="cell_a">合計国力</td>
-              <td>
-                <select name="up6" size="1" value={formValues.up6} onChange={handleChange}>
-                  <option value=""></option>
-                  {["1","2","3","4","5","6","7","8","9"].map((n) => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
-                以上
-                <select name="down6" size="1" value={formValues.down6} onChange={handleChange}>
-                  <option value=""></option>
-                  {["1","2","3","4","5","6","7","8","9"].map((n) => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
-                以下
-              </td>
-              <td className="cell_a">射撃</td>
-              <td>
-                <select name="up39" size="1" value={formValues.up39} onChange={handleChange}>
-                  <option value=""></option>
-                  {["0","1","2","3","4","5","6","7","8","9"].map((n) => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
-                以上
-                <select name="down39" size="1" value={formValues.down39} onChange={handleChange}>
-                  <option value=""></option>
-                  {["0","1","2","3","4","5","6","7","8","9"].map((n) => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
-                以下
-              </td>
-            </tr>
-
-            {/* 資源コスト / 防御 */}
-            <tr>
-              <td className="cell_b">資源コスト</td>
-              <td>
-                <select name="up7" size="1" value={formValues.up7} onChange={handleChange}>
-                  <option value=""></option>
-                  {["1","2","3","4","5","6"].map((n) => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
-                以上
-                <select name="down7" size="1" value={formValues.down7} onChange={handleChange}>
-                  <option value=""></option>
-                  {["1","2","3","4","5","6"].map((n) => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
-                以下
-              </td>
-              <td className="cell_b">防御</td>
-              <td>
-                <select name="up40" size="1" value={formValues.up40} onChange={handleChange}>
-                  <option value=""></option>
-                  {["0","1","2","3","4","5","6","7","8","9"].map((n) => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
-                以上
-                <select name="down40" size="1" value={formValues.down40} onChange={handleChange}>
-                  <option value=""></option>
-                  {["0","1","2","3","4","5","6","7","8","9"].map((n) => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
-                以下
-              </td>
-            </tr>
-
-            {/* 性別・年齢・特徴 */}
-            <tr>
-              <td className="cell_a">性別・年齢・特徴</td>
-              <td colSpan="3">
-                <select name="keys57" size="1" value={formValues.keys57} onChange={handleChange}>
-                  <option value=""></option>
-                  <option value="M">男性</option>
-                  <option value="F">女性</option>
-                </select>
-                <select name="keys58" size="1" value={formValues.keys58} onChange={handleChange}>
-                  <option value=""></option>
-                  <option value="Ad">大人</option>
-                  <option value="Ch">子供</option>
-                </select>
-                <select name="keys59" size="1" value={formValues.keys59} onChange={handleChange}>
-                  <option value=""></option>
-                  <option value="NT">NT</option>
-                  <option value="CO">CO</option>
-                  <option value="GF">GF</option>
-                </select>
-              </td>
-            </tr>
-
-            {/* 地形適性 */}
-            <tr>
-              <td className="cell_b">地形適性（or検索）</td>
-              <td colSpan="3">
-                {["宇宙", "地球", "宇地"].map((val) => (
-                  <label key={val}>
-                    <input
-                      type="checkbox"
-                      name="or8"
-                      value={val}
-                      onChange={handleChange}
-                      checked={formValues.or8.includes(val)}
-                    />
-                    {val}
-                  </label>
-                ))}
-              </td>
-            </tr>
-
-            {/* 特殊テキスト選択（and検索） */}
-            <tr>
-              <td className="cell_a">
-                特殊テキスト選択
-                <br />
-                （and検索）
-              </td>
-              <td colSpan="3">
-                <label>
-                  <input type="checkbox" name="keys9" onChange={handleChange} checked={formValues.keys9} />
-                  1枚制限
-                </label>
-                <label>
-                  <input type="checkbox" name="keys10" onChange={handleChange} checked={formValues.keys10} />
-                  プリベント
-                </label>
-                <label>
-                  <input type="checkbox" name="keys18" onChange={handleChange} checked={formValues.keys18} />
-                  クイック
-                </label>
-                <label>
-                  <input type="checkbox" name="keys11" onChange={handleChange} checked={formValues.keys11} />
-                  PS装甲
-                </label>
-                <label>
-                  <input type="checkbox" name="keys27" onChange={handleChange} checked={formValues.keys27} />
-                  MF
-                </label>
-                <br />
-                <label>
-                  <input type="checkbox" name="keys15" onChange={handleChange} checked={formValues.keys15} />
-                  強襲
-                </label>
-                <label>
-                  <input type="checkbox" name="keys16" onChange={handleChange} checked={formValues.keys16} />
-                  速攻
-                </label>
-                <label>
-                  <input type="checkbox" name="keys13,53" onChange={handleChange} checked={formValues["keys13,53"]} />
-                  バルチャー
-                </label>
-                <label>
-                  <input type="checkbox" name="keys14" onChange={handleChange} checked={formValues.keys14} />
-                  宙間戦闘
-                </label>
-                <br />
-                <label>
-                  <input type="checkbox" name="keys19,51" onChange={handleChange} checked={formValues["keys19,51"]} />
-                  大気圏突入
-                </label>
-                <label>
-                  <input type="checkbox" name="keys20,54" onChange={handleChange} checked={formValues["keys20,54"]} />
-                  範囲兵器
-                </label>
-                <label>
-                  <input type="checkbox" name="keys23" onChange={handleChange} checked={formValues.keys23} />
-                  サイコミュ
-                </label>
-                <label>
-                  <input type="checkbox" name="keys26,48" onChange={handleChange} checked={formValues["keys26,48"]} />
-                  高機動
-                </label>
-                <br />
-                <label>
-                  <input type="checkbox" name="keys21,52" onChange={handleChange} checked={formValues["keys21,52"]} />
-                  砂漠
-                </label>
-                <label>
-                  <input type="checkbox" name="keys22,49" onChange={handleChange} checked={formValues["keys22,49"]} />
-                  水
-                </label>
-                <label>
-                  <input type="checkbox" name="keys17" onChange={handleChange} checked={formValues.keys17} />
-                  タイヤ
-                </label>
-                <label>
-                  <input type="checkbox" name="keys25" onChange={handleChange} checked={formValues.keys25} />
-                  変形
-                </label>
-                <label>
-                  <input type="checkbox" name="keys30,46" onChange={handleChange} checked={formValues["keys30,46"]} />
-                  特殊シールド
-                </label>
-                <br />
-                <label>
-                  <input type="checkbox" name="keys12" onChange={handleChange} checked={formValues.keys12} />
-                  サポート
-                </label>
-                <label>
-                  <input type="checkbox" name="keys24" onChange={handleChange} checked={formValues.keys24} />
-                  拠点
-                </label>
-                <label>
-                  <input type="checkbox" name="keys31,55" onChange={handleChange} checked={formValues["keys31,55"]} />
-                  コロニー
-                </label>
-                <label>
-                  <input type="checkbox" name="keys28" onChange={handleChange} checked={formValues.keys28} />
-                  艦船
-                </label>
-                <label>
-                  <input type="checkbox" name="keys29" onChange={handleChange} checked={formValues.keys29} />
-                  補給
-                </label>
-                <br />
-                <label>
-                  <input type="checkbox" name="keys33" onChange={handleChange} checked={formValues.keys33} />
-                  【セット/Ｘ】
-                </label>
-                <label>
-                  <input type="checkbox" name="keys34" onChange={handleChange} checked={formValues.keys34} />
-                  家名
-                </label>
-                <label>
-                  <input type="checkbox" name="keys35" onChange={handleChange} checked={formValues.keys35} />
-                  艦船用修正
-                </label>
-                <label>
-                  <input type="checkbox" name="keys32" onChange={handleChange} checked={formValues.keys32} />
-                  解体
-                </label>
-              </td>
-            </tr>
-
-            {/* カード名称から検索 */}
-            <tr>
-              <td className="cell_b">カード名称から検索</td>
-              <td colSpan="3">
-                <input
-                  type="text"
-                  size="50"
-                  name="keys3"
-                  value={formValues.keys3}
-                  onChange={handleChange}
-                />
-              </td>
-            </tr>
-
-            {/* カードテキストから検索 */}
-            <tr>
-              <td className="cell_a" nowrap="nowrap">
-                カードテキストから検索
-              </td>
-              <td colSpan="3">
-                <input
-                  type="text"
-                  size="50"
-                  name="keys36,42"
-                  value={formValues["keys36,42"]}
-                  onChange={handleChange}
-                />
-              </td>
-            </tr>
-
-            {/* キーワードで検索 */}
-            <tr>
-              <td className="cell_b">キーワードで検索</td>
-              <td colSpan="3">
-                <input
-                  type="text"
-                  size="50"
-                  name="IDv001"
-                  value={formValues.IDv001}
-                  onChange={handleChange}
-                />
-                <select name="IDn001" size="1" value={formValues.IDn001} onChange={handleChange}>
-                  <option>and</option>
-                  <option>or</option>
-                  <option>not</option>
-                </select>
-              </td>
-            </tr>
-
-            {/* 検索条件 */}
-            <tr>
-              <td className="cell_a">検索条件</td>
-              <td colSpan="3">
-                <select name="word" size="1" value={formValues.word} onChange={handleChange}>
-                  <option value="1">大文字小文字を区別</option>
-                  <option value="0">区別しない</option>
-                  <option value="2">全角半角も区別しない</option>
-                </select>
-              </td>
-            </tr>
-
-            {/* 表示件数 */}
-            <tr>
-              <td className="cell_b">表示件数</td>
-              <td colSpan="3">
-                <select name="print" size="1" value={formValues.print} onChange={handleChange}>
-                  <option>10</option>
-                  <option>20</option>
-                  <option>30</option>
-                  <option>40</option>
-                  <option>50</option>
-                </select>
-                件ごと
-              </td>
-            </tr>
-
-            {/* 再録 */}
-            <tr>
-              <td className="cell_a" nowrap="nowrap">
-                再録
-              </td>
-              <td colSpan="3">
-                <label>
-                  <input
-                    type="radio"
-                    name="keys63"
-                    value=""
-                    onChange={handleChange}
-                    checked={formValues.keys63 === ""}
-                  />
-                  表示　
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="keys63"
-                    value="O"
-                    onChange={handleChange}
-                    checked={formValues.keys63 === "O"}
-                  />
-                  非表示　
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="keys63"
-                    value="R"
-                    onChange={handleChange}
-                    checked={formValues.keys63 === "R"}
-                  />
-                  再録のみ表示
-                </label>
-              </td>
-            </tr>
-
-            {/* Submit / Reset */}
-            <tr>
-              <td>
-                <br />
-                <input type="submit" value="検索" />
-              </td>
-              <td colSpan="3">
-                <br />
-                <input type="reset" value="取消" onClick={handleReset} />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </form>
-
-      <br />
-      <div className="base">
-        <a href="dbuse.html" target="_blank" rel="noopener noreferrer">
-          ○ DATABASE解説 ○
-        </a>
-      </div>
-      <hr color="#009563" noshade="noshade" width="92%" size="14" />
-      <div className="ret">
-        <a href="https://web.archive.org/web/20060411002812/http://relena.noob.jp/">
-          戻る
-        </a>
-      </div>
-
-      <div id="footer">
-        <p>Copyright &copy; 少女が見た流星 All Rights Reserved.</p>
-      </div>
-    </div>
-  );
-};
-
-export default SearchForm;
+          {formValues.deckRangeType === 'tensaku' && (
+            <select
+              name="deckRangeDetail"
+              className="ntext"
+              value={formValues.deckRangeDetail}
+              onChange={handleChange}
+              style={{ marginLeft: '8px' }}
+            >
+              <option value="">選択してください</option>
+                  <option value="2010-03-09">第9回 添削杯</option>
+                  <option value="2009-08-09">第8回 添削杯</option>
+                  <option value="2009-02-19">第7回 添削杯</option>
+                  <option value="2008-02-28">第6回 添削杯</option>
+                  <option value="2007-08-31">第5回 添削杯</option>
+                  <option value="2007-02-28">第4回 添削杯</option>
+                  <option value="2006-08-31">第3回 添削杯</option>
+              <option value="2006-02-28">第2回 添削杯</option>
+              <option value="2005-08-31">第1回 添削杯</option>
+            </select>
+          )}
+        </div>
+      </div>
+
+      {/* ⑪ 禁止制限 
+      <div className="form-row">
+        <label>禁止制限</label>
+        <div className="checkbox-group">
+          <label>
+            <input 
+              type="radio" 
+              name="exclude" 
+              value="banned"
+              checked={formValues.exclude === "banned"}
+              onChange={handleChange}
+            />
+            禁止カードは除く
+          </label>
+          <label>
+            <input 
+              type="radio" 
+              name="exclude" 
+              value="restricted"
+              checked={formValues.exclude === "restricted"}
+              onChange={handleChange}
+            />
+            制限カードは除く
+          </label>
+          <label>
+            <input 
+              type="radio" 
+              name="exclude" 
+              value="no"
+              checked={formValues.exclude === "no"}
+              onChange={handleChange}
+            />
+            すべて表示
+          </label>
+        </div>
+      </div> */}
+
+      {/* ⑫ 収録弾（placeholder） */}
+      <div className="form-row">
+        <th>収録弾</th>
+        <div>
+        {/* 8×4でチェックボックスを並べる */}
+        <div className="checkbox-grid6">
+          {[
+            { label: "GUNDAM WAR", value: "1st" },
+            { label: "撃墜王出撃", value: "2nd" },
+            { label: "宇宙の記憶", value: "3rd" },
+            { label: "新しき翼", value: "4th" },
+            { label: "永久の絆", value: "5th" },
+            { label: "新世紀の鼓動", value: "6th" },
+            { label: "革新の波濤", value: "7th" },
+            { label: "月下の戦塵", value: "8th" },
+            { label: "相剋の軌跡", value: "9th" },
+            { label: "刻の末裔", value: "10th" },
+            { label: "蒼海の死闘", value: "11th" },
+            { label: "宿命の螺旋", value: "12th" },
+            { label: "烈火の咆哮", value: "13th" },
+            { label: "果てなき運命", value: "14th" },
+            { label: "禁忌の胎動", value: "15th" },
+            { label: "覇王の紋章", value: "16th" },
+            { label: "不敗の流派", value: "17th" },
+            { label: "戦慄の兵威", value: "18th" },
+            { label: "変革の叛旗", value: "19th" },
+            { label: "流転する世界", value: "20th" },
+            { label: "放たれた刃", value: "21st" },
+            { label: "武神降臨", value: "22nd" },
+            { label: "栄光の戦史", value: "23rd" },
+            { label: "宇宙を駆逐する光", value: "24th" },
+            { label: "双極の閃光", value: "25th" },
+            { label: "戦いという名の対話", value: "26th" },
+            { label: "雷鳴の使徒", value: "27th" },
+            { label: "絶対戦力", value: "28th" },
+            { label: "プロモカード", value: "PR" }
+          ].map(({ label, value }) => (
+            <label key={value}>
+              <input 
+                type="checkbox" 
+                name="setIncluded" 
+                value={value}
+                checked={formValues.setIncluded.includes(String(value))}
+                onChange={handleChange}
+              />
+              {label}
+            </label>
+          ))}
+          </div>
+          
+          {/* セレクトボックスを一列で並べる */}
+          <div className="select-row">
+            <Select
+              isMulti
+              name="setFeatureExtraBB"
+              options={setIncludeExtraOptionsBB}
+              value={formValues.setFeatureExtraBB}
+              onChange={(selectedOptions) => handleSelectChange("setFeatureExtraBB", selectedOptions)}
+              placeholder="BB/EB"
+            />
+            <Select
+              isMulti
+              name="setFeatureExtraST"
+              options={setIncludeExtraOptionsST}
+              value={formValues.setFeatureExtraST}
+              onChange={(selectedOptions) => handleSelectChange("setFeatureExtraST", selectedOptions)}
+              placeholder="スターター"
+            />
+            <Select
+              isMulti
+              name="setFeatureExtraDB"
+              options={setIncludeExtraOptionsDB}
+              value={formValues.setFeatureExtraDB}
+              onChange={(selectedOptions) => handleSelectChange("setFeatureExtraDB", selectedOptions)}
+              placeholder="特殊ブースター"
+            />
+            <Select
+              isMulti
+              name="setFeatureExtraEX"
+              options={setIncludeExtraOptionsEX}
+              value={formValues.setFeatureExtraEX}
+              onChange={(selectedOptions) => handleSelectChange("setFeatureExtraEX", selectedOptions)}
+              placeholder="その他"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ⑯ 表示件数 */}
+      <div className="form-row">
+        <th>表示件数</th>
+        <select
+          name="pageSize"
+          className="nselect"
+          value={formValues.pageSize}
+          onChange={handleChange}
+        >
+          {[10, 20, 50, 100, 200].map(size => (
+            <option key={size} value={size}>{size}件</option>
+          ))}
+        </select>
+      </div>
+
+{/* ⑰ 送信／リセット ボタン */}
+<div className="form-row">
+  {/* 左カラム */}
+  <label></label> {/* ここは空か、何かラベルを置いてもよい */}
+  {/* 右カラム */}
+  <div className="button-cell">
+    <div className="button-group">
+      <button type="submit" className="search">
+        <span className="owl-sprite-16-black icon-search"></span>検索
+      </button>
+      <button type="reset" className="reset" onClick={handleReset}>
+        <span className="owl-sprite-16-black icon-delete"></span>リセット
+      </button>
+    </div>
+  </div>
+</div>
+    </form>
+  );
+};
+
+export default SearchForm;

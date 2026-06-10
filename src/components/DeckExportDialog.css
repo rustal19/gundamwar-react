@@ -1,0 +1,102 @@
+.deck-export-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 1150;
+}
+
+.deck-export-dialog {
+  width: min(1280px, calc(100vw - 3rem));
+  max-height: calc(100vh - 3rem);
+  background: #ffffff;
+  border: 1px solid #d8dee8;
+  box-shadow: 0 20px 56px rgba(15, 23, 42, 0.24);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.deck-export-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.deck-export-dialog-header h3 {
+  margin: 0;
+  font-size: 1.08rem;
+  color: #182132;
+}
+
+.deck-export-dialog-note,
+.deck-export-dialog-status {
+  margin: 0;
+  color: #526071;
+  font-size: 0.86rem;
+}
+
+.deck-export-dialog-preview-frame {
+  border: 1px solid #d8dee8;
+  background: #f8fafc;
+  overflow: auto;
+  padding: 0.9rem;
+}
+
+.deck-export-dialog-preview-image {
+  display: block;
+  width: 100%;
+  min-width: 760px;
+  height: auto;
+  background: #eef3f8;
+}
+
+.deck-export-dialog-preview-empty {
+  min-height: 16rem;
+  display: grid;
+  place-items: center;
+  color: #5c6878;
+  font-size: 0.94rem;
+}
+
+.deck-export-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.deck-export-dialog-status {
+  justify-self: end;
+  color: #1f5e3b;
+}
+
+.deck-export-dialog-status-error {
+  color: #972626;
+}
+
+@media (max-width: 960px) {
+  .deck-export-dialog-overlay {
+    padding: 1rem;
+  }
+
+  .deck-export-dialog {
+    width: min(100vw - 2rem, 900px);
+    max-height: calc(100vh - 2rem);
+    padding: 1rem;
+  }
+
+  .deck-export-dialog-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .deck-export-dialog-preview-image {
+    min-width: 680px;
+  }
+}
