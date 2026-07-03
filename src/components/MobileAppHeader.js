@@ -7,7 +7,8 @@ import "./AppHeader.css";
 
 export default function MobileAppHeader() {
   const location = useLocation();
-  const { authMode, canUseGoogleAuth, isAuthenticated, signOut, user } = useAuth();
+  const { authMode, canUseGoogleAuth, displayNickname, isAuthenticated, signOut, user } =
+    useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const homePath = useMemo(
@@ -24,6 +25,10 @@ export default function MobileAppHeader() {
   );
   const deckPath = useMemo(
     () => buildPathWithForcedMobileLayout("/deck", location.search),
+    [location.search]
+  );
+  const profilePath = useMemo(
+    () => buildPathWithForcedMobileLayout("/profile", location.search),
     [location.search]
   );
 
@@ -91,8 +96,11 @@ export default function MobileAppHeader() {
               <>
                 <div className="app-auth-status">
                   <span className="app-auth-label">ログイン中</span>
-                  <strong>{user?.name || "-"}</strong>
+                  <strong>{displayNickname || user?.name || "-"}</strong>
                 </div>
+                <Link className="app-auth-button" to={profilePath}>
+                  プロフィール
+                </Link>
                 <button className="app-auth-button" onClick={signOut}>
                   ログアウト
                 </button>
