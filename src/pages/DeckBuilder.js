@@ -44,12 +44,14 @@ const DeckBuilder = ({ compact = false }) => {
     clearDeck,
     replaceDeck,
   } = useDeck();
-  const { savedDecks, isLoading, isSaving, error, saveDeck, removeDeck } = useSavedDecks();
+  const { savedDecks, isLoading, isSaving, error, saveDeck, removeDeck, setPublication } =
+    useSavedDecks();
 
   const [saveMessage, setSaveMessage] = useState("");
   const [deckTitle, setDeckTitle] = useState("");
   const [selectedDeckId, setSelectedDeckId] = useState("");
   const [deletingDeckId, setDeletingDeckId] = useState("");
+  const [publishingDeckId, setPublishingDeckId] = useState("");
   const [deckViewMode, setDeckViewMode] = useState("detail");
   const [isBasicGDialogOpen, setIsBasicGDialogOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
@@ -264,6 +266,20 @@ const DeckBuilder = ({ compact = false }) => {
       setSaveMessage(removeError.message);
     } finally {
       setDeletingDeckId("");
+      clearSaveMessageSoon();
+    }
+  };
+
+  const handlePublicationChange = async ({ deckId, isPublic, description }) => {
+    try {
+      setPublishingDeckId(String(deckId));
+      await setPublication({ deckId, isPublic, description });
+      setSaveMessage(isPublic ? "デッキを公開しました。" : "デッキを非公開にしました。");
+    } catch (publicationError) {
+      setSaveMessage(publicationError.message);
+      throw publicationError;
+    } finally {
+      setPublishingDeckId("");
       clearSaveMessageSoon();
     }
   };
@@ -583,8 +599,11 @@ const DeckBuilder = ({ compact = false }) => {
         initialDeckId={selectedDeckId}
         onLoad={handleLoadDeck}
         onDelete={handleDeleteSavedDeck}
+        onPublicationChange={handlePublicationChange}
         isLoading={isLoading}
         isDeleting={Boolean(deletingDeckId)}
+        isPublishing={Boolean(publishingDeckId)}
+        publishingDeckId={publishingDeckId}
         deletingDeckId={deletingDeckId}
         errorMessage={error}
       />

@@ -7,7 +7,10 @@ import RouteAnalyticsTracker from "./components/RouteAnalyticsTracker";
 import SearchForm from "./components/SearchForm";
 import { AuthProvider } from "./context/AuthContext";
 import { DeckProvider } from "./context/DeckContext";
+import AdminUsers from "./pages/AdminUsers";
 import DeckBuilder from "./pages/DeckBuilder";
+import PublicDeckDetail from "./pages/PublicDeckDetail";
+import PublicDecks from "./pages/PublicDecks";
 import SearchResults from "./pages/SearchResults";
 import TournamentDetail from "./pages/TournamentDetail";
 import TournamentList from "./pages/TournamentList";
@@ -45,6 +48,9 @@ const AppContent = () => {
         <Route path="/deck" element={<DeckBuilder compact={isCompactLayout} />} />
         <Route path="/tournaments" element={<TournamentList compact={isCompactLayout} />} />
         <Route path="/tournaments/:id" element={<TournamentDetail compact={isCompactLayout} />} />
+        <Route path="/admin/users" element={<AdminUsers compact={isCompactLayout} />} />
+        <Route path="/decks" element={<PublicDecks compact={isCompactLayout} />} />
+        <Route path="/decks/:id" element={<PublicDeckDetail compact={isCompactLayout} />} />
       </Routes>
     </div>
   );

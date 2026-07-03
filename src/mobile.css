@@ -579,6 +579,33 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.app-shell-mobile .app-nav {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.app-shell-mobile .public-decks-search {
+  grid-template-columns: 1fr;
+  gap: 0.45rem;
+}
+
+.app-shell-mobile .public-deck-card {
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+  padding: 0.75rem;
+}
+
+.app-shell-mobile .public-deck-meta {
+  justify-items: start;
+  grid-template-columns: repeat(3, auto);
+  gap: 0.65rem;
+  white-space: normal;
+}
+
+.app-shell-mobile .public-deck-row {
+  grid-template-columns: 2rem 4.2rem minmax(0, 1fr);
+  gap: 0.5rem;
+}
+
 /* SearchResults mobile rules */
 .app-shell-mobile .search-results-heading-row {
   display: flex;

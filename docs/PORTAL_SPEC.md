@@ -60,6 +60,10 @@ Melee.gg のようなポータルサイトを目指す拡張の**全タスク共
 ```
 - regulation の既定値: `{ name: "スタンダード", mainMin: 50, mainMax: 50, sideSize: 10,
   maxCopies: 3, bannedCards: [], limitedCards: [], allowedSets: null }`
+- **フォーマットプリセット**: `src/data/formats.js` に
+  `export const FORMAT_PRESETS = [{ name, regulation }]` を定義し、大会作成フォームで
+  プリセット選択 → regulation に展開(展開後の個別編集も可)。具体的な禁止・制限リストは
+  ユーザーから受領後に登録する(未受領の間は「スタンダード」既定値のみ)。
 
 ### entry(大会参加)
 ```
@@ -115,10 +119,16 @@ match: { id, roundId, tableNo, player1EntryId, player2EntryId|null,  // null = �
 
 ### admin
 - `GET  /api/users?query=` / `PUT /api/users/:id/role` — organizer 権限付与
+- `PATCH /api/decks/:id` — admin は他人のデッキも `{ isPublic: false }` にできる(強制非公開)
+- `DELETE /api/users/:id/nickname` — ニックネームの強制リセット(該当ユーザーは次回、再登録を求められる)
 
 ## 4. フロントエンド構成
 
 ### ルート(App.js に追加)
+
+全体のページマップと「/ = ポータルトップ、検索は /search」への変更は
+[SITE_DESIGN.md](SITE_DESIGN.md) §1 を参照。
+
 | パス | ページ | 備考 |
 |---|---|---|
 | `/decks` | 公開デッキ一覧 | 検索ボックス+ページング |

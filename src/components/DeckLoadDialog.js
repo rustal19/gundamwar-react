@@ -46,12 +46,17 @@ export default function DeckLoadDialog({
   initialDeckId,
   onLoad,
   onDelete,
+  onPublicationChange,
   isLoading,
   isDeleting,
+  isPublishing,
+  publishingDeckId,
   deletingDeckId,
   errorMessage,
 }) {
   const [activeDeckId, setActiveDeckId] = useState("");
+  const [publicationDescription, setPublicationDescription] = useState("");
+  const [publicationMessage, setPublicationMessage] = useState("");
 
   useEffect(() => {
     if (!open) return undefined;
@@ -82,6 +87,12 @@ export default function DeckLoadDialog({
     () => savedDecks.find((deck) => deck.id === activeDeckId) || null,
     [activeDeckId, savedDecks]
   );
+
+  useEffect(() => {
+    setPublicationDescription(activeDeck?.description || "");
+    setPublicationMessage("");
+  }, [activeDeck?.id, activeDeck?.description]);
+
   const activePreview = useMemo(
     () => splitDeckItems(activeDeck?.items || []),
     [activeDeck]
@@ -99,6 +110,21 @@ export default function DeckLoadDialog({
     const shouldDelete = window.confirm(`「${activeDeck.title}」を削除しますか？`);
     if (!shouldDelete) return;
     await onDelete(activeDeck.id);
+  };
+
+  const handlePublicationSubmit = async (nextIsPublic) => {
+    if (!activeDeck || !onPublicationChange) return;
+    setPublicationMessage("");
+    try {
+      await onPublicationChange({
+        deckId: activeDeck.id,
+        isPublic: nextIsPublic,
+        description: publicationDescription,
+      });
+      setPublicationMessage(nextIsPublic ? "公開設定を更新しました。" : "非公開にしました。");
+    } catch (error) {
+      setPublicationMessage(error.message);
+    }
   };
 
   if (!open) return null;
@@ -178,6 +204,45 @@ export default function DeckLoadDialog({
                         : "プレビューを表示できませんでした。"}
                     </div>
                   )}
+                </div>
+
+                <div className="deck-publication-panel">
+                  <div className="deck-publication-header">
+                    <strong>{activeDeck.isPublic ? "公開中" : "非公開"}</strong>
+                    <span>公開デッキ一覧に表示する説明文を設定できます。</span>
+                  </div>
+                  <textarea
+                    className="deck-publication-textarea"
+                    value={publicationDescription}
+                    onChange={(event) => setPublicationDescription(event.target.value)}
+                    placeholder="デッキの説明"
+                    rows={3}
+                  />
+                  <div className="deck-publication-actions">
+                    <button
+                      type="button"
+                      className="deck-secondary-button"
+                      onClick={() => handlePublicationSubmit(false)}
+                      disabled={isPublishing || isLoading || !activeDeck.isPublic}
+                    >
+                      {publishingDeckId === activeDeck.id ? "更新中..." : "非公開にする"}
+                    </button>
+                    <button
+                      type="button"
+                      className="deck-primary-button"
+                      onClick={() => handlePublicationSubmit(true)}
+                      disabled={isPublishing || isLoading}
+                    >
+                      {publishingDeckId === activeDeck.id
+                        ? "更新中..."
+                        : activeDeck.isPublic
+                        ? "公開内容を更新"
+                        : "公開する"}
+                    </button>
+                  </div>
+                  {publicationMessage ? (
+                    <p className="deck-publication-message">{publicationMessage}</p>
+                  ) : null}
                 </div>
 
                 <div className="deck-load-dialog-actions">
