@@ -19,6 +19,8 @@ const MOCK_ENABLED =
 
 const AuthContext = createContext(null);
 const VALID_ROLES = new Set(["user", "organizer", "admin"]);
+const NICKNAME_MIN_LENGTH = 2;
+const NICKNAME_MAX_LENGTH = 20;
 
 function buildApiUrl(path) {
   return API_BASE_URL ? `${API_BASE_URL}${path}` : path;
@@ -29,6 +31,7 @@ export function normalizeUser(rawUser) {
   const id = rawUser.googleSub || rawUser.sub || rawUser.id || rawUser.userId;
   if (!id) return null;
   const role = VALID_ROLES.has(rawUser.role) ? rawUser.role : "user";
+  const nickname = String(rawUser.nickname || "").trim();
 
   return {
     id: String(id),
@@ -36,7 +39,21 @@ export function normalizeUser(rawUser) {
     name: rawUser.name || rawUser.displayName || rawUser.email || "Google User",
     avatarUrl: rawUser.avatarUrl || rawUser.picture || "",
     role,
+    nickname,
+    displayNickname: nickname,
   };
+}
+
+export function normalizeNickname(value) {
+  return String(value || "").trim();
+}
+
+export function validateNickname(value) {
+  const nickname = normalizeNickname(value);
+  if (nickname.length < NICKNAME_MIN_LENGTH || nickname.length > NICKNAME_MAX_LENGTH) {
+    return `ニックネームは${NICKNAME_MIN_LENGTH}〜${NICKNAME_MAX_LENGTH}文字で入力してください。`;
+  }
+  return "";
 }
 
 function readMockUser() {
@@ -223,6 +240,39 @@ export function AuthProvider({ children }) {
     }
   }, [authMode]);
 
+  const updateProfile = useCallback(
+    async ({ nickname }) => {
+      if (!user?.id) {
+        throw new Error("ログインしてからプロフィールを変更してください。");
+      }
+
+      const nextNickname = normalizeNickname(nickname);
+      const validationError = validateNickname(nextNickname);
+      if (validationError) {
+        throw new Error(validationError);
+      }
+
+      if (authMode === "mock") {
+        const nextUser = normalizeUser({
+          ...user,
+          nickname: nextNickname,
+        });
+        writeMockUser(nextUser);
+        setUser(nextUser);
+        return nextUser;
+      }
+
+      const payload = await requestJson("/api/users/me/profile", {
+        method: "PUT",
+        body: JSON.stringify({ nickname: nextNickname }),
+      });
+      const nextUser = normalizeUser(payload.user || payload);
+      setUser(nextUser);
+      return nextUser;
+    },
+    [authMode, user]
+  );
+
   const value = useMemo(
     () => ({
       user,
@@ -231,6 +281,7 @@ export function AuthProvider({ children }) {
       isAuthenticated: Boolean(user),
       isOrganizer: user?.role === "organizer" || user?.role === "admin",
       isAdmin: user?.role === "admin",
+      displayNickname: user?.displayNickname || user?.nickname || "",
       authError,
       authMode,
       authConfigState,
@@ -240,6 +291,7 @@ export function AuthProvider({ children }) {
       signInWithGoogleCredential,
       signInWithMock,
       signOut,
+      updateProfile,
       refreshSession: loadSession,
     }),
     [
@@ -254,6 +306,7 @@ export function AuthProvider({ children }) {
       signInWithGoogleCredential,
       signInWithMock,
       signOut,
+      updateProfile,
       loadSession,
     ]
   );

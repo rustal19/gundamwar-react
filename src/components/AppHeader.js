@@ -6,7 +6,8 @@ import "./AppHeader.css";
 
 export default function AppHeader() {
   const location = useLocation();
-  const { authMode, canUseGoogleAuth, isAuthenticated, signOut, user } = useAuth();
+  const { authMode, canUseGoogleAuth, displayNickname, isAuthenticated, signOut, user } =
+    useAuth();
 
   const navItems = [
     { to: "/", matchPath: "/", label: "検索" },
@@ -51,8 +52,11 @@ export default function AppHeader() {
             <>
               <div className="app-auth-status">
                 <span className="app-auth-label">ログイン中</span>
-                <strong>{user?.name || "-"}</strong>
+                <strong>{displayNickname || user?.name || "-"}</strong>
               </div>
+              <Link className="app-auth-button" to="/profile">
+                プロフィール
+              </Link>
               <button className="app-auth-button" onClick={signOut}>
                 ログアウト
               </button>
