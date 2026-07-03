@@ -1,0 +1,60 @@
+.app-footer {
+  border-top: 1px solid #d8dee8;
+  color: #5c6775;
+  font-size: 0.86rem;
+  margin-top: 2rem;
+  padding: 1rem 0.85rem;
+  text-align: center;
+}
+
+.app-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  justify-content: center;
+  margin-bottom: 0.45rem;
+}
+
+.app-footer-links a {
+  color: #253042;
+  text-decoration: none;
+}
+
+.app-footer-links a:hover,
+.app-footer-links a:focus {
+  text-decoration: underline;
+}
+
+.app-footer p {
+  margin: 0;
+}
+
+.legal-page {
+  box-sizing: border-box;
+  color: #253042;
+  line-height: 1.8;
+  margin: 0 auto;
+  max-width: 860px;
+  padding: 2rem 1rem 0;
+}
+
+.legal-page h1 {
+  font-size: 1.8rem;
+  margin: 0 0 1rem;
+}
+
+.legal-page h2 {
+  font-size: 1.15rem;
+  margin: 1.7rem 0 0.4rem;
+}
+
+.legal-page p {
+  margin: 0.45rem 0 0;
+}
+
+.legal-page-draft-note {
+  background: #fff8db;
+  border: 1px solid #ead78a;
+  color: #67531b;
+  padding: 0.5rem 0.7rem;
+}
