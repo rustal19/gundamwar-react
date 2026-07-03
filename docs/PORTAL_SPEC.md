@@ -60,6 +60,10 @@ Melee.gg のようなポータルサイトを目指す拡張の**全タスク共
 ```
 - regulation の既定値: `{ name: "スタンダード", mainMin: 50, mainMax: 50, sideSize: 10,
   maxCopies: 3, bannedCards: [], limitedCards: [], allowedSets: null }`
+- **フォーマットプリセット**: `src/data/formats.js` に
+  `export const FORMAT_PRESETS = [{ name, regulation }]` を定義し、大会作成フォームで
+  プリセット選択 → regulation に展開(展開後の個別編集も可)。具体的な禁止・制限リストは
+  ユーザーから受領後に登録する(未受領の間は「スタンダード」既定値のみ)。
 
 ### entry(大会参加)
 ```

@@ -9,3 +9,11 @@ orchestrator/ はローカル専用ツールで、gitには含めない(.gitigno
 
 - 開発サーバー: `npm start`(port 3000)
 - カードデータ等は親フォルダ(gundam war homepage)の csv/ と scripts/ にある(別リポジトリ)
+
+## 進行中: ポータル化(デッキ公開・大会運営)
+
+設計済み。着手前に必ず読むこと:
+
+- [docs/ROADMAP.md](docs/ROADMAP.md) — 現在地・残作業・レビューチェックリスト・検証ノウハウ
+- [docs/PORTAL_SPEC.md](docs/PORTAL_SPEC.md) — 機能仕様(全タスク共通の契約)
+- [docs/BACKEND_DESIGN.md](docs/BACKEND_DESIGN.md) — サーバー側の設計(コード到着待ち)
