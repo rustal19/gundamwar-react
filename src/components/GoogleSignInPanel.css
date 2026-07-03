@@ -17,6 +17,22 @@
   cursor: pointer;
 }
 
+.google-mock-role-field {
+  display: grid;
+  gap: 0.25rem;
+  color: #253042;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.google-mock-role-field select {
+  border: 1px solid #cfd6df;
+  background: #fff;
+  color: #253042;
+  padding: 0.45rem 0.55rem;
+  font: inherit;
+}
+
 .google-signin-note {
   margin: 0;
   color: #566477;
