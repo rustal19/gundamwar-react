@@ -6,7 +6,7 @@ const MOCK_USER_KEY = "gundamwar.auth.mockUser.v1";
 const PAGE_SIZE = 10;
 
 const DEFAULT_REGULATION = {
-  name: "Standard",
+  name: "スタンダード",
   mainMin: 50,
   mainMax: 50,
   sideSize: 10,
@@ -20,10 +20,6 @@ function buildApiUrl(path) {
   return API_BASE_URL ? `${API_BASE_URL}${path}` : path;
 }
 
-function shouldUseMock(authMode) {
-  return authMode === "mock" || (!API_BASE_URL && typeof window !== "undefined");
-}
-
 function readMockUser() {
   if (typeof window === "undefined") return null;
   try {
@@ -34,7 +30,7 @@ function readMockUser() {
     if (!id) return null;
     return {
       id: String(id),
-      name: user.name || user.displayName || user.email || "Local Player",
+      name: user.name || user.displayName || user.email || "プレイヤー",
     };
   } catch (error) {
     console.warn("Failed to read mock user.", error);
@@ -49,7 +45,7 @@ function getCurrentUser(user) {
   }
   return {
     id: String(currentUser.id),
-    name: currentUser.name || currentUser.email || "Player",
+    name: currentUser.name || currentUser.email || "プレイヤー",
   };
 }
 
@@ -69,7 +65,7 @@ function createInitialStore() {
     {
       id: "entry-1",
       tournamentId,
-      user: { id: "mock-player-1", name: "Player 1" },
+      user: { id: "mock-player-1", name: "プレイヤー1" },
       deckItems: null,
       decklistSubmittedAt: null,
       status: "checked_in",
@@ -78,7 +74,7 @@ function createInitialStore() {
     {
       id: "entry-2",
       tournamentId,
-      user: { id: "mock-player-2", name: "Player 2" },
+      user: { id: "mock-player-2", name: "プレイヤー2" },
       deckItems: null,
       decklistSubmittedAt: null,
       status: "checked_in",
@@ -87,7 +83,7 @@ function createInitialStore() {
     {
       id: "entry-3",
       tournamentId,
-      user: { id: "mock-player-3", name: "Player 3" },
+      user: { id: "mock-player-3", name: "プレイヤー3" },
       deckItems: null,
       decklistSubmittedAt: null,
       status: "checked_in",
@@ -99,8 +95,8 @@ function createInitialStore() {
     tournaments: [
       {
         id: tournamentId,
-        title: "Local Swiss Cup",
-        description: "Mock tournament for local portal development.",
+        title: "ローカルスイス杯",
+        description: "ローカル開発用のモック大会です。",
         format: "swiss",
         swissRounds: 3,
         topCutSize: null,
@@ -110,15 +106,15 @@ function createInitialStore() {
         capacity: 32,
         decklistRequired: true,
         regulation: DEFAULT_REGULATION,
-        createdBy: { id: "organizer-1", name: "Local Organizer" },
+        createdBy: { id: "organizer-1", name: "ローカル主催者" },
         entryCount: entries.length,
         createdAt: daysFromNow(-10),
         updatedAt: daysFromNow(-1),
       },
       {
         id: "mock-tournament-2",
-        title: "Weekend Registration",
-        description: "Open registration event.",
+        title: "週末エントリー受付大会",
+        description: "週末開催予定のエントリー受付中大会です。",
         format: "swiss",
         swissRounds: null,
         topCutSize: 8,
@@ -128,7 +124,7 @@ function createInitialStore() {
         capacity: 16,
         decklistRequired: false,
         regulation: DEFAULT_REGULATION,
-        createdBy: { id: "organizer-1", name: "Local Organizer" },
+        createdBy: { id: "organizer-1", name: "ローカル主催者" },
         entryCount: 0,
         createdAt: daysFromNow(-2),
         updatedAt: daysFromNow(-2),
@@ -195,7 +191,7 @@ function normalizeEntry(entry) {
     tournamentId: String(entry.tournamentId),
     user: {
       id: String(entry.user?.id || ""),
-      name: entry.user?.name || "Player",
+      name: entry.user?.name || "プレイヤー",
     },
     deckItems: Array.isArray(entry.deckItems) ? entry.deckItems : null,
     decklistSubmittedAt: entry.decklistSubmittedAt || null,
@@ -317,7 +313,7 @@ async function requestJson(path, options = {}) {
 }
 
 export async function fetchTournaments({ status = "", page = 1, authMode } = {}) {
-  if (shouldUseMock(authMode)) {
+  if (authMode === "mock") {
     const store = readStore();
     const visible = store.tournaments
       .map((tournament) => normalizeTournament(tournament, getEntries(store, tournament.id)))
@@ -342,7 +338,7 @@ export async function fetchTournaments({ status = "", page = 1, authMode } = {})
 }
 
 export async function fetchTournament(id, { authMode, user } = {}) {
-  if (shouldUseMock(authMode)) {
+  if (authMode === "mock") {
     const store = readStore();
     const tournament = normalizeTournament(getTournamentOrThrow(store, id), getEntries(store, id));
     const entries = getEntries(store, id).map((entry) => sanitizeEntryForViewer(entry, tournament, user));
@@ -357,7 +353,7 @@ export async function fetchTournament(id, { authMode, user } = {}) {
 }
 
 export async function fetchStandings(id, { authMode } = {}) {
-  if (shouldUseMock(authMode)) {
+  if (authMode === "mock") {
     const store = readStore();
     const entries = getEntries(store, id);
     const matches = flattenMatches(getRounds(store, id));
@@ -375,7 +371,7 @@ export async function fetchStandings(id, { authMode } = {}) {
 }
 
 export async function fetchRounds(id, { authMode } = {}) {
-  if (shouldUseMock(authMode)) {
+  if (authMode === "mock") {
     const store = readStore();
     return { rounds: getRounds(store, id) };
   }
@@ -384,7 +380,7 @@ export async function fetchRounds(id, { authMode } = {}) {
 }
 
 export async function createEntry({ tournamentId, deckItems = null, authMode, user }) {
-  if (shouldUseMock(authMode)) {
+  if (authMode === "mock") {
     const currentUser = getCurrentUser(user);
     const store = readStore();
     const tournament = getTournamentOrThrow(store, tournamentId);
@@ -418,7 +414,7 @@ export async function createEntry({ tournamentId, deckItems = null, authMode, us
 }
 
 export async function updateMyEntry({ tournamentId, deckItems = null, authMode, user }) {
-  if (shouldUseMock(authMode)) {
+  if (authMode === "mock") {
     const currentUser = getCurrentUser(user);
     const store = readStore();
     const tournament = getTournamentOrThrow(store, tournamentId);
@@ -452,7 +448,7 @@ export async function updateMyEntry({ tournamentId, deckItems = null, authMode, 
 }
 
 export async function deleteMyEntry(tournamentId, { authMode, user } = {}) {
-  if (shouldUseMock(authMode)) {
+  if (authMode === "mock") {
     const currentUser = getCurrentUser(user);
     const store = readStore();
     const tournament = getTournamentOrThrow(store, tournamentId);

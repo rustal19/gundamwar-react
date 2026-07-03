@@ -28,6 +28,11 @@ const STATUS_LABELS = {
   draft: "下書き",
 };
 
+const ROUND_STATUS_LABELS = {
+  in_progress: "進行中",
+  completed: "完了",
+};
+
 function formatDateTime(value) {
   if (!value) return "-";
   const date = new Date(value);
@@ -61,7 +66,7 @@ function buildMatchLabel(match, entries) {
   const p2 = match.player2EntryId == null ? null : findEntry(entries, match.player2EntryId);
   return {
     p1Name: p1?.user?.name || "-",
-    p2Name: p2?.user?.name || "BYE",
+    p2Name: p2?.user?.name || "不戦勝",
   };
 }
 
@@ -317,17 +322,17 @@ export default function TournamentDetail({ compact = false }) {
         <section key={round.id} className="tournament-round">
           <div className="tournament-round-header">
             <h2>
-              Round {round.number} / {round.stage === "top_cut" ? "Top Cut" : "Swiss"}
+              第{round.number}回戦 / {round.stage === "top_cut" ? "トップカット" : "スイス"}
             </h2>
-            <span>{round.status}</span>
+            <span>{ROUND_STATUS_LABELS[round.status] || round.status}</span>
           </div>
           <div className="tournament-table-wrap">
             <table className="tournament-table">
               <thead>
                 <tr>
                   <th>卓</th>
-                  <th>Player 1</th>
-                  <th>Player 2</th>
+                  <th>プレイヤー1</th>
+                  <th>プレイヤー2</th>
                   <th>結果</th>
                 </tr>
               </thead>
@@ -361,7 +366,7 @@ export default function TournamentDetail({ compact = false }) {
             <th>勝</th>
             <th>敗</th>
             <th>分</th>
-            <th>Pts</th>
+            <th>勝点</th>
             <th>OMW%</th>
           </tr>
         </thead>

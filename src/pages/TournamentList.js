@@ -82,7 +82,7 @@ export default function TournamentList({ compact = false }) {
     <main className={compact ? "tournament-page compact" : "tournament-page"}>
       <div className="tournament-page-header">
         <div>
-          <p className="tournament-eyebrow">Tournaments</p>
+          <p className="tournament-eyebrow">大会一覧</p>
           <h1>大会</h1>
         </div>
         <div className="tournament-filter" aria-label="大会ステータス">

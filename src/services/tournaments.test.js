@@ -9,7 +9,8 @@ import {
 
 const STORAGE_KEY = "gundamwar.tournaments.v1";
 const MOCK_USER_KEY = "gundamwar.auth.mockUser.v1";
-const user = { id: "test-user", name: "Test User" };
+const user = { id: "test-user", name: "テストユーザー" };
+const originalFetch = global.fetch;
 
 function setMockUser() {
   window.localStorage.setItem(MOCK_USER_KEY, JSON.stringify(user));
@@ -27,7 +28,7 @@ function setRegistrationTournament(overrides = {}) {
       tournaments: [
         {
           id: "t1",
-          title: "Registration Event",
+          title: "受付中大会",
           description: "",
           format: "swiss",
           swissRounds: null,
@@ -38,7 +39,7 @@ function setRegistrationTournament(overrides = {}) {
           capacity: 8,
           decklistRequired: false,
           regulation: {},
-          createdBy: { id: "org", name: "Organizer" },
+          createdBy: { id: "org", name: "主催者" },
           entryCount: 0,
           createdAt: future,
           updatedAt: future,
@@ -54,7 +55,12 @@ function setRegistrationTournament(overrides = {}) {
 describe("tournaments service mock mode", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    global.fetch = originalFetch;
     setMockUser();
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
   });
 
   it("seeds and pages public tournaments", async () => {
@@ -64,6 +70,25 @@ describe("tournaments service mock mode", () => {
     expect(payload.items.every((tournament) => tournament.status !== "draft")).toBe(true);
     expect(payload.page).toBe(1);
     expect(payload.pageSize).toBe(10);
+    expect(payload.items.map((tournament) => tournament.title)).toContain("ローカルスイス杯");
+    expect(payload.items.map((tournament) => tournament.title)).toContain("週末エントリー受付大会");
+    expect(payload.items[0].regulation.name).toBe("スタンダード");
+  });
+
+  it("uses the real API unless authMode is mock", async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ items: [], total: 0, page: 2, pageSize: 10 }),
+    });
+
+    const payload = await fetchTournaments({ page: 2 });
+
+    expect(payload.page).toBe(2);
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/tournaments?page=2",
+      expect.objectContaining({ credentials: "include", method: "GET" })
+    );
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 
   it("creates, updates, and deletes my entry", async () => {
@@ -75,7 +100,7 @@ describe("tournaments service mock mode", () => {
     expect(created.deckItems).toHaveLength(1);
 
     const updatedItems = [
-      { cardId: "card-2", count: 50, card: { cardId: "card-2", name: "Card 2" }, zone: "main" },
+      { cardId: "card-2", count: 50, card: { cardId: "card-2", name: "カード2" }, zone: "main" },
     ];
     const updated = await updateMyEntry({
       tournamentId: "t1",
@@ -104,8 +129,8 @@ describe("tournaments service mock mode", () => {
       {
         id: "other-entry",
         tournamentId: "t1",
-        user: { id: "other-user", name: "Other User" },
-        deckItems: [{ cardId: "secret", count: 1, card: { cardId: "secret", name: "Secret" }, zone: "main" }],
+        user: { id: "other-user", name: "別プレイヤー" },
+        deckItems: [{ cardId: "secret", count: 1, card: { cardId: "secret", name: "非公開" }, zone: "main" }],
         decklistSubmittedAt: new Date().toISOString(),
         status: "registered",
         createdAt: new Date().toISOString(),
