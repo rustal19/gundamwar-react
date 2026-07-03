@@ -2,7 +2,6 @@ import React from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import AppFooter from "./components/AppFooter";
 import AppHeader from "./components/AppHeader";
-import Home from "./components/Home";
 import MobileAppHeader from "./components/MobileAppHeader";
 import NicknameGate from "./components/NicknameGate";
 import RouteAnalyticsTracker from "./components/RouteAnalyticsTracker";
@@ -15,6 +14,7 @@ import PublicDeckDetail from "./pages/PublicDeckDetail";
 import PublicDecks from "./pages/PublicDecks";
 import Profile from "./pages/Profile";
 import Privacy from "./pages/Privacy";
+import PortalHome from "./pages/PortalHome";
 import SearchResults from "./pages/SearchResults";
 import Terms from "./pages/Terms";
 import TournamentDetail from "./pages/TournamentDetail";
@@ -48,9 +48,9 @@ const AppContent = () => {
         <RouteAnalyticsTracker />
         <HeaderComponent />
         <NicknameGate />
-        {location.pathname === "/" ? <SearchForm compact={isCompactLayout} /> : null}
+        {location.pathname === "/search" ? <SearchForm compact={isCompactLayout} /> : null}
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<PortalHome compact={isCompactLayout} />} />
           <Route path="/search" element={<SearchResults compact={isCompactLayout} />} />
           <Route path="/deck" element={<DeckBuilder compact={isCompactLayout} />} />
           <Route path="/decks" element={<PublicDecks compact={isCompactLayout} />} />

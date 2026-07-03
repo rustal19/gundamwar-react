@@ -1,8 +1,33 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import SearchResultCard from "../components/SearchResultCard";
+import { buildPathWithForcedMobileLayout } from "../utils/deviceLayout";
 import { API_SEARCH_URL, parseSearchParams } from "../utils/searchResults";
 import "./SearchResults.css";
+
+const NON_CRITERIA_KEYS = new Set(["page", "pageSize", "mobileLayout", "sortMethod", "sortOrder"]);
+
+const NON_CRITERIA_DEFAULTS = {
+  colorMulti: "able",
+  deckRangeType: "none",
+  exclude: "no",
+  includeAltStats: true,
+  name_forward: false,
+  traits_logic: "and",
+};
+
+function hasSearchCriteria(params) {
+  return Object.entries(params).some(([key, value]) => {
+    if (NON_CRITERIA_KEYS.has(key)) return false;
+    if (Object.prototype.hasOwnProperty.call(NON_CRITERIA_DEFAULTS, key)) {
+      return value !== NON_CRITERIA_DEFAULTS[key];
+    }
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === "string") return value.trim() !== "";
+    if (typeof value === "boolean") return value;
+    return value !== null && value !== undefined && value !== "";
+  });
+}
 
 const SearchResults = ({ compact = false }) => {
   const navigate = useNavigate();
@@ -12,12 +37,22 @@ const SearchResults = ({ compact = false }) => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [needsCriteria, setNeedsCriteria] = useState(false);
 
   useEffect(() => {
     const parsedSearchParams = parseSearchParams(location.search);
     setPage(Number(parsedSearchParams.page) || 1);
     setPageSize(Number(parsedSearchParams.pageSize) || 50);
     setIsLoaded(false);
+    setNeedsCriteria(false);
+
+    if (!hasSearchCriteria(parsedSearchParams)) {
+      setResults([]);
+      setTotal(0);
+      setIsLoaded(true);
+      setNeedsCriteria(true);
+      return undefined;
+    }
 
     const abortController = new AbortController();
 
@@ -153,20 +188,28 @@ const SearchResults = ({ compact = false }) => {
         </div>
         {!compact && (
           <div className="search-results-toolbar-actions">
-            <Link className="results-link-button" to="/">
+            <Link
+              className="results-link-button"
+              to={buildPathWithForcedMobileLayout("/search", location.search)}
+            >
               検索に戻る
             </Link>
-            <Link className="results-link-button primary" to="/deck">
+            <Link
+              className="results-link-button primary"
+              to={buildPathWithForcedMobileLayout("/deck", location.search)}
+            >
               デッキ
             </Link>
           </div>
         )}
       </div>
 
-      {pagination}
+      {!needsCriteria ? pagination : null}
 
       {!isLoaded ? (
         <div className="results-empty-state">Loading...</div>
+      ) : needsCriteria ? (
+        <div className="results-empty-state">検索条件を指定してください。</div>
       ) : results.length === 0 ? (
         <div className="results-empty-state">検索結果がありません。</div>
       ) : (
@@ -183,7 +226,7 @@ const SearchResults = ({ compact = false }) => {
         </div>
       )}
 
-      {pagination}
+      {!needsCriteria ? pagination : null}
     </div>
   );
 };

@@ -249,7 +249,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
       return;
     }
     // クエリパラメータを含まない URL に置き換える（強制モバイル指定のみ保持）
-    navigate(buildPathWithForcedMobileLayout("/", location.search), { replace: true });
+    navigate(buildPathWithForcedMobileLayout("/search", location.search), { replace: true });
   };
 
   // compact 時はアコーディオン（details）で包み、デスクトップではそのまま並べる
