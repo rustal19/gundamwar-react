@@ -11,32 +11,23 @@ export default function MobileAppHeader() {
     useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const homePath = useMemo(
-    () => buildPathWithForcedMobileLayout("/", location.search),
-    [location.search]
-  );
-  const decksPath = useMemo(
-    () => buildPathWithForcedMobileLayout("/decks", location.search),
-    [location.search]
-  );
-  const tournamentsPath = useMemo(
-    () => buildPathWithForcedMobileLayout("/tournaments", location.search),
-    [location.search]
-  );
-  const deckPath = useMemo(
-    () => buildPathWithForcedMobileLayout("/deck", location.search),
-    [location.search]
-  );
-  const profilePath = useMemo(
-    () => buildPathWithForcedMobileLayout("/profile", location.search),
+  const paths = useMemo(
+    () => ({
+      home: buildPathWithForcedMobileLayout("/", location.search),
+      search: buildPathWithForcedMobileLayout("/search", location.search),
+      decks: buildPathWithForcedMobileLayout("/decks", location.search),
+      tournaments: buildPathWithForcedMobileLayout("/tournaments", location.search),
+      deck: buildPathWithForcedMobileLayout("/deck", location.search),
+      profile: buildPathWithForcedMobileLayout("/profile", location.search),
+    }),
     [location.search]
   );
 
   const navItems = [
-    { to: homePath, matchPath: "/", label: "検索" },
-    { to: decksPath, matchPath: "/decks", label: "公開デッキ" },
-    { to: tournamentsPath, matchPath: "/tournaments", label: "大会" },
-    { to: deckPath, matchPath: "/deck", exact: true, label: "デッキ構築(β版)" },
+    { to: paths.search, matchPath: "/search", exact: true, label: "検索" },
+    { to: paths.decks, matchPath: "/decks", label: "公開デッキ" },
+    { to: paths.tournaments, matchPath: "/tournaments", label: "大会" },
+    { to: paths.deck, matchPath: "/deck", exact: true, label: "デッキ構築(β版)" },
   ];
 
   useEffect(() => {
@@ -51,7 +42,7 @@ export default function MobileAppHeader() {
       <div className="app-header-inner">
         <div className="app-header-topbar">
           <div className="app-brand">
-            <Link to={homePath} className="app-brand-link">
+            <Link to={paths.home} className="app-brand-link">
               Gundam War Database
             </Link>
           </div>
@@ -72,12 +63,9 @@ export default function MobileAppHeader() {
         <div className={menuClassName}>
           <nav className="app-nav" aria-label="Primary">
             {navItems.map((item) => {
-              const isActive =
-                item.matchPath === "/"
-                  ? location.pathname === "/"
-                  : item.exact
-                    ? location.pathname === item.matchPath
-                    : location.pathname.startsWith(item.matchPath);
+              const isActive = item.exact
+                ? location.pathname === item.matchPath
+                : location.pathname.startsWith(item.matchPath);
 
               return (
                 <Link
@@ -98,7 +86,7 @@ export default function MobileAppHeader() {
                   <span className="app-auth-label">ログイン中</span>
                   <strong>{displayNickname || user?.name || "-"}</strong>
                 </div>
-                <Link className="app-auth-button" to={profilePath}>
+                <Link className="app-auth-button" to={paths.profile}>
                   プロフィール
                 </Link>
                 <button className="app-auth-button" onClick={signOut}>
