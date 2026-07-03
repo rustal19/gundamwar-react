@@ -18,6 +18,15 @@ Melee.gg のようなポータルサイトを目指す拡張の**全タスク共
 - mock モードでは localStorage キー `gundamwar.auth.mockUser.v1` の JSON に
   `role` を書けば任意ロールでテストできる。モックのログインUIにロール切替を追加してよい。
 
+### ニックネーム(必須)
+
+- `user` に `nickname: string` を追加(2〜20文字、重複可)。**公開される場所
+  (公開デッキの owner、大会の参加者一覧・ペアリング・順位表)には必ず nickname を
+  表示し、Google アカウント名は本人以外に表示しない。**
+- ニックネーム未設定のログインユーザーには登録モーダルを表示し、登録するまで
+  公開系の操作(デッキ公開・大会エントリー)をブロックする。
+- 変更API: `PUT /api/users/me/profile` — `{ nickname }`。`/profile` ページで変更可。
+
 ## 2. データモデル(バックエンド想定。フロントは JSON 形状のみ依存)
 
 ### deck(既存 saved deck の拡張)
@@ -27,6 +36,8 @@ Melee.gg のようなポータルサイトを目指す拡張の**全タスク共
 ```
 - `items` は DeckContext と同形式: `[{ cardId, count, card, zone: "main"|"side" }]`
 - `card` はカード情報スナップショット(検索APIの1件と同形式)
+- 公開デッキは**生きた参照**: 公開後にデッキを編集すると公開側にも反映される。
+  デッキを削除すると公開も解除される。大会に提出したデッキリストのみスナップショット固定。
 
 ### tournament
 ```
@@ -36,8 +47,19 @@ Melee.gg のようなポータルサイトを目指す拡張の**全タスク共
   status: "draft" | "registration" | "in_progress" | "completed" | "cancelled",
   startsAt, registrationClosesAt, capacity: number|null,
   decklistRequired: bool,
+  regulation: {                    // デッキ構築レギュレーション
+    name: string,                  // 例 "スタンダード"
+    mainMin: 50, mainMax: 50,      // メイン枚数の下限/上限(ちょうど50 = 両方50)
+    sideSize: 10,                  // サイドは 0枚 か sideSize枚ちょうど
+    maxCopies: 3,                  // 同名カード上限(メイン+サイド合算)
+    bannedCards: string[],         // 禁止(カード名 or cardId、どちらでも一致)
+    limitedCards: string[],        // 制限 = 合計1枚まで
+    allowedSets: string[]|null     // 使用可能セット。null = 全セット可
+  },
   createdBy: { id, name }, entryCount: number, createdAt, updatedAt }
 ```
+- regulation の既定値: `{ name: "スタンダード", mainMin: 50, mainMax: 50, sideSize: 10,
+  maxCopies: 3, bannedCards: [], limitedCards: [], allowedSets: null }`
 
 ### entry(大会参加)
 ```
@@ -71,16 +93,23 @@ match: { id, roundId, tableNo, player1EntryId, player2EntryId|null,  // null = �
   - デッキリストは大会 status が `completed` になるまで本人と主催者以外に返さない
 
 ### 認証ユーザー
+- `PUT  /api/users/me/profile` — `{ nickname }` の変更
 - `PATCH /api/decks/:id` — `{ isPublic, description }` の変更(公開/非公開切替)
 - `POST /api/tournaments/:id/entries` — エントリー `{ deckItems?: [...] }`
 - `PUT  /api/tournaments/:id/entries/me` — 自分のデッキリスト提出/差し替え(締切前のみ)
 - `DELETE /api/tournaments/:id/entries/me` — エントリー取消(開始前のみ)
+- `POST /api/tournaments/:id/entries/me/drop` — 自主ドロップ(進行中でもラウンド間なら可)
+- デッキリスト提出はサーバー側で §5 の `validateDeck(items, regulation)` により検証し、
+  **違反があれば 400 `{ error, violations }` で提出を拒否**する(フロントも提出前に同チェックを行い
+  違反内容を表示する)。
 
 ### organizer(自分が作成した大会のみ)
 - `POST /api/tournaments` / `PUT /api/tournaments/:id` — 作成・編集(status 変更含む)
 - `GET  /api/tournaments/:id/entries` — 参加者一覧(デッキリスト込み)
 - `PUT  /api/tournaments/:id/entries/:entryId` — `{ status }` 変更(チェックイン/ドロップ)
-- `POST /api/tournaments/:id/rounds` — 次ラウンドのペアリング生成(§5 のアルゴリズム)
+- `POST /api/tournaments/:id/rounds` — 次ラウンドのペアリング生成(§5 のアルゴリズム)。
+  swiss の規定ラウンド(`swissRounds`、null なら `ceil(log2(参加者数))`)終了後に呼ぶと、
+  `topCutSize` 指定時は順位表上位でトップカット(stage: `top_cut`)のブラケットを自動生成する
 - `PUT  /api/matches/:id/result` — `{ result }` 報告
 - `PUT  /api/rounds/:id` — `{ status: "completed" }`(全卓結果必須)
 
@@ -98,6 +127,10 @@ match: { id, roundId, tableNo, player1EntryId, player2EntryId|null,  // null = �
 | `/tournaments/:id` | 大会詳細 | 概要/参加者/ペアリング/順位表タブ+エントリー導線 |
 | `/tournaments/:id/manage` | 主催者コンソール | organizer のみ。403 相当はメッセージ表示 |
 | `/admin/users` | 権限管理 | admin のみ |
+| `/profile` | プロフィール | ニックネーム設定・変更 |
+
+- 公開デッキ詳細には「このデッキをコピー」ボタン(DeckContext の `replaceDeck` で
+  デッキビルダーへ取り込み → `/deck` へ遷移。ログイン不要)。
 
 - 各ページは既存パターンに従い `compact` prop でモバイル対応する。
 - ヘッダー(AppHeader / MobileAppHeader)に「デッキ」「大会」リンクを追加。
@@ -128,6 +161,19 @@ React/DOM に依存しないこと)。
 `buildBracket(entryIds)` → 1回戦マッチ配列(2の冪に満たない分は上位シードに bye)
 `nextRoundPairs(matches)` → 勝者同士の次ラウンドペア
 - シード順は引数の配列順(swiss からのトップカット時は順位表順を渡す)。
+
+### deckValidation.js
+`validateDeck(items, regulation)` → 違反配列 `[{ code, message, cardName? }]`(空配列 = 合格)
+- チェック内容(regulation は §2 の形状):
+  - `main_count`: メイン合計枚数が `mainMin`〜`mainMax` の範囲内
+  - `side_count`: サイド合計枚数が 0 または `sideSize` ちょうど
+  - `max_copies`: 同名カード(`card.name`)のメイン+サイド合算が `maxCopies` 以下
+  - `banned` / `limited`: `bannedCards` は0枚、`limitedCards` は合計1枚まで
+    (カード名・cardId のどちらで指定されても一致させる)
+  - `allowed_sets`: `allowedSets` 指定時、全カードの収録セットが範囲内。
+    カードのセット情報の取り出しは `getCardSets(card)` ヘルパーに閉じ込める
+    (検索APIのカード形状のセット関連フィールドを確認して実装)
+- `message` は日本語でユーザーに表示できる文言にする。
 
 ### standings.js
 `computeStandings(entries, matches)` → 順位表配列
