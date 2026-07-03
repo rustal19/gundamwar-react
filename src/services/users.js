@@ -95,7 +95,7 @@ export async function fetchUsers({ query = "", authMode = "mock" } = {}) {
 export async function updateUserRole({ userId, role, authMode = "mock" }) {
   const normalizedRole = normalizeRole(role);
   if (!userId) {
-    throw new Error("userId is required.");
+    throw new Error("userId は必須です。");
   }
 
   if (authMode === "mock") {

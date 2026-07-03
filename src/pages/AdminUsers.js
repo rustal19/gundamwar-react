@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { fetchUsers, updateUserRole } from "../services/users";
-import "./SearchResults.css";
 
 const ROLES = ["user", "organizer", "admin"];
 
@@ -55,11 +54,11 @@ export default function AdminUsers({ compact = false }) {
       <main id="search-results-container">
         <div className="search-results-toolbar">
           <div>
-            <h1>Role Admin</h1>
-            <div className="search-results-summary">Admin role required.</div>
+            <h1>権限管理</h1>
+            <div className="search-results-summary">admin 権限が必要です。</div>
           </div>
         </div>
-        <div className="results-empty-state">You do not have permission to view this page.</div>
+        <div className="results-empty-state">このページを表示する権限がありません。</div>
       </main>
     );
   }
@@ -68,29 +67,29 @@ export default function AdminUsers({ compact = false }) {
     <main id="search-results-container">
       <div className="search-results-toolbar">
         <div className={compact ? "search-results-heading-row" : undefined}>
-          <h1>Role Admin</h1>
-          <div className="search-results-summary">Search users and update roles.</div>
+          <h1>権限管理</h1>
+          <div className="search-results-summary">ユーザーを検索してロールを変更します。</div>
         </div>
       </div>
 
       <form className="search-results-toolbar-actions" onSubmit={handleSubmit}>
         <input
-          aria-label="User search"
+          aria-label="ユーザー検索"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Name, email, ID, or role"
+          placeholder="名前・メール・ID・ロールで検索"
         />
         <button className="results-link-button primary" type="submit" disabled={isLoading}>
-          Search
+          検索
         </button>
       </form>
 
       {error ? <div className="results-empty-state">{error}</div> : null}
 
       {isLoading ? (
-        <div className="results-empty-state">Loading...</div>
+        <div className="results-empty-state">読み込み中...</div>
       ) : users.length === 0 ? (
-        <div className="results-empty-state">No users found.</div>
+        <div className="results-empty-state">ユーザーが見つかりません。</div>
       ) : (
         <div className="results-list">
           {users.map((user) => (

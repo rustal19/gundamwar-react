@@ -120,7 +120,7 @@ export default function GoogleSignInPanel({ variant = "default" }) {
     return (
       <div className={rootClassName}>
         <label className="google-mock-role-field">
-          <span>Role</span>
+          <span>ロール</span>
           <select value={mockRole} onChange={(event) => setMockRole(event.target.value)}>
             <option value="user">user</option>
             <option value="organizer">organizer</option>
