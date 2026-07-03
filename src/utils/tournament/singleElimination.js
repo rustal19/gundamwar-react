@@ -3,6 +3,11 @@ function nextPowerOfTwo(value) {
   return 2 ** Math.ceil(Math.log2(value));
 }
 
+function seedOrder(size) {
+  if (size === 1) return [1];
+  return seedOrder(size / 2).flatMap((seed) => [seed, size + 1 - seed]);
+}
+
 function winnerOf(match) {
   if (match.winnerEntryId != null) return match.winnerEntryId;
   if (match.result === "bye" || match.player2EntryId == null) return match.player1EntryId;
@@ -12,23 +17,25 @@ function winnerOf(match) {
 }
 
 export function buildBracket(entryIds) {
-  const bracketSize = nextPowerOfTwo(entryIds.length);
-  const byeCount = bracketSize - entryIds.length;
-  const seededByes = entryIds.slice(0, byeCount).map((entryId) => ({
-    player1EntryId: entryId,
-    player2EntryId: null,
-  }));
-
-  const remaining = entryIds.slice(byeCount);
-  const playedMatches = [];
-  for (let i = 0; i < remaining.length / 2; i += 1) {
-    playedMatches.push({
-      player1EntryId: remaining[i],
-      player2EntryId: remaining[remaining.length - 1 - i],
-    });
+  if (entryIds.length === 0) return [];
+  if (entryIds.length === 1) {
+    return [{ player1EntryId: entryIds[0], player2EntryId: null }];
   }
 
-  return seededByes.concat(playedMatches);
+  const bracketSize = nextPowerOfTwo(entryIds.length);
+  const slots = seedOrder(bracketSize).map((seed) => entryIds[seed - 1] ?? null);
+  const matches = [];
+
+  for (let i = 0; i < slots.length; i += 2) {
+    const [player1EntryId, player2EntryId] = [slots[i], slots[i + 1]];
+    matches.push(
+      player1EntryId == null
+        ? { player1EntryId: player2EntryId, player2EntryId: null }
+        : { player1EntryId, player2EntryId }
+    );
+  }
+
+  return matches;
 }
 
 export function nextRoundPairs(matches) {

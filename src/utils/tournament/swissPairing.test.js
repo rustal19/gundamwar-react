@@ -50,4 +50,33 @@ describe("pairSwissRound", () => {
       pairSwissRound(tournamentEntries, previousMatches)
     );
   });
+
+  it("generates five consecutive rounds for forty players in practical time", () => {
+    const tournamentEntries = entries(
+      Array.from({ length: 40 }, (_, index) => String(index + 1))
+    );
+    const previousMatches = [];
+    const startedAt = Date.now();
+
+    for (let round = 0; round < 5; round += 1) {
+      const pairs = pairSwissRound(tournamentEntries, previousMatches);
+      const paired = new Set();
+
+      expect(pairs).toHaveLength(20);
+      pairs.forEach((pair) => {
+        expect(paired.has(pair.player1EntryId)).toBe(false);
+        expect(paired.has(pair.player2EntryId)).toBe(false);
+        paired.add(pair.player1EntryId);
+        paired.add(pair.player2EntryId);
+
+        previousMatches.push({
+          player1EntryId: pair.player1EntryId,
+          player2EntryId: pair.player2EntryId,
+          result: "p1_win",
+        });
+      });
+    }
+
+    expect(Date.now() - startedAt).toBeLessThan(3000);
+  });
 });

@@ -35,48 +35,40 @@ function chooseByeEntry(standings, previousMatches) {
   );
 }
 
-function pairingSignature(pairs) {
-  return pairs
-    .map((pair) => `${pair.player1EntryId}:${pair.player2EntryId}`)
-    .join("|");
-}
-
-function betterCandidate(candidate, best) {
-  if (!best) return true;
-  if (candidate.rematches !== best.rematches) return candidate.rematches < best.rematches;
-  if (candidate.crossGroups !== best.crossGroups) return candidate.crossGroups < best.crossGroups;
-  return pairingSignature(candidate.pairs) < pairingSignature(best.pairs);
-}
-
-function searchPairings(players, previousOpponents) {
+function searchPairings(players, previousOpponents, allowRematches) {
   if (players.length === 0) {
-    return { pairs: [], rematches: 0, crossGroups: 0 };
+    return [];
   }
 
   const [first, ...rest] = players;
-  let best = null;
+  const candidates = rest
+    .map((opponent, index) => ({
+      opponent,
+      index,
+      hasPlayed: previousOpponents.has(pairKey(first.entryId, opponent.entryId)),
+      pointGap: Math.abs(first.points - opponent.points),
+    }))
+    .filter((candidate) => allowRematches || !candidate.hasPlayed)
+    .sort((a, b) => {
+      if (a.pointGap !== b.pointGap) return a.pointGap - b.pointGap;
+      return compareEntryIds(a.opponent.entryId, b.opponent.entryId);
+    });
 
-  rest.forEach((opponent, index) => {
-    const remaining = rest.slice(0, index).concat(rest.slice(index + 1));
-    const child = searchPairings(remaining, previousOpponents);
-    if (!child) return;
+  for (const candidate of candidates) {
+    const remaining = rest.slice(0, candidate.index).concat(rest.slice(candidate.index + 1));
+    const child = searchPairings(remaining, previousOpponents, allowRematches);
+    if (child) {
+      return [
+        {
+          player1EntryId: first.entryId,
+          player2EntryId: candidate.opponent.entryId,
+        },
+        ...child,
+      ];
+    }
+  }
 
-    const isRematch = previousOpponents.has(pairKey(first.entryId, opponent.entryId)) ? 1 : 0;
-    const isCrossGroup = first.points === opponent.points ? 0 : 1;
-    const pair = {
-      player1EntryId: first.entryId,
-      player2EntryId: opponent.entryId,
-    };
-    const candidate = {
-      pairs: [pair, ...child.pairs],
-      rematches: isRematch + child.rematches,
-      crossGroups: isCrossGroup + child.crossGroups,
-    };
-
-    if (betterCandidate(candidate, best)) best = candidate;
-  });
-
-  return best;
+  return null;
 }
 
 export function pairSwissRound(entries, previousMatches) {
@@ -107,6 +99,8 @@ export function pairSwissRound(entries, previousMatches) {
       return compareEntryIds(a.entryId, b.entryId);
     });
 
-  const result = searchPairings(players, previousOpponents);
-  return pairs.concat(result ? result.pairs : []);
+  const result =
+    searchPairings(players, previousOpponents, false) ??
+    searchPairings(players, previousOpponents, true);
+  return pairs.concat(result ?? []);
 }

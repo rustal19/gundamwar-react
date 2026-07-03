@@ -50,4 +50,14 @@ describe("computeStandings", () => {
 
     expect(standings.find((standing) => standing.entryId === "A").omwPercent).toBeCloseTo(1 / 3);
   });
+
+  it("excludes bye wins from an opponent's OMW% denominator", () => {
+    const standings = computeStandings(entries.slice(0, 3), [
+      { player1EntryId: "B", player2EntryId: null, result: "bye" },
+      { player1EntryId: "B", player2EntryId: "C", result: "p1_win" },
+      { player1EntryId: "B", player2EntryId: "A", result: "p1_win" },
+    ]);
+
+    expect(standings.find((standing) => standing.entryId === "A").omwPercent).toBeCloseTo(1);
+  });
 });

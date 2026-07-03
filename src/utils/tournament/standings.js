@@ -61,8 +61,8 @@ function applyMatch(records, match) {
 }
 
 function opponentMatchWinPercent(record) {
-  const played = record.wins + record.losses + record.draws;
-  if (played === 0) return 0;
+  const played = record.opponents.length;
+  if (played === 0) return 1 / 3;
   return Math.max(1 / 3, record.matchPoints / (played * 3));
 }
 
