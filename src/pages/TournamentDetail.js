@@ -11,6 +11,7 @@ import {
   fetchTournament,
   updateMyEntry,
 } from "../services/tournaments";
+import { defaultRegulation, validateDeck } from "../utils/deckValidation";
 import "./Tournaments.css";
 
 const TABS = [
@@ -157,6 +158,14 @@ export default function TournamentDetail({ compact = false }) {
     if (deckSource === "saved") return selectedSavedDeck?.items || [];
     return currentDeck.items || [];
   }, [currentDeck.items, deckSource, selectedSavedDeck]);
+  const regulation = useMemo(
+    () => defaultRegulation(tournament?.regulation),
+    [tournament?.regulation]
+  );
+  const deckViolations = useMemo(() => {
+    if (!submittedItems.length) return [];
+    return validateDeck(submittedItems, regulation);
+  }, [regulation, submittedItems]);
 
   const canRegister = Boolean(
     tournament &&
@@ -177,9 +186,14 @@ export default function TournamentDetail({ compact = false }) {
   const hasDeckForSubmit = submittedItems.length > 0;
 
   const submitDisabled =
-    isSubmitting || !isAuthenticated || (needsDeck && !hasDeckForSubmit) || (!canRegister && !canUpdateDeck);
+    isSubmitting ||
+    !isAuthenticated ||
+    (needsDeck && !hasDeckForSubmit) ||
+    deckViolations.length > 0 ||
+    (!canRegister && !canUpdateDeck);
 
   const submitEntry = async () => {
+    if (deckViolations.length > 0) return;
     setIsSubmitting(true);
     setError("");
     setMessage("");
@@ -263,21 +277,21 @@ export default function TournamentDetail({ compact = false }) {
         <dl className="tournament-definition-list">
           <div>
             <dt>名称</dt>
-            <dd>{tournament.regulation?.name || "-"}</dd>
+            <dd>{regulation.name || "-"}</dd>
           </div>
           <div>
             <dt>メイン</dt>
             <dd>
-              {tournament.regulation?.mainMin} - {tournament.regulation?.mainMax}
+              {regulation.mainMin} - {regulation.mainMax}
             </dd>
           </div>
           <div>
             <dt>サイド</dt>
-            <dd>{tournament.regulation?.sideSize}</dd>
+            <dd>{regulation.sideSize}</dd>
           </div>
           <div>
             <dt>同名上限</dt>
-            <dd>{tournament.regulation?.maxCopies}</dd>
+            <dd>{regulation.maxCopies}</dd>
           </div>
         </dl>
       </section>
@@ -452,6 +466,18 @@ export default function TournamentDetail({ compact = false }) {
             <div className="tournament-deck-summary">
               メイン {countCards(submittedItems, "main")} / サイド {countCards(submittedItems, "side")}
             </div>
+            {deckViolations.length > 0 ? (
+              <div className="tournament-validation-alert">
+                <strong>デッキリストを提出できません。</strong>
+                <ul>
+                  {deckViolations.map((violation, index) => (
+                    <li key={`${violation.code}-${violation.cardName || index}`}>
+                      {violation.message}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             <div className="tournament-entry-actions">
               <button type="button" onClick={submitEntry} disabled={submitDisabled}>
                 {myEntry ? "デッキ提出/更新" : "エントリー"}

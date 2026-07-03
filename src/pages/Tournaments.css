@@ -232,6 +232,20 @@
   color: #8f2d2d;
 }
 
+.tournament-validation-alert {
+  border: 1px solid #efb2b2;
+  border-radius: 6px;
+  background: #fff0f0;
+  color: #8f2d2d;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+}
+
+.tournament-validation-alert ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
 .tournament-tabs {
   margin-top: 16px;
 }

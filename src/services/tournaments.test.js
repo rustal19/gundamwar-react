@@ -52,6 +52,15 @@ function setRegistrationTournament(overrides = {}) {
   );
 }
 
+function buildValidDeck(prefix = "card") {
+  return Array.from({ length: 17 }, (_, index) => ({
+    cardId: `${prefix}-${index + 1}`,
+    count: index === 16 ? 2 : 3,
+    card: { cardId: `${prefix}-${index + 1}`, name: `${prefix} ${index + 1}`, sets: ["S1"] },
+    zone: "main",
+  }));
+}
+
 describe("tournaments service mock mode", () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -93,22 +102,20 @@ describe("tournaments service mock mode", () => {
 
   it("creates, updates, and deletes my entry", async () => {
     setRegistrationTournament();
-    const deckItems = [{ cardId: "card-1", count: 50, card: { cardId: "card-1", name: "Card" }, zone: "main" }];
+    const deckItems = buildValidDeck("card");
 
     const created = await createEntry({ tournamentId: "t1", deckItems, authMode: "mock", user });
     expect(created.user.id).toBe(user.id);
-    expect(created.deckItems).toHaveLength(1);
+    expect(created.deckItems).toHaveLength(17);
 
-    const updatedItems = [
-      { cardId: "card-2", count: 50, card: { cardId: "card-2", name: "カード2" }, zone: "main" },
-    ];
+    const updatedItems = buildValidDeck("updated-card");
     const updated = await updateMyEntry({
       tournamentId: "t1",
       deckItems: updatedItems,
       authMode: "mock",
       user,
     });
-    expect(updated.deckItems[0].cardId).toBe("card-2");
+    expect(updated.deckItems[0].cardId).toBe("updated-card-1");
 
     await deleteMyEntry("t1", { authMode: "mock", user });
     expect(readStore().entries.t1).toEqual([]);
