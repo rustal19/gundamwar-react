@@ -1,5 +1,6 @@
 import React from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
+import AppFooter from "./components/AppFooter";
 import AppHeader from "./components/AppHeader";
 import Home from "./components/Home";
 import MobileAppHeader from "./components/MobileAppHeader";
@@ -13,7 +14,9 @@ import DeckBuilder from "./pages/DeckBuilder";
 import PublicDeckDetail from "./pages/PublicDeckDetail";
 import PublicDecks from "./pages/PublicDecks";
 import Profile from "./pages/Profile";
+import Privacy from "./pages/Privacy";
 import SearchResults from "./pages/SearchResults";
+import Terms from "./pages/Terms";
 import { useLayoutTier } from "./utils/deviceLayout";
 import "./mobile.css";
 
@@ -38,21 +41,26 @@ const AppContent = () => {
   const HeaderComponent = isCompactLayout ? MobileAppHeader : AppHeader;
 
   return (
-    <div className={shellClassName}>
-      <RouteAnalyticsTracker />
-      <HeaderComponent />
-      <NicknameGate />
-      {location.pathname === "/" ? <SearchForm compact={isCompactLayout} /> : null}
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/search" element={<SearchResults compact={isCompactLayout} />} />
-        <Route path="/deck" element={<DeckBuilder compact={isCompactLayout} />} />
-        <Route path="/admin/users" element={<AdminUsers compact={isCompactLayout} />} />
-        <Route path="/decks" element={<PublicDecks compact={isCompactLayout} />} />
-        <Route path="/decks/:id" element={<PublicDeckDetail compact={isCompactLayout} />} />
-        <Route path="/profile" element={<Profile compact={isCompactLayout} />} />
-      </Routes>
-    </div>
+    <>
+      <div className={shellClassName}>
+        <RouteAnalyticsTracker />
+        <HeaderComponent />
+        <NicknameGate />
+        {location.pathname === "/" ? <SearchForm compact={isCompactLayout} /> : null}
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/search" element={<SearchResults compact={isCompactLayout} />} />
+          <Route path="/deck" element={<DeckBuilder compact={isCompactLayout} />} />
+          <Route path="/admin/users" element={<AdminUsers compact={isCompactLayout} />} />
+          <Route path="/decks" element={<PublicDecks compact={isCompactLayout} />} />
+          <Route path="/decks/:id" element={<PublicDeckDetail compact={isCompactLayout} />} />
+          <Route path="/profile" element={<Profile compact={isCompactLayout} />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
+        </Routes>
+      </div>
+      <AppFooter />
+    </>
   );
 };
 
