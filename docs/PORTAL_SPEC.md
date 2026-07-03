@@ -119,10 +119,16 @@ match: { id, roundId, tableNo, player1EntryId, player2EntryId|null,  // null = �
 
 ### admin
 - `GET  /api/users?query=` / `PUT /api/users/:id/role` — organizer 権限付与
+- `PATCH /api/decks/:id` — admin は他人のデッキも `{ isPublic: false }` にできる(強制非公開)
+- `DELETE /api/users/:id/nickname` — ニックネームの強制リセット(該当ユーザーは次回、再登録を求められる)
 
 ## 4. フロントエンド構成
 
 ### ルート(App.js に追加)
+
+全体のページマップと「/ = ポータルトップ、検索は /search」への変更は
+[SITE_DESIGN.md](SITE_DESIGN.md) §1 を参照。
+
 | パス | ページ | 備考 |
 |---|---|---|
 | `/decks` | 公開デッキ一覧 | 検索ボックス+ページング |
