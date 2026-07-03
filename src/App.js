@@ -17,6 +17,8 @@ import Profile from "./pages/Profile";
 import Privacy from "./pages/Privacy";
 import SearchResults from "./pages/SearchResults";
 import Terms from "./pages/Terms";
+import TournamentDetail from "./pages/TournamentDetail";
+import TournamentList from "./pages/TournamentList";
 import { useLayoutTier } from "./utils/deviceLayout";
 import "./mobile.css";
 
@@ -51,9 +53,11 @@ const AppContent = () => {
           <Route path="/" element={<Home />} />
           <Route path="/search" element={<SearchResults compact={isCompactLayout} />} />
           <Route path="/deck" element={<DeckBuilder compact={isCompactLayout} />} />
-          <Route path="/admin/users" element={<AdminUsers compact={isCompactLayout} />} />
           <Route path="/decks" element={<PublicDecks compact={isCompactLayout} />} />
           <Route path="/decks/:id" element={<PublicDeckDetail compact={isCompactLayout} />} />
+          <Route path="/tournaments" element={<TournamentList compact={isCompactLayout} />} />
+          <Route path="/tournaments/:id" element={<TournamentDetail compact={isCompactLayout} />} />
+          <Route path="/admin/users" element={<AdminUsers compact={isCompactLayout} />} />
           <Route path="/profile" element={<Profile compact={isCompactLayout} />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />

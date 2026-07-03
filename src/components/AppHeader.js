@@ -11,8 +11,9 @@ export default function AppHeader() {
 
   const navItems = [
     { to: "/", matchPath: "/", label: "検索" },
-    { to: "/deck", matchPath: "/deck", exact: true, label: "デッキ構築(β版)" },
     { to: "/decks", matchPath: "/decks", label: "公開デッキ" },
+    { to: "/tournaments", matchPath: "/tournaments", label: "大会" },
+    { to: "/deck", matchPath: "/deck", exact: true, label: "デッキ構築(β版)" },
   ];
 
   return (
@@ -31,8 +32,8 @@ export default function AppHeader() {
                 item.matchPath === "/"
                   ? location.pathname === "/"
                   : item.exact
-                  ? location.pathname === item.matchPath
-                  : location.pathname.startsWith(item.matchPath);
+                    ? location.pathname === item.matchPath
+                    : location.pathname.startsWith(item.matchPath);
 
               return (
                 <Link

@@ -15,12 +15,16 @@ export default function MobileAppHeader() {
     () => buildPathWithForcedMobileLayout("/", location.search),
     [location.search]
   );
-  const deckPath = useMemo(
-    () => buildPathWithForcedMobileLayout("/deck", location.search),
-    [location.search]
-  );
   const decksPath = useMemo(
     () => buildPathWithForcedMobileLayout("/decks", location.search),
+    [location.search]
+  );
+  const tournamentsPath = useMemo(
+    () => buildPathWithForcedMobileLayout("/tournaments", location.search),
+    [location.search]
+  );
+  const deckPath = useMemo(
+    () => buildPathWithForcedMobileLayout("/deck", location.search),
     [location.search]
   );
   const profilePath = useMemo(
@@ -30,8 +34,9 @@ export default function MobileAppHeader() {
 
   const navItems = [
     { to: homePath, matchPath: "/", label: "検索" },
-    { to: deckPath, matchPath: "/deck", exact: true, label: "デッキ構築(β版)" },
     { to: decksPath, matchPath: "/decks", label: "公開デッキ" },
+    { to: tournamentsPath, matchPath: "/tournaments", label: "大会" },
+    { to: deckPath, matchPath: "/deck", exact: true, label: "デッキ構築(β版)" },
   ];
 
   useEffect(() => {
@@ -71,8 +76,8 @@ export default function MobileAppHeader() {
                 item.matchPath === "/"
                   ? location.pathname === "/"
                   : item.exact
-                  ? location.pathname === item.matchPath
-                  : location.pathname.startsWith(item.matchPath);
+                    ? location.pathname === item.matchPath
+                    : location.pathname.startsWith(item.matchPath);
 
               return (
                 <Link
