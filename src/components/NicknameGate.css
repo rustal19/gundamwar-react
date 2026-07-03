@@ -1,0 +1,69 @@
+.nickname-gate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(15, 23, 42, 0.48);
+}
+
+.nickname-gate-dialog {
+  width: min(420px, calc(100vw - 3rem));
+  border: 1px solid #d8dee8;
+  background: #fff;
+  box-shadow: 0 20px 56px rgba(15, 23, 42, 0.24);
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+  box-sizing: border-box;
+}
+
+.nickname-gate-header {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.nickname-gate-header h3 {
+  margin: 0;
+  color: #182132;
+  font-size: 1.08rem;
+}
+
+.nickname-gate-header p {
+  margin: 0;
+  color: #526071;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.nickname-gate-field {
+  display: grid;
+  gap: 0.35rem;
+  color: #253042;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.nickname-gate-field input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #cfd6df;
+  padding: 0.58rem 0.7rem;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.nickname-gate-error {
+  margin: 0;
+  color: #972626;
+  font-size: 0.9rem;
+}
+
+.nickname-gate-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
