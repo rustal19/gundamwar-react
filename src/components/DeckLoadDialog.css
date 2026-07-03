@@ -159,6 +159,49 @@
   flex-wrap: wrap;
 }
 
+.deck-publication-panel {
+  border: 1px solid #d8dee8;
+  background: #fff;
+  padding: 0.8rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.deck-publication-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #253042;
+}
+
+.deck-publication-header span,
+.deck-publication-message {
+  color: #526071;
+  font-size: 0.84rem;
+}
+
+.deck-publication-textarea {
+  width: 100%;
+  min-width: 0;
+  resize: vertical;
+  border: 1px solid #cfd6df;
+  padding: 0.55rem 0.65rem;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.deck-publication-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.deck-publication-message {
+  margin: 0;
+}
+
 .deck-load-dialog-error {
   margin: 0;
   color: #972626;
