@@ -44,7 +44,9 @@
 .tournament-filter,
 .tournament-tabs,
 .tournament-pagination,
-.tournament-entry-actions {
+.tournament-entry-actions,
+.tournament-header-actions,
+.tournament-row-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -54,7 +56,10 @@
 .tournament-filter button,
 .tournament-tabs button,
 .tournament-pagination button,
-.tournament-entry-actions button {
+.tournament-entry-actions button,
+.tournament-round-header button,
+.tournament-row-actions button,
+.tournament-deck-viewer button {
   border: 1px solid #b7c4d1;
   border-radius: 4px;
   background: #ffffff;
@@ -66,14 +71,23 @@
 
 .tournament-filter button.active,
 .tournament-tabs button.active,
-.tournament-entry-actions button:first-child {
+.tournament-entry-actions button:first-child,
+.tournament-create-link {
   border-color: #2d6cdf;
   background: #2d6cdf;
   color: #ffffff;
 }
 
+.tournament-create-link {
+  border-radius: 4px;
+  font-weight: 800;
+  padding: 8px 12px;
+  text-decoration: none;
+}
+
 .tournament-pagination button:disabled,
-.tournament-entry-actions button:disabled {
+.tournament-entry-actions button:disabled,
+.tournament-round-header button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
@@ -205,6 +219,64 @@
   padding: 6px 8px;
 }
 
+.tournament-manage-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.tournament-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.tournament-form-grid label {
+  display: grid;
+  gap: 5px;
+  color: #465463;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.tournament-form-grid input,
+.tournament-form-grid select,
+.tournament-form-grid textarea,
+.tournament-table select {
+  min-height: 36px;
+  border: 1px solid #b7c4d1;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #203040;
+  padding: 6px 8px;
+}
+
+.tournament-form-grid textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.tournament-form-wide,
+.tournament-checkbox {
+  grid-column: 1 / -1;
+}
+
+.tournament-checkbox {
+  align-items: center;
+  grid-template-columns: auto 1fr;
+}
+
+.tournament-manage-actions {
+  margin-top: 4px;
+}
+
+.tournament-deck-viewer {
+  margin-top: 14px;
+  border-top: 1px solid #dce3ea;
+  padding-top: 14px;
+}
+
 .tournament-deck-summary,
 .tournament-muted,
 .tournament-empty {
@@ -324,6 +396,10 @@
   }
 
   .tournament-section-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tournament-form-grid {
     grid-template-columns: 1fr;
   }
 

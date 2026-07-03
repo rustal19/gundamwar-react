@@ -1,10 +1,18 @@
 import {
+  completeRound,
+  createNextRound,
   createEntry,
+  createTournament,
   deleteMyEntry,
+  fetchEntries,
+  fetchRounds,
   fetchStandings,
   fetchTournament,
   fetchTournaments,
+  reportMatchResult,
+  updateEntryStatus,
   updateMyEntry,
+  updateTournament,
 } from "./tournaments";
 
 const STORAGE_KEY = "gundamwar.tournaments.v1";
@@ -50,6 +58,15 @@ function setRegistrationTournament(overrides = {}) {
       rounds: { t1: [] },
     })
   );
+}
+
+function makeValidDeck() {
+  return Array.from({ length: 50 }, (_, index) => ({
+    cardId: `card-${index + 1}`,
+    count: 1,
+    card: { cardId: `card-${index + 1}`, name: `Card ${index + 1}` },
+    zone: "main",
+  }));
 }
 
 function buildValidDeck(prefix = "card") {
@@ -156,5 +173,115 @@ describe("tournaments service mock mode", () => {
     expect(standings.items[0].points).toBe(3);
     expect(standings.items.map((standing) => standing.entryId)).toContain("entry-1");
     expect(standings.items.map((standing) => standing.entryId)).toContain("entry-3");
+  });
+
+  it("creates and updates organizer tournaments with forward status transitions", async () => {
+    const created = await createTournament({
+      title: "Organizer Cup",
+      description: "test",
+      format: "swiss",
+      swissRounds: null,
+      topCutSize: null,
+      status: "draft",
+      capacity: 16,
+      decklistRequired: true,
+      regulation: { name: "Custom", mainMin: 40 },
+      authMode: "mock",
+      user,
+    });
+
+    expect(created.id).toBeTruthy();
+    expect(created.regulation.name).toBe("Custom");
+    expect(created.entryCount).toBe(0);
+
+    const registration = await updateTournament({
+      id: created.id,
+      status: "registration",
+      authMode: "mock",
+      user,
+    });
+    expect(registration.status).toBe("registration");
+
+    await expect(
+      updateTournament({ id: created.id, status: "draft", authMode: "mock", user })
+    ).rejects.toThrow("ステータス");
+  });
+
+  it("updates organizer entry status and exposes submitted decklists", async () => {
+    setRegistrationTournament();
+    const deckItems = makeValidDeck();
+    const entry = await createEntry({ tournamentId: "t1", deckItems, authMode: "mock", user });
+
+    const checkedIn = await updateEntryStatus({
+      tournamentId: "t1",
+      entryId: entry.id,
+      status: "checked_in",
+      authMode: "mock",
+    });
+
+    expect(checkedIn.status).toBe("checked_in");
+    const entries = await fetchEntries("t1", { authMode: "mock" });
+    expect(entries.items[0].deckItems).toHaveLength(50);
+  });
+
+  it("generates swiss pairings, reports results, completes rounds, and updates standings", async () => {
+    setRegistrationTournament({
+      status: "registration",
+      swissRounds: null,
+      registrationClosesAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    });
+    const store = readStore();
+    store.entries.t1 = ["1", "2", "3", "4"].map((suffix) => ({
+      id: `entry-${suffix}`,
+      tournamentId: "t1",
+      user: { id: `player-${suffix}`, name: `Player ${suffix}` },
+      deckItems: null,
+      decklistSubmittedAt: null,
+      status: "checked_in",
+      createdAt: new Date().toISOString(),
+    }));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const round1 = await createNextRound("t1", { authMode: "mock" });
+    expect(round1.stage).toBe("swiss");
+    expect(round1.matches).toHaveLength(2);
+    expect((await fetchTournament("t1", { authMode: "mock", user })).status).toBe("in_progress");
+
+    await reportMatchResult({ matchId: round1.matches[0].id, result: "p1_win", authMode: "mock" });
+    await reportMatchResult({ matchId: round1.matches[1].id, result: "p2_win", authMode: "mock" });
+    const completedRound1 = await completeRound(round1.id, { authMode: "mock" });
+    expect(completedRound1.status).toBe("completed");
+
+    const standings = await fetchStandings("t1", { authMode: "mock" });
+    expect(standings.items[0].points).toBe(3);
+
+    const round2 = await createNextRound("t1", { authMode: "mock" });
+    expect(round2.number).toBe(2);
+    expect(round2.matches).toHaveLength(2);
+
+    const rounds = await fetchRounds("t1", { authMode: "mock" });
+    expect(rounds.rounds).toHaveLength(2);
+  });
+
+  it("finishes a single elimination tournament when the final round completes", async () => {
+    setRegistrationTournament({ status: "registration", format: "single_elim" });
+    const store = readStore();
+    store.entries.t1 = ["1", "2"].map((suffix) => ({
+      id: `entry-${suffix}`,
+      tournamentId: "t1",
+      user: { id: `player-${suffix}`, name: `Player ${suffix}` },
+      deckItems: null,
+      decklistSubmittedAt: null,
+      status: "checked_in",
+      createdAt: new Date().toISOString(),
+    }));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const round = await createNextRound("t1", { authMode: "mock" });
+    await reportMatchResult({ matchId: round.matches[0].id, result: "p1_win", authMode: "mock" });
+    await completeRound(round.id, { authMode: "mock" });
+
+    const tournament = await fetchTournament("t1", { authMode: "mock", user });
+    expect(tournament.status).toBe("completed");
   });
 });
