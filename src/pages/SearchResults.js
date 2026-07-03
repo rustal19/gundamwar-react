@@ -4,7 +4,7 @@ import SearchResultCard from "../components/SearchResultCard";
 import { API_SEARCH_URL, parseSearchParams } from "../utils/searchResults";
 import "./SearchResults.css";
 
-const SearchResults = () => {
+const SearchResults = ({ compact = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [results, setResults] = useState([]);
@@ -147,18 +147,20 @@ const SearchResults = () => {
   return (
     <div id="search-results-container">
       <div className="search-results-toolbar">
-        <div>
+        <div className={compact ? "search-results-heading-row" : undefined}>
           <h1>検索結果</h1>
           <div className="search-results-summary">{`${total}件 / ${page} / ${totalPages}ページ`}</div>
         </div>
-        <div className="search-results-toolbar-actions">
-          <Link className="results-link-button" to="/">
-            検索に戻る
-          </Link>
-          <Link className="results-link-button primary" to="/deck">
-            デッキ
-          </Link>
-        </div>
+        {!compact && (
+          <div className="search-results-toolbar-actions">
+            <Link className="results-link-button" to="/">
+              検索に戻る
+            </Link>
+            <Link className="results-link-button primary" to="/deck">
+              デッキ
+            </Link>
+          </div>
+        )}
       </div>
 
       {pagination}
@@ -170,7 +172,13 @@ const SearchResults = () => {
       ) : (
         <div className="results-list">
           {results.map((card) => (
-            <SearchResultCard key={card.cardId} card={card} showDeckActions={false} />
+            <SearchResultCard
+              key={card.cardId}
+              card={card}
+              showDeckActions={false}
+              compactDetailLayout={compact}
+              enableImagePreview={compact}
+            />
           ))}
         </div>
       )}

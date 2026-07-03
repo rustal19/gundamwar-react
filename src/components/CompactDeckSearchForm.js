@@ -3,24 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { trackEvent } from "../utils/analytics";
 import { preserveForcedMobileLayoutInParams } from "../utils/deviceLayout";
 import { parseSearchParams } from "../utils/searchResults";
+import { DECK_RANGE_PRESET_CUTOFFS, TENSAKU_OPTIONS } from "../data/searchOptions";
 import "./CompactDeckSearchForm.css";
-
-const DECK_RANGE_PRESET_CUTOFFS = {
-  classic: "2006-01-01",
-  rising: "2009-11-20",
-};
-
-const TENSAKU_OPTIONS = [
-  { label: "第9回 添削杯", value: "2010-03-09" },
-  { label: "第8回 添削杯", value: "2009-08-09" },
-  { label: "第7回 添削杯", value: "2009-02-19" },
-  { label: "第6回 添削杯", value: "2008-02-28" },
-  { label: "第5回 添削杯", value: "2007-08-31" },
-  { label: "第4回 添削杯", value: "2007-02-28" },
-  { label: "第3回 添削杯", value: "2006-08-31" },
-  { label: "第2回 添削杯", value: "2006-02-28" },
-  { label: "第1回 添削杯", value: "2005-08-31" },
-];
 
 const CARD_TYPE_OPTIONS = [
   { label: "UNIT", value: "1" },

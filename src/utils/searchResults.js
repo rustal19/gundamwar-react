@@ -30,7 +30,7 @@ export function getCardColorNames(card) {
   };
 }
 
-const MULTI_SELECT_KEYS = [
+export const MULTI_SELECT_KEYS = [
   "cardType",
   "colorInclude",
   "colorExclude",

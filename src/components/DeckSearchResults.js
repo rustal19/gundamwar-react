@@ -15,7 +15,7 @@ function hasMeaningfulFilters(searchParams) {
   });
 }
 
-const DeckSearchResults = () => {
+const DeckSearchResults = ({ compact = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const resultsViewportRef = useRef(null);
@@ -176,31 +176,53 @@ const DeckSearchResults = () => {
     return <div className="pagination pagination-inline">{buttons}</div>;
   }, [handlePageChange, page, totalPages]);
 
+  const summary = (
+    <div className="search-results-summary">{`${total}件 / ${page} / ${totalPages}ページ`}</div>
+  );
+
+  const viewToggle = (
+    <div className="search-results-view-toggle" aria-label="検索結果の表示切替">
+      <button
+        type="button"
+        className={viewMode === "detail" ? "active" : ""}
+        onClick={() => setViewMode("detail")}
+      >
+        詳細
+      </button>
+      <button
+        type="button"
+        className={viewMode === "image" ? "active" : ""}
+        onClick={() => setViewMode("image")}
+      >
+        画像のみ
+      </button>
+    </div>
+  );
+
   return (
     <section className="deck-search-results-panel">
-      <div className="deck-panel-header">
-        <h2>検索結果</h2>
-        <div className="deck-search-results-header-tools">
-          <div className="search-results-summary">{`${total}件 / ${page} / ${totalPages}ページ`}</div>
-          {pagination}
-          <div className="search-results-view-toggle" aria-label="検索結果の表示切替">
-            <button
-              type="button"
-              className={viewMode === "detail" ? "active" : ""}
-              onClick={() => setViewMode("detail")}
-            >
-              詳細
-            </button>
-            <button
-              type="button"
-              className={viewMode === "image" ? "active" : ""}
-              onClick={() => setViewMode("image")}
-            >
-              画像のみ
-            </button>
+      {compact ? (
+        <div className="search-results-toolbar deck-search-results-toolbar">
+          <div className="deck-search-results-heading-bar">
+            <div className="search-results-heading-row">
+              <h2 className="deck-search-results-title">検索結果</h2>
+              {summary}
+            </div>
+            {viewToggle}
+          </div>
+
+          <div className="deck-search-results-controls">{pagination}</div>
+        </div>
+      ) : (
+        <div className="deck-panel-header">
+          <h2>検索結果</h2>
+          <div className="deck-search-results-header-tools">
+            {summary}
+            {pagination}
+            {viewToggle}
           </div>
         </div>
-      </div>
+      )}
 
       <div ref={resultsViewportRef} className="deck-search-results-viewport">
         {!isLoaded ? (

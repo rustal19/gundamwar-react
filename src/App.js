@@ -3,13 +3,10 @@ import { Route, Routes, useLocation } from "react-router-dom";
 import AppHeader from "./components/AppHeader";
 import Home from "./components/Home";
 import MobileAppHeader from "./components/MobileAppHeader";
-import MobileSearchForm from "./components/MobileSearchForm";
 import RouteAnalyticsTracker from "./components/RouteAnalyticsTracker";
 import SearchForm from "./components/SearchForm";
 import { AuthProvider } from "./context/AuthContext";
 import { DeckProvider } from "./context/DeckContext";
-import MobileDeckBuilder from "./pages/MobileDeckBuilder";
-import MobileSearchResults from "./pages/MobileSearchResults";
 import DeckBuilder from "./pages/DeckBuilder";
 import SearchResults from "./pages/SearchResults";
 import { useLayoutTier } from "./utils/deviceLayout";
@@ -34,19 +31,16 @@ const AppContent = () => {
     .join(" ");
 
   const HeaderComponent = isCompactLayout ? MobileAppHeader : AppHeader;
-  const SearchFormComponent = isCompactLayout ? MobileSearchForm : SearchForm;
-  const SearchResultsComponent = isCompactLayout ? MobileSearchResults : SearchResults;
-  const DeckBuilderComponent = isCompactLayout ? MobileDeckBuilder : DeckBuilder;
 
   return (
     <div className={shellClassName}>
       <RouteAnalyticsTracker />
       <HeaderComponent />
-      {location.pathname === "/" ? <SearchFormComponent /> : null}
+      {location.pathname === "/" ? <SearchForm compact={isCompactLayout} /> : null}
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/search" element={<SearchResultsComponent />} />
-        <Route path="/deck" element={<DeckBuilderComponent />} />
+        <Route path="/search" element={<SearchResults compact={isCompactLayout} />} />
+        <Route path="/deck" element={<DeckBuilder compact={isCompactLayout} />} />
       </Routes>
     </div>
   );
