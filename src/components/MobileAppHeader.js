@@ -18,10 +18,15 @@ export default function MobileAppHeader() {
     () => buildPathWithForcedMobileLayout("/deck", location.search),
     [location.search]
   );
+  const tournamentsPath = useMemo(
+    () => buildPathWithForcedMobileLayout("/tournaments", location.search),
+    [location.search]
+  );
 
   const navItems = [
     { to: homePath, matchPath: "/", label: "検索" },
     { to: deckPath, matchPath: "/deck", label: "デッキ構築(β版)" },
+    { to: tournamentsPath, matchPath: "/tournaments", label: "大会" },
   ];
 
   useEffect(() => {

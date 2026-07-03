@@ -9,6 +9,8 @@ import { AuthProvider } from "./context/AuthContext";
 import { DeckProvider } from "./context/DeckContext";
 import DeckBuilder from "./pages/DeckBuilder";
 import SearchResults from "./pages/SearchResults";
+import TournamentDetail from "./pages/TournamentDetail";
+import TournamentList from "./pages/TournamentList";
 import { useLayoutTier } from "./utils/deviceLayout";
 import "./mobile.css";
 
@@ -41,6 +43,8 @@ const AppContent = () => {
         <Route path="/" element={<Home />} />
         <Route path="/search" element={<SearchResults compact={isCompactLayout} />} />
         <Route path="/deck" element={<DeckBuilder compact={isCompactLayout} />} />
+        <Route path="/tournaments" element={<TournamentList compact={isCompactLayout} />} />
+        <Route path="/tournaments/:id" element={<TournamentDetail compact={isCompactLayout} />} />
       </Routes>
     </div>
   );
