@@ -7,6 +7,7 @@ import {
 
 const user = { id: "user-1", name: "Test User" };
 const savedKey = "gundamwar.savedDecks.v1:user-1";
+const ownerSavedKey = "gundamwar.savedDecks.v1:owner-1";
 
 function writeSavedDecks(decks) {
   window.localStorage.setItem(savedKey, JSON.stringify(decks));
@@ -140,5 +141,46 @@ describe("publicDecks mock service", () => {
 
     expect(deck.isPublic).toBe(false);
     expect(JSON.parse(window.localStorage.getItem(PUBLIC_STORAGE_KEY))).toEqual([]);
+  });
+
+  test("admin force-unpublishes another user's public deck and updates owner saved deck if present", async () => {
+    window.localStorage.setItem(
+      ownerSavedKey,
+      JSON.stringify([
+        {
+          id: "deck-9",
+          title: "Owner Deck",
+          isPublic: true,
+          description: "公開中",
+          publishedAt: "2026-02-01T00:00:00.000Z",
+          items: [],
+        },
+      ])
+    );
+    window.localStorage.setItem(
+      PUBLIC_STORAGE_KEY,
+      JSON.stringify([
+        {
+          id: "deck-9",
+          title: "Owner Deck",
+          isPublic: true,
+          description: "公開中",
+          publishedAt: "2026-02-01T00:00:00.000Z",
+          owner: { id: "owner-1", name: "Owner" },
+          items: [],
+        },
+      ])
+    );
+
+    const deck = await setDeckPublication({
+      authMode: "mock",
+      user: { id: "admin-1", name: "Admin", role: "admin" },
+      deckId: "deck-9",
+      isPublic: false,
+    });
+
+    expect(deck).toMatchObject({ id: "deck-9", isPublic: false });
+    expect(JSON.parse(window.localStorage.getItem(PUBLIC_STORAGE_KEY))).toEqual([]);
+    expect(JSON.parse(window.localStorage.getItem(ownerSavedKey))[0].isPublic).toBe(false);
   });
 });

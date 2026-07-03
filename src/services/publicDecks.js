@@ -34,6 +34,10 @@ function buildSavedStorageKey(user) {
   return `${SAVED_STORAGE_PREFIX}:${user.id}`;
 }
 
+function buildSavedStorageKeyByUserId(userId) {
+  return `${SAVED_STORAGE_PREFIX}:${userId}`;
+}
+
 function normalizeOwner(owner, fallbackUser) {
   const ownerId = owner?.id || fallbackUser?.id || "";
   return {
@@ -76,6 +80,18 @@ function readMockSavedDecks(user) {
 
 function writeMockSavedDecks(user, decks) {
   writeJsonStorage(buildSavedStorageKey(user), decks);
+}
+
+function readMockSavedDecksByUserId(userId) {
+  if (!userId) return [];
+  const parsed = readJsonStorage(buildSavedStorageKeyByUserId(userId), []);
+  if (!Array.isArray(parsed)) return [];
+  return parsed;
+}
+
+function writeMockSavedDecksByUserId(userId, decks) {
+  if (!userId) return;
+  writeJsonStorage(buildSavedStorageKeyByUserId(userId), decks);
 }
 
 async function requestJson(path, options = {}) {
@@ -179,6 +195,45 @@ export async function setDeckPublication({
 
   if (authMode === "mock") {
     const now = new Date().toISOString();
+    const publicDecks = readMockPublicDecks();
+    const publicDeck = publicDecks.find((deck) => deck.id === deckKey);
+    const canAdminForceUnpublish = user.role === "admin" && !nextIsPublic;
+
+    if (canAdminForceUnpublish) {
+      const ownerId = publicDeck?.owner?.id;
+      const ownerSavedDecks = readMockSavedDecksByUserId(ownerId);
+
+      if (ownerSavedDecks.some((deck) => String(deck.id) === deckKey)) {
+        writeMockSavedDecksByUserId(
+          ownerId,
+          ownerSavedDecks.map((deck) =>
+            String(deck.id) === deckKey
+              ? {
+                  ...deck,
+                  isPublic: false,
+                  updatedAt: now,
+                }
+              : deck
+          )
+        );
+      }
+
+      writeMockPublicDecks(publicDecks.filter((deck) => deck.id !== deckKey));
+      return normalizePublicDeck(
+        {
+          ...(publicDeck || {
+            id: deckKey,
+            title: deckKey,
+            items: [],
+            owner: normalizeOwner(null, user),
+          }),
+          isPublic: false,
+          updatedAt: now,
+        },
+        user
+      );
+    }
+
     const savedDecks = readMockSavedDecks(user);
     const savedDeck = savedDecks.find((deck) => String(deck.id) === deckKey);
     if (!savedDeck) {
@@ -198,7 +253,6 @@ export async function setDeckPublication({
       savedDecks.map((deck) => (String(deck.id) === deckKey ? nextSavedDeck : deck))
     );
 
-    const publicDecks = readMockPublicDecks();
     const nextPublicDecks = publicDecks.filter((deck) => deck.id !== deckKey);
     if (nextIsPublic) {
       nextPublicDecks.unshift(

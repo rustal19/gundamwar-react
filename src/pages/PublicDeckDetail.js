@@ -8,7 +8,7 @@ import {
   DECK_TYPE_ORDER,
   groupDeckItemsByType,
 } from "../utils/deckExport";
-import { fetchPublicDeck } from "../services/publicDecks";
+import { fetchPublicDeck, setDeckPublication } from "../services/publicDecks";
 import "./PublicDecks.css";
 
 function normalizeZone(item) {
@@ -71,12 +71,13 @@ function DeckTypeGroups({ title, items }) {
 }
 
 export default function PublicDeckDetail({ compact = false }) {
-  const { authMode } = useAuth();
+  const { authMode, isAdmin, user } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
   const { items, replaceDeck } = useDeck();
   const [deck, setDeck] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isModerating, setIsModerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
@@ -123,6 +124,28 @@ export default function PublicDeckDetail({ compact = false }) {
     navigate("/deck");
   };
 
+  const handleAdminUnpublish = async () => {
+    if (!deck) return;
+    if (!window.confirm("この公開デッキを非公開にしますか？")) return;
+
+    setIsModerating(true);
+    setErrorMessage("");
+    try {
+      await setDeckPublication({
+        authMode,
+        user,
+        deckId: deck.id,
+        isPublic: false,
+        description: deck.description || "",
+      });
+      navigate("/decks");
+    } catch (moderationError) {
+      setErrorMessage(moderationError.message);
+    } finally {
+      setIsModerating(false);
+    }
+  };
+
   return (
     <main
       id="search-results-container"
@@ -146,6 +169,16 @@ export default function PublicDeckDetail({ compact = false }) {
           {deck ? (
             <button type="button" className="results-link-button primary" onClick={handleCopyDeck}>
               このデッキをコピー
+            </button>
+          ) : null}
+          {deck && isAdmin ? (
+            <button
+              type="button"
+              className="results-link-button"
+              onClick={handleAdminUnpublish}
+              disabled={isModerating}
+            >
+              非公開にする(admin)
             </button>
           ) : null}
           <Link className="results-link-button" to="/decks">

@@ -25,6 +25,7 @@ function normalizeUser(rawUser) {
     id: String(rawUser.id),
     email: rawUser.email || "",
     name: rawUser.name || rawUser.displayName || rawUser.email || "User",
+    nickname: String(rawUser.nickname || "").trim(),
     role: normalizeRole(rawUser.role),
   };
 }
@@ -123,4 +124,29 @@ export async function updateUserRole({ userId, role, authMode = "mock" }) {
     body: JSON.stringify({ role: normalizedRole }),
   });
   return normalizeUser(payload.user || payload);
+}
+
+export async function resetUserNickname({ userId, authMode = "mock" }) {
+  if (!userId) {
+    throw new Error("userId は必須です。");
+  }
+
+  if (authMode === "mock") {
+    const users = readMockUsers();
+    const userExists = users.some((user) => user.id === String(userId));
+    if (!userExists) {
+      throw new Error("ユーザーが見つかりません。");
+    }
+
+    const nextUsers = users.map((user) =>
+      user.id === String(userId) ? { ...user, nickname: "" } : user
+    );
+    writeMockUsers(nextUsers);
+    return nextUsers.find((user) => user.id === String(userId));
+  }
+
+  const payload = await requestJson(`/api/users/${encodeURIComponent(userId)}/nickname`, {
+    method: "DELETE",
+  });
+  return normalizeUser(payload.user || payload) || { id: String(userId), nickname: "" };
 }
