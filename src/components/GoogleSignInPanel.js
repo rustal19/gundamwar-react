@@ -40,6 +40,7 @@ function loadGoogleScript() {
 export default function GoogleSignInPanel({ variant = "default" }) {
   const buttonRef = useRef(null);
   const [loadError, setLoadError] = useState("");
+  const [mockRole, setMockRole] = useState("user");
   const {
     authMode,
     authConfigState,
@@ -118,7 +119,15 @@ export default function GoogleSignInPanel({ variant = "default" }) {
   if (authMode === "mock") {
     return (
       <div className={rootClassName}>
-        <button className="google-mock-button" onClick={signInWithMock}>
+        <label className="google-mock-role-field">
+          <span>Role</span>
+          <select value={mockRole} onChange={(event) => setMockRole(event.target.value)}>
+            <option value="user">user</option>
+            <option value="organizer">organizer</option>
+            <option value="admin">admin</option>
+          </select>
+        </label>
+        <button className="google-mock-button" onClick={() => signInWithMock(mockRole)}>
           ローカルログイン
         </button>
         {!isHeaderVariant ? (

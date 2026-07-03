@@ -7,6 +7,7 @@ import RouteAnalyticsTracker from "./components/RouteAnalyticsTracker";
 import SearchForm from "./components/SearchForm";
 import { AuthProvider } from "./context/AuthContext";
 import { DeckProvider } from "./context/DeckContext";
+import AdminUsers from "./pages/AdminUsers";
 import DeckBuilder from "./pages/DeckBuilder";
 import SearchResults from "./pages/SearchResults";
 import { useLayoutTier } from "./utils/deviceLayout";
@@ -41,6 +42,7 @@ const AppContent = () => {
         <Route path="/" element={<Home />} />
         <Route path="/search" element={<SearchResults compact={isCompactLayout} />} />
         <Route path="/deck" element={<DeckBuilder compact={isCompactLayout} />} />
+        <Route path="/admin/users" element={<AdminUsers compact={isCompactLayout} />} />
       </Routes>
     </div>
   );

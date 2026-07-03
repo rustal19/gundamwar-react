@@ -18,21 +18,24 @@ const MOCK_ENABLED =
   (typeof window !== "undefined" && !ENV_GOOGLE_CLIENT_ID && IS_LOCALHOST);
 
 const AuthContext = createContext(null);
+const VALID_ROLES = new Set(["user", "organizer", "admin"]);
 
 function buildApiUrl(path) {
   return API_BASE_URL ? `${API_BASE_URL}${path}` : path;
 }
 
-function normalizeUser(rawUser) {
+export function normalizeUser(rawUser) {
   if (!rawUser) return null;
   const id = rawUser.googleSub || rawUser.sub || rawUser.id || rawUser.userId;
   if (!id) return null;
+  const role = VALID_ROLES.has(rawUser.role) ? rawUser.role : "user";
 
   return {
     id: String(id),
     email: rawUser.email || "",
     name: rawUser.name || rawUser.displayName || rawUser.email || "Google User",
     avatarUrl: rawUser.avatarUrl || rawUser.picture || "",
+    role,
   };
 }
 
@@ -176,12 +179,13 @@ export function AuthProvider({ children }) {
     [authMode, canUseGoogleAuth]
   );
 
-  const signInWithMock = useCallback(async () => {
+  const signInWithMock = useCallback(async (role = "user") => {
     const mockUser = normalizeUser({
       id: "local-demo-user",
       email: "local-demo@gundamwar.test",
       name: "ローカル確認ユーザー",
       avatarUrl: "",
+      role,
     });
     writeMockUser(mockUser);
     setUser(mockUser);
@@ -225,6 +229,8 @@ export function AuthProvider({ children }) {
       isReady,
       isAuthenticating,
       isAuthenticated: Boolean(user),
+      isOrganizer: user?.role === "organizer" || user?.role === "admin",
+      isAdmin: user?.role === "admin",
       authError,
       authMode,
       authConfigState,
