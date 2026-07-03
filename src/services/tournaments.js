@@ -1,6 +1,7 @@
 import { computeStandings } from "../utils/tournament/standings";
 import { buildBracket, nextRoundPairs } from "../utils/tournament/singleElimination";
 import { pairSwissRound } from "../utils/tournament/swissPairing";
+import { validateDeck } from "../utils/deckValidation";
 
 const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
 const STORAGE_KEY = "gundamwar.tournaments.v1";
@@ -266,6 +267,16 @@ function assertCanEnter(tournament, entries, currentUser, deckItems) {
   }
 }
 
+function assertDeckIsValid(deckItems, regulation) {
+  if (!Array.isArray(deckItems) || deckItems.length === 0) return;
+  const violations = validateDeck(deckItems, regulation);
+  if (violations.length === 0) return;
+
+  const error = new Error("デッキリストがレギュレーションに違反しています。");
+  error.violations = violations;
+  throw error;
+}
+
 function assertCanChangeEntry(tournament) {
   if (!["registration", "in_progress"].includes(tournament.status)) {
     throw new Error("この大会のエントリーは変更できません。");
@@ -502,6 +513,7 @@ export async function createEntry({ tournamentId, deckItems = null, authMode, us
     const tournament = getTournamentOrThrow(store, tournamentId);
     const entries = getEntries(store, tournamentId);
     assertCanEnter(tournament, entries, currentUser, deckItems);
+    assertDeckIsValid(deckItems, tournament.regulation);
 
     const now = nowIso();
     const entry = normalizeEntry({
@@ -535,6 +547,7 @@ export async function updateMyEntry({ tournamentId, deckItems = null, authMode, 
     const store = readStore();
     const tournament = getTournamentOrThrow(store, tournamentId);
     assertCanChangeEntry(tournament);
+    assertDeckIsValid(deckItems, tournament.regulation);
     const entries = getEntries(store, tournamentId);
     const existing = entries.find(
       (entry) => entry.user.id === currentUser.id && entry.status !== "dropped"

@@ -60,6 +60,24 @@ function setRegistrationTournament(overrides = {}) {
   );
 }
 
+function makeValidDeck() {
+  return Array.from({ length: 50 }, (_, index) => ({
+    cardId: `card-${index + 1}`,
+    count: 1,
+    card: { cardId: `card-${index + 1}`, name: `Card ${index + 1}` },
+    zone: "main",
+  }));
+}
+
+function buildValidDeck(prefix = "card") {
+  return Array.from({ length: 17 }, (_, index) => ({
+    cardId: `${prefix}-${index + 1}`,
+    count: index === 16 ? 2 : 3,
+    card: { cardId: `${prefix}-${index + 1}`, name: `${prefix} ${index + 1}`, sets: ["S1"] },
+    zone: "main",
+  }));
+}
+
 describe("tournaments service mock mode", () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -101,22 +119,20 @@ describe("tournaments service mock mode", () => {
 
   it("creates, updates, and deletes my entry", async () => {
     setRegistrationTournament();
-    const deckItems = [{ cardId: "card-1", count: 50, card: { cardId: "card-1", name: "Card" }, zone: "main" }];
+    const deckItems = buildValidDeck("card");
 
     const created = await createEntry({ tournamentId: "t1", deckItems, authMode: "mock", user });
     expect(created.user.id).toBe(user.id);
-    expect(created.deckItems).toHaveLength(1);
+    expect(created.deckItems).toHaveLength(17);
 
-    const updatedItems = [
-      { cardId: "card-2", count: 50, card: { cardId: "card-2", name: "カード2" }, zone: "main" },
-    ];
+    const updatedItems = buildValidDeck("updated-card");
     const updated = await updateMyEntry({
       tournamentId: "t1",
       deckItems: updatedItems,
       authMode: "mock",
       user,
     });
-    expect(updated.deckItems[0].cardId).toBe("card-2");
+    expect(updated.deckItems[0].cardId).toBe("updated-card-1");
 
     await deleteMyEntry("t1", { authMode: "mock", user });
     expect(readStore().entries.t1).toEqual([]);
@@ -193,7 +209,7 @@ describe("tournaments service mock mode", () => {
 
   it("updates organizer entry status and exposes submitted decklists", async () => {
     setRegistrationTournament();
-    const deckItems = [{ cardId: "card-1", count: 50, card: { name: "Card" }, zone: "main" }];
+    const deckItems = makeValidDeck();
     const entry = await createEntry({ tournamentId: "t1", deckItems, authMode: "mock", user });
 
     const checkedIn = await updateEntryStatus({
@@ -205,7 +221,7 @@ describe("tournaments service mock mode", () => {
 
     expect(checkedIn.status).toBe("checked_in");
     const entries = await fetchEntries("t1", { authMode: "mock" });
-    expect(entries.items[0].deckItems).toHaveLength(1);
+    expect(entries.items[0].deckItems).toHaveLength(50);
   });
 
   it("generates swiss pairings, reports results, completes rounds, and updates standings", async () => {
