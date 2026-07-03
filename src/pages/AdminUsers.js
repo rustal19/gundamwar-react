@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { fetchUsers, updateUserRole } from "../services/users";
+import { fetchUsers, resetUserNickname, updateUserRole } from "../services/users";
 
 const ROLES = ["user", "organizer", "admin"];
 
@@ -46,6 +46,22 @@ export default function AdminUsers({ compact = false }) {
       );
     } catch (updateError) {
       setError(updateError.message);
+    }
+  };
+
+  const handleNicknameReset = async (userId) => {
+    if (!window.confirm("このユーザーのニックネームをリセットしますか？")) return;
+
+    setError("");
+    try {
+      const updatedUser = await resetUserNickname({ userId, authMode });
+      setUsers((currentUsers) =>
+        currentUsers.map((user) =>
+          user.id === updatedUser.id ? { ...user, ...updatedUser, nickname: "" } : user
+        )
+      );
+    } catch (resetError) {
+      setError(resetError.message);
     }
   };
 
@@ -99,6 +115,7 @@ export default function AdminUsers({ compact = false }) {
                   <div>
                     <strong className="card-model-name">{user.name}</strong>
                     <div className="card-text">{user.email || user.id}</div>
+                    <div className="card-text">ニックネーム: {user.nickname || "未設定"}</div>
                   </div>
                   <label className="card-actions">
                     <span className="search-results-summary">role</span>
@@ -113,6 +130,13 @@ export default function AdminUsers({ compact = false }) {
                       ))}
                     </select>
                   </label>
+                  <button
+                    type="button"
+                    className="results-link-button"
+                    onClick={() => handleNicknameReset(user.id)}
+                  >
+                    ニックネームをリセット
+                  </button>
                 </div>
               </div>
             </div>

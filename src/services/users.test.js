@@ -1,4 +1,4 @@
-import { fetchUsers, updateUserRole, USERS_STORAGE_KEY } from "./users";
+import { fetchUsers, resetUserNickname, updateUserRole, USERS_STORAGE_KEY } from "./users";
 
 describe("users service mock storage", () => {
   beforeEach(() => {
@@ -17,7 +17,7 @@ describe("users service mock storage", () => {
     const result = await fetchUsers({ query: "bob" });
 
     expect(result.items).toEqual([
-      { id: "u2", email: "bob@example.test", name: "Bob", role: "organizer" },
+      { id: "u2", email: "bob@example.test", name: "Bob", nickname: "", role: "organizer" },
     ]);
     expect(result.total).toBe(1);
   });
@@ -33,6 +33,27 @@ describe("users service mock storage", () => {
 
     expect(updatedUser.role).toBe("admin");
     expect(result.items[0].role).toBe("admin");
+  });
+
+  it("resets a mock user nickname", async () => {
+    window.localStorage.setItem(
+      USERS_STORAGE_KEY,
+      JSON.stringify([
+        {
+          id: "u1",
+          email: "alice@example.test",
+          name: "Alice",
+          nickname: "アリス",
+          role: "user",
+        },
+      ])
+    );
+
+    const updatedUser = await resetUserNickname({ userId: "u1" });
+    const result = await fetchUsers({ query: "" });
+
+    expect(updatedUser.nickname).toBe("");
+    expect(result.items[0].nickname).toBe("");
   });
 
   it("normalizes unsupported roles to user", async () => {
