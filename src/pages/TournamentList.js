@@ -32,7 +32,7 @@ function formatDate(value) {
 }
 
 export default function TournamentList({ compact = false }) {
-  const { authMode } = useAuth();
+  const { authMode, isOrganizer } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const status = searchParams.get("status") || "";
   const page = Math.max(1, Number(searchParams.get("page") || "1"));
@@ -85,17 +85,24 @@ export default function TournamentList({ compact = false }) {
           <p className="tournament-eyebrow">大会一覧</p>
           <h1>大会</h1>
         </div>
-        <div className="tournament-filter" aria-label="大会ステータス">
-          {STATUS_OPTIONS.map((option) => (
-            <button
-              key={option.value || "all"}
-              type="button"
-              className={status === option.value ? "active" : ""}
-              onClick={() => setFilter(option.value)}
-            >
-              {option.label}
-            </button>
-          ))}
+        <div className="tournament-header-actions">
+          {isOrganizer ? (
+            <Link to="/tournaments/new" className="tournament-create-link">
+              大会を作成
+            </Link>
+          ) : null}
+          <div className="tournament-filter" aria-label="大会ステータス">
+            {STATUS_OPTIONS.map((option) => (
+              <button
+                key={option.value || "all"}
+                type="button"
+                className={status === option.value ? "active" : ""}
+                onClick={() => setFilter(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
