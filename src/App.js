@@ -8,6 +8,8 @@ import SearchForm from "./components/SearchForm";
 import { AuthProvider } from "./context/AuthContext";
 import { DeckProvider } from "./context/DeckContext";
 import DeckBuilder from "./pages/DeckBuilder";
+import PublicDeckDetail from "./pages/PublicDeckDetail";
+import PublicDecks from "./pages/PublicDecks";
 import SearchResults from "./pages/SearchResults";
 import { useLayoutTier } from "./utils/deviceLayout";
 import "./mobile.css";
@@ -41,6 +43,8 @@ const AppContent = () => {
         <Route path="/" element={<Home />} />
         <Route path="/search" element={<SearchResults compact={isCompactLayout} />} />
         <Route path="/deck" element={<DeckBuilder compact={isCompactLayout} />} />
+        <Route path="/decks" element={<PublicDecks compact={isCompactLayout} />} />
+        <Route path="/decks/:id" element={<PublicDeckDetail compact={isCompactLayout} />} />
       </Routes>
     </div>
   );

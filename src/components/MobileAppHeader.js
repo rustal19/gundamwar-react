@@ -18,10 +18,15 @@ export default function MobileAppHeader() {
     () => buildPathWithForcedMobileLayout("/deck", location.search),
     [location.search]
   );
+  const decksPath = useMemo(
+    () => buildPathWithForcedMobileLayout("/decks", location.search),
+    [location.search]
+  );
 
   const navItems = [
     { to: homePath, matchPath: "/", label: "検索" },
-    { to: deckPath, matchPath: "/deck", label: "デッキ構築(β版)" },
+    { to: deckPath, matchPath: "/deck", exact: true, label: "デッキ構築(β版)" },
+    { to: decksPath, matchPath: "/decks", label: "デッキ" },
   ];
 
   useEffect(() => {
@@ -60,6 +65,8 @@ export default function MobileAppHeader() {
               const isActive =
                 item.matchPath === "/"
                   ? location.pathname === "/"
+                  : item.exact
+                  ? location.pathname === item.matchPath
                   : location.pathname.startsWith(item.matchPath);
 
               return (

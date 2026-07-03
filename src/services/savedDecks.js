@@ -28,6 +28,9 @@ function normalizeSavedDeck(rawDeck) {
     id: String(rawDeck.id),
     title: rawDeck.title || "無題デッキ",
     items: Array.isArray(rawDeck.items) ? rawDeck.items : [],
+    isPublic: Boolean(rawDeck.isPublic),
+    description: rawDeck.description || "",
+    publishedAt: rawDeck.publishedAt || rawDeck.published_at || "",
     createdAt: rawDeck.createdAt || rawDeck.created_at || "",
     updatedAt: rawDeck.updatedAt || rawDeck.updated_at || "",
   };

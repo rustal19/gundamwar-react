@@ -5,6 +5,7 @@ import {
   fetchSavedDecks,
   saveSavedDeck,
 } from "../services/savedDecks";
+import { setDeckPublication } from "../services/publicDecks";
 
 export function useSavedDecks() {
   const { authMode, isAuthenticated, user } = useAuth();
@@ -91,6 +92,43 @@ export function useSavedDecks() {
     [authMode, user]
   );
 
+  const setPublication = useCallback(
+    async ({ deckId, isPublic, description }) => {
+      if (!user) {
+        throw new Error("ログインしてから公開設定を変更してください。");
+      }
+
+      setError("");
+      try {
+        const updatedDeck = await setDeckPublication({
+          authMode,
+          user,
+          deckId,
+          isPublic,
+          description,
+        });
+        setSavedDecks((current) =>
+          current.map((deck) =>
+            deck.id === String(deckId)
+              ? {
+                  ...deck,
+                  isPublic: updatedDeck.isPublic,
+                  description: updatedDeck.description,
+                  publishedAt: updatedDeck.publishedAt,
+                  updatedAt: updatedDeck.updatedAt,
+                }
+              : deck
+          )
+        );
+        return updatedDeck;
+      } catch (publicationError) {
+        setError(publicationError.message);
+        throw publicationError;
+      }
+    },
+    [authMode, user]
+  );
+
   return {
     savedDecks,
     isLoading,
@@ -99,5 +137,6 @@ export function useSavedDecks() {
     refresh,
     saveDeck,
     removeDeck,
+    setPublication,
   };
 }

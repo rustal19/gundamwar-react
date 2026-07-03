@@ -9,8 +9,9 @@ export default function AppHeader() {
   const { authMode, canUseGoogleAuth, isAuthenticated, signOut, user } = useAuth();
 
   const navItems = [
-    { to: "/", label: "検索" },
-    { to: "/deck", label: "デッキ構築(β版)" },
+    { to: "/", matchPath: "/", label: "検索" },
+    { to: "/deck", matchPath: "/deck", exact: true, label: "デッキ構築(β版)" },
+    { to: "/decks", matchPath: "/decks", label: "デッキ" },
   ];
 
   return (
@@ -26,13 +27,15 @@ export default function AppHeader() {
           <nav className="app-nav" aria-label="Primary">
             {navItems.map((item) => {
               const isActive =
-                item.to === "/"
+                item.matchPath === "/"
                   ? location.pathname === "/"
-                  : location.pathname.startsWith(item.to);
+                  : item.exact
+                  ? location.pathname === item.matchPath
+                  : location.pathname.startsWith(item.matchPath);
 
               return (
                 <Link
-                  key={item.to}
+                  key={item.matchPath}
                   to={item.to}
                   className={isActive ? "app-nav-link active" : "app-nav-link"}
                 >
