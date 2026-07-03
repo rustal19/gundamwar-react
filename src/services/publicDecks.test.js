@@ -101,7 +101,7 @@ describe("publicDecks mock service", () => {
       title: "Public",
     });
     await expect(fetchPublicDeck("deck-2", { authMode: "mock" })).rejects.toThrow(
-      "Public deck was not found."
+      "公開デッキが見つかりません。"
     );
   });
 

@@ -121,7 +121,7 @@ export default function DeckLoadDialog({
         isPublic: nextIsPublic,
         description: publicationDescription,
       });
-      setPublicationMessage(nextIsPublic ? "Public deck updated." : "Deck is now private.");
+      setPublicationMessage(nextIsPublic ? "公開設定を更新しました。" : "非公開にしました。");
     } catch (error) {
       setPublicationMessage(error.message);
     }

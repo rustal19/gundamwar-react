@@ -9,7 +9,7 @@ function buildApiUrl(path) {
 
 function ensureUser(user) {
   if (!user?.id) {
-    throw new Error("Login is required.");
+    throw new Error("ログインが必要です。");
   }
 }
 
@@ -38,7 +38,7 @@ function normalizeOwner(owner, fallbackUser) {
   const ownerId = owner?.id || fallbackUser?.id || "";
   return {
     id: String(ownerId),
-    name: owner?.name || fallbackUser?.name || "Unknown",
+    name: owner?.name || fallbackUser?.name || "名無し",
   };
 }
 
@@ -46,7 +46,7 @@ function normalizePublicDeck(rawDeck, fallbackUser) {
   if (!rawDeck?.id) return null;
   return {
     id: String(rawDeck.id),
-    title: rawDeck.title || "Untitled deck",
+    title: rawDeck.title || "無題デッキ",
     items: Array.isArray(rawDeck.items) ? rawDeck.items : [],
     isPublic: Boolean(rawDeck.isPublic),
     description: rawDeck.description || "",
@@ -154,7 +154,7 @@ export async function fetchPublicDeck(id, { authMode } = {}) {
   if (authMode === "mock") {
     const deck = readMockPublicDecks().find((item) => item.id === deckId && item.isPublic);
     if (!deck) {
-      throw new Error("Public deck was not found.");
+      throw new Error("公開デッキが見つかりません。");
     }
     return deck;
   }
@@ -182,7 +182,7 @@ export async function setDeckPublication({
     const savedDecks = readMockSavedDecks(user);
     const savedDeck = savedDecks.find((deck) => String(deck.id) === deckKey);
     if (!savedDeck) {
-      throw new Error("Saved deck was not found.");
+      throw new Error("保存デッキが見つかりません。");
     }
 
     const publishedAt = nextIsPublic ? savedDeck.publishedAt || now : "";

@@ -11,7 +11,7 @@ export default function AppHeader() {
   const navItems = [
     { to: "/", matchPath: "/", label: "検索" },
     { to: "/deck", matchPath: "/deck", exact: true, label: "デッキ構築(β版)" },
-    { to: "/decks", matchPath: "/decks", label: "デッキ" },
+    { to: "/decks", matchPath: "/decks", label: "公開デッキ" },
   ];
 
   return (

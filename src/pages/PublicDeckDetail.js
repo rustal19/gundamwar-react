@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useDeck } from "../context/DeckContext";
 import { getCardCode } from "../utils/cardImages";
 import {
   DECK_EXPORT_SECTION_LABELS,
@@ -8,7 +9,7 @@ import {
   groupDeckItemsByType,
 } from "../utils/deckExport";
 import { fetchPublicDeck } from "../services/publicDecks";
-import "./SearchResults.css";
+import "./PublicDecks.css";
 
 function normalizeZone(item) {
   return item?.zone === "side" ? "side" : "main";
@@ -71,7 +72,9 @@ function DeckTypeGroups({ title, items }) {
 
 export default function PublicDeckDetail({ compact = false }) {
   const { authMode } = useAuth();
+  const navigate = useNavigate();
   const { id } = useParams();
+  const { items, replaceDeck } = useDeck();
   const [deck, setDeck] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -108,6 +111,18 @@ export default function PublicDeckDetail({ compact = false }) {
     [deck]
   );
 
+  const handleCopyDeck = () => {
+    if (!deck) return;
+    if (
+      items.length > 0 &&
+      !window.confirm("現在のデッキ内容を置き換えます。よろしいですか?")
+    ) {
+      return;
+    }
+    replaceDeck(deck.items);
+    navigate("/deck");
+  };
+
   return (
     <main
       id="search-results-container"
@@ -127,13 +142,20 @@ export default function PublicDeckDetail({ compact = false }) {
             </div>
           ) : null}
         </div>
-        <Link className="results-link-button" to="/decks">
-          一覧へ
-        </Link>
+        <div className="public-deck-detail-actions">
+          {deck ? (
+            <button type="button" className="results-link-button primary" onClick={handleCopyDeck}>
+              このデッキをコピー
+            </button>
+          ) : null}
+          <Link className="results-link-button" to="/decks">
+            一覧へ
+          </Link>
+        </div>
       </div>
 
       {!isLoaded ? (
-        <div className="results-empty-state">Loading...</div>
+        <div className="results-empty-state">読み込み中...</div>
       ) : errorMessage ? (
         <div className="results-empty-state">{errorMessage}</div>
       ) : deck ? (

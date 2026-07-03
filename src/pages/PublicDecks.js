@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { fetchPublicDecks } from "../services/publicDecks";
-import "./SearchResults.css";
+import "./PublicDecks.css";
 
 function formatDate(value) {
   if (!value) return "";
@@ -122,7 +122,7 @@ export default function PublicDecks({ compact = false }) {
       {pagination}
 
       {!isLoaded ? (
-        <div className="results-empty-state">Loading...</div>
+        <div className="results-empty-state">読み込み中...</div>
       ) : errorMessage ? (
         <div className="results-empty-state">{errorMessage}</div>
       ) : result.items.length === 0 ? (
