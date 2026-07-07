@@ -43,6 +43,7 @@ CREATE TABLE tournaments (
   top_cut_size INT NULL,           -- swiss のみ有効
   status ENUM('draft','registration','in_progress','completed','cancelled')
     NOT NULL DEFAULT 'draft',
+  venue VARCHAR(200) NULL,
   starts_at DATETIME NULL,
   registration_closes_at DATETIME NULL,
   capacity INT NULL,

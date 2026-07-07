@@ -45,6 +45,7 @@ Melee.gg のようなポータルサイトを目指す拡張の**全タスク共
   swissRounds: number|null,        // null = 参加者数から自動(ceil(log2(n)))
   topCutSize: number|null,         // swiss のみ。null = カットなし。4/8/16
   status: "draft" | "registration" | "in_progress" | "completed" | "cancelled",
+  venue: string|null,              // 開催地(自由記述。「東京・○○」「オンライン」等)
   startsAt, registrationClosesAt, capacity: number|null,
   decklistRequired: bool,
   regulation: {                    // デッキ構築レギュレーション
