@@ -50,6 +50,8 @@ CREATE TABLE tournaments (
   capacity INT NULL,
   decklist_required TINYINT(1) NOT NULL DEFAULT 1,
   decklists_public TINYINT(1) NOT NULL DEFAULT 0,
+  announcement TEXT NULL,
+  round_time_minutes INT NULL,
   regulation JSON NOT NULL,        -- PORTAL_SPEC §2 の regulation 形状
   created_by VARCHAR(64) NOT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -60,7 +62,8 @@ CREATE TABLE tournaments (
 CREATE TABLE tournament_entries (
   id INT AUTO_INCREMENT PRIMARY KEY,
   tournament_id INT NOT NULL,
-  user_id VARCHAR(64) NOT NULL,
+  user_id VARCHAR(64) NULL,        -- NULL = ゲスト(主催者の手動追加)
+  guest_name VARCHAR(20) NULL,     -- ゲストの表示名(user_id が NULL のとき必須)
   deck_items JSON NULL,            -- 提出時スナップショット(items 形式)
   decklist_submitted_at DATETIME NULL,
   status ENUM('registered','checked_in','dropped') NOT NULL DEFAULT 'registered',
@@ -76,6 +79,7 @@ CREATE TABLE rounds (
   number INT NOT NULL,
   stage ENUM('swiss','top_cut') NOT NULL DEFAULT 'swiss',
   status ENUM('in_progress','completed') NOT NULL DEFAULT 'in_progress',
+  timer_started_at DATETIME NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uq_round (tournament_id, number)
 );

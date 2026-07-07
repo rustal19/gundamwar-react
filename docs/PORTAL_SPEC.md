@@ -51,6 +51,8 @@ Melee.gg のようなポータルサイトを目指す拡張の**全タスク共
   startsAt, registrationClosesAt, capacity: number|null,
   decklistRequired: bool,
   decklistsPublic: bool,           // 終了後にデッキリストを公開するか(既定 false、主催者が設定)
+  announcement: string|null,       // 参加者向けアナウンス(最新1件。詳細ページ上部に掲示)
+  roundTimeMinutes: number|null,   // ラウンド制限時間(分)。null = タイマーなし
   regulation: {                    // デッキ構築レギュレーション
     name: string,                  // 例 "スタンダード"
     mainMin: 50, mainMax: 50,      // メイン枚数の下限/上限(ちょうど50 = 両方50)
@@ -71,7 +73,7 @@ Melee.gg のようなポータルサイトを目指す拡張の**全タスク共
 
 ### entry(大会参加)
 ```
-{ id, tournamentId, user: { id, name },
+{ id, tournamentId, user: { id: string|null, name },  // id null = ゲスト(主催者の手動追加)
   deckItems: [...]|null,           // 提出時点のスナップショット(items と同形式)
   decklistSubmittedAt: string|null,
   status: "registered" | "checked_in" | "dropped",
@@ -81,7 +83,8 @@ Melee.gg のようなポータルサイトを目指す拡張の**全タスク共
 ### round / match
 ```
 round: { id, tournamentId, number, stage: "swiss" | "top_cut",
-         status: "in_progress" | "completed" }
+         status: "in_progress" | "completed",
+         timerStartedAt: string|null }   // タイマー開始時刻(主催者が開始操作)
 match: { id, roundId, tableNo, player1EntryId, player2EntryId|null,  // null = 不戦勝(bye)
          result: "p1_win" | "p2_win" | "draw" | "bye" | null }
 ```
@@ -116,14 +119,27 @@ match: { id, roundId, tableNo, player1EntryId, player2EntryId|null,  // null = �
   違反内容を表示する)。
 
 ### organizer(自分が作成した大会のみ)
-- `POST /api/tournaments` / `PUT /api/tournaments/:id` — 作成・編集(status 変更含む)
+- `POST /api/tournaments` / `PUT /api/tournaments/:id` — 作成・編集(status・announcement・
+  regulation・roundTimeMinutes 等を含む)。**制約**: format / swissRounds / topCutSize は
+  ラウンド生成後は変更不可。regulation(禁止・制限等)を変更した場合、提出済み全デッキを
+  再検証し、新たに違反となった entry の一覧をレスポンスで返す(`{ tournament, violations:
+  [{ entryId, violations }] }`。自動で提出無効にはしない=主催者が個別対応)
 - `GET  /api/tournaments/:id/entries` — 参加者一覧(デッキリスト込み)
+- `POST /api/tournaments/:id/entries/manual` — **当日参加の手動追加** `{ name, deckItems? }`。
+  アカウント不要のゲスト(user.id = null)として登録
 - `PUT  /api/tournaments/:id/entries/:entryId` — `{ status }` 変更(チェックイン/ドロップ)
 - `POST /api/tournaments/:id/rounds` — 次ラウンドのペアリング生成(§5 のアルゴリズム)。
   swiss の規定ラウンド(`swissRounds`、null なら `ceil(log2(参加者数))`)終了後に呼ぶと、
   `topCutSize` 指定時は順位表上位でトップカット(stage: `top_cut`)のブラケットを自動生成する
-- `PUT  /api/matches/:id/result` — `{ result }` 報告
+- `PUT  /api/rounds/:id/matches` — **ペアリング手動修正**(未完了ラウンドのみ)。
+  `{ matches: [{ tableNo, player1EntryId, player2EntryId|null }] }` で全卓を置き換え。
+  全アクティブ参加者がちょうど1回ずつ登場することをサーバーで検証
+- `DELETE /api/rounds/:id` — **リペアリング用**。未完了ラウンドを破棄(その後 POST rounds で再生成)
+- `PUT  /api/matches/:id/result` — `{ result }` 報告。**完了済みラウンドの訂正も可**
+  (順位はすべて都度計算のため自動で反映)。ただしシングルエリミ/トップカットで
+  後続ラウンドの組と矛盾する訂正は 409 を返し、「後続ラウンドの破棄が必要」と伝える
 - `PUT  /api/rounds/:id` — `{ status: "completed" }`(全卓結果必須)
+- `POST /api/rounds/:id/timer` — **ラウンドタイマー開始**(timerStartedAt = now。再実行で再スタート)
 
 ### admin
 - `GET  /api/users?query=` / `PUT /api/users/:id/role` — organizer 権限付与
