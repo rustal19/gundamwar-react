@@ -16,6 +16,8 @@ orchestrator/ はローカル専用ツールで、gitには含めない(.gitigno
 
 - [docs/ROADMAP.md](docs/ROADMAP.md) — 現在地・残作業・レビューチェックリスト・検証ノウハウ
 - [docs/DESIGN_HANDOFF.md](docs/DESIGN_HANDOFF.md) — **デザイン・表示調整フェーズの引き継ぎ**(スタイル地図・作業ルール・確認方法・調整候補)
+- [docs/DESIGN_SPEC.md](docs/DESIGN_SPEC.md) — デザイン仕様v1(トークン定義・部品規約・実装フェーズD1/D2)
+- [docs/UI_SPEC.md](docs/UI_SPEC.md) — UI定義書v1(サイト名・ヘッダー・全ページの表示物・実装タスクU1〜U3)
 - [docs/SITE_DESIGN.md](docs/SITE_DESIGN.md) — サイト全体の情報設計・運用方針・**未決事項リスト(要ユーザー確認)**
 - [docs/PORTAL_SPEC.md](docs/PORTAL_SPEC.md) — 機能仕様(全タスク共通の契約)
 - [docs/BACKEND_DESIGN.md](docs/BACKEND_DESIGN.md) — サーバー側の設計(コード到着待ち)
