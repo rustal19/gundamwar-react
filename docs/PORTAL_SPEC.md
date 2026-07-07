@@ -106,6 +106,9 @@ match: { id, roundId, tableNo, player1EntryId, player2EntryId|null,  // null = �
 - `GET  /api/tournaments/:id/rounds` — ラウンドとマッチの一覧(`{ rounds: [{...round, matches: [...] }] }`)
   - デッキリストは「status が `completed` **かつ** `decklistsPublic` が true」の場合のみ
     本人と主催者以外に返す(entries も同じルール)
+  - **マッチの `result` は status が `completed` になるまで、リクエストユーザーが
+    当事者のマッチ以外は null にして返す**(主催者・admin には常に全結果を返す。
+    シングルエリミの勝ち上がり判定用に `winnerEntryId` のみ全員に返す)
 - `GET  /api/tournaments/:id/standings?round=N` — `round` 指定時は第Nラウンド終了時点の
   順位表(そのラウンドまでの matches のみで計算)。省略時は最新
 
