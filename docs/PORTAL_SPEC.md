@@ -110,8 +110,15 @@ match: { id, roundId, tableNo, player1EntryId, player2EntryId|null,  // null = �
 - `PUT  /api/users/me/profile` — `{ nickname }` の変更
 - `PATCH /api/decks/:id` — `{ isPublic, description, format }` の変更(公開/非公開切替。
   isPublic: true にする際は format 必須。公開時のフォーマット適合チェックは行わない=ラベルのみ)
-- `POST /api/tournaments/:id/entries` — エントリー `{ deckItems?: [...] }`
+- `POST /api/tournaments/:id/entries` — エントリー `{ deckItems?: [...] }`。
+  **decklistRequired の大会でもデッキなしでエントリー可**(提出は締切までに行えばよい。
+  未提出のまま締切を過ぎた場合の扱いは主催者判断=ドロップ操作)
 - `PUT  /api/tournaments/:id/entries/me` — 自分のデッキリスト提出/差し替え(締切前のみ)
+- `GET  /api/users/me/tournaments` — 自分がエントリーした大会一覧
+  (`{ items: [{ tournament, entry, needsDecklist: bool }] }`。参加予定/進行中/過去の全て)
+- `GET  /api/users/:id/profile` — 公開プロフィール
+  (`{ user: { id, nickname }, publicDecks: [...], results: [{ tournament, rank, wins, losses, draws }] }`。
+  results は completed の大会のみ。表示名は常に nickname)
 - `DELETE /api/tournaments/:id/entries/me` — エントリー取消(開始前のみ)
 - `POST /api/tournaments/:id/entries/me/drop` — 自主ドロップ(進行中でもラウンド間なら可)
 - デッキリスト提出はサーバー側で §5 の `validateDeck(items, regulation)` により検証し、
