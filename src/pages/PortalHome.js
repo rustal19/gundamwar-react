@@ -23,6 +23,12 @@ function formatDate(value) {
   });
 }
 
+function formatVenue(tournament) {
+  const venue = tournament.venue?.trim();
+  if (venue) return venue;
+  return tournament.isOnline ? "オンライン" : "未設定";
+}
+
 function countDeckItems(items) {
   return (Array.isArray(items) ? items : []).reduce(
     (sum, item) => sum + Number(item?.count || 0),
@@ -151,6 +157,7 @@ export default function PortalHome({ compact = false }) {
                     {TOURNAMENT_STATUS_LABELS[tournament.status] || tournament.status}
                   </span>
                   <span>開始 {formatDate(tournament.startsAt)}</span>
+                  <span>開催地 {formatVenue(tournament)}</span>
                   <span>
                     参加 {tournament.entryCount || 0}
                     {tournament.capacity == null ? "" : ` / ${tournament.capacity}`}

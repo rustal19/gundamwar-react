@@ -25,6 +25,10 @@ const DEFAULT_FORM = {
   startsAt: "",
   registrationClosesAt: "",
   capacity: "",
+  venue: "",
+  isOnline: false,
+  selfCheckin: false,
+  decklistsPublic: false,
   decklistRequired: false,
   regulation: {
     name: "スタンダード",
@@ -101,6 +105,10 @@ function formFromTournament(tournament) {
     startsAt: toDateTimeLocal(tournament.startsAt),
     registrationClosesAt: toDateTimeLocal(tournament.registrationClosesAt),
     capacity: tournament.capacity ?? "",
+    venue: tournament.venue || "",
+    isOnline: Boolean(tournament.isOnline),
+    selfCheckin: Boolean(tournament.selfCheckin),
+    decklistsPublic: Boolean(tournament.decklistsPublic),
     regulation: {
       ...DEFAULT_FORM.regulation,
       ...(tournament.regulation || {}),
@@ -119,6 +127,10 @@ function payloadFromForm(form) {
     startsAt: fromDateTimeLocal(form.startsAt),
     registrationClosesAt: fromDateTimeLocal(form.registrationClosesAt),
     capacity: numberOrNull(form.capacity),
+    venue: form.venue?.trim() ? form.venue.trim() : null,
+    isOnline: Boolean(form.isOnline),
+    selfCheckin: Boolean(form.selfCheckin),
+    decklistsPublic: Boolean(form.decklistsPublic),
     decklistRequired: Boolean(form.decklistRequired),
     regulation: {
       name: form.regulation.name,
@@ -197,6 +209,14 @@ export default function TournamentManage({ compact = false }) {
 
   const setField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const setOnline = (checked) => {
+    setForm((current) => ({
+      ...current,
+      isOnline: checked,
+      selfCheckin: checked ? true : current.selfCheckin,
+    }));
   };
 
   const setRegulationField = (field, value) => {
@@ -397,6 +417,38 @@ export default function TournamentManage({ compact = false }) {
                   </option>
                 ))}
               </select>
+            </label>
+            <label>
+              開催地
+              <input
+                value={form.venue}
+                placeholder="東京・秋葉原カードショップ○○"
+                onChange={(event) => setField("venue", event.target.value)}
+              />
+            </label>
+            <label className="tournament-checkbox">
+              <input
+                type="checkbox"
+                checked={form.isOnline}
+                onChange={(event) => setOnline(event.target.checked)}
+              />
+              オンライン大会
+            </label>
+            <label className="tournament-checkbox">
+              <input
+                type="checkbox"
+                checked={form.selfCheckin}
+                onChange={(event) => setField("selfCheckin", event.target.checked)}
+              />
+              セルフチェックインを許可
+            </label>
+            <label className="tournament-checkbox">
+              <input
+                type="checkbox"
+                checked={form.decklistsPublic}
+                onChange={(event) => setField("decklistsPublic", event.target.checked)}
+              />
+              終了後にデッキリストを公開
             </label>
             <label className="tournament-checkbox">
               <input

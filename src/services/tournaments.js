@@ -107,6 +107,10 @@ function createInitialStore() {
         startsAt: daysFromNow(-1),
         registrationClosesAt: daysFromNow(-2),
         capacity: 32,
+        venue: "東京・秋葉原カードショップ○○",
+        isOnline: false,
+        selfCheckin: false,
+        decklistsPublic: false,
         decklistRequired: true,
         regulation: DEFAULT_REGULATION,
         createdBy: { id: "organizer-1", name: "ローカル主催者" },
@@ -125,6 +129,10 @@ function createInitialStore() {
         startsAt: daysFromNow(7),
         registrationClosesAt: daysFromNow(6),
         capacity: 16,
+        venue: null,
+        isOnline: true,
+        selfCheckin: true,
+        decklistsPublic: false,
         decklistRequired: false,
         regulation: DEFAULT_REGULATION,
         createdBy: { id: "organizer-1", name: "ローカル主催者" },
@@ -180,6 +188,10 @@ function normalizeTournament(tournament, entries = []) {
     topCutSize: tournament.topCutSize ?? null,
     status: tournament.status || "draft",
     capacity: tournament.capacity ?? null,
+    venue: tournament.venue ? String(tournament.venue) : null,
+    isOnline: Boolean(tournament.isOnline),
+    selfCheckin: Boolean(tournament.selfCheckin),
+    decklistsPublic: Boolean(tournament.decklistsPublic),
     decklistRequired: Boolean(tournament.decklistRequired),
     regulation: { ...DEFAULT_REGULATION, ...(tournament.regulation || {}) },
     entryCount: entries.length,
@@ -249,6 +261,17 @@ function isBefore(dateString) {
   return Date.now() < new Date(dateString).getTime();
 }
 
+function isSameLocalDate(dateString, now = new Date()) {
+  if (!dateString) return false;
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return false;
+  return (
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  );
+}
+
 function assertCanEnter(tournament, entries, currentUser, deckItems) {
   if (tournament.status !== "registration") {
     throw new Error("現在この大会にはエントリーできません。");
@@ -294,7 +317,9 @@ function assertCanDeleteEntry(tournament) {
 
 function sanitizeEntryForViewer(entry, tournament, viewer) {
   const isOwner = viewer?.id && entry.user.id === String(viewer.id);
-  if (tournament.status === "completed" || isOwner) return entry;
+  const isOrganizer = viewer?.id && tournament.createdBy?.id === String(viewer.id);
+  const isPublicAfterCompleted = tournament.status === "completed" && tournament.decklistsPublic;
+  if (isOwner || isOrganizer || isPublicAfterCompleted) return entry;
   return { ...entry, deckItems: null, decklistSubmittedAt: entry.decklistSubmittedAt };
 }
 
@@ -620,6 +645,10 @@ export async function createTournament(data = {}) {
         startsAt: payload.startsAt || "",
         registrationClosesAt: payload.registrationClosesAt || "",
         capacity: payload.capacity ?? null,
+        venue: payload.venue ? String(payload.venue) : null,
+        isOnline: Boolean(payload.isOnline),
+        selfCheckin: Boolean(payload.selfCheckin),
+        decklistsPublic: Boolean(payload.decklistsPublic),
         decklistRequired: Boolean(payload.decklistRequired),
         regulation: { ...DEFAULT_REGULATION, ...(payload.regulation || {}) },
         createdBy: currentUser,
@@ -676,6 +705,44 @@ export async function updateTournament({ id, authMode, user, ...data }) {
   return requestJson(`/api/tournaments/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
+  });
+}
+
+export async function checkInMyEntry({ tournamentId, authMode, user }) {
+  if (authMode === "mock") {
+    const currentUser = getCurrentUser(user);
+    const store = readStore();
+    const tournament = normalizeTournament(
+      getTournamentOrThrow(store, tournamentId),
+      getEntries(store, tournamentId)
+    );
+    if (!tournament.selfCheckin) {
+      throw new Error("この大会はセルフチェックインを許可していません。");
+    }
+    if (!isSameLocalDate(tournament.startsAt)) {
+      throw new Error("セルフチェックインは開催日当日のみ利用できます。");
+    }
+    if (getRounds(store, tournamentId).length > 0) {
+      throw new Error("ラウンド生成後はセルフチェックインできません。");
+    }
+
+    const entries = getEntries(store, tournamentId);
+    const existing = entries.find(
+      (entry) => entry.user.id === currentUser.id && entry.status !== "dropped"
+    );
+    if (!existing) throw new Error("エントリーが見つかりません。");
+
+    const updated = normalizeEntry({ ...existing, status: "checked_in" });
+    store.entries[String(tournamentId)] = entries.map((entry) =>
+      entry.id === updated.id ? updated : entry
+    );
+    writeStore(store);
+    return updated;
+  }
+
+  return requestJson(`/api/tournaments/${tournamentId}/entries/me/checkin`, {
+    method: "POST",
+    body: JSON.stringify({}),
   });
 }
 

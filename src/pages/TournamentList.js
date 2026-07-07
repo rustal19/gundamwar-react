@@ -31,6 +31,12 @@ function formatDate(value) {
   });
 }
 
+function formatVenue(tournament) {
+  const venue = tournament.venue?.trim();
+  if (venue) return venue;
+  return tournament.isOnline ? "オンライン" : "未設定";
+}
+
 export default function TournamentList({ compact = false }) {
   const { authMode, isOrganizer } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -126,6 +132,7 @@ export default function TournamentList({ compact = false }) {
             </div>
             <div className="tournament-row-meta">
               <span>開始 {formatDate(tournament.startsAt)}</span>
+              <span>開催地 {formatVenue(tournament)}</span>
               <span>締切 {formatDate(tournament.registrationClosesAt)}</span>
               <span>
                 参加 {tournament.entryCount || 0}
