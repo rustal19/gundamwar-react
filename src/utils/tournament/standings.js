@@ -23,6 +23,11 @@ function createRecord(entryId) {
   };
 }
 
+function joinedAtRound(entry) {
+  const round = Number(entry?.joinedAtRound ?? 1);
+  return Number.isFinite(round) && round > 1 ? Math.floor(round) : 1;
+}
+
 function isCompletedMatch(match) {
   return match && match.result && RESULT_POINTS[match.result];
 }
@@ -88,6 +93,12 @@ export function computeStandings(entries, matches) {
       .sort((a, b) => compareEntryIds(a.id, b.id))
       .map((entry) => [entry.id, createRecord(entry.id)])
   );
+
+  entries.forEach((entry) => {
+    const record = records.get(entry.id);
+    if (!record) return;
+    record.losses += Math.max(0, joinedAtRound(entry) - 1);
+  });
 
   matches.forEach((match) => applyMatch(records, match));
 
