@@ -114,8 +114,8 @@ export default function PortalHome({ compact = false }) {
   return (
     <main className={compact ? "portal-home compact" : "portal-home"}>
       <section className="portal-hero">
-        <p className="portal-eyebrow">Gundam War Database</p>
-        <h1>Gundam War Database</h1>
+        <p className="portal-eyebrow">Gundam War Portal</p>
+        <h1>Gundam War Portal</h1>
         <p>
           ガンダムウォーのカード検索、デッキ構築、公開デッキ、大会情報をまとめて扱える
           非公式ファンサイトです。
