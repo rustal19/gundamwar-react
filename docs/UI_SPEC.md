@@ -26,7 +26,27 @@
   1. **ブランド**「Gundam War Portal」(クリックで `/`)
   2. **ナビ**(この順): ホーム(/) / カード検索(/search) / デッキ構築(/deck) /
      公開デッキ(/decks) / 大会(/tournaments)
-     - 各項目: Tablerアイコン+ラベル。アクティブ= `--gw-primary-soft` 地+ `--gw-primary-strong` 文字
+     - 各項目: アイコン+ラベル。アクティブ= `--gw-primary-soft` 地+ `--gw-primary-strong` 文字
+
+### アイコン(確定)
+
+- 実装方式: **npm依存を追加しない**。Tabler Icons(MITライセンス、outline系)の SVG パスを
+  `src/components/icons.js` にインラインReact部品として収録(冒頭コメントに出典とライセンスを明記)。
+  サイズは 20px(縮小時 22px)、`stroke="currentColor"` で色は文字色に追従
+- 割り当て:
+  | 項目 | Tabler名 |
+  |---|---|
+  | ホーム | home |
+  | カード検索 | search |
+  | デッキ構築 | stack-2 |
+  | 公開デッキ | cards |
+  | 大会 | trophy |
+  | 大会を作成 | circle-plus |
+  | 権限管理 | user-cog |
+  | プロフィール | user |
+  | ログイン / ログアウト | login-2 / logout |
+- **縮小時(56px)**: アイコンのみ表示。各項目に `title` とスクリーンリーダー用の
+  非表示ラベルを付け、ホバーでツールチップ(title)が出ること
   3. (下部・罫線区切り)**運営メニュー** — organizer/admin のログイン時のみ表示。
      一般ユーザー(user)・未ログインには**見出しごと非表示**:
      - セクション見出し「運営メニュー」(10.5px・muted)
