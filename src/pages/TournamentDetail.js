@@ -47,6 +47,12 @@ function formatDateTime(value) {
   });
 }
 
+function formatVenue(tournament) {
+  const venue = tournament.venue?.trim();
+  if (venue) return venue;
+  return tournament.isOnline ? "オンライン" : "未設定";
+}
+
 function isBefore(value) {
   if (!value) return true;
   return Date.now() < new Date(value).getTime();
@@ -255,6 +261,10 @@ export default function TournamentDetail({ compact = false }) {
             <dd>{tournament.format === "single_elim" ? "シングルエリミネーション" : "スイス"}</dd>
           </div>
           <div>
+            <dt>開催地</dt>
+            <dd>{formatVenue(tournament)}</dd>
+          </div>
+          <div>
             <dt>開始</dt>
             <dd>{formatDateTime(tournament.startsAt)}</dd>
           </div>
@@ -420,6 +430,7 @@ export default function TournamentDetail({ compact = false }) {
         <div>
           <p className="tournament-eyebrow">{STATUS_LABELS[tournament.status] || tournament.status}</p>
           <h1>{tournament.title}</h1>
+          <p>開催地 {formatVenue(tournament)} / 開始 {formatDateTime(tournament.startsAt)}</p>
           <p>{tournament.description || "説明はありません。"}</p>
         </div>
         <div className={`tournament-status ${tournament.status}`}>

@@ -1,4 +1,5 @@
 import {
+  checkInMyEntry,
   completeRound,
   createNextRound,
   createEntry,
@@ -45,6 +46,10 @@ function setRegistrationTournament(overrides = {}) {
           startsAt: future,
           registrationClosesAt: future,
           capacity: 8,
+          venue: null,
+          isOnline: false,
+          selfCheckin: false,
+          decklistsPublic: false,
           decklistRequired: false,
           regulation: {},
           createdBy: { id: "org", name: "主催者" },
@@ -99,6 +104,18 @@ describe("tournaments service mock mode", () => {
     expect(payload.items.map((tournament) => tournament.title)).toContain("ローカルスイス杯");
     expect(payload.items.map((tournament) => tournament.title)).toContain("週末エントリー受付大会");
     expect(payload.items[0].regulation.name).toBe("スタンダード");
+    expect(payload.items.find((tournament) => tournament.id === "mock-tournament-1")).toMatchObject({
+      venue: "東京・秋葉原カードショップ○○",
+      isOnline: false,
+      selfCheckin: false,
+      decklistsPublic: false,
+    });
+    expect(payload.items.find((tournament) => tournament.id === "mock-tournament-2")).toMatchObject({
+      venue: null,
+      isOnline: true,
+      selfCheckin: true,
+      decklistsPublic: false,
+    });
   });
 
   it("uses the real API unless authMode is mock", async () => {
@@ -167,6 +184,126 @@ describe("tournaments service mock mode", () => {
     expect(tournament.entries[0].decklistSubmittedAt).toBeTruthy();
   });
 
+  it("shows other players decklists only when completed and decklistsPublic is true", async () => {
+    setRegistrationTournament({ status: "completed", decklistsPublic: false });
+    const submittedAt = new Date().toISOString();
+    const deckItems = [
+      { cardId: "secret", count: 1, card: { cardId: "secret", name: "秘密兵器" }, zone: "main" },
+    ];
+    const store = readStore();
+    store.entries.t1 = [
+      {
+        id: "other-entry",
+        tournamentId: "t1",
+        user: { id: "other-user", name: "別プレイヤー" },
+        deckItems,
+        decklistSubmittedAt: submittedAt,
+        status: "registered",
+        createdAt: submittedAt,
+      },
+    ];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const hidden = await fetchTournament("t1", { authMode: "mock", user });
+    expect(hidden.entries[0].deckItems).toBeNull();
+
+    store.tournaments[0].decklistsPublic = true;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    const visible = await fetchTournament("t1", { authMode: "mock", user });
+    expect(visible.entries[0].deckItems).toEqual(deckItems);
+  });
+
+  it("allows owner and organizer to see submitted decklists even when not public", async () => {
+    setRegistrationTournament({ status: "completed", decklistsPublic: false });
+    const submittedAt = new Date().toISOString();
+    const deckItems = [
+      { cardId: "owner-card", count: 1, card: { cardId: "owner-card", name: "自分のカード" }, zone: "main" },
+    ];
+    const store = readStore();
+    store.entries.t1 = [
+      {
+        id: "my-entry",
+        tournamentId: "t1",
+        user: { id: user.id, name: user.name },
+        deckItems,
+        decklistSubmittedAt: submittedAt,
+        status: "registered",
+        createdAt: submittedAt,
+      },
+    ];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const ownerView = await fetchTournament("t1", { authMode: "mock", user });
+    expect(ownerView.entries[0].deckItems).toEqual(deckItems);
+
+    const organizerView = await fetchTournament("t1", {
+      authMode: "mock",
+      user: { id: "org", name: "主催者" },
+    });
+    expect(organizerView.entries[0].deckItems).toEqual(deckItems);
+  });
+
+  it("checks in my entry only on the tournament day before rounds are generated", async () => {
+    const today = new Date().toISOString();
+    setRegistrationTournament({ startsAt: today, selfCheckin: true });
+    const store = readStore();
+    store.entries.t1 = [
+      {
+        id: "my-entry",
+        tournamentId: "t1",
+        user,
+        deckItems: null,
+        decklistSubmittedAt: null,
+        status: "registered",
+        createdAt: today,
+      },
+    ];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const checkedIn = await checkInMyEntry({ tournamentId: "t1", authMode: "mock", user });
+    expect(checkedIn.status).toBe("checked_in");
+    expect(readStore().entries.t1[0].status).toBe("checked_in");
+  });
+
+  it("rejects self check-in when disabled, not on the day, or after rounds exist", async () => {
+    const today = new Date().toISOString();
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const entry = {
+      id: "my-entry",
+      tournamentId: "t1",
+      user,
+      deckItems: null,
+      decklistSubmittedAt: null,
+      status: "registered",
+      createdAt: today,
+    };
+
+    setRegistrationTournament({ startsAt: today, selfCheckin: false });
+    let store = readStore();
+    store.entries.t1 = [entry];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    await expect(checkInMyEntry({ tournamentId: "t1", authMode: "mock", user })).rejects.toThrow(
+      "セルフチェックインを許可していません"
+    );
+
+    setRegistrationTournament({ startsAt: tomorrow, selfCheckin: true });
+    store = readStore();
+    store.entries.t1 = [entry];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    await expect(checkInMyEntry({ tournamentId: "t1", authMode: "mock", user })).rejects.toThrow(
+      "開催日当日"
+    );
+
+    setRegistrationTournament({ startsAt: today, selfCheckin: true });
+    store = readStore();
+    store.entries.t1 = [entry];
+    store.rounds.t1 = [{ id: "round-1", tournamentId: "t1", number: 1, stage: "swiss", matches: [] }];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    await expect(checkInMyEntry({ tournamentId: "t1", authMode: "mock", user })).rejects.toThrow(
+      "ラウンド生成後"
+    );
+  });
+
   it("computes standings from mock rounds using tournament utility", async () => {
     const standings = await fetchStandings("mock-tournament-1", { authMode: "mock" });
 
@@ -184,6 +321,10 @@ describe("tournaments service mock mode", () => {
       topCutSize: null,
       status: "draft",
       capacity: 16,
+      venue: "オンライン Discord",
+      isOnline: true,
+      selfCheckin: true,
+      decklistsPublic: true,
       decklistRequired: true,
       regulation: { name: "Custom", mainMin: 40 },
       authMode: "mock",
@@ -191,6 +332,10 @@ describe("tournaments service mock mode", () => {
     });
 
     expect(created.id).toBeTruthy();
+    expect(created.venue).toBe("オンライン Discord");
+    expect(created.isOnline).toBe(true);
+    expect(created.selfCheckin).toBe(true);
+    expect(created.decklistsPublic).toBe(true);
     expect(created.regulation.name).toBe("Custom");
     expect(created.entryCount).toBe(0);
 
@@ -201,6 +346,7 @@ describe("tournaments service mock mode", () => {
       user,
     });
     expect(registration.status).toBe("registration");
+    expect(registration.venue).toBe("オンライン Discord");
 
     await expect(
       updateTournament({ id: created.id, status: "draft", authMode: "mock", user })
