@@ -3,7 +3,9 @@ import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useDeck } from "../context/DeckContext";
 import { fetchSavedDecks } from "../services/savedDecks";
+import TournamentMyStatus from "../components/TournamentMyStatus";
 import {
+  checkInMyEntry,
   createEntry,
   deleteMyEntry,
   fetchRounds,
@@ -228,6 +230,21 @@ export default function TournamentDetail({ compact = false }) {
     }
   };
 
+  const checkInEntry = async () => {
+    setIsSubmitting(true);
+    setError("");
+    setMessage("");
+    try {
+      await checkInMyEntry({ tournamentId: id, authMode, user });
+      setMessage("チェックインしました。");
+      await loadTournament();
+    } catch (checkInError) {
+      setError(checkInError.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (isLoading && !tournament) {
     return <main className="tournament-page">読み込み中...</main>;
   }
@@ -430,72 +447,28 @@ export default function TournamentDetail({ compact = false }) {
         </div>
       </div>
 
-      <section className="tournament-entry-panel">
-        <div>
-          <h2>{myEntry ? "参加中" : "エントリー"}</h2>
-          <p>
-            {isAuthenticated
-              ? tournament.decklistRequired
-                ? "保存デッキまたは現在のデッキを選んで提出してください。"
-                : "デッキ提出は任意です。"
-              : "ログイン後にエントリーできます。"}
-          </p>
-        </div>
-        {isAuthenticated ? (
-          <div className="tournament-entry-controls">
-            <label>
-              提出元
-              <select value={deckSource} onChange={(event) => setDeckSource(event.target.value)}>
-                <option value="current">現在のデッキ</option>
-                <option value="saved">保存デッキ</option>
-              </select>
-            </label>
-            {deckSource === "saved" ? (
-              <label>
-                保存デッキ
-                <select
-                  value={selectedDeckId}
-                  onChange={(event) => setSelectedDeckId(event.target.value)}
-                >
-                  <option value="">選択してください</option>
-                  {savedDecks.map((deck) => (
-                    <option key={deck.id} value={deck.id}>
-                      {deck.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-            <div className="tournament-deck-summary">
-              メイン {countCards(submittedItems, "main")} / サイド {countCards(submittedItems, "side")}
-            </div>
-            {deckViolations.length > 0 ? (
-              <div className="tournament-validation-alert">
-                <strong>デッキリストを提出できません。</strong>
-                <ul>
-                  {deckViolations.map((violation, index) => (
-                    <li key={`${violation.code}-${violation.cardName || index}`}>
-                      {violation.message}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-            <div className="tournament-entry-actions">
-              <button type="button" onClick={submitEntry} disabled={submitDisabled}>
-                {myEntry ? "デッキ提出/更新" : "エントリー"}
-              </button>
-              <button type="button" onClick={cancelEntry} disabled={!canCancel || isSubmitting}>
-                取消
-              </button>
-            </div>
-            {!canRegister && !myEntry ? <p className="tournament-muted">現在受付できません。</p> : null}
-            {myEntry && !canUpdateDeck ? (
-              <p className="tournament-muted">デッキリストの変更受付は終了しています。</p>
-            ) : null}
-          </div>
-        ) : null}
-      </section>
+      <TournamentMyStatus
+        tournament={tournament}
+        myEntry={myEntry}
+        entries={entries}
+        rounds={rounds}
+        isAuthenticated={isAuthenticated}
+        canRegister={canRegister}
+        canUpdateDeck={canUpdateDeck}
+        canCancel={canCancel}
+        deckSource={deckSource}
+        onDeckSourceChange={setDeckSource}
+        selectedDeckId={selectedDeckId}
+        onSelectedDeckChange={setSelectedDeckId}
+        savedDecks={savedDecks}
+        submittedItems={submittedItems}
+        deckViolations={deckViolations}
+        onSubmitEntry={submitEntry}
+        onCancelEntry={cancelEntry}
+        onCheckIn={checkInEntry}
+        submitDisabled={submitDisabled}
+        isSubmitting={isSubmitting}
+      />
 
       {message ? <div className="tournament-success">{message}</div> : null}
       {error ? <div className="tournament-alert">{error}</div> : null}

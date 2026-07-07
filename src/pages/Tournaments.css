@@ -222,6 +222,77 @@
   margin-top: 12px;
 }
 
+.tournament-my-status-band {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 12px;
+  border: 1px solid var(--gw-border);
+  border-radius: var(--gw-radius);
+  background: var(--gw-surface);
+  box-shadow: var(--gw-shadow-card);
+  padding: 18px;
+}
+
+.tournament-my-status-band.primary {
+  border-color: var(--gw-primary);
+  background: var(--gw-primary-soft);
+}
+
+.tournament-my-status-band.accent,
+.tournament-my-status-band.warning {
+  border-color: var(--gw-accent);
+  background: var(--gw-accent-soft);
+}
+
+.tournament-my-status-band h2,
+.tournament-my-status-band p {
+  margin: 6px 0 0;
+}
+
+.tournament-my-status-band h2 {
+  margin-top: 0;
+}
+
+.tournament-my-status-band > .tournament-entry-controls {
+  min-width: min(420px, 100%);
+}
+
+.tournament-my-table {
+  color: var(--gw-primary-strong);
+  font-size: 2.2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.tournament-my-status-result {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  color: var(--gw-text);
+  font-weight: 800;
+}
+
+.tournament-result-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--gw-radius-sm);
+  background: var(--gw-success-soft);
+  color: var(--gw-primary-strong);
+  padding: 6px 10px;
+}
+
+.tournament-result-badge.loss {
+  background: var(--gw-danger-soft);
+  color: var(--gw-danger);
+}
+
+.tournament-my-warning {
+  color: var(--gw-accent);
+  font-weight: 800;
+}
+
 .tournament-entry-controls {
   display: grid;
   min-width: min(420px, 100%);
@@ -421,7 +492,8 @@
 @media (max-width: 760px) {
   .tournament-page-header,
   .tournament-detail-header,
-  .tournament-entry-panel {
+  .tournament-entry-panel,
+  .tournament-my-status-band {
     display: grid;
   }
 
