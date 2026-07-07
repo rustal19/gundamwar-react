@@ -30,7 +30,7 @@
   color: var(--gw-text);
   background:
     linear-gradient(135deg, var(--gw-surface-glaze), var(--gw-surface-tint-strong)),
-    var(--gw-field-tint-strong);
+    var(--gw-field-bg);
 }
 
 .card-image-placeholder-code {

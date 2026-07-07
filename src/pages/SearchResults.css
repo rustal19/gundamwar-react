@@ -120,7 +120,7 @@
 .card-item {
   border: 1px solid var(--gw-secondary-border);
   box-sizing: border-box;
-  color: var(--gw-text-black);
+  color: var(--gw-text);
   overflow: hidden;
 }
 

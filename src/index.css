@@ -33,21 +33,16 @@
              system-ui, sans-serif;
 
   /* D1 既存UIをトークン化するための補助色 */
-  --gw-text-strong: #182132;
-  --gw-text-black: #000000;
-  --gw-link: #194fa3;
+  --gw-text-strong: #1d2620;
   --gw-completed-text: #5f5e5a;
   --gw-completed-soft: #ededea;
   --gw-warning-text: #67531b;
   --gw-warning-border: #ead78a;
   --gw-warning-soft: #fff8db;
-  --gw-field-bg: #f8fafc;
-  --gw-field-muted: #eef2f6;
-  --gw-field-tint: #eef3f8;
-  --gw-field-tint-strong: #eef2f7;
-  --gw-scrollbar-track: #edf1f6;
-  --gw-scrollbar-thumb: #8a97aa;
-  --gw-scrollbar-thumb-hover: #6f7d92;
+  --gw-field-bg: #f6f8f5;
+  --gw-scrollbar-track: #eef1ed;
+  --gw-scrollbar-thumb: #94a096;
+  --gw-scrollbar-thumb-hover: #7a877e;
   --gw-success: #1f5e3b;
   --gw-success-alt: #23683a;
   --gw-success-border: #9fd0b1;
@@ -97,6 +92,14 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+a {
+  color: var(--gw-primary);
+}
+
+a:hover {
+  color: var(--gw-primary-strong);
 }
 
 button:focus-visible,

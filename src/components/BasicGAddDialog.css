@@ -94,7 +94,7 @@
   display: block;
   object-fit: cover;
   border: 1px solid var(--gw-secondary-border-soft);
-  background: var(--gw-field-muted);
+  background: var(--gw-field-bg);
 }
 
 .basic-g-stepper {
@@ -188,7 +188,7 @@
   aspect-ratio: 63 / 88;
   object-fit: cover;
   display: block;
-  background: var(--gw-field-muted);
+  background: var(--gw-field-bg);
 }
 
 @media (max-width: 1280px) {

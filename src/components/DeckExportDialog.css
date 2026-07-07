@@ -53,7 +53,7 @@
   width: 100%;
   min-width: 760px;
   height: auto;
-  background: var(--gw-field-tint);
+  background: var(--gw-field-bg);
 }
 
 .deck-export-dialog-preview-empty {

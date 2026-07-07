@@ -166,7 +166,7 @@
   min-height: 28px;
   border: 1px solid transparent;
   border-radius: var(--gw-radius-sm);
-  background: var(--gw-field-tint);
+  background: var(--gw-field-bg);
   color: var(--gw-text);
   font-size: 0.82rem;
   font-weight: 800;
