@@ -142,7 +142,9 @@ match: { id, roundId, tableNo, player1EntryId, player2EntryId|null,  // null = �
 - `GET  /api/tournaments/:id/entries` — 参加者一覧(デッキリスト込み)
 - `POST /api/tournaments/:id/entries/manual` — **当日参加の手動追加** `{ name, deckItems? }`。
   アカウント不要のゲスト(user.id = null)として登録
-- `PUT  /api/tournaments/:id/entries/:entryId` — `{ status }` 変更(チェックイン/ドロップ)
+- `PUT  /api/tournaments/:id/entries/:entryId` — `{ status?, deckItems? }` 変更
+  (チェックイン/ドロップ、および**主催者による代理デッキ登録**=ゲストや紙提出の
+  参加者のリストを主催者が入力。validateDeck の検証は通常提出と同じ)
 - `POST /api/tournaments/:id/rounds` — 次ラウンドのペアリング生成(§5 のアルゴリズム)。
   swiss の規定ラウンド(`swissRounds`、null なら `ceil(log2(参加者数))`)終了後に呼ぶと、
   `topCutSize` 指定時は順位表上位でトップカット(stage: `top_cut`)のブラケットを自動生成する
