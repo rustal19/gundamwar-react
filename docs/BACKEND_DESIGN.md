@@ -48,6 +48,7 @@ CREATE TABLE tournaments (
   registration_closes_at DATETIME NULL,
   capacity INT NULL,
   decklist_required TINYINT(1) NOT NULL DEFAULT 1,
+  decklists_public TINYINT(1) NOT NULL DEFAULT 0,
   regulation JSON NOT NULL,        -- PORTAL_SPEC §2 の regulation 形状
   created_by VARCHAR(64) NOT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

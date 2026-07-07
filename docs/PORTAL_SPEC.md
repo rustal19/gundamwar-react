@@ -48,6 +48,7 @@ Melee.gg のようなポータルサイトを目指す拡張の**全タスク共
   venue: string|null,              // 開催地(自由記述。「東京・○○」「オンライン」等)
   startsAt, registrationClosesAt, capacity: number|null,
   decklistRequired: bool,
+  decklistsPublic: bool,           // 終了後にデッキリストを公開するか(既定 false、主催者が設定)
   regulation: {                    // デッキ構築レギュレーション
     name: string,                  // 例 "スタンダード"
     mainMin: 50, mainMax: 50,      // メイン枚数の下限/上限(ちょうど50 = 両方50)
@@ -95,7 +96,10 @@ match: { id, roundId, tableNo, player1EntryId, player2EntryId|null,  // null = �
 - `GET  /api/tournaments/:id` — 大会詳細
 - `GET  /api/tournaments/:id/standings` — 順位表(§5 のタイブレーカー込み)
 - `GET  /api/tournaments/:id/rounds` — ラウンドとマッチの一覧(`{ rounds: [{...round, matches: [...] }] }`)
-  - デッキリストは大会 status が `completed` になるまで本人と主催者以外に返さない
+  - デッキリストは「status が `completed` **かつ** `decklistsPublic` が true」の場合のみ
+    本人と主催者以外に返す(entries も同じルール)
+- `GET  /api/tournaments/:id/standings?round=N` — `round` 指定時は第Nラウンド終了時点の
+  順位表(そのラウンドまでの matches のみで計算)。省略時は最新
 
 ### 認証ユーザー
 - `PUT  /api/users/me/profile` — `{ nickname }` の変更
