@@ -32,6 +32,7 @@ ALTER TABLE users
 ALTER TABLE decks
   ADD COLUMN is_public TINYINT(1) NOT NULL DEFAULT 0,
   ADD COLUMN description TEXT NULL,
+  ADD COLUMN format VARCHAR(50) NULL,
   ADD COLUMN published_at DATETIME NULL;
 
 CREATE TABLE tournaments (

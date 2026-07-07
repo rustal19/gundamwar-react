@@ -31,7 +31,9 @@ Melee.gg のようなポータルサイトを目指す拡張の**全タスク共
 
 ### deck(既存 saved deck の拡張)
 ```
-{ id, title, items, isPublic: bool, description: string, publishedAt, createdAt, updatedAt,
+{ id, title, items, isPublic: bool, description: string,
+  format: string|null,    // フォーマット名(公開時に必須選択。src/data/formats.js の name)
+  publishedAt, createdAt, updatedAt,
   owner: { id, name } }   // owner は公開APIのレスポンスのみ
 ```
 - `items` は DeckContext と同形式: `[{ cardId, count, card, zone: "main"|"side" }]`
@@ -103,7 +105,8 @@ match: { id, roundId, tableNo, player1EntryId, player2EntryId|null,  // null = �
 
 ### 認証ユーザー
 - `PUT  /api/users/me/profile` — `{ nickname }` の変更
-- `PATCH /api/decks/:id` — `{ isPublic, description }` の変更(公開/非公開切替)
+- `PATCH /api/decks/:id` — `{ isPublic, description, format }` の変更(公開/非公開切替。
+  isPublic: true にする際は format 必須。公開時のフォーマット適合チェックは行わない=ラベルのみ)
 - `POST /api/tournaments/:id/entries` — エントリー `{ deckItems?: [...] }`
 - `PUT  /api/tournaments/:id/entries/me` — 自分のデッキリスト提出/差し替え(締切前のみ)
 - `DELETE /api/tournaments/:id/entries/me` — エントリー取消(開始前のみ)
