@@ -45,6 +45,7 @@ CREATE TABLE tournaments (
   status ENUM('draft','registration','in_progress','completed','cancelled')
     NOT NULL DEFAULT 'draft',
   venue VARCHAR(200) NULL,
+  is_online TINYINT(1) NOT NULL DEFAULT 0,
   starts_at DATETIME NULL,
   registration_closes_at DATETIME NULL,
   capacity INT NULL,
