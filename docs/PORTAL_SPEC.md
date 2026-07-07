@@ -48,8 +48,9 @@ Melee.gg のようなポータルサイトを目指す拡張の**全タスク共
   topCutSize: number|null,         // swiss のみ。null = カットなし。4/8/16
   status: "draft" | "registration" | "in_progress" | "completed" | "cancelled",
   venue: string|null,              // 開催地(自由記述。「東京・○○」等)
-  isOnline: bool,                  // オンライン大会(true なら参加者のセルフチェックイン可。
-                                   // venue 未入力時の表示は「オンライン」)
+  isOnline: bool,                  // オンライン大会(venue 未入力時の表示は「オンライン」)
+  selfCheckin: bool,               // セルフチェックイン許可(主催者が任意に設定。
+                                   // フォームで isOnline をオンにした際の既定値は true)
   startsAt, registrationClosesAt, capacity: number|null,
   decklistRequired: bool,
   decklistsPublic: bool,           // 終了後にデッキリストを公開するか(既定 false、主催者が設定)
@@ -124,7 +125,7 @@ match: { id, roundId, tableNo, player1EntryId, player2EntryId|null,  // null = �
 - `DELETE /api/tournaments/:id/entries/me` — エントリー取消(開始前のみ)
 - `POST /api/tournaments/:id/entries/me/drop` — 自主ドロップ(進行中でもラウンド間なら可)
 - `POST /api/tournaments/:id/entries/me/checkin` — **セルフチェックイン**。
-  `isOnline: true` の大会のみ・開催日当日かつラウンド生成前のみ可(それ以外は 403)
+  `selfCheckin: true` の大会のみ・開催日当日かつラウンド生成前のみ可(それ以外は 403)
 - デッキリスト提出はサーバー側で §5 の `validateDeck(items, regulation)` により検証し、
   **違反があれば 400 `{ error, violations }` で提出を拒否**する(フロントも提出前に同チェックを行い
   違反内容を表示する)。
