@@ -54,6 +54,7 @@ CREATE TABLE tournaments (
   decklists_public TINYINT(1) NOT NULL DEFAULT 0,
   announcement TEXT NULL,
   round_time_minutes INT NULL,
+  late_entry TINYINT(1) NOT NULL DEFAULT 0,
   regulation JSON NOT NULL,        -- PORTAL_SPEC §2 の regulation 形状
   created_by VARCHAR(64) NOT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -68,7 +69,8 @@ CREATE TABLE tournament_entries (
   guest_name VARCHAR(20) NULL,     -- ゲストの表示名(user_id が NULL のとき必須)
   deck_items JSON NULL,            -- 提出時スナップショット(items 形式)
   decklist_submitted_at DATETIME NULL,
-  status ENUM('registered','checked_in','dropped') NOT NULL DEFAULT 'registered',
+  status ENUM('pending','registered','checked_in','dropped') NOT NULL DEFAULT 'registered',
+  joined_at_round INT NOT NULL DEFAULT 1,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uq_entry (tournament_id, user_id),
@@ -92,7 +94,9 @@ CREATE TABLE matches (
   table_no INT NOT NULL,
   player1_entry_id INT NOT NULL,
   player2_entry_id INT NULL,       -- NULL = bye
-  result ENUM('p1_win','p2_win','draw','bye') NULL,
+  player1_games INT NULL,          -- BO3スコア(2-1 の 2)
+  player2_games INT NULL,
+  result ENUM('p1_win','p2_win','draw','bye') NULL,  -- スコアから導出して保存
   reported_at DATETIME NULL,
   KEY idx_round (round_id)
 );

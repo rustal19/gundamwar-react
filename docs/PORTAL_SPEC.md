@@ -56,6 +56,7 @@ Melee.gg のようなポータルサイトを目指す拡張の**全タスク共
   decklistsPublic: bool,           // 終了後にデッキリストを公開するか(既定 false、主催者が設定)
   announcement: string|null,       // 参加者向けアナウンス(最新1件。詳細ページ上部に掲示)
   roundTimeMinutes: number|null,   // ラウンド制限時間(分)。null = タイマーなし
+  lateEntry: bool,                 // 途中参加を許可(進行中の参加申請を受け付ける)
   regulation: {                    // デッキ構築レギュレーション
     name: string,                  // 例 "スタンダード"
     mainMin: 50, mainMax: 50,      // メイン枚数の下限/上限(ちょうど50 = 両方50)
@@ -79,7 +80,9 @@ Melee.gg のようなポータルサイトを目指す拡張の**全タスク共
 { id, tournamentId, user: { id: string|null, name },  // id null = ゲスト(主催者の手動追加)
   deckItems: [...]|null,           // 提出時点のスナップショット(items と同形式)
   decklistSubmittedAt: string|null,
-  status: "registered" | "checked_in" | "dropped",
+  status: "pending" | "registered" | "checked_in" | "dropped",  // pending = 途中参加の申請中
+  joinedAtRound: number,           // 第N回戦から参加(既定1。途中参加の承認時に
+                                   // 「完了済みラウンド数+1」が入り、それ以前は不戦敗扱い)
   createdAt }
 ```
 
@@ -89,7 +92,10 @@ round: { id, tournamentId, number, stage: "swiss" | "top_cut",
          status: "in_progress" | "completed",
          timerStartedAt: string|null }   // タイマー開始時刻(主催者が開始操作)
 match: { id, roundId, tableNo, player1EntryId, player2EntryId|null,  // null = 不戦勝(bye)
+         player1Games: number|null, player2Games: number|null,  // BO3スコア(例 2-1)
          result: "p1_win" | "p2_win" | "draw" | "bye" | null }
+// result はスコアから導出(p1>p2 → p1_win、p1<p2 → p2_win、同数 → draw)。
+// bye はスコアなしで result="bye"。表示は常に「2-1」等のスコア表記
 ```
 
 ## 3. API 契約
@@ -118,7 +124,9 @@ match: { id, roundId, tableNo, player1EntryId, player2EntryId|null,  // null = �
   isPublic: true にする際は format 必須。公開時のフォーマット適合チェックは行わない=ラベルのみ)
 - `POST /api/tournaments/:id/entries` — エントリー `{ deckItems?: [...] }`。
   **decklistRequired の大会でもデッキなしでエントリー可**(提出は締切までに行えばよい。
-  未提出のまま締切を過ぎた場合の扱いは主催者判断=ドロップ操作)
+  未提出のまま締切を過ぎた場合の扱いは主催者判断=ドロップ操作)。
+  **`lateEntry: true` の大会は status=in_progress 中も受け付け、その場合 status="pending"
+  (申請中)で作成**される(主催者の承認待ち。承認/却下は organizer API 参照)
 - `PUT  /api/tournaments/:id/entries/me` — 自分のデッキリスト提出/差し替え(締切前のみ)
 - `GET  /api/users/me/tournaments` — 自分がエントリーした大会一覧
   (`{ items: [{ tournament, entry, needsDecklist: bool }] }`。参加予定/進行中/過去の全て)
@@ -141,7 +149,12 @@ match: { id, roundId, tableNo, player1EntryId, player2EntryId|null,  // null = �
   [{ entryId, violations }] }`。自動で提出無効にはしない=主催者が個別対応)
 - `GET  /api/tournaments/:id/entries` — 参加者一覧(デッキリスト込み)
 - `POST /api/tournaments/:id/entries/manual` — **当日参加の手動追加** `{ name, deckItems? }`。
-  アカウント不要のゲスト(user.id = null)として登録
+  アカウント不要のゲスト(user.id = null)として登録。**進行中の追加も可**で、その場合
+  joinedAtRound = 完了済みラウンド数+1(それ以前は不戦敗として順位計算)
+- `PUT  /api/tournaments/:id/entries/:entryId/approve` — **途中参加申請の承認**。
+  pending → registered にし、joinedAtRound = 完了済みラウンド数+1 を設定
+- `DELETE /api/tournaments/:id/entries/:entryId` — 申請の却下(pending のみ)、
+  または draft/registration 中のエントリー削除
 - `PUT  /api/tournaments/:id/entries/:entryId` — `{ status?, deckItems? }` 変更
   (チェックイン/ドロップ、および**主催者による代理デッキ登録**=ゲストや紙提出の
   参加者のリストを主催者が入力。validateDeck の検証は通常提出と同じ)
@@ -152,7 +165,8 @@ match: { id, roundId, tableNo, player1EntryId, player2EntryId|null,  // null = �
   `{ matches: [{ tableNo, player1EntryId, player2EntryId|null }] }` で全卓を置き換え。
   全アクティブ参加者がちょうど1回ずつ登場することをサーバーで検証
 - `DELETE /api/rounds/:id` — **リペアリング用**。未完了ラウンドを破棄(その後 POST rounds で再生成)
-- `PUT  /api/matches/:id/result` — `{ result }` 報告。**完了済みラウンドの訂正も可**
+- `PUT  /api/matches/:id/result` — `{ player1Games, player2Games }` 報告(result はサーバーが
+  導出。bye は `{ result: "bye" }` のみ)。**完了済みラウンドの訂正も可**
   (順位はすべて都度計算のため自動で反映)。ただしシングルエリミ/トップカットで
   後続ラウンドの組と矛盾する訂正は 409 を返し、「後続ラウンドの破棄が必要」と伝える
 - `PUT  /api/rounds/:id` — `{ status: "completed" }`(全卓結果必須)
@@ -229,6 +243,8 @@ React/DOM に依存しないこと)。
 ### standings.js
 `computeStandings(entries, matches)` → 順位表配列
 - 勝点 → OMW%(オポネント・マッチ勝率、bye 除外、下限 1/3)→ 直接対決 → entryId。
+- **途中参加対応**: entry.joinedAtRound が 2 以上の場合、それ以前のラウンド数ぶんを
+  不戦敗として losses に加算(勝点 0)。不戦敗は bye と同様、OMW% の実対戦数には含めない
 - 出力: `[{ entryId, rank, wins, losses, draws, points, omwPercent }]`
 
 ## 6. タスク間の共有ルール
