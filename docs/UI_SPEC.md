@@ -27,9 +27,12 @@
   2. **ナビ**(この順): ホーム(/) / カード検索(/search) / デッキ構築(/deck) /
      公開デッキ(/decks) / 大会(/tournaments)
      - 各項目: Tablerアイコン+ラベル。アクティブ= `--gw-primary-soft` 地+ `--gw-primary-strong` 文字
-  3. (下部・罫線区切り)**ロール別メニュー**:
-     - 大会を作成(/tournaments/new)— organizer/admin のみ
+  3. (下部・罫線区切り)**運営メニュー** — organizer/admin のログイン時のみ表示。
+     一般ユーザー(user)・未ログインには**見出しごと非表示**:
+     - セクション見出し「運営メニュー」(10.5px・muted)
+     - 大会を作成(/tournaments/new)— organizer/admin
      - 権限管理(/admin/users)— admin のみ
+     - (初回のサイドバーモック `sidebar_workbench_layout_proposal` の構成が正)
   4. **ユーザー欄**(最下部): ログイン済み=イニシャル丸+ニックネーム。
      クリックでメニュー(プロフィール / ログアウト)。未ログイン=「ログイン」ボタン1つ
 - `/deck`(デッキ構築)のみ**アイコンだけの細い幅(56px)に自動縮小**
