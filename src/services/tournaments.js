@@ -112,6 +112,9 @@ function createInitialStore() {
         selfCheckin: false,
         decklistsPublic: false,
         decklistRequired: true,
+        announcement: null,
+        roundTimeMinutes: null,
+        lateEntry: false,
         regulation: DEFAULT_REGULATION,
         createdBy: { id: "organizer-1", name: "ローカル主催者" },
         entryCount: entries.length,
@@ -134,6 +137,9 @@ function createInitialStore() {
         selfCheckin: true,
         decklistsPublic: false,
         decklistRequired: false,
+        announcement: null,
+        roundTimeMinutes: null,
+        lateEntry: false,
         regulation: DEFAULT_REGULATION,
         createdBy: { id: "organizer-1", name: "ローカル主催者" },
         entryCount: 0,
@@ -160,6 +166,8 @@ function createInitialStore() {
               tableNo: 1,
               player1EntryId: "entry-1",
               player2EntryId: "entry-2",
+              player1Games: 2,
+              player2Games: 0,
               result: "p1_win",
             },
             {
@@ -168,6 +176,8 @@ function createInitialStore() {
               tableNo: 2,
               player1EntryId: "entry-3",
               player2EntryId: null,
+              player1Games: null,
+              player2Games: null,
               result: "bye",
             },
           ],
@@ -193,6 +203,9 @@ function normalizeTournament(tournament, entries = []) {
     selfCheckin: Boolean(tournament.selfCheckin),
     decklistsPublic: Boolean(tournament.decklistsPublic),
     decklistRequired: Boolean(tournament.decklistRequired),
+    announcement: tournament.announcement ? String(tournament.announcement) : null,
+    roundTimeMinutes: tournament.roundTimeMinutes ?? null,
+    lateEntry: Boolean(tournament.lateEntry),
     regulation: { ...DEFAULT_REGULATION, ...(tournament.regulation || {}) },
     entryCount: entries.length,
   };
@@ -205,12 +218,13 @@ function normalizeEntry(entry) {
     id: String(entry.id),
     tournamentId: String(entry.tournamentId),
     user: {
-      id: String(entry.user?.id || ""),
+      id: entry.user?.id == null ? null : String(entry.user.id),
       name: entry.user?.name || "プレイヤー",
     },
     deckItems: Array.isArray(entry.deckItems) ? entry.deckItems : null,
     decklistSubmittedAt: entry.decklistSubmittedAt || null,
     status: entry.status || "registered",
+    joinedAtRound: Math.max(1, Number(entry.joinedAtRound || 1)),
     createdAt: entry.createdAt || nowIso(),
   };
 }
@@ -273,10 +287,11 @@ function isSameLocalDate(dateString, now = new Date()) {
 }
 
 function assertCanEnter(tournament, entries, currentUser, deckItems) {
-  if (tournament.status !== "registration") {
+  const acceptsLateEntry = tournament.status === "in_progress" && tournament.lateEntry;
+  if (tournament.status !== "registration" && !acceptsLateEntry) {
     throw new Error("現在この大会にはエントリーできません。");
   }
-  if (!isBefore(tournament.registrationClosesAt)) {
+  if (!acceptsLateEntry && !isBefore(tournament.registrationClosesAt)) {
     throw new Error("エントリー締切を過ぎています。");
   }
   if (tournament.capacity != null && entries.length >= tournament.capacity) {
@@ -328,7 +343,46 @@ function flattenMatches(rounds) {
 }
 
 function activeEntriesForPairing(entries) {
-  return entries.filter((entry) => entry.status !== "dropped");
+  return entries.filter((entry) => !["dropped", "pending"].includes(entry.status));
+}
+
+function activeEntriesForRound(entries, roundNumber) {
+  return activeEntriesForPairing(entries).filter(
+    (entry) => Number(entry.joinedAtRound || 1) <= Number(roundNumber)
+  );
+}
+
+function completedRoundCount(store, tournamentId) {
+  return completedRounds(getRounds(store, tournamentId)).length;
+}
+
+function nextJoinRound(store, tournamentId) {
+  return completedRoundCount(store, tournamentId) + 1;
+}
+
+function deriveResultFromGames({ player1Games, player2Games, result, isBye }) {
+  if (isBye) return "bye";
+  if (result != null && (player1Games == null || player2Games == null)) {
+    if (!["p1_win", "p2_win", "draw"].includes(result)) {
+      throw new Error("不正な結果です。");
+    }
+    return result;
+  }
+
+  const p1 = Number(player1Games);
+  const p2 = Number(player2Games);
+  if (!Number.isInteger(p1) || !Number.isInteger(p2) || p1 < 0 || p2 < 0) {
+    throw new Error("ゲーム数を正しく入力してください。");
+  }
+  if (p1 > p2) return "p1_win";
+  if (p2 > p1) return "p2_win";
+  return "draw";
+}
+
+function winnerEntryId(match, result = match.result) {
+  if (result === "p1_win" || result === "bye") return match.player1EntryId;
+  if (result === "p2_win") return match.player2EntryId;
+  return null;
 }
 
 function swissRoundLimit(tournament, activeCount) {
@@ -352,8 +406,11 @@ function makeRound({ tournamentId, number, stage, pairs }) {
       tableNo: index + 1,
       player1EntryId: pair.player1EntryId,
       player2EntryId: pair.player2EntryId ?? null,
+      player1Games: null,
+      player2Games: null,
       result: pair.player2EntryId == null ? "bye" : null,
     })),
+    timerStartedAt: null,
   };
 }
 
@@ -395,13 +452,14 @@ function updateTournamentStatusIfDone(tournament, rounds, activeCount) {
 
 function buildNextRound(store, tournamentId) {
   const tournament = getTournamentOrThrow(store, tournamentId);
-  const entries = activeEntriesForPairing(getEntries(store, tournamentId));
+  let entries = activeEntriesForPairing(getEntries(store, tournamentId));
   if (entries.length === 0) throw new Error("参加者がいません。");
 
   const rounds = getRounds(store, tournamentId);
   assertNoOpenRound(rounds);
 
   const nextNumber = rounds.length + 1;
+  entries = activeEntriesForRound(entries, nextNumber);
   let pairs = [];
   let stage = "swiss";
 
@@ -541,13 +599,15 @@ export async function createEntry({ tournamentId, deckItems = null, authMode, us
     assertDeckIsValid(deckItems, tournament.regulation);
 
     const now = nowIso();
+    const isLatePending = tournament.status === "in_progress" && tournament.lateEntry;
     const entry = normalizeEntry({
       id: `entry-${Date.now()}`,
       tournamentId,
       user: currentUser,
       deckItems: Array.isArray(deckItems) && deckItems.length > 0 ? deckItems : null,
       decklistSubmittedAt: Array.isArray(deckItems) && deckItems.length > 0 ? now : null,
-      status: "registered",
+      status: isLatePending ? "pending" : "registered",
+      joinedAtRound: isLatePending ? nextJoinRound(store, tournamentId) : 1,
       createdAt: now,
     });
     store.entries[String(tournamentId)] = [entry, ...entries];
@@ -650,6 +710,9 @@ export async function createTournament(data = {}) {
         selfCheckin: Boolean(payload.selfCheckin),
         decklistsPublic: Boolean(payload.decklistsPublic),
         decklistRequired: Boolean(payload.decklistRequired),
+        announcement: payload.announcement ? String(payload.announcement) : null,
+        roundTimeMinutes: payload.roundTimeMinutes ?? null,
+        lateEntry: Boolean(payload.lateEntry),
         regulation: { ...DEFAULT_REGULATION, ...(payload.regulation || {}) },
         createdBy: currentUser,
         entryCount: 0,
@@ -686,11 +749,34 @@ export async function updateTournament({ id, authMode, user, ...data }) {
     }
 
     const entries = getEntries(store, id);
+    const rounds = getRounds(store, id);
+    if (rounds.length > 0) {
+      ["format", "swissRounds", "topCutSize"].forEach((field) => {
+        if (Object.prototype.hasOwnProperty.call(data, field) && data[field] !== existing[field]) {
+          throw new Error("ラウンド生成後は大会形式・回戦数・トップカット人数を変更できません。");
+        }
+      });
+    }
+    const regulationChanged = Object.prototype.hasOwnProperty.call(data, "regulation");
+    const nextRegulation = {
+      ...DEFAULT_REGULATION,
+      ...(existing.regulation || {}),
+      ...(data.regulation || {}),
+    };
+    const violations = regulationChanged
+      ? entries
+          .filter((entry) => Array.isArray(entry.deckItems) && entry.deckItems.length > 0)
+          .map((entry) => ({
+            entryId: entry.id,
+            violations: validateDeck(entry.deckItems, nextRegulation),
+          }))
+          .filter((item) => item.violations.length > 0)
+      : [];
     const updated = normalizeTournament(
       {
         ...existing,
         ...data,
-        regulation: { ...DEFAULT_REGULATION, ...(existing.regulation || {}), ...(data.regulation || {}) },
+        regulation: nextRegulation,
         updatedAt: nowIso(),
       },
       entries
@@ -699,7 +785,7 @@ export async function updateTournament({ id, authMode, user, ...data }) {
       String(item.id) === String(id) ? updated : item
     );
     writeStore(store);
-    return updated;
+    return regulationChanged ? { ...updated, violations } : updated;
   }
 
   return requestJson(`/api/tournaments/${id}`, {
@@ -756,17 +842,117 @@ export async function fetchEntries(tournamentId, { authMode } = {}) {
   return requestJson(`/api/tournaments/${tournamentId}/entries`, { method: "GET" });
 }
 
-export async function updateEntryStatus({ tournamentId, entryId, status, authMode }) {
+export async function createManualEntry({ tournamentId, name, deckItems = null, authMode }) {
   if (authMode === "mock") {
-    if (!["registered", "checked_in", "dropped"].includes(status)) {
-      throw new Error("不正な参加ステータスです。");
+    const store = readStore();
+    const tournament = getTournamentOrThrow(store, tournamentId);
+    const entries = getEntries(store, tournamentId);
+    if (!name || !String(name).trim()) {
+      throw new Error("参加者名を入力してください。");
     }
+    assertDeckIsValid(deckItems, tournament.regulation);
+
+    const now = nowIso();
+    const entry = normalizeEntry({
+      id: `entry-manual-${Date.now()}`,
+      tournamentId,
+      user: { id: null, name: String(name).trim() },
+      deckItems: Array.isArray(deckItems) && deckItems.length > 0 ? deckItems : null,
+      decklistSubmittedAt: Array.isArray(deckItems) && deckItems.length > 0 ? now : null,
+      status: "registered",
+      joinedAtRound: tournament.status === "in_progress" ? nextJoinRound(store, tournamentId) : 1,
+      createdAt: now,
+    });
+    store.entries[String(tournamentId)] = [entry, ...entries];
+    store.tournaments = store.tournaments.map((item) =>
+      String(item.id) === String(tournamentId)
+        ? { ...item, entryCount: store.entries[String(tournamentId)].length, updatedAt: now }
+        : item
+    );
+    writeStore(store);
+    return entry;
+  }
+
+  return requestJson(`/api/tournaments/${tournamentId}/entries/manual`, {
+    method: "POST",
+    body: JSON.stringify({ name, deckItems: Array.isArray(deckItems) ? deckItems : undefined }),
+  });
+}
+
+export async function approveEntry({ tournamentId, entryId, authMode }) {
+  if (authMode === "mock") {
     const store = readStore();
     getTournamentOrThrow(store, tournamentId);
     const entries = getEntries(store, tournamentId);
     const existing = entries.find((entry) => entry.id === String(entryId));
+    if (!existing || existing.status !== "pending") {
+      throw new Error("承認できる申請中の参加者が見つかりません。");
+    }
+    const updated = normalizeEntry({
+      ...existing,
+      status: "registered",
+      joinedAtRound: nextJoinRound(store, tournamentId),
+    });
+    store.entries[String(tournamentId)] = entries.map((entry) =>
+      entry.id === updated.id ? updated : entry
+    );
+    writeStore(store);
+    return updated;
+  }
+
+  return requestJson(`/api/tournaments/${tournamentId}/entries/${entryId}/approve`, {
+    method: "PUT",
+    body: JSON.stringify({}),
+  });
+}
+
+export async function rejectEntry({ tournamentId, entryId, authMode }) {
+  if (authMode === "mock") {
+    const store = readStore();
+    getTournamentOrThrow(store, tournamentId);
+    const entries = getEntries(store, tournamentId);
+    const existing = entries.find((entry) => entry.id === String(entryId));
+    if (!existing || existing.status !== "pending") {
+      throw new Error("却下できる申請中の参加者が見つかりません。");
+    }
+    const nextEntries = entries.filter((entry) => entry.id !== String(entryId));
+    store.entries[String(tournamentId)] = nextEntries;
+    store.tournaments = store.tournaments.map((item) =>
+      String(item.id) === String(tournamentId)
+        ? { ...item, entryCount: nextEntries.length, updatedAt: nowIso() }
+        : item
+    );
+    writeStore(store);
+    return;
+  }
+
+  await requestJson(`/api/tournaments/${tournamentId}/entries/${entryId}`, {
+    method: "DELETE",
+    body: JSON.stringify({}),
+  });
+}
+
+export async function updateEntryStatus({ tournamentId, entryId, status, deckItems, authMode }) {
+  if (authMode === "mock") {
+    if (status && !["registered", "checked_in", "dropped"].includes(status)) {
+      throw new Error("不正な参加ステータスです。");
+    }
+    const store = readStore();
+    const tournament = getTournamentOrThrow(store, tournamentId);
+    const entries = getEntries(store, tournamentId);
+    const existing = entries.find((entry) => entry.id === String(entryId));
     if (!existing) throw new Error("参加者が見つかりません。");
-    const updated = normalizeEntry({ ...existing, status });
+    if (deckItems !== undefined) {
+      assertDeckIsValid(deckItems, tournament.regulation);
+    }
+    const hasDeckItems = Array.isArray(deckItems) && deckItems.length > 0;
+    const updated = normalizeEntry({
+      ...existing,
+      status: status || existing.status,
+      deckItems: deckItems === undefined ? existing.deckItems : hasDeckItems ? deckItems : null,
+      decklistSubmittedAt:
+        deckItems === undefined ? existing.decklistSubmittedAt : hasDeckItems ? nowIso() : null,
+    });
     store.entries[String(tournamentId)] = entries.map((entry) =>
       entry.id === updated.id ? updated : entry
     );
@@ -776,7 +962,7 @@ export async function updateEntryStatus({ tournamentId, entryId, status, authMod
 
   return requestJson(`/api/tournaments/${tournamentId}/entries/${entryId}`, {
     method: "PUT",
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ status, deckItems: Array.isArray(deckItems) ? deckItems : undefined }),
   });
 }
 
@@ -801,19 +987,59 @@ export async function createNextRound(tournamentId, { authMode } = {}) {
   });
 }
 
-export async function reportMatchResult({ matchId, result, authMode }) {
+export async function reportMatchResult({ matchId, player1Games, player2Games, result, authMode }) {
   if (authMode === "mock") {
-    if (!["p1_win", "p2_win", "draw", "bye", null].includes(result)) {
+    if (result !== undefined && !["p1_win", "p2_win", "draw", "bye", null].includes(result)) {
       throw new Error("不正な結果です。");
     }
     const store = readStore();
     let updatedMatch = null;
+    let found = null;
+    Object.keys(store.rounds).forEach((tournamentId) => {
+      getRounds(store, tournamentId).forEach((round) => {
+        (round.matches || []).forEach((match) => {
+          if (match.id === matchId) found = { tournamentId, round, match };
+        });
+      });
+    });
+    if (!found) throw new Error("試合が見つかりません。");
+
+    const isBye = found.match.player2EntryId == null || found.match.result === "bye" || result === "bye";
+    const nextResult =
+      result === null && player1Games == null && player2Games == null
+        ? null
+        : deriveResultFromGames({ player1Games, player2Games, result, isBye });
+    const oldWinner = winnerEntryId(found.match);
+    const nextWinner = nextResult ? winnerEntryId(found.match, nextResult) : null;
+    const tournament = getTournamentOrThrow(store, found.tournamentId);
+    const isElimination = found.round.stage === "top_cut" || tournament.format === "single_elim";
+    const hasLaterRounds = getRounds(store, found.tournamentId).some(
+      (round) => Number(round.number) > Number(found.round.number)
+    );
+    if (isElimination && hasLaterRounds && oldWinner !== nextWinner) {
+      throw new Error("結果の訂正が後続ラウンドの組み合わせと矛盾します。後続ラウンドを破棄してください。");
+    }
     Object.keys(store.rounds).forEach((tournamentId) => {
       store.rounds[tournamentId] = getRounds(store, tournamentId).map((round) => ({
         ...round,
         matches: (round.matches || []).map((match) => {
           if (match.id !== matchId) return match;
-          updatedMatch = { ...match, result };
+          updatedMatch = {
+            ...match,
+            player1Games:
+              nextResult === null || isBye
+                ? null
+                : player1Games == null
+                  ? match.player1Games ?? null
+                  : Number(player1Games),
+            player2Games:
+              nextResult === null || isBye
+                ? null
+                : player2Games == null
+                  ? match.player2Games ?? null
+                  : Number(player2Games),
+            result: nextResult,
+          };
           return updatedMatch;
         }),
       }));
@@ -825,7 +1051,121 @@ export async function reportMatchResult({ matchId, result, authMode }) {
 
   return requestJson(`/api/matches/${matchId}/result`, {
     method: "PUT",
-    body: JSON.stringify({ result }),
+    body: JSON.stringify({ player1Games, player2Games }),
+  });
+}
+
+export async function updateRoundMatches({ roundId, matches, authMode }) {
+  if (authMode === "mock") {
+    const store = readStore();
+    let updatedRound = null;
+    let tournamentIdForRound = "";
+    let targetRound = null;
+
+    Object.keys(store.rounds).forEach((tournamentId) => {
+      const round = getRounds(store, tournamentId).find((item) => item.id === roundId);
+      if (round) {
+        tournamentIdForRound = tournamentId;
+        targetRound = round;
+      }
+    });
+    if (!targetRound) throw new Error("ラウンドが見つかりません。");
+    if (targetRound.status === "completed") {
+      throw new Error("完了済みラウンドの組み合わせは変更できません。");
+    }
+    if (!Array.isArray(matches) || matches.length === 0) {
+      throw new Error("組み合わせを入力してください。");
+    }
+
+    const activeIds = activeEntriesForRound(
+      getEntries(store, tournamentIdForRound),
+      targetRound.number
+    ).map((entry) => entry.id);
+    const expected = new Set(activeIds);
+    const seen = new Set();
+    matches.forEach((match) => {
+      [match.player1EntryId, match.player2EntryId].forEach((entryId) => {
+        if (entryId == null) return;
+        const id = String(entryId);
+        if (!expected.has(id)) throw new Error("組み合わせに参加対象外の参加者が含まれています。");
+        if (seen.has(id)) throw new Error("同じ参加者が複数の卓に含まれています。");
+        seen.add(id);
+      });
+    });
+    if (seen.size !== expected.size) {
+      throw new Error("全アクティブ参加者がちょうど1回ずつ出場する必要があります。");
+    }
+
+    const nextMatches = matches.map((match, index) => ({
+      id: match.id || `match-${roundId}-${index + 1}-${Date.now()}`,
+      roundId,
+      tableNo: Number(match.tableNo || index + 1),
+      player1EntryId: String(match.player1EntryId),
+      player2EntryId: match.player2EntryId == null ? null : String(match.player2EntryId),
+      player1Games: null,
+      player2Games: null,
+      result: match.player2EntryId == null ? "bye" : null,
+    }));
+
+    store.rounds[tournamentIdForRound] = getRounds(store, tournamentIdForRound).map((round) => {
+      if (round.id !== roundId) return round;
+      updatedRound = { ...round, matches: nextMatches };
+      return updatedRound;
+    });
+    writeStore(store);
+    return updatedRound;
+  }
+
+  return requestJson(`/api/rounds/${roundId}/matches`, {
+    method: "PUT",
+    body: JSON.stringify({ matches }),
+  });
+}
+
+export async function deleteRound(roundId, { authMode } = {}) {
+  if (authMode === "mock") {
+    const store = readStore();
+    let deleted = false;
+    Object.keys(store.rounds).forEach((tournamentId) => {
+      const rounds = getRounds(store, tournamentId);
+      const target = rounds.find((round) => round.id === roundId);
+      if (!target) return;
+      if (target.status === "completed") {
+        throw new Error("完了済みラウンドは削除できません。");
+      }
+      store.rounds[tournamentId] = rounds.filter((round) => round.id !== roundId);
+      deleted = true;
+    });
+    if (!deleted) throw new Error("ラウンドが見つかりません。");
+    writeStore(store);
+    return;
+  }
+
+  await requestJson(`/api/rounds/${roundId}`, {
+    method: "DELETE",
+    body: JSON.stringify({}),
+  });
+}
+
+export async function startRoundTimer(roundId, { timerStartedAt, authMode } = {}) {
+  if (authMode === "mock") {
+    const store = readStore();
+    let updatedRound = null;
+    Object.keys(store.rounds).forEach((tournamentId) => {
+      store.rounds[tournamentId] = getRounds(store, tournamentId).map((round) => {
+        if (round.id !== roundId) return round;
+        updatedRound = { ...round, timerStartedAt: timerStartedAt || nowIso() };
+        return updatedRound;
+      });
+    });
+    if (!updatedRound) throw new Error("ラウンドが見つかりません。");
+    writeStore(store);
+    return updatedRound;
+  }
+
+  return requestJson(`/api/rounds/${roundId}/timer`, {
+    method: "POST",
+    body: JSON.stringify({ timerStartedAt }),
   });
 }
 

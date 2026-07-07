@@ -60,4 +60,22 @@ describe("computeStandings", () => {
 
     expect(standings.find((standing) => standing.entryId === "A").omwPercent).toBeCloseTo(1);
   });
+
+  it("counts rounds before joinedAtRound as losses without affecting OMW%", () => {
+    const standings = computeStandings(
+      [
+        { id: "A", status: "checked_in" },
+        { id: "B", status: "checked_in" },
+        { id: "C", status: "registered", joinedAtRound: 3 },
+      ],
+      [
+        { player1EntryId: "C", player2EntryId: "A", result: "p1_win" },
+      ]
+    );
+
+    const late = standings.find((standing) => standing.entryId === "C");
+    expect(late.losses).toBe(2);
+    expect(late.points).toBe(3);
+    expect(late.omwPercent).toBeCloseTo(1 / 3);
+  });
 });
