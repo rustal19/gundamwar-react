@@ -19,7 +19,7 @@
 
 .search-results-summary {
   margin-top: 0.35rem;
-  color: #546173;
+  color: var(--gw-text-muted);
 }
 
 .deck-search-results-panel .deck-panel-header {
@@ -59,9 +59,9 @@
 .results-link-button,
 .deck-action-button,
 .pagination button {
-  border: 1px solid #cfd6df;
-  background: #fff;
-  color: #253042;
+  border: 1px solid var(--gw-secondary-border);
+  background: var(--gw-surface);
+  color: var(--gw-primary);
   padding: 0.6rem 0.9rem;
   font: inherit;
   cursor: pointer;
@@ -72,14 +72,14 @@
 
 .results-link-button.primary,
 .deck-action-button.primary {
-  border-color: #253042;
-  background: #253042;
-  color: #fff;
+  border-color: var(--gw-primary);
+  background: var(--gw-primary);
+  color: var(--gw-on-primary);
 }
 
 .results-empty-state {
-  border: 1px solid #d8dee8;
-  background: #f8fafc;
+  border: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-field-bg);
   padding: 1rem;
 }
 
@@ -101,9 +101,9 @@
 }
 
 .search-results-view-toggle button {
-  border: 1px solid #cfd6df;
-  background: #fff;
-  color: #253042;
+  border: 1px solid var(--gw-secondary-border);
+  background: var(--gw-surface);
+  color: var(--gw-primary);
   padding: 0.45rem 0.65rem;
   font: inherit;
   cursor: pointer;
@@ -112,15 +112,15 @@
 }
 
 .search-results-view-toggle button.active {
-  border-color: #253042;
-  background: #253042;
-  color: #fff;
+  border-color: var(--gw-primary);
+  background: var(--gw-primary);
+  color: var(--gw-on-primary);
 }
 
 .card-item {
-  border: 1px solid #cfd6df;
+  border: 1px solid var(--gw-secondary-border);
   box-sizing: border-box;
-  color: #000;
+  color: var(--gw-text-black);
   overflow: hidden;
 }
 
@@ -145,8 +145,8 @@
 
 .result-card-image-frame {
   position: relative;
-  border: 1px solid #cfd6df;
-  background: #fff;
+  border: 1px solid var(--gw-secondary-border);
+  background: var(--gw-surface);
 }
 
 .result-card-image-zone-actions {
@@ -160,7 +160,7 @@
 }
 
 .result-card-image-meta {
-  color: #526071;
+  color: var(--gw-text-muted);
   font-size: 0.8rem;
   text-align: center;
 }
@@ -173,9 +173,9 @@
   height: 1.8rem;
   display: inline-grid;
   place-items: center;
-  border: 1px solid #253042;
-  background: #253042;
-  color: #fff;
+  border: 1px solid var(--gw-primary);
+  background: var(--gw-primary);
+  color: var(--gw-on-primary);
   font-weight: 700;
   font-size: 0.9rem;
 }
@@ -237,7 +237,7 @@
 .deck-count-label {
   min-width: 1rem;
   font-size: 0.8rem;
-  color: #526071;
+  color: var(--gw-text-muted);
   font-weight: 700;
 }
 
@@ -248,7 +248,7 @@
 }
 
 .card-divider {
-  border-top: 1px solid rgba(37, 48, 66, 0.18);
+  border-top: 1px solid var(--gw-border-translucent);
   margin: 0.8rem 0;
 }
 
@@ -286,9 +286,9 @@
 
 .pagination-current,
 .pagination button:disabled {
-  border-color: #253042;
-  background: #253042;
-  color: #fff;
+  border-color: var(--gw-primary);
+  background: var(--gw-primary);
+  color: var(--gw-on-primary);
   cursor: default;
 }
 

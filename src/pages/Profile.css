@@ -4,8 +4,8 @@
 }
 
 .profile-panel {
-  border: 1px solid #d8dee8;
-  background: #fff;
+  border: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-surface);
   padding: 1.25rem;
   display: grid;
   gap: 1.1rem;
@@ -20,20 +20,20 @@
 
 .profile-heading h1 {
   margin: 0 0 0.35rem;
-  color: #182132;
+  color: var(--gw-text-strong);
   font-size: 1.35rem;
 }
 
 .profile-note {
   margin: 0;
-  color: #526071;
+  color: var(--gw-text-muted);
   font-size: 0.94rem;
 }
 
 .profile-current,
 .profile-private-info {
-  border: 1px solid #d8dee8;
-  background: #f8fafc;
+  border: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-field-bg);
   padding: 0.75rem;
   display: grid;
   gap: 0.18rem;
@@ -46,13 +46,13 @@
 
 .profile-current span,
 .profile-private-info span {
-  color: #6b7787;
+  color: var(--gw-text-muted);
   font-size: 0.78rem;
 }
 
 .profile-current strong,
 .profile-private-info strong {
-  color: #253042;
+  color: var(--gw-primary);
 }
 
 .profile-form {
@@ -63,7 +63,7 @@
 .profile-field {
   display: grid;
   gap: 0.35rem;
-  color: #253042;
+  color: var(--gw-primary);
   font-weight: 700;
   font-size: 0.92rem;
 }
@@ -71,7 +71,7 @@
 .profile-field input {
   width: 100%;
   min-width: 0;
-  border: 1px solid #cfd6df;
+  border: 1px solid var(--gw-secondary-border);
   padding: 0.58rem 0.7rem;
   font: inherit;
   box-sizing: border-box;
@@ -79,7 +79,7 @@
 
 .profile-private-info p {
   margin: 0;
-  color: #526071;
+  color: var(--gw-text-muted);
   font-size: 0.84rem;
 }
 
@@ -90,11 +90,11 @@
 }
 
 .profile-error {
-  color: #972626;
+  color: var(--gw-danger-strong);
 }
 
 .profile-message {
-  color: #23683a;
+  color: var(--gw-success-alt);
 }
 
 .profile-actions {

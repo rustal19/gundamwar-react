@@ -2,22 +2,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { fetchTournaments } from "../services/tournaments";
+import {
+  TOURNAMENT_STATUS_LABELS as STATUS_LABELS,
+  TOURNAMENT_STATUS_OPTIONS as STATUS_OPTIONS,
+} from "../data/statusLabels";
 import "./Tournaments.css";
 
-const STATUS_OPTIONS = [
-  { value: "", label: "すべて" },
-  { value: "registration", label: "受付中" },
-  { value: "in_progress", label: "進行中" },
-  { value: "completed", label: "完了" },
-  { value: "cancelled", label: "中止" },
-];
-
-const STATUS_LABELS = {
-  registration: "受付中",
-  in_progress: "進行中",
-  completed: "完了",
-  cancelled: "中止",
-};
 
 function formatDate(value) {
   if (!value) return "-";

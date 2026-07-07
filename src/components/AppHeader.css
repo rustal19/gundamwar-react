@@ -14,8 +14,8 @@
 }
 
 .app-header {
-  border-bottom: 1px solid #d8dee8;
-  background: #fff;
+  border-bottom: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-surface);
   position: sticky;
   top: 0;
   z-index: 20;
@@ -41,7 +41,7 @@
 }
 
 .app-brand-link {
-  color: #253042;
+  color: var(--gw-primary);
   text-decoration: none;
   font-size: 1.2rem;
   font-weight: 700;
@@ -57,9 +57,9 @@
 
 .app-nav-link,
 .app-auth-button {
-  border: 1px solid #d8dee8;
-  background: #f8fafc;
-  color: #4b5a6c;
+  border: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-field-bg);
+  color: var(--gw-text-muted);
   padding: 0.38rem 0.7rem;
   text-decoration: none;
   font: inherit;
@@ -72,9 +72,9 @@
 }
 
 .app-nav-link.active {
-  border-color: #253042;
-  background: #253042;
-  color: #fff;
+  border-color: var(--gw-primary);
+  background: var(--gw-primary);
+  color: var(--gw-on-primary);
 }
 
 .app-auth {
@@ -94,11 +94,11 @@
 
 .app-auth-label {
   font-size: 0.75rem;
-  color: #6b7787;
+  color: var(--gw-text-muted);
 }
 
 .app-auth-status strong {
-  color: #253042;
+  color: var(--gw-primary);
   font-size: 0.88rem;
   overflow: hidden;
   text-overflow: ellipsis;

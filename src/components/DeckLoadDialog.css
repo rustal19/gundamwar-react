@@ -1,7 +1,7 @@
 .deck-load-dialog-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.48);
+  background: var(--gw-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -12,9 +12,9 @@
 .deck-load-dialog {
   width: min(1420px, calc(100vw - 3rem));
   max-height: calc(100vh - 3rem);
-  background: #fff;
-  border: 1px solid #d8dee8;
-  box-shadow: 0 20px 56px rgba(15, 23, 42, 0.24);
+  background: var(--gw-surface);
+  border: 1px solid var(--gw-secondary-border-soft);
+  box-shadow: 0 20px 56px var(--gw-shadow-modal-color);
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 1rem;
@@ -31,14 +31,14 @@
 .deck-load-dialog-header h3 {
   margin: 0;
   font-size: 1.05rem;
-  color: #182132;
+  color: var(--gw-text-strong);
 }
 
 .deck-load-dialog-note,
 .deck-load-dialog-preview-header p,
 .deck-load-dialog-list-meta {
   margin: 0;
-  color: #526071;
+  color: var(--gw-text-muted);
   font-size: 0.86rem;
 }
 
@@ -51,8 +51,8 @@
 
 .deck-load-dialog-list-panel,
 .deck-load-dialog-preview-panel {
-  border: 1px solid #d8dee8;
-  background: #f8fafc;
+  border: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-field-bg);
   min-height: 0;
 }
 
@@ -65,7 +65,7 @@
   padding: 0.9rem 0.95rem 0.7rem;
   font-size: 0.96rem;
   font-weight: 700;
-  color: #182132;
+  color: var(--gw-text-strong);
 }
 
 .deck-load-dialog-list,
@@ -85,14 +85,14 @@
 .deck-load-dialog-preview-empty {
   display: grid;
   place-items: center;
-  color: #5c6878;
+  color: var(--gw-text-muted);
   font-size: 0.94rem;
 }
 
 .deck-load-dialog-list-item {
   width: 100%;
-  border: 1px solid #d8dee8;
-  background: #fff;
+  border: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-surface);
   padding: 0.58rem 0.68rem;
   display: grid;
   gap: 0.08rem;
@@ -101,13 +101,13 @@
 }
 
 .deck-load-dialog-list-item.active {
-  border-color: #253042;
-  box-shadow: inset 0 0 0 1px #253042;
+  border-color: var(--gw-primary);
+  box-shadow: inset 0 0 0 1px var(--gw-primary);
 }
 
 .deck-load-dialog-list-title {
   font-weight: 700;
-  color: #253042;
+  color: var(--gw-primary);
   font-size: 0.9rem;
   line-height: 1.18;
 }
@@ -134,12 +134,12 @@
 .deck-load-dialog-preview-header h4 {
   margin: 0 0 0.2rem;
   font-size: 1rem;
-  color: #182132;
+  color: var(--gw-text-strong);
 }
 
 .deck-load-dialog-preview-frame {
-  border: 1px solid #d8dee8;
-  background: #fff;
+  border: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-surface);
   overflow: auto;
   padding: 0.8rem;
 }
@@ -149,7 +149,7 @@
   width: 100%;
   min-width: 760px;
   height: auto;
-  background: #eef3f8;
+  background: var(--gw-field-tint);
 }
 
 .deck-load-dialog-actions {
@@ -160,8 +160,8 @@
 }
 
 .deck-publication-panel {
-  border: 1px solid #d8dee8;
-  background: #fff;
+  border: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-surface);
   padding: 0.8rem;
   display: grid;
   gap: 0.65rem;
@@ -172,12 +172,12 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
-  color: #253042;
+  color: var(--gw-primary);
 }
 
 .deck-publication-header span,
 .deck-publication-message {
-  color: #526071;
+  color: var(--gw-text-muted);
   font-size: 0.84rem;
 }
 
@@ -185,7 +185,7 @@
   width: 100%;
   min-width: 0;
   resize: vertical;
-  border: 1px solid #cfd6df;
+  border: 1px solid var(--gw-secondary-border);
   padding: 0.55rem 0.65rem;
   font: inherit;
   box-sizing: border-box;
@@ -204,7 +204,7 @@
 
 .deck-load-dialog-error {
   margin: 0;
-  color: #972626;
+  color: var(--gw-danger-strong);
   font-size: 0.9rem;
 }
 

@@ -6,8 +6,8 @@
   max-width: 1200px;
   margin: 20px auto;
   padding: 20px;
-  background-color: #ebffe3;
-  border: 1px solid #ddd;
+  background-color: var(--gw-primary-soft);
+  border: 1px solid var(--gw-border);
   border-radius: 4px;
   box-sizing: border-box;
 }
@@ -21,7 +21,7 @@
 }
 
 .form-row:not(:last-child) {
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid var(--gw-border-strong);
   padding-bottom: 10px;
   margin-bottom: 0px;
 }

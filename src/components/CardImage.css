@@ -1,8 +1,8 @@
 .card-image-frame {
   width: 100%;
   aspect-ratio: 63 / 88;
-  border: 1px solid #cfd6df;
-  background: #f7f9fc;
+  border: 1px solid var(--gw-secondary-border);
+  background: var(--gw-field-bg);
   overflow: hidden;
   display: flex;
   align-items: stretch;
@@ -27,10 +27,10 @@
   place-items: center;
   padding: 0.75rem;
   text-align: center;
-  color: #3f4a5a;
+  color: var(--gw-text);
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.75), rgba(232, 237, 244, 0.95)),
-    #eef2f7;
+    linear-gradient(135deg, var(--gw-surface-glaze), var(--gw-surface-tint-strong)),
+    var(--gw-field-tint-strong);
 }
 
 .card-image-placeholder-code {

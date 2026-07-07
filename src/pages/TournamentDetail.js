@@ -11,6 +11,10 @@ import {
   fetchTournament,
   updateMyEntry,
 } from "../services/tournaments";
+import {
+  ROUND_STATUS_LABELS,
+  TOURNAMENT_STATUS_LABELS as STATUS_LABELS,
+} from "../data/statusLabels";
 import { defaultRegulation, validateDeck } from "../utils/deckValidation";
 import "./Tournaments.css";
 
@@ -21,18 +25,6 @@ const TABS = [
   { id: "standings", label: "順位表" },
 ];
 
-const STATUS_LABELS = {
-  registration: "受付中",
-  in_progress: "進行中",
-  completed: "完了",
-  cancelled: "中止",
-  draft: "下書き",
-};
-
-const ROUND_STATUS_LABELS = {
-  in_progress: "進行中",
-  completed: "完了",
-};
 
 function formatDateTime(value) {
   if (!value) return "-";
