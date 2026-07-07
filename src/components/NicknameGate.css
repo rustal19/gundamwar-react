@@ -6,14 +6,14 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background: rgba(15, 23, 42, 0.48);
+  background: var(--gw-overlay);
 }
 
 .nickname-gate-dialog {
   width: min(420px, calc(100vw - 3rem));
-  border: 1px solid #d8dee8;
-  background: #fff;
-  box-shadow: 0 20px 56px rgba(15, 23, 42, 0.24);
+  border: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-surface);
+  box-shadow: 0 20px 56px var(--gw-shadow-modal-color);
   padding: 1.25rem;
   display: grid;
   gap: 1rem;
@@ -27,13 +27,13 @@
 
 .nickname-gate-header h3 {
   margin: 0;
-  color: #182132;
+  color: var(--gw-text-strong);
   font-size: 1.08rem;
 }
 
 .nickname-gate-header p {
   margin: 0;
-  color: #526071;
+  color: var(--gw-text-muted);
   font-size: 0.9rem;
   line-height: 1.55;
 }
@@ -41,7 +41,7 @@
 .nickname-gate-field {
   display: grid;
   gap: 0.35rem;
-  color: #253042;
+  color: var(--gw-primary);
   font-weight: 700;
   font-size: 0.92rem;
 }
@@ -49,7 +49,7 @@
 .nickname-gate-field input {
   width: 100%;
   min-width: 0;
-  border: 1px solid #cfd6df;
+  border: 1px solid var(--gw-secondary-border);
   padding: 0.58rem 0.7rem;
   font: inherit;
   box-sizing: border-box;
@@ -57,7 +57,7 @@
 
 .nickname-gate-error {
   margin: 0;
-  color: #972626;
+  color: var(--gw-danger-strong);
   font-size: 0.9rem;
 }
 

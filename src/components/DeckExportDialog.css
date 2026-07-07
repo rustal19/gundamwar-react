@@ -1,7 +1,7 @@
 .deck-export-dialog-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.48);
+  background: var(--gw-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -12,9 +12,9 @@
 .deck-export-dialog {
   width: min(1280px, calc(100vw - 3rem));
   max-height: calc(100vh - 3rem);
-  background: #ffffff;
-  border: 1px solid #d8dee8;
-  box-shadow: 0 20px 56px rgba(15, 23, 42, 0.24);
+  background: var(--gw-surface);
+  border: 1px solid var(--gw-secondary-border-soft);
+  box-shadow: 0 20px 56px var(--gw-shadow-modal-color);
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto auto;
   gap: 1rem;
@@ -31,19 +31,19 @@
 .deck-export-dialog-header h3 {
   margin: 0;
   font-size: 1.08rem;
-  color: #182132;
+  color: var(--gw-text-strong);
 }
 
 .deck-export-dialog-note,
 .deck-export-dialog-status {
   margin: 0;
-  color: #526071;
+  color: var(--gw-text-muted);
   font-size: 0.86rem;
 }
 
 .deck-export-dialog-preview-frame {
-  border: 1px solid #d8dee8;
-  background: #f8fafc;
+  border: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-field-bg);
   overflow: auto;
   padding: 0.9rem;
 }
@@ -53,14 +53,14 @@
   width: 100%;
   min-width: 760px;
   height: auto;
-  background: #eef3f8;
+  background: var(--gw-field-bg);
 }
 
 .deck-export-dialog-preview-empty {
   min-height: 16rem;
   display: grid;
   place-items: center;
-  color: #5c6878;
+  color: var(--gw-text-muted);
   font-size: 0.94rem;
 }
 
@@ -73,11 +73,11 @@
 
 .deck-export-dialog-status {
   justify-self: end;
-  color: #1f5e3b;
+  color: var(--gw-success);
 }
 
 .deck-export-dialog-status-error {
-  color: #972626;
+  color: var(--gw-danger-strong);
 }
 
 @media (max-width: 960px) {

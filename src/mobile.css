@@ -29,8 +29,8 @@
 
 .app-shell-mobile .search-accordion {
   display: block;
-  border: 1px solid #d8dee8;
-  background: #f8fafc;
+  border: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-field-bg);
   overflow: hidden;
 }
 
@@ -40,7 +40,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.62rem 0.68rem;
-  color: #253042;
+  color: var(--gw-primary);
   font-size: 0.84rem;
   font-weight: 700;
   cursor: pointer;
@@ -57,7 +57,7 @@
   flex: 0 0 auto;
   font-size: 1rem;
   line-height: 1;
-  color: #526071;
+  color: var(--gw-text-muted);
 }
 
 .app-shell-mobile .search-accordion[open] .search-accordion-summary::after {
@@ -89,7 +89,7 @@
 .app-shell-mobile .form-label {
   display: block;
   font-size: 0.78rem;
-  color: #526071;
+  color: var(--gw-text-muted);
 }
 
 .app-shell-mobile .form-field,
@@ -405,7 +405,7 @@
 }
 
 .app-brand-link {
-  color: #253042;
+  color: var(--gw-primary);
   text-decoration: none;
   font-size: 1.2rem;
   font-weight: 700;
@@ -414,9 +414,9 @@
 
 .app-mobile-menu-toggle {
   display: none;
-  border: 1px solid #d8dee8;
-  background: #f8fafc;
-  color: #253042;
+  border: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-field-bg);
+  color: var(--gw-primary);
   width: 2.4rem;
   height: 2.4rem;
   padding: 0;
@@ -500,9 +500,9 @@
 .app-shell-mobile .app-mobile-menu-toggle {
   display: inline-flex;
   position: static;
-  border-color: #253042;
-  background: #253042;
-  color: #fff;
+  border-color: var(--gw-primary);
+  background: var(--gw-primary);
+  color: var(--gw-on-primary);
   width: 2.25rem;
   height: 2.25rem;
   flex: 0 0 auto;
@@ -623,7 +623,7 @@
 
 .app-shell-mobile .search-results-summary {
   margin-top: 0;
-  color: #546173;
+  color: var(--gw-text-muted);
   font-size: 0.84rem;
   line-height: 1.25;
   white-space: nowrap;
@@ -994,9 +994,9 @@
 }
 
 .app-shell-mobile .deck-mobile-tab {
-  border: 1px solid #cfd6df;
-  background: #fff;
-  color: #253042;
+  border: 1px solid var(--gw-secondary-border);
+  background: var(--gw-surface);
+  color: var(--gw-primary);
   min-height: 2.05rem;
   min-width: 0;
   padding: 0.42rem 0.55rem;
@@ -1006,9 +1006,9 @@
 }
 
 .app-shell-mobile .deck-mobile-tab.active {
-  border-color: #253042;
-  background: #253042;
-  color: #fff;
+  border-color: var(--gw-primary);
+  background: var(--gw-primary);
+  color: var(--gw-on-primary);
 }
 
 .app-shell-mobile .deck-layout-shell {

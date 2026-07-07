@@ -3,13 +3,10 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { fetchPublicDecks } from "../services/publicDecks";
 import { fetchTournaments } from "../services/tournaments";
+import { TOURNAMENT_STATUS_LABELS } from "../data/statusLabels";
 import { buildPathWithForcedMobileLayout } from "../utils/deviceLayout";
 import "./PortalHome.css";
 
-const TOURNAMENT_STATUS_LABELS = {
-  registration: "受付中",
-  in_progress: "進行中",
-};
 
 function formatDate(value) {
   if (!value) return "-";

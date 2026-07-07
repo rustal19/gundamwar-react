@@ -1,6 +1,6 @@
 .app-footer {
-  border-top: 1px solid #d8dee8;
-  color: #5c6775;
+  border-top: 1px solid var(--gw-secondary-border-soft);
+  color: var(--gw-text-muted);
   font-size: 0.86rem;
   margin-top: 2rem;
   padding: 1rem 0.85rem;
@@ -16,7 +16,7 @@
 }
 
 .app-footer-links a {
-  color: #253042;
+  color: var(--gw-primary);
   text-decoration: none;
 }
 
@@ -31,10 +31,10 @@
 
 .legal-page {
   box-sizing: border-box;
-  color: #253042;
+  color: var(--gw-text);
   line-height: 1.8;
   margin: 0 auto;
-  max-width: 860px;
+  max-width: 720px;
   padding: 2rem 1rem 0;
 }
 
@@ -53,8 +53,8 @@
 }
 
 .legal-page-draft-note {
-  background: #fff8db;
-  border: 1px solid #ead78a;
-  color: #67531b;
+  background: var(--gw-warning-soft);
+  border: 1px solid var(--gw-warning-border);
+  color: var(--gw-warning-text);
   padding: 0.5rem 0.7rem;
 }

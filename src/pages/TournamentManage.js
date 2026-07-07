@@ -13,6 +13,7 @@ import {
   updateEntryStatus,
   updateTournament,
 } from "../services/tournaments";
+import { TOURNAMENT_STATUS_LABELS as STATUS_LABELS } from "../data/statusLabels";
 import "./Tournaments.css";
 
 const DEFAULT_FORM = {
@@ -40,14 +41,6 @@ const DEFAULT_FORM = {
     limitedCards: [],
     allowedSets: null,
   },
-};
-
-const STATUS_LABELS = {
-  draft: "下書き",
-  registration: "受付中",
-  in_progress: "進行中",
-  completed: "完了",
-  cancelled: "中止",
 };
 
 const ENTRY_STATUS_LABELS = {
