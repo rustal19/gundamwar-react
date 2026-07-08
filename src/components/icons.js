@@ -149,6 +149,17 @@ export function ClockIcon(props) {
   );
 }
 
+export function MegaphoneIcon(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M5 8v8" />
+      <path d="M5 8l10 -3v14l-10 -3" />
+      <path d="M19 9a3 3 0 0 1 0 6" />
+      <path d="M9 17l1 4h3l-1 -3" />
+    </IconBase>
+  );
+}
+
 export function UsersIcon(props) {
   return (
     <IconBase {...props}>

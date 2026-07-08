@@ -222,6 +222,29 @@
   margin-top: 12px;
 }
 
+.tournament-announcement-band {
+  align-items: flex-start;
+  background: var(--gw-primary-soft);
+  border: 1px solid var(--gw-primary);
+  border-radius: var(--gw-radius);
+  box-shadow: var(--gw-shadow-card);
+  color: var(--gw-text);
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 16px 18px;
+}
+
+.tournament-announcement-band svg {
+  color: var(--gw-primary-strong);
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.tournament-announcement-band p {
+  margin: 4px 0 0;
+}
+
 .tournament-my-status-band {
   display: flex;
   align-items: flex-start;
@@ -274,6 +297,11 @@
   font-weight: 800;
 }
 
+.tournament-round-timer {
+  color: var(--gw-primary-strong);
+  font-weight: 900;
+}
+
 .tournament-result-badge {
   display: inline-flex;
   align-items: center;
@@ -286,6 +314,11 @@
 .tournament-result-badge.loss {
   background: var(--gw-danger-soft);
   color: var(--gw-danger);
+}
+
+.tournament-result-badge.draw {
+  background: var(--gw-accent-soft);
+  color: var(--gw-accent);
 }
 
 .tournament-my-warning {
@@ -601,6 +634,7 @@
   .tournament-page-header,
   .tournament-detail-header,
   .tournament-entry-panel,
+  .tournament-announcement-band,
   .tournament-my-status-band {
     display: grid;
   }
