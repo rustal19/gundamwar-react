@@ -141,8 +141,8 @@ export default function TournamentDetail({ compact = false }) {
     return nextTournament;
   }, [authMode, id, user]);
 
-  const loadAll = useCallback(async () => {
-    setIsLoading(true);
+  const loadAll = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setIsLoading(true);
     setError("");
     try {
       const [nextTournament, nextRounds, nextStandings] = await Promise.all([
@@ -156,13 +156,49 @@ export default function TournamentDetail({ compact = false }) {
     } catch (loadError) {
       setError(loadError.message);
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, [authMode, id, user]);
 
   useEffect(() => {
     loadAll();
   }, [loadAll]);
+
+  useEffect(() => {
+    if (tournament?.status !== "in_progress") return undefined;
+
+    let intervalId = null;
+    const refresh = () => {
+      if (document.hidden) return;
+      loadAll({ silent: true });
+    };
+    const start = () => {
+      if (intervalId == null && !document.hidden) {
+        intervalId = window.setInterval(refresh, 30000);
+      }
+    };
+    const stop = () => {
+      if (intervalId != null) {
+        window.clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stop();
+      } else {
+        refresh();
+        start();
+      }
+    };
+
+    start();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [loadAll, tournament?.status]);
 
   useEffect(() => {
     if (!isAuthenticated || !user) {
@@ -229,6 +265,12 @@ export default function TournamentDetail({ compact = false }) {
       isBefore(tournament.registrationClosesAt) &&
       myEntry
   );
+  const canLateEntry = Boolean(
+    tournament &&
+      tournament.status === "in_progress" &&
+      tournament.lateEntry &&
+      !myEntry
+  );
   const canCancel = Boolean(
     tournament && tournament.status === "registration" && isBefore(tournament.startsAt) && myEntry
   );
@@ -275,6 +317,23 @@ export default function TournamentDetail({ compact = false }) {
         await createEntry({ tournamentId: id, deckItems: submittedItems, authMode, user });
         setMessage("エントリーしました。");
       }
+      await loadTournament();
+      const nextStandings = await fetchStandings(id, { authMode });
+      setStandings(nextStandings.items || nextStandings.standings || []);
+    } catch (submitError) {
+      setError(submitError.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const requestLateEntry = async () => {
+    setIsSubmitting(true);
+    setError("");
+    setMessage("");
+    try {
+      await createEntry({ tournamentId: id, deckItems: null, authMode, user });
+      setMessage("参加申請を送信しました。");
       await loadTournament();
       const nextStandings = await fetchStandings(id, { authMode });
       setStandings(nextStandings.items || nextStandings.standings || []);
@@ -613,6 +672,7 @@ export default function TournamentDetail({ compact = false }) {
         isAuthenticated={isAuthenticated}
         canRegister={canRegister}
         canUpdateDeck={canUpdateDeck}
+        canLateEntry={canLateEntry}
         canCancel={canCancel}
         deckSource={deckSource}
         onDeckSourceChange={setDeckSource}
@@ -622,6 +682,7 @@ export default function TournamentDetail({ compact = false }) {
         submittedItems={submittedItems}
         deckViolations={deckViolations}
         onSubmitEntry={submitEntry}
+        onRequestLateEntry={requestLateEntry}
         onCancelEntry={cancelEntry}
         onCheckIn={checkInEntry}
         submitDisabled={submitDisabled}
