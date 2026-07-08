@@ -110,6 +110,68 @@ function myResultInfo(match, myEntryId) {
   return { label: `${won ? "勝利" : "敗北"}${score}`, tone: won ? "win" : "loss" };
 }
 
+function DeckCountPreview({ items }) {
+  return (
+    <span className="tournament-deck-summary">
+      メイン {countCards(items, "main")} / サイド {countCards(items, "side")}
+    </span>
+  );
+}
+
+function MatchHistory({ rounds, entries, myEntry }) {
+  const [open, setOpen] = useState(false);
+  if (!myEntry) return null;
+
+  const rows = (rounds || [])
+    .map((round) => {
+      const match = findMyMatch(round, myEntry.id);
+      if (!match) return null;
+      return {
+        round,
+        match,
+        opponent: opponentName(match, entries, myEntry.id),
+        result: myResultInfo(match, myEntry.id),
+      };
+    })
+    .filter(Boolean);
+
+  return (
+    <div className="tournament-match-history">
+      <button type="button" className="tournament-secondary-button" onClick={() => setOpen((value) => !value)}>
+        {open ? "対戦履歴を閉じる" : "対戦履歴"}
+      </button>
+      {open ? (
+        rows.length > 0 ? (
+          <div className="tournament-table-wrap">
+            <table className="tournament-table tournament-history-table">
+              <thead>
+                <tr>
+                  <th>ラウンド</th>
+                  <th>卓番号</th>
+                  <th>対戦相手</th>
+                  <th>スコア</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(({ round, match, opponent, result }) => (
+                  <tr key={`${round.id}-${match.id}`}>
+                    <td>第{round.number}回戦</td>
+                    <td>{match.tableNo || "-"}</td>
+                    <td>{opponent}</td>
+                    <td>{result?.label || "未報告"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="tournament-muted">対戦履歴はまだありません。</p>
+        )
+      ) : null}
+    </div>
+  );
+}
+
 function EntryForm({
   deckSource,
   onDeckSourceChange,
@@ -127,8 +189,70 @@ function EntryForm({
   isSubmitting,
   myEntry,
 }) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const selectedSavedDeck = (savedDecks || []).find((deck) => deck.id === selectedDeckId);
+
   return (
     <div className="tournament-entry-controls">
+      <div className="tournament-selected-deck">
+        <span>
+          提出デッキ: {deckSource === "saved" ? selectedSavedDeck?.title || "保存デッキ未選択" : "現在のデッキビルダー"}
+        </span>
+        <DeckCountPreview items={submittedItems} />
+        <button type="button" className="tournament-secondary-button" onClick={() => setIsDialogOpen(true)}>
+          デッキを選ぶ
+        </button>
+      </div>
+      <p className="tournament-muted">締切までは何度でも差し替えできます。</p>
+      {isDialogOpen ? (
+        <div className="tournament-dialog-backdrop" role="presentation">
+          <div className="tournament-deck-dialog" role="dialog" aria-modal="true" aria-labelledby="deck-submit-dialog-title">
+            <div className="tournament-dialog-header">
+              <h3 id="deck-submit-dialog-title">デッキ提出</h3>
+              <button type="button" className="tournament-secondary-button" onClick={() => setIsDialogOpen(false)}>
+                閉じる
+              </button>
+            </div>
+            <section className="tournament-submit-choice">
+              <h4>保存デッキから選択</h4>
+              {savedDecks.length === 0 ? <p className="tournament-muted">保存デッキはありません。</p> : null}
+              <div className="tournament-saved-deck-list">
+                {savedDecks.map((deck) => (
+                  <label key={deck.id} className="tournament-saved-deck-option">
+                    <input
+                      type="radio"
+                      name="submitted-deck"
+                      checked={deckSource === "saved" && selectedDeckId === deck.id}
+                      onChange={() => {
+                        onDeckSourceChange("saved");
+                        onSelectedDeckChange(deck.id);
+                      }}
+                    />
+                    <span>{deck.title}</span>
+                    <DeckCountPreview items={deck.items} />
+                  </label>
+                ))}
+              </div>
+            </section>
+            <section className="tournament-submit-choice">
+              <h4>現在のデッキビルダーの内容</h4>
+              <button
+                type="button"
+                className={deckSource === "current" ? "tournament-choice-button active" : "tournament-choice-button"}
+                onClick={() => onDeckSourceChange("current")}
+              >
+                現在のデッキを使う <DeckCountPreview items={submittedItems} />
+              </button>
+            </section>
+            <section className="tournament-submit-choice">
+              <h4>デッキ構築へ</h4>
+              <a className="tournament-choice-link" href="/deck">
+                デッキ構築へ
+              </a>
+            </section>
+          </div>
+        </div>
+      ) : null}
       <label>
         提出元
         <select value={deckSource} onChange={(event) => onDeckSourceChange(event.target.value)}>
@@ -188,6 +312,7 @@ export default function TournamentMyStatus({
   isAuthenticated,
   canRegister,
   canUpdateDeck,
+  canLateEntry,
   canCancel,
   deckSource,
   onDeckSourceChange,
@@ -197,6 +322,7 @@ export default function TournamentMyStatus({
   submittedItems,
   deckViolations,
   onSubmitEntry,
+  onRequestLateEntry,
   onCancelEntry,
   onCheckIn,
   submitDisabled,
@@ -241,6 +367,23 @@ export default function TournamentMyStatus({
   }
 
   if (!myEntry) {
+    if (canLateEntry) {
+      return (
+        <section className="tournament-my-status-band default">
+          <div>
+            <p className="tournament-eyebrow">マイステータス</p>
+            <h2>途中参加申請</h2>
+            <p>進行中の大会です。承認されると次のラウンドから参加できます。</p>
+          </div>
+          <div className="tournament-entry-actions">
+            <button type="button" onClick={onRequestLateEntry} disabled={isSubmitting}>
+              参加申請
+            </button>
+          </div>
+        </section>
+      );
+    }
+
     return (
       <section className="tournament-my-status-band default">
         <div>
@@ -265,6 +408,19 @@ export default function TournamentMyStatus({
           isSubmitting={isSubmitting}
           myEntry={myEntry}
         />
+      </section>
+    );
+  }
+
+  if (myEntry.status === "pending") {
+    return (
+      <section className="tournament-my-status-band warning">
+        <div>
+          <p className="tournament-eyebrow">マイステータス</p>
+          <h2>申請中(主催者の承認待ち)</h2>
+          <p>承認されると第{myEntry.joinedAtRound || 1}回戦まで不戦敗として追加されます。</p>
+          <MatchHistory rounds={rounds} entries={entries} myEntry={myEntry} />
+        </div>
       </section>
     );
   }
@@ -316,6 +472,7 @@ export default function TournamentMyStatus({
             <span>結果は主催者が登録します。</span>
           )}
         </div>
+        <MatchHistory rounds={rounds} entries={entries} myEntry={myEntry} />
       </section>
     );
   }
@@ -345,6 +502,7 @@ export default function TournamentMyStatus({
         isSubmitting={isSubmitting}
         myEntry={myEntry}
       />
+      {myEntry ? <MatchHistory rounds={rounds} entries={entries} myEntry={myEntry} /> : null}
     </section>
   );
 }

@@ -98,6 +98,26 @@
   gap: 8px;
 }
 
+.portal-my-tournament-item {
+  position: relative;
+}
+
+.portal-warning-badge {
+  position: absolute;
+  top: 8px;
+  right: 92px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: var(--gw-radius-sm);
+  background: var(--gw-accent-soft);
+  color: var(--gw-accent);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 8px;
+}
+
 .tournament-card {
   display: grid;
   grid-template-columns: 70px 1fr auto;
@@ -304,6 +324,11 @@
 
   .tournament-card-action {
     width: 100%;
+  }
+
+  .portal-warning-badge {
+    position: static;
+    margin-bottom: 4px;
   }
 
   .portal-deck-row {

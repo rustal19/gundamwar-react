@@ -4,7 +4,7 @@ import TournamentCard from "../components/TournamentCard";
 import { SearchIcon } from "../components/icons";
 import { useAuth } from "../context/AuthContext";
 import { fetchPublicDecks } from "../services/publicDecks";
-import { fetchTournaments } from "../services/tournaments";
+import { fetchMyTournaments, fetchTournaments } from "../services/tournaments";
 import { buildPathWithForcedMobileLayout } from "../utils/deviceLayout";
 import { getDeckColors } from "../utils/deckColors";
 import "./PortalHome.css";
@@ -22,25 +22,6 @@ function formatDate(value) {
 
 function compareStartsAt(left, right) {
   return String(left.startsAt || "").localeCompare(String(right.startsAt || ""));
-}
-
-function getEntries(tournament) {
-  if (Array.isArray(tournament.entries)) return tournament.entries;
-  if (Array.isArray(tournament.entryList)) return tournament.entryList;
-  return [];
-}
-
-function findMyEntry(tournament, user) {
-  if (!user?.id) return null;
-  const userId = String(user.id);
-  const directEntry = tournament.myEntry || tournament.entry || null;
-  if (directEntry?.user?.id && String(directEntry.user.id) === userId) return directEntry;
-  if (directEntry?.userId && String(directEntry.userId) === userId) return directEntry;
-  return (
-    getEntries(tournament).find(
-      (entry) => String(entry?.user?.id || entry?.userId || "") === userId
-    ) || null
-  );
 }
 
 function OwnerLink({ owner, buildPath }) {
@@ -78,10 +59,12 @@ export default function PortalHome({ compact = false }) {
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState("");
   const [tournaments, setTournaments] = useState([]);
+  const [myTournamentItems, setMyTournamentItems] = useState([]);
   const [decks, setDecks] = useState([]);
   const [isTournamentsLoaded, setIsTournamentsLoaded] = useState(false);
   const [isDecksLoaded, setIsDecksLoaded] = useState(false);
   const [tournamentsError, setTournamentsError] = useState("");
+  const [myTournamentsError, setMyTournamentsError] = useState("");
   const [decksError, setDecksError] = useState("");
 
   const paths = useMemo(
@@ -131,6 +114,38 @@ export default function PortalHome({ compact = false }) {
 
   useEffect(() => {
     let isActive = true;
+    setMyTournamentsError("");
+
+    if (!isAuthenticated || !user?.id || typeof fetchMyTournaments !== "function") {
+      setMyTournamentItems([]);
+      return () => {
+        isActive = false;
+      };
+    }
+
+    Promise.resolve(fetchMyTournaments({ authMode, user }))
+      .then((payload) => {
+        if (!isActive) return;
+        setMyTournamentItems(
+          (payload?.items || []).filter(({ tournament, entry }) =>
+            ["registration", "in_progress"].includes(tournament?.status) &&
+            entry?.status !== "dropped"
+          )
+        );
+      })
+      .catch((error) => {
+        if (!isActive) return;
+        setMyTournamentsError(error.message);
+        setMyTournamentItems([]);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [authMode, isAuthenticated, user]);
+
+  useEffect(() => {
+    let isActive = true;
     setIsDecksLoaded(false);
     setDecksError("");
 
@@ -153,16 +168,17 @@ export default function PortalHome({ compact = false }) {
     };
   }, [authMode]);
 
-  const myTournaments = useMemo(() => {
-    if (!isAuthenticated || !user?.id) return [];
-    return tournaments
-      .map((tournament) => ({
-        ...tournament,
-        myEntry: findMyEntry(tournament, user),
-      }))
-      .filter((tournament) => tournament.myEntry)
-      .slice(0, 5);
-  }, [isAuthenticated, tournaments, user]);
+  const myTournaments = useMemo(
+    () =>
+      myTournamentItems
+        .map(({ tournament, entry, needsDecklist }) => ({
+          ...tournament,
+          myEntry: entry,
+          needsDecklist,
+        }))
+        .slice(0, 5),
+    [myTournamentItems]
+  );
 
   const featuredTournaments = useMemo(
     () => tournaments.slice(0, 5),
@@ -188,9 +204,13 @@ export default function PortalHome({ compact = false }) {
           </div>
           <div className="portal-tournament-list">
             {myTournaments.map((tournament) => (
-              <TournamentCard key={`my-${tournament.id}`} tournament={tournament} buildPath={buildPath} />
+              <div key={`my-${tournament.id}`} className="portal-my-tournament-item">
+                {tournament.needsDecklist ? <span className="portal-warning-badge">未提出</span> : null}
+                <TournamentCard tournament={tournament} buildPath={buildPath} />
+              </div>
             ))}
           </div>
+          {myTournamentsError ? <div className="portal-empty">{myTournamentsError}</div> : null}
         </section>
       ) : null}
 

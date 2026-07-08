@@ -1,31 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import TournamentCard from "../components/TournamentCard";
 import { useAuth } from "../context/AuthContext";
 import { fetchTournaments } from "../services/tournaments";
-import {
-  TOURNAMENT_STATUS_LABELS as STATUS_LABELS,
-  TOURNAMENT_STATUS_OPTIONS as STATUS_OPTIONS,
-} from "../data/statusLabels";
+import { TOURNAMENT_STATUS_OPTIONS as STATUS_OPTIONS } from "../data/statusLabels";
 import "./Tournaments.css";
-
-
-function formatDate(value) {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleString("ja-JP", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function formatVenue(tournament) {
-  const venue = tournament.venue?.trim();
-  if (venue) return venue;
-  return tournament.isOnline ? "オンライン" : "未設定";
-}
 
 export default function TournamentList({ compact = false }) {
   const { authMode, isOrganizer } = useAuth();
@@ -110,26 +89,7 @@ export default function TournamentList({ compact = false }) {
           <div className="tournament-empty">表示できる大会がありません。</div>
         ) : null}
         {payload.items.map((tournament) => (
-          <article key={tournament.id} className="tournament-row">
-            <div className="tournament-row-main">
-              <div className="tournament-row-title">
-                <Link to={`/tournaments/${tournament.id}`}>{tournament.title}</Link>
-                <span className={`tournament-status ${tournament.status}`}>
-                  {STATUS_LABELS[tournament.status] || tournament.status}
-                </span>
-              </div>
-              <p>{tournament.description || "説明はありません。"}</p>
-            </div>
-            <div className="tournament-row-meta">
-              <span>開始 {formatDate(tournament.startsAt)}</span>
-              <span>開催地 {formatVenue(tournament)}</span>
-              <span>締切 {formatDate(tournament.registrationClosesAt)}</span>
-              <span>
-                参加 {tournament.entryCount || 0}
-                {tournament.capacity == null ? "" : ` / ${tournament.capacity}`}
-              </span>
-            </div>
-          </article>
+          <TournamentCard key={tournament.id} tournament={tournament} />
         ))}
       </div>
 
