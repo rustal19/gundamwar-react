@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { BrowserRouter, MemoryRouter } from "react-router-dom";
 import { fetchPublicDecks } from "../services/publicDecks";
-import { fetchTournaments } from "../services/tournaments";
+import { fetchMyTournaments, fetchTournaments } from "../services/tournaments";
 import PortalHome from "./PortalHome";
 
 jest.mock("../context/AuthContext", () => ({
@@ -14,6 +14,7 @@ jest.mock("../context/AuthContext", () => ({
 
 jest.mock("../services/tournaments", () => ({
   __esModule: true,
+  fetchMyTournaments: jest.fn(),
   fetchTournaments: jest.fn(),
 }));
 
@@ -50,6 +51,15 @@ const inProgressTournaments = Array.from({ length: 3 }, (_, index) => ({
 }));
 
 beforeEach(() => {
+  fetchMyTournaments.mockResolvedValue({
+    items: [
+      {
+        tournament: registrationTournaments[0],
+        entry: { id: "entry-1", user: { id: "user-1", name: "繝・せ繝医Θ繝ｼ繧ｶ繝ｼ" } },
+        needsDecklist: true,
+      },
+    ],
+  });
   fetchTournaments.mockImplementation(({ status }) =>
     Promise.resolve({
       items: status === "registration" ? registrationTournaments : inProgressTournaments,
