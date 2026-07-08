@@ -182,7 +182,7 @@ export default function TournamentDetail({ compact = false }) {
     };
   }, [authMode, isAuthenticated, user]);
 
-  const entries = tournament?.entries || [];
+  const entries = useMemo(() => tournament?.entries || [], [tournament?.entries]);
   const visibleTabs = useMemo(
     () => BASE_TABS.filter((tab) => tab.id !== "results" || tournament?.status === "completed"),
     [tournament?.status]
