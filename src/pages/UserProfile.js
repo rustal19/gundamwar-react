@@ -173,7 +173,7 @@ export default function UserProfile({ compact = false }) {
       record,
       publicDeckCount: Array.isArray(profile?.publicDecks) ? profile.publicDecks.length : 0,
     };
-  }, [id, profile]);
+  }, [profile]);
   const isSelf = toId(currentUser?.id) === toId(id);
 
   if (isLoaded && isNotFoundError(error)) return <NotFound />;
