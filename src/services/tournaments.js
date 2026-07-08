@@ -802,7 +802,8 @@ export async function updateTournament({ id, authMode, user, ...data }) {
     if (data.status && data.status !== existing.status) {
       const from = statusOrder.indexOf(existing.status);
       const to = statusOrder.indexOf(data.status);
-      if (to === -1 || from === -1 || to < from || to > from + 1) {
+      const canCancel = data.status === "cancelled" && existing.status !== "completed";
+      if (!canCancel && (to === -1 || from === -1 || to < from || to > from + 1)) {
         throw new Error("不正なステータス遷移です。");
       }
     }
@@ -850,6 +851,27 @@ export async function updateTournament({ id, authMode, user, ...data }) {
   return requestJson(`/api/tournaments/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
+  });
+}
+
+export async function deleteTournament(id, { authMode, user } = {}) {
+  if (authMode === "mock") {
+    getCurrentUser(user);
+    const store = readStore();
+    const existing = getTournamentOrThrow(store, id);
+    if (existing.status !== "draft") {
+      throw new Error("下書きの大会のみ削除できます。");
+    }
+    store.tournaments = store.tournaments.filter((item) => String(item.id) !== String(id));
+    delete store.entries[String(id)];
+    delete store.rounds[String(id)];
+    writeStore(store);
+    return;
+  }
+
+  await requestJson(`/api/tournaments/${id}`, {
+    method: "DELETE",
+    body: JSON.stringify({}),
   });
 }
 
