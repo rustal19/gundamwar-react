@@ -7,7 +7,7 @@ const Terms = () => {
       <p className="legal-page-draft-note">公開前にユーザー承認が必要なドラフト</p>
       <h1 id="terms-title">利用規約</h1>
       <p>
-        この利用規約は、個人が非商用で運営する「Gundam War Database」
+        この利用規約は、個人が非商用で運営する「Gundam War Portal」
         の利用条件を定めるドラフトです。本サイトはガンダムウォーを楽しむファンのための情報整理を目的とした、非公式ファンサイトです。
       </p>
 

@@ -4,15 +4,28 @@
   font-size: 0.86rem;
   margin-top: 2rem;
   padding: 1rem 0.85rem;
-  text-align: center;
+  text-align: left;
+}
+
+.app-footer-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem 1.1rem;
+  justify-content: space-between;
+  margin-bottom: 0.45rem;
+}
+
+.app-footer-brand {
+  color: var(--gw-primary-strong);
 }
 
 .app-footer-links {
   display: flex;
   flex-wrap: wrap;
   gap: 0.8rem;
-  justify-content: center;
-  margin-bottom: 0.45rem;
+  justify-content: flex-end;
+  margin-bottom: 0;
 }
 
 .app-footer-links a {

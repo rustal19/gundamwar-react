@@ -1,6 +1,8 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import App from "./App";
+
+const MOCK_USER_KEY = "gundamwar.auth.mockUser.v1";
 
 jest.mock("./services/tournaments", () => ({
   __esModule: true,
@@ -12,43 +14,112 @@ jest.mock("./services/publicDecks", () => ({
   fetchPublicDecks: jest.fn(() => Promise.resolve({ items: [] })),
 }));
 
-test("トップページにポータルが表示される", async () => {
-  render(
-    <MemoryRouter initialEntries={["/"]}>
+function renderApp(path = "/") {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
       <App />
     </MemoryRouter>
   );
-  expect(screen.getAllByText("Gundam War Database").length).toBeGreaterThan(0);
-  expect(screen.getByText("開催予定・進行中の大会")).toBeInTheDocument();
-  expect(screen.getByText("新着公開デッキ")).toBeInTheDocument();
-  await waitFor(() => {
-    expect(screen.getByText("開催予定・進行中の大会はありません。")).toBeInTheDocument();
+}
+
+function setMockUser(role) {
+  window.localStorage.setItem(
+    MOCK_USER_KEY,
+    JSON.stringify({
+      id: `${role}-user`,
+      name: `${role} user`,
+      nickname: `${role} member`,
+      email: `${role}@example.test`,
+      role,
+    })
+  );
+}
+
+beforeEach(() => {
+  window.localStorage.clear();
+  Object.defineProperty(window, "innerWidth", {
+    configurable: true,
+    writable: true,
+    value: 1280,
   });
 });
 
-test("/search に検索フォームが表示される", () => {
-  render(
-    <MemoryRouter initialEntries={["/search"]}>
-      <App />
-    </MemoryRouter>
-  );
-  expect(screen.getByText("カード名")).toBeInTheDocument();
-});
+test("home renders the portal brand and desktop sidebar links", () => {
+  const { container } = renderApp("/");
+  const sidebar = container.querySelector(".gw-sidebar");
 
-test("フッターに利用規約とプライバシーポリシーへのリンクが表示される", async () => {
-  render(
-    <MemoryRouter initialEntries={["/"]}>
-      <App />
-    </MemoryRouter>
-  );
-
-  expect(screen.getByRole("link", { name: "利用規約" })).toHaveAttribute("href", "/terms");
-  expect(screen.getByRole("link", { name: "プライバシーポリシー" })).toHaveAttribute(
+  expect(screen.getAllByText("Gundam War Portal").length).toBeGreaterThan(0);
+  expect(sidebar).toBeInTheDocument();
+  expect(within(sidebar).getByRole("link", { name: /Gundam War Portal/ })).toHaveAttribute(
     "href",
-    "/privacy"
+    "/"
   );
-  expect(screen.getAllByText(/非公式ファンサイト/).length).toBeGreaterThan(0);
+  expect(sidebar.querySelector('a[href="/"]')).toBeInTheDocument();
+  expect(sidebar.querySelector('a[href="/search"]')).toBeInTheDocument();
+  expect(sidebar.querySelector('a[href="/deck"]')).toBeInTheDocument();
+  expect(sidebar.querySelector('a[href="/decks"]')).toBeInTheDocument();
+  expect(sidebar.querySelector('a[href="/tournaments"]')).toBeInTheDocument();
+});
+
+test("/search renders the search form and collapsed sidebar", () => {
+  const { container } = renderApp("/search");
+
+  expect(container.querySelector("#name")).toBeInTheDocument();
+  expect(container.querySelector(".gw-sidebar")).toHaveClass("gw-sidebar-collapsed");
+  expect(container.querySelector('a[href="/search"]')).toHaveAttribute("title");
+});
+
+test("footer renders the portal name and legal links", () => {
+  const { container } = renderApp("/");
+  const footer = container.querySelector(".app-footer");
+
+  expect(within(footer).getByText("Gundam War Portal")).toBeInTheDocument();
+  expect(footer.querySelector('a[href="/terms"]')).toBeInTheDocument();
+  expect(footer.querySelector('a[href="/privacy"]')).toBeInTheDocument();
+});
+
+test("anonymous and user roles do not see organizer menu links", () => {
+  const { container, unmount } = renderApp("/");
+  expect(container.querySelector('a[href="/tournaments/new"]')).not.toBeInTheDocument();
+  expect(container.querySelector('a[href="/admin/users"]')).not.toBeInTheDocument();
+  unmount();
+
+  setMockUser("user");
+  const userView = renderApp("/");
+  expect(userView.container.querySelector('a[href="/tournaments/new"]')).not.toBeInTheDocument();
+  expect(userView.container.querySelector('a[href="/admin/users"]')).not.toBeInTheDocument();
+});
+
+test("organizer sees tournament creation and admin also sees user permissions", () => {
+  setMockUser("organizer");
+  const { container, unmount } = renderApp("/");
+
+  expect(container.querySelector('a[href="/tournaments/new"]')).toBeInTheDocument();
+  expect(container.querySelector('a[href="/admin/users"]')).not.toBeInTheDocument();
+  unmount();
+
+  window.localStorage.clear();
+  setMockUser("admin");
+  const adminView = renderApp("/");
+  expect(adminView.container.querySelector('a[href="/tournaments/new"]')).toBeInTheDocument();
+  expect(adminView.container.querySelector('a[href="/admin/users"]')).toBeInTheDocument();
+});
+
+test("login button opens GoogleSignInPanel popover and closes after mock login", async () => {
+  const { container } = renderApp("/");
+
+  fireEvent.click(container.querySelector(".gw-sidebar-login-button"));
+
+  const loginDialog = screen.getByRole("dialog");
+  const roleSelect = within(loginDialog).getByRole("combobox");
+  expect(roleSelect).toBeInTheDocument();
+
+  fireEvent.change(roleSelect, { target: { value: "organizer" } });
+  fireEvent.click(loginDialog.querySelector(".google-mock-button"));
+
   await waitFor(() => {
-    expect(screen.getByText("開催予定・進行中の大会はありません。")).toBeInTheDocument();
+    expect(container.querySelector(".gw-sidebar-login-menu")).not.toBeInTheDocument();
   });
+  expect(container.querySelector('a[href="/tournaments/new"]')).toBeInTheDocument();
+  expect(container.querySelector('a[href="/admin/users"]')).not.toBeInTheDocument();
 });

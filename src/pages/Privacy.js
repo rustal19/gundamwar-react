@@ -7,7 +7,7 @@ const Privacy = () => {
       <p className="legal-page-draft-note">公開前にユーザー承認が必要なドラフト</p>
       <h1 id="privacy-title">プライバシーポリシー</h1>
       <p>
-        このプライバシーポリシーは、個人が非商用で運営する「Gundam War Database」
+        このプライバシーポリシーは、個人が非商用で運営する「Gundam War Portal」
         における情報の取り扱いを説明するドラフトです。本サイトは非公式ファンサイトです。
       </p>
 
