@@ -195,3 +195,20 @@ test("途中参加の申請を参加者タブで許可できる", async () => {
   });
   expect(screen.getByText((content, element) => element?.classList.contains("mini-badge") && content === "第2回戦から")).toBeInTheDocument();
 });
+
+test("次にやることのガイド行とフォーマットプリセット展開が動作する", async () => {
+  seedStore();
+  renderManage();
+
+  expect(await screen.findByText("UI大会")).toBeInTheDocument();
+  expect(screen.getByText(/未報告卓が1卓あります。結果を入力してください。/)).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "大会情報" }));
+  const maxCopiesInput = screen.getByLabelText("同名上限");
+  fireEvent.change(maxCopiesInput, { target: { value: "2" } });
+  expect(screen.getByLabelText("フォーマットプリセット")).toHaveValue("その他");
+
+  fireEvent.change(screen.getByLabelText("フォーマットプリセット"), { target: { value: "スタンダード" } });
+  expect(screen.getByLabelText("同名上限")).toHaveValue(3);
+  expect(screen.getByLabelText("メイン下限")).toHaveValue(50);
+});
