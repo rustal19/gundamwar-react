@@ -26,9 +26,12 @@ export default function RoundTabs({ rounds, selectedRoundNumber, onChange, class
         <button
           key={round.id || round.number}
           type="button"
-          className={Number(selectedRoundNumber) === Number(round.number) ? "active" : ""}
+          className={`${Number(selectedRoundNumber) === Number(round.number) ? "active" : ""} ${
+            round.isCurrent ? "current" : ""
+          }`.trim()}
           onClick={() => onChange(round.number)}
         >
+          {round.isCurrent ? <span className="round-tab-dot" aria-hidden="true" /> : null}
           第{round.number}回戦
         </button>
       ))}
