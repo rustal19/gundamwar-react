@@ -118,6 +118,21 @@
   text-decoration: none;
 }
 
+.public-deck-colors {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18rem;
+  flex: 0 0 auto;
+}
+
+.public-deck-color-dot {
+  width: 0.72rem;
+  height: 0.72rem;
+  border: 1px solid var(--gw-secondary-border);
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
 .public-deck-format-badge {
   display: inline-flex;
   align-items: center;

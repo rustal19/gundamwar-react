@@ -38,6 +38,7 @@ const SearchResults = ({ compact = false }) => {
   const [pageSize, setPageSize] = useState(50);
   const [isLoaded, setIsLoaded] = useState(false);
   const [needsCriteria, setNeedsCriteria] = useState(false);
+  const [viewMode, setViewMode] = useState("detail");
 
   useEffect(() => {
     const parsedSearchParams = parseSearchParams(location.search);
@@ -101,6 +102,25 @@ const SearchResults = ({ compact = false }) => {
   );
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize || 1));
+
+  const viewToggle = (
+    <div className="search-results-view-toggle" aria-label="検索結果の表示切替">
+      <button
+        type="button"
+        className={viewMode === "detail" ? "active" : ""}
+        onClick={() => setViewMode("detail")}
+      >
+        詳細
+      </button>
+      <button
+        type="button"
+        className={viewMode === "image" ? "active" : ""}
+        onClick={() => setViewMode("image")}
+      >
+        画像のみ
+      </button>
+    </div>
+  );
 
   const pagination = useMemo(() => {
     if (totalPages <= 1) return null;
@@ -185,9 +205,11 @@ const SearchResults = ({ compact = false }) => {
         <div className={compact ? "search-results-heading-row" : undefined}>
           <h1>検索結果</h1>
           <div className="search-results-summary">{`${total}件 / ${page} / ${totalPages}ページ`}</div>
+          {compact ? viewToggle : null}
         </div>
         {!compact && (
           <div className="search-results-toolbar-actions">
+            {viewToggle}
             <Link
               className="results-link-button"
               to={buildPathWithForcedMobileLayout("/search", location.search)}
@@ -207,20 +229,21 @@ const SearchResults = ({ compact = false }) => {
       {!needsCriteria ? pagination : null}
 
       {!isLoaded ? (
-        <div className="results-empty-state">Loading...</div>
+        <div className="results-empty-state">読み込み中...</div>
       ) : needsCriteria ? (
         <div className="results-empty-state">検索条件を指定してください。</div>
       ) : results.length === 0 ? (
         <div className="results-empty-state">検索結果がありません。</div>
       ) : (
-        <div className="results-list">
+        <div className={viewMode === "image" ? "results-list results-image-grid" : "results-list"}>
           {results.map((card) => (
             <SearchResultCard
               key={card.cardId}
               card={card}
+              viewMode={viewMode}
               showDeckActions={false}
               compactDetailLayout={compact}
-              enableImagePreview={compact}
+              enableImagePreview={compact || viewMode === "image"}
             />
           ))}
         </div>
