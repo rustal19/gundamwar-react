@@ -9,6 +9,7 @@ import {
   deleteRound,
   deleteMyEntry,
   fetchEntries,
+  fetchMyTournaments,
   fetchRounds,
   fetchRoundsForManage,
   fetchStandings,
@@ -162,12 +163,20 @@ describe("tournaments service mock mode", () => {
     expect(readStore().entries.t1).toEqual([]);
   });
 
-  it("requires a decklist when the tournament requires it", async () => {
+  it("allows entry without a decklist even when the tournament requires it", async () => {
     setRegistrationTournament({ decklistRequired: true });
 
-    await expect(createEntry({ tournamentId: "t1", authMode: "mock", user })).rejects.toThrow(
-      "デッキリスト"
-    );
+    const entry = await createEntry({ tournamentId: "t1", authMode: "mock", user });
+    expect(entry.deckItems).toBeNull();
+    expect(entry.decklistSubmittedAt).toBeNull();
+
+    const myTournaments = await fetchMyTournaments({ authMode: "mock", user });
+    expect(myTournaments.items).toEqual([
+      expect.objectContaining({
+        entry: expect.objectContaining({ id: entry.id }),
+        needsDecklist: true,
+      }),
+    ]);
   });
 
   it("hides other players decklists before completed", async () => {

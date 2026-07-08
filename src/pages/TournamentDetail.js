@@ -232,8 +232,6 @@ export default function TournamentDetail({ compact = false }) {
   const canCancel = Boolean(
     tournament && tournament.status === "registration" && isBefore(tournament.startsAt) && myEntry
   );
-  const needsDeck = Boolean(tournament?.decklistRequired);
-  const hasDeckForSubmit = submittedItems.length > 0;
   const decklistsVisible = tournament?.status === "completed" && tournament.decklistsPublic;
   const selectedPairingRound = useMemo(
     () => rounds.find((round) => Number(round.number) === Number(pairingRoundNumber)) || null,
@@ -261,7 +259,6 @@ export default function TournamentDetail({ compact = false }) {
   const submitDisabled =
     isSubmitting ||
     !isAuthenticated ||
-    (needsDeck && !hasDeckForSubmit) ||
     deckViolations.length > 0 ||
     (!canRegister && !canUpdateDeck);
 

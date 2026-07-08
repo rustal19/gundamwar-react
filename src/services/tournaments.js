@@ -286,7 +286,7 @@ function isSameLocalDate(dateString, now = new Date()) {
   );
 }
 
-function assertCanEnter(tournament, entries, currentUser, deckItems) {
+function assertCanEnter(tournament, entries, currentUser) {
   const acceptsLateEntry = tournament.status === "in_progress" && tournament.lateEntry;
   if (tournament.status !== "registration" && !acceptsLateEntry) {
     throw new Error("現在この大会にはエントリーできません。");
@@ -299,9 +299,6 @@ function assertCanEnter(tournament, entries, currentUser, deckItems) {
   }
   if (entries.some((entry) => entry.user.id === currentUser.id && entry.status !== "dropped")) {
     throw new Error("すでにエントリー済みです。");
-  }
-  if (tournament.decklistRequired && (!Array.isArray(deckItems) || deckItems.length === 0)) {
-    throw new Error("この大会はデッキリスト提出が必要です。");
   }
 }
 
@@ -596,6 +593,34 @@ export async function fetchTournament(id, { authMode, user } = {}) {
   return requestJson(`/api/tournaments/${id}`, { method: "GET" });
 }
 
+export async function fetchMyTournaments({ authMode, user } = {}) {
+  if (authMode === "mock") {
+    const currentUser = getCurrentUser(user);
+    const store = readStore();
+    const items = store.tournaments
+      .map((rawTournament) => {
+        const entries = getEntries(store, rawTournament.id);
+        const entry = entries.find(
+          (item) => item.user?.id === currentUser.id && item.status !== "dropped"
+        );
+        if (!entry) return null;
+        const tournament = normalizeTournament(rawTournament, entries);
+        return {
+          tournament,
+          entry,
+          needsDecklist: Boolean(tournament.decklistRequired && !entry.decklistSubmittedAt),
+        };
+      })
+      .filter(Boolean)
+      .sort((left, right) =>
+        String(right.tournament.startsAt || "").localeCompare(String(left.tournament.startsAt || ""))
+      );
+    return { items };
+  }
+
+  return requestJson("/api/users/me/tournaments", { method: "GET" });
+}
+
 export async function fetchStandings(id, { authMode, round } = {}) {
   if (authMode === "mock") {
     const store = readStore();
@@ -654,7 +679,7 @@ export async function createEntry({ tournamentId, deckItems = null, authMode, us
     const store = readStore();
     const tournament = getTournamentOrThrow(store, tournamentId);
     const entries = getEntries(store, tournamentId);
-    assertCanEnter(tournament, entries, currentUser, deckItems);
+    assertCanEnter(tournament, entries, currentUser);
     assertDeckIsValid(deckItems, tournament.regulation);
 
     const now = nowIso();
@@ -697,9 +722,6 @@ export async function updateMyEntry({ tournamentId, deckItems = null, authMode, 
       (entry) => entry.user.id === currentUser.id && entry.status !== "dropped"
     );
     if (!existing) throw new Error("エントリーが見つかりません。");
-    if (tournament.decklistRequired && (!Array.isArray(deckItems) || deckItems.length === 0)) {
-      throw new Error("この大会はデッキリスト提出が必要です。");
-    }
 
     const now = nowIso();
     const updated = normalizeEntry({
