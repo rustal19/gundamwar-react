@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { FORMAT_PRESETS, OTHER_FORMAT_NAME } from "../data/formats";
 import { fetchPublicDecks } from "../services/publicDecks";
 import "./PublicDecks.css";
 
@@ -29,21 +30,24 @@ export default function PublicDecks({ compact = false }) {
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const page = Number(params.get("page") || 1);
   const query = params.get("query") || "";
+  const format = params.get("format") || "";
   const [searchText, setSearchText] = useState(query);
+  const [formatFilter, setFormatFilter] = useState(format);
   const [result, setResult] = useState({ items: [], total: 0, page: 1, pageSize: 20 });
   const [isLoaded, setIsLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     setSearchText(query);
-  }, [query]);
+    setFormatFilter(format);
+  }, [format, query]);
 
   useEffect(() => {
     let isActive = true;
     setIsLoaded(false);
     setErrorMessage("");
 
-    fetchPublicDecks({ page, query, authMode })
+    fetchPublicDecks({ page, query, format, authMode })
       .then((payload) => {
         if (!isActive) return;
         setResult(payload);
@@ -60,9 +64,13 @@ export default function PublicDecks({ compact = false }) {
     return () => {
       isActive = false;
     };
-  }, [authMode, page, query]);
+  }, [authMode, format, page, query]);
 
   const totalPages = Math.max(1, Math.ceil(result.total / result.pageSize || 1));
+  const formatOptions = useMemo(
+    () => [...new Set([...FORMAT_PRESETS.map((preset) => preset.name).filter(Boolean), OTHER_FORMAT_NAME])],
+    []
+  );
 
   const navigateToPage = useCallback(
     (nextPage) => {
@@ -79,6 +87,7 @@ export default function PublicDecks({ compact = false }) {
     event.preventDefault();
     const nextParams = new URLSearchParams();
     if (searchText.trim()) nextParams.set("query", searchText.trim());
+    if (formatFilter) nextParams.set("format", formatFilter);
     nextParams.set("page", "1");
     navigate(`/decks?${nextParams.toString()}`);
   };
@@ -114,6 +123,18 @@ export default function PublicDecks({ compact = false }) {
           onChange={(event) => setSearchText(event.target.value)}
           placeholder="デッキ名・説明・ユーザー名で検索"
         />
+        <select
+          value={formatFilter}
+          onChange={(event) => setFormatFilter(event.target.value)}
+          aria-label="フォーマットで絞り込み"
+        >
+          <option value="">すべてのフォーマット</option>
+          {formatOptions.map((formatName) => (
+            <option key={formatName} value={formatName}>
+              {formatName}
+            </option>
+          ))}
+        </select>
         <button type="submit" className="deck-action-button primary">
           検索
         </button>
@@ -134,6 +155,7 @@ export default function PublicDecks({ compact = false }) {
               <div>
                 <h2>
                   <Link to={`/decks/${deck.id}`}>{deck.title}</Link>
+                  {deck.format ? <span className="public-deck-format-badge">{deck.format}</span> : null}
                 </h2>
                 <p>{deck.description || "説明はありません。"}</p>
               </div>

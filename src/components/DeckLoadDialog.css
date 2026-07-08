@@ -191,6 +191,23 @@
   box-sizing: border-box;
 }
 
+.deck-publication-format {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--gw-text-muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.deck-publication-format select {
+  min-height: 2.25rem;
+  border: 1px solid var(--gw-secondary-border);
+  background: var(--gw-surface);
+  color: var(--gw-text);
+  padding: 0.45rem 0.55rem;
+  font: inherit;
+}
+
 .deck-publication-actions {
   display: flex;
   justify-content: flex-end;

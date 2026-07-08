@@ -13,7 +13,9 @@ import {
   updateEntryStatus,
   updateTournament,
 } from "../services/tournaments";
+import CardHoverPreview from "../components/CardHoverPreview";
 import { TOURNAMENT_STATUS_LABELS as STATUS_LABELS } from "../data/statusLabels";
+import { getCardCode } from "../utils/cardImages";
 import "./Tournaments.css";
 
 const DEFAULT_FORM = {
@@ -148,6 +150,30 @@ function countCards(items, zone) {
 
 function findEntry(entries, entryId) {
   return entries.find((entry) => entry.id === entryId) || null;
+}
+
+function TournamentDeckRows({ items, compact }) {
+  return (
+    <table className="tournament-table tournament-decklist-table">
+      <tbody>
+        {(items || []).map((item, index) => {
+          const card = item.card || {};
+          return (
+            <tr key={`${item.cardId || card.name}-${item.zone || "main"}-${index}`}>
+              <td>{item.zone === "side" ? "サイド" : "メイン"}</td>
+              <td>{getCardCode(card) || "-"}</td>
+              <td>
+                <CardHoverPreview card={card} compact={compact}>
+                  {card.name || item.cardId}
+                </CardHoverPreview>
+              </td>
+              <td>{item.count}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
 }
 
 export default function TournamentManage({ compact = false }) {
@@ -598,17 +624,7 @@ export default function TournamentManage({ compact = false }) {
                   </button>
                 </div>
                 {selectedEntry.deckItems?.length ? (
-                  <table className="tournament-table">
-                    <tbody>
-                      {selectedEntry.deckItems.map((item, index) => (
-                        <tr key={`${item.cardId || item.card?.name}-${index}`}>
-                          <td>{item.zone || "main"}</td>
-                          <td>{item.card?.name || item.cardId}</td>
-                          <td>{item.count}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <TournamentDeckRows items={selectedEntry.deckItems} compact={compact} />
                 ) : (
                   <div className="tournament-muted">デッキリストは提出されていません。</div>
                 )}
