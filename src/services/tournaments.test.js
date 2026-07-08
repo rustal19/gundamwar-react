@@ -10,6 +10,7 @@ import {
   deleteMyEntry,
   fetchEntries,
   fetchRounds,
+  fetchRoundsForManage,
   fetchStandings,
   fetchTournament,
   fetchTournaments,
@@ -316,6 +317,125 @@ describe("tournaments service mock mode", () => {
     expect(standings.items[0].points).toBe(3);
     expect(standings.items.map((standing) => standing.entryId)).toContain("entry-1");
     expect(standings.items.map((standing) => standing.entryId)).toContain("entry-3");
+  });
+
+  it("hides match results from non-participants until the tournament is completed", async () => {
+    setRegistrationTournament({ status: "in_progress" });
+    const store = readStore();
+    store.entries.t1 = ["1", "2", "3", "4"].map((suffix) => ({
+      id: `entry-${suffix}`,
+      tournamentId: "t1",
+      user: { id: `player-${suffix}`, name: `Player ${suffix}` },
+      deckItems: null,
+      decklistSubmittedAt: null,
+      status: "checked_in",
+      createdAt: new Date().toISOString(),
+    }));
+    store.rounds.t1 = [
+      {
+        id: "round-1",
+        tournamentId: "t1",
+        number: 1,
+        stage: "swiss",
+        status: "completed",
+        timerStartedAt: null,
+        matches: [
+          {
+            id: "match-1",
+            roundId: "round-1",
+            tableNo: 1,
+            player1EntryId: "entry-1",
+            player2EntryId: "entry-2",
+            player1Games: 2,
+            player2Games: 0,
+            result: "p1_win",
+          },
+          {
+            id: "match-2",
+            roundId: "round-1",
+            tableNo: 2,
+            player1EntryId: "entry-3",
+            player2EntryId: "entry-4",
+            player1Games: 1,
+            player2Games: 2,
+            result: "p2_win",
+          },
+        ],
+      },
+    ];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const playerView = await fetchRounds("t1", {
+      authMode: "mock",
+      user: { id: "player-1", name: "Player 1" },
+    });
+    expect(playerView.rounds[0].matches[0].result).toBe("p1_win");
+    expect(playerView.rounds[0].matches[1]).toMatchObject({
+      result: null,
+      player1Games: null,
+      player2Games: null,
+      winnerEntryId: "entry-4",
+    });
+
+    const manageView = await fetchRoundsForManage("t1", { authMode: "mock" });
+    expect(manageView.rounds[0].matches[1].result).toBe("p2_win");
+
+    const organizerView = await fetchRounds("t1", {
+      authMode: "mock",
+      user: { id: "org", name: "主催者", role: "organizer" },
+    });
+    expect(organizerView.rounds[0].matches[1].result).toBe("p2_win");
+
+    store.tournaments[0].status = "completed";
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    const completedView = await fetchRounds("t1", { authMode: "mock", user });
+    expect(completedView.rounds[0].matches[1].result).toBe("p2_win");
+  });
+
+  it("recomputes standings at the selected round", async () => {
+    setRegistrationTournament({ status: "in_progress" });
+    const store = readStore();
+    store.entries.t1 = ["1", "2", "3", "4"].map((suffix) => ({
+      id: `entry-${suffix}`,
+      tournamentId: "t1",
+      user: { id: `player-${suffix}`, name: `Player ${suffix}` },
+      deckItems: null,
+      decklistSubmittedAt: null,
+      status: "checked_in",
+      createdAt: new Date().toISOString(),
+    }));
+    store.rounds.t1 = [
+      {
+        id: "round-1",
+        tournamentId: "t1",
+        number: 1,
+        stage: "swiss",
+        status: "completed",
+        matches: [
+          { id: "m1", roundId: "round-1", tableNo: 1, player1EntryId: "entry-1", player2EntryId: "entry-2", result: "p1_win" },
+          { id: "m2", roundId: "round-1", tableNo: 2, player1EntryId: "entry-3", player2EntryId: "entry-4", result: "p1_win" },
+        ],
+      },
+      {
+        id: "round-2",
+        tournamentId: "t1",
+        number: 2,
+        stage: "swiss",
+        status: "completed",
+        matches: [
+          { id: "m3", roundId: "round-2", tableNo: 1, player1EntryId: "entry-1", player2EntryId: "entry-3", result: "p2_win" },
+          { id: "m4", roundId: "round-2", tableNo: 2, player1EntryId: "entry-2", player2EntryId: "entry-4", result: "p2_win" },
+        ],
+      },
+    ];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const round1 = await fetchStandings("t1", { authMode: "mock", round: 1 });
+    const latest = await fetchStandings("t1", { authMode: "mock" });
+
+    expect(round1.items.find((standing) => standing.entryId === "entry-1").points).toBe(3);
+    expect(latest.items.find((standing) => standing.entryId === "entry-1").points).toBe(3);
+    expect(latest.items.find((standing) => standing.entryId === "entry-3").points).toBe(6);
   });
 
   it("creates and updates organizer tournaments with forward status transitions", async () => {

@@ -385,6 +385,40 @@ function winnerEntryId(match, result = match.result) {
   return null;
 }
 
+function isMatchParticipant(match, viewer, entries) {
+  if (!viewer?.id) return false;
+  const viewerEntry = entries.find((entry) => entry.user?.id === String(viewer.id));
+  if (!viewerEntry) return false;
+  return [match.player1EntryId, match.player2EntryId].some(
+    (entryId) => entryId != null && String(entryId) === String(viewerEntry.id)
+  );
+}
+
+function sanitizeMatchForViewer(match, tournament, viewer, entries) {
+  const nextWinnerEntryId = winnerEntryId(match);
+  const isOrganizer = viewer?.id && tournament.createdBy?.id === String(viewer.id);
+  const isAdmin = viewer?.role === "admin";
+  if (tournament.status === "completed" || isOrganizer || isAdmin || isMatchParticipant(match, viewer, entries)) {
+    return { ...match, winnerEntryId: nextWinnerEntryId };
+  }
+  return {
+    ...match,
+    player1Games: null,
+    player2Games: null,
+    result: null,
+    winnerEntryId: nextWinnerEntryId,
+  };
+}
+
+function sanitizeRoundsForViewer(rounds, tournament, viewer, entries) {
+  return rounds.map((round) => ({
+    ...round,
+    matches: (round.matches || []).map((match) =>
+      sanitizeMatchForViewer(match, tournament, viewer, entries)
+    ),
+  }));
+}
+
 function swissRoundLimit(tournament, activeCount) {
   if (tournament.swissRounds != null && Number(tournament.swissRounds) > 0) {
     return Number(tournament.swissRounds);
@@ -562,11 +596,14 @@ export async function fetchTournament(id, { authMode, user } = {}) {
   return requestJson(`/api/tournaments/${id}`, { method: "GET" });
 }
 
-export async function fetchStandings(id, { authMode } = {}) {
+export async function fetchStandings(id, { authMode, round } = {}) {
   if (authMode === "mock") {
     const store = readStore();
     const entries = getEntries(store, id);
-    const matches = flattenMatches(getRounds(store, id));
+    const rounds = getRounds(store, id);
+    const matches = flattenMatches(
+      round == null ? rounds : rounds.filter((item) => Number(item.number) <= Number(round))
+    );
     const standings = computeStandings(entries, matches).map((standing) => {
       const entry = entries.find((item) => item.id === standing.entryId);
       return {
@@ -577,13 +614,35 @@ export async function fetchStandings(id, { authMode } = {}) {
     return { items: standings };
   }
 
-  return requestJson(`/api/tournaments/${id}/standings`, { method: "GET" });
+  const query = round == null ? "" : `?round=${encodeURIComponent(round)}`;
+  return requestJson(`/api/tournaments/${id}/standings${query}`, { method: "GET" });
 }
 
-export async function fetchRounds(id, { authMode } = {}) {
+export async function fetchRounds(id, { authMode, user } = {}) {
   if (authMode === "mock") {
     const store = readStore();
-    return { rounds: getRounds(store, id) };
+    const tournament = getTournamentOrThrow(store, id);
+    const viewer = user || readMockUser();
+    return {
+      rounds: sanitizeRoundsForViewer(getRounds(store, id), tournament, viewer, getEntries(store, id)),
+    };
+  }
+
+  return requestJson(`/api/tournaments/${id}/rounds`, { method: "GET" });
+}
+
+export async function fetchRoundsForManage(id, { authMode } = {}) {
+  if (authMode === "mock") {
+    const store = readStore();
+    return {
+      rounds: getRounds(store, id).map((round) => ({
+        ...round,
+        matches: (round.matches || []).map((match) => ({
+          ...match,
+          winnerEntryId: winnerEntryId(match),
+        })),
+      })),
+    };
   }
 
   return requestJson(`/api/tournaments/${id}/rounds`, { method: "GET" });

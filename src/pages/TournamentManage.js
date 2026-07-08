@@ -6,7 +6,7 @@ import {
   createNextRound,
   createTournament,
   fetchEntries,
-  fetchRounds,
+  fetchRoundsForManage,
   fetchStandings,
   fetchTournament,
   reportMatchResult,
@@ -178,7 +178,7 @@ export default function TournamentManage({ compact = false }) {
       const [tournament, entryPayload, roundPayload, standingPayload] = await Promise.all([
         fetchTournament(id, { authMode, user }),
         fetchEntries(id, { authMode }),
-        fetchRounds(id, { authMode }),
+        fetchRoundsForManage(id, { authMode }),
         fetchStandings(id, { authMode }),
       ]);
       const nextForm = formFromTournament(tournament);
