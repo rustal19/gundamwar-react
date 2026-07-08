@@ -1187,7 +1187,7 @@ export default function TournamentManage({ compact = false }) {
       </Link>
       <div className="tournament-page-header manage-header">
         <div>
-          <p className="tournament-eyebrow">Organizer Console</p>
+          <p className="tournament-eyebrow">大会管理</p>
           <h1>{isNew ? "大会を作成" : form.title || "大会管理"}</h1>
         </div>
         {!isNew ? (
@@ -1209,7 +1209,9 @@ export default function TournamentManage({ compact = false }) {
 
       {!isNew ? (
         <>
-          <div className="next-action-band">{nextActionText(form.status, rounds)}</div>
+          <div className="next-action-band">
+            <strong>次にやること:</strong> {nextActionText(form.status, rounds)}
+          </div>
           <div className="status-action-row">
             <button type="button" disabled={isSubmitting || form.status !== "draft"} onClick={() => changeStatus("registration")}>
               受付開始
