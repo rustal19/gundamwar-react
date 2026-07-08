@@ -10,7 +10,52 @@
   border: 1px solid var(--gw-border);
   border-radius: 4px;
   box-sizing: border-box;
-}
+}
+
+.not-found-page {
+  width: min(720px, calc(100% - 2rem));
+  margin: 2rem auto 0;
+}
+
+.not-found-panel {
+  border: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-surface);
+  padding: 1.5rem;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.not-found-panel h1,
+.not-found-panel p {
+  margin: 0;
+}
+
+.not-found-eyebrow {
+  color: var(--gw-text-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.not-found-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.not-found-actions .results-link-button {
+  border: 1px solid var(--gw-secondary-border);
+  background: var(--gw-surface);
+  color: var(--gw-primary);
+  padding: 0.6rem 0.9rem;
+  text-decoration: none;
+}
+
+.not-found-actions .results-link-button.primary {
+  border-color: var(--gw-primary);
+  background: var(--gw-primary);
+  color: var(--gw-on-primary);
+}
 
 /* 各行：ラベルと入力グループを2列に配置 */
 .form-row {

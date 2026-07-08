@@ -43,6 +43,17 @@ function findMyEntry(tournament, user) {
   );
 }
 
+function OwnerLink({ owner, buildPath }) {
+  const label = owner?.name || "-";
+  return owner?.id ? (
+    <Link className="portal-deck-owner" to={buildPath(`/users/${owner.id}`)}>
+      {label}
+    </Link>
+  ) : (
+    <span className="portal-deck-owner">{label}</span>
+  );
+}
+
 function DeckColorDots({ items }) {
   const colors = getDeckColors(items);
   const displayColors = colors.length > 0 ? colors : [{ name: "不明", value: "#d8d8d8" }];
@@ -240,7 +251,7 @@ export default function PortalHome({ compact = false }) {
                 <Link className="portal-deck-title" to={buildPath(`/decks/${deck.id}`)}>
                   {deck.title}
                 </Link>
-                <span className="portal-deck-owner">{deck.owner?.name || "-"}</span>
+                <OwnerLink owner={deck.owner} buildPath={buildPath} />
                 <span className="portal-deck-date">{formatDate(deck.publishedAt || deck.updatedAt)}</span>
               </article>
             ))}

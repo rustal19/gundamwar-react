@@ -11,6 +11,7 @@ import {
   groupDeckItemsByType,
 } from "../utils/deckExport";
 import { fetchPublicDeck, setDeckPublication } from "../services/publicDecks";
+import NotFound from "./NotFound";
 import "./PublicDecks.css";
 
 function normalizeZone(item) {
@@ -35,6 +36,15 @@ function countItems(items) {
     (sum, item) => sum + Number(item?.count || 0),
     0
   );
+}
+
+function OwnerLink({ owner }) {
+  const label = owner?.name || "-";
+  return owner?.id ? <Link to={`/users/${owner.id}`}>{label}</Link> : <span>{label}</span>;
+}
+
+function isNotFoundError(error) {
+  return error?.code === "not_found" || error?.status === 404 || /not found|見つかりません/i.test(error?.message || "");
 }
 
 function DeckTypeGroups({ title, items, compact }) {
@@ -123,11 +133,13 @@ export default function PublicDeckDetail({ compact = false }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isModerating, setIsModerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
     let isActive = true;
     setIsLoaded(false);
     setErrorMessage("");
+    setLoadError(null);
 
     fetchPublicDeck(id, { authMode })
       .then((payload) => {
@@ -137,6 +149,7 @@ export default function PublicDeckDetail({ compact = false }) {
         if (!isActive) return;
         setDeck(null);
         setErrorMessage(error.message);
+        setLoadError(error);
       })
       .finally(() => {
         if (isActive) setIsLoaded(true);
@@ -193,6 +206,10 @@ export default function PublicDeckDetail({ compact = false }) {
     }
   };
 
+  if (isLoaded && loadError && isNotFoundError(loadError)) {
+    return <NotFound />;
+  }
+
   return (
     <main
       id="search-results-container"
@@ -205,12 +222,13 @@ export default function PublicDeckDetail({ compact = false }) {
             <div className="search-results-summary">
               {[
                 deck.format,
-                deck.owner?.name,
                 formatDate(deck.publishedAt || deck.updatedAt),
                 sideCount ? `メイン${mainCount}・サイド${sideCount}` : `メイン${mainCount}`,
               ]
                 .filter(Boolean)
                 .join(" / ")}
+              {" / "}
+              <OwnerLink owner={deck.owner} />
             </div>
           ) : null}
         </div>

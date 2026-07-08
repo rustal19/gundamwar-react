@@ -24,6 +24,11 @@ function countDeckItems(items) {
   );
 }
 
+function OwnerLink({ owner }) {
+  const label = owner?.name || "-";
+  return owner?.id ? <Link to={`/users/${owner.id}`}>{label}</Link> : <span>{label}</span>;
+}
+
 function DeckColorDots({ items }) {
   const colors = getDeckColors(items);
   const displayColors = colors.length > 0 ? colors : [{ name: "不明", value: "#d8d8d8" }];
@@ -183,7 +188,7 @@ export default function PublicDecks({ compact = false }) {
                 <p>{deck.description || "説明はありません。"}</p>
               </div>
               <div className="public-deck-meta">
-                <span>{deck.owner?.name || "-"}</span>
+                <OwnerLink owner={deck.owner} />
                 <span>{`${countDeckItems(deck.items)}枚`}</span>
                 <span>{formatDate(deck.publishedAt || deck.updatedAt)}</span>
               </div>

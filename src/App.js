@@ -10,6 +10,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { DeckProvider } from "./context/DeckContext";
 import AdminUsers from "./pages/AdminUsers";
 import DeckBuilder from "./pages/DeckBuilder";
+import NotFound from "./pages/NotFound";
 import PublicDeckDetail from "./pages/PublicDeckDetail";
 import PublicDecks from "./pages/PublicDecks";
 import Profile from "./pages/Profile";
@@ -21,6 +22,7 @@ import TournamentDetail from "./pages/TournamentDetail";
 import TournamentDisplay from "./pages/TournamentDisplay";
 import TournamentList from "./pages/TournamentList";
 import TournamentManage from "./pages/TournamentManage";
+import UserProfile from "./pages/UserProfile";
 import { useLayoutTier } from "./utils/deviceLayout";
 import "./mobile.css";
 
@@ -77,8 +79,10 @@ const AppContent = () => {
             <Route path="/tournaments/:id/manage" element={<TournamentManage compact={isCompactLayout} />} />
             <Route path="/admin/users" element={<AdminUsers compact={isCompactLayout} />} />
             <Route path="/profile" element={<Profile compact={isCompactLayout} />} />
+            <Route path="/users/:id" element={<UserProfile compact={isCompactLayout} />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
       </div>
