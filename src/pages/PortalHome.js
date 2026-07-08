@@ -1,41 +1,71 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import TournamentCard from "../components/TournamentCard";
+import { SearchIcon } from "../components/icons";
 import { useAuth } from "../context/AuthContext";
 import { fetchPublicDecks } from "../services/publicDecks";
 import { fetchTournaments } from "../services/tournaments";
-import { TOURNAMENT_STATUS_LABELS } from "../data/statusLabels";
 import { buildPathWithForcedMobileLayout } from "../utils/deviceLayout";
+import { getDeckColors } from "../utils/deckColors";
 import "./PortalHome.css";
-
 
 function formatDate(value) {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleString("ja-JP", {
+  return date.toLocaleDateString("ja-JP", {
+    year: "numeric",
     month: "2-digit",
     day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
   });
 }
 
-function formatVenue(tournament) {
-  const venue = tournament.venue?.trim();
-  if (venue) return venue;
-  return tournament.isOnline ? "オンライン" : "未設定";
+function compareStartsAt(left, right) {
+  return String(left.startsAt || "").localeCompare(String(right.startsAt || ""));
 }
 
-function countDeckItems(items) {
-  return (Array.isArray(items) ? items : []).reduce(
-    (sum, item) => sum + Number(item?.count || 0),
-    0
+function getEntries(tournament) {
+  if (Array.isArray(tournament.entries)) return tournament.entries;
+  if (Array.isArray(tournament.entryList)) return tournament.entryList;
+  return [];
+}
+
+function findMyEntry(tournament, user) {
+  if (!user?.id) return null;
+  const userId = String(user.id);
+  const directEntry = tournament.myEntry || tournament.entry || null;
+  if (directEntry?.user?.id && String(directEntry.user.id) === userId) return directEntry;
+  if (directEntry?.userId && String(directEntry.userId) === userId) return directEntry;
+  return (
+    getEntries(tournament).find(
+      (entry) => String(entry?.user?.id || entry?.userId || "") === userId
+    ) || null
+  );
+}
+
+function DeckColorDots({ items }) {
+  const colors = getDeckColors(items);
+  const displayColors = colors.length > 0 ? colors : [{ name: "不明", value: "#d8d8d8" }];
+
+  return (
+    <span className="portal-deck-colors" aria-label={`デッキ色: ${displayColors.map((color) => color.name).join("、")}`}>
+      {displayColors.map((color) => (
+        <span
+          key={color.name}
+          className="portal-deck-color-dot"
+          style={{ backgroundColor: color.value }}
+          title={color.name}
+        />
+      ))}
+    </span>
   );
 }
 
 export default function PortalHome({ compact = false }) {
-  const { authMode } = useAuth();
+  const { authMode, isAuthenticated, user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const [searchText, setSearchText] = useState("");
   const [tournaments, setTournaments] = useState([]);
   const [decks, setDecks] = useState([]);
   const [isTournamentsLoaded, setIsTournamentsLoaded] = useState(false);
@@ -45,8 +75,6 @@ export default function PortalHome({ compact = false }) {
 
   const paths = useMemo(
     () => ({
-      search: buildPathWithForcedMobileLayout("/search", location.search),
-      deck: buildPathWithForcedMobileLayout("/deck", location.search),
       decks: buildPathWithForcedMobileLayout("/decks", location.search),
       tournaments: buildPathWithForcedMobileLayout("/tournaments", location.search),
     }),
@@ -66,11 +94,14 @@ export default function PortalHome({ compact = false }) {
     ])
       .then(([registration, inProgress]) => {
         if (!isActive) return;
+        const seen = new Set();
         const nextItems = [...(registration?.items || []), ...(inProgress?.items || [])]
-          .sort((left, right) =>
-            String(left.startsAt || "").localeCompare(String(right.startsAt || ""))
-          )
-          .slice(0, 5);
+          .filter((tournament) => {
+            if (!tournament?.id || seen.has(tournament.id)) return false;
+            seen.add(tournament.id);
+            return true;
+          })
+          .sort(compareStartsAt);
         setTournaments(nextItems);
       })
       .catch((error) => {
@@ -111,25 +142,64 @@ export default function PortalHome({ compact = false }) {
     };
   }, [authMode]);
 
+  const myTournaments = useMemo(() => {
+    if (!isAuthenticated || !user?.id) return [];
+    return tournaments
+      .map((tournament) => ({
+        ...tournament,
+        myEntry: findMyEntry(tournament, user),
+      }))
+      .filter((tournament) => tournament.myEntry)
+      .slice(0, 5);
+  }, [isAuthenticated, tournaments, user]);
+
+  const featuredTournaments = useMemo(
+    () => tournaments.slice(0, 5),
+    [tournaments]
+  );
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    const params = new URLSearchParams();
+    const name = searchText.trim();
+    if (name) params.set("name", name);
+    const mobileLayout = new URLSearchParams(location.search).get("mobileLayout");
+    if (mobileLayout) params.set("mobileLayout", mobileLayout);
+    navigate(`/search?${params.toString()}`);
+  };
+
   return (
     <main className={compact ? "portal-home compact" : "portal-home"}>
-      <section className="portal-hero">
-        <p className="portal-eyebrow">Gundam War Portal</p>
-        <h1>Gundam War Portal</h1>
-        <p>
-          ガンダムウォーのカード検索、デッキ構築、公開デッキ、大会情報をまとめて扱える
-          非公式ファンサイトです。
-        </p>
-      </section>
+      {myTournaments.length > 0 ? (
+        <section className="portal-section portal-section-first">
+          <div className="portal-section-header">
+            <h2>あなたの大会</h2>
+          </div>
+          <div className="portal-tournament-list">
+            {myTournaments.map((tournament) => (
+              <TournamentCard key={`my-${tournament.id}`} tournament={tournament} buildPath={buildPath} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <form className="portal-card-search" onSubmit={handleSearchSubmit}>
+        <SearchIcon size={22} />
+        <input
+          type="search"
+          value={searchText}
+          onChange={(event) => setSearchText(event.target.value)}
+          placeholder="カード名で検索"
+          aria-label="カード名で検索"
+        />
+        <button type="submit">検索</button>
+      </form>
 
       <section className="portal-section">
         <div className="portal-section-header">
-          <div>
-            <p className="portal-eyebrow">Tournaments</p>
-            <h2>開催予定・進行中の大会</h2>
-          </div>
+          <h2>大会</h2>
           <Link className="portal-more-link" to={paths.tournaments}>
-            もっと見る
+            一覧へ
           </Link>
         </div>
 
@@ -137,30 +207,12 @@ export default function PortalHome({ compact = false }) {
           <div className="portal-empty">読み込み中...</div>
         ) : tournamentsError ? (
           <div className="portal-empty">{tournamentsError}</div>
-        ) : tournaments.length === 0 ? (
-          <div className="portal-empty">開催予定・進行中の大会はありません。</div>
+        ) : featuredTournaments.length === 0 ? (
+          <div className="portal-empty">受付中・進行中の大会はありません。</div>
         ) : (
-          <div className="portal-list">
-            {tournaments.map((tournament) => (
-              <article key={tournament.id} className="portal-row">
-                <div>
-                  <h3>
-                    <Link to={buildPath(`/tournaments/${tournament.id}`)}>{tournament.title}</Link>
-                  </h3>
-                  <p>{tournament.description || "説明はありません。"}</p>
-                </div>
-                <div className="portal-meta">
-                  <span className={`portal-status ${tournament.status}`}>
-                    {TOURNAMENT_STATUS_LABELS[tournament.status] || tournament.status}
-                  </span>
-                  <span>開始 {formatDate(tournament.startsAt)}</span>
-                  <span>開催地 {formatVenue(tournament)}</span>
-                  <span>
-                    参加 {tournament.entryCount || 0}
-                    {tournament.capacity == null ? "" : ` / ${tournament.capacity}`}
-                  </span>
-                </div>
-              </article>
+          <div className="portal-tournament-list">
+            {featuredTournaments.map((tournament) => (
+              <TournamentCard key={tournament.id} tournament={tournament} buildPath={buildPath} />
             ))}
           </div>
         )}
@@ -168,12 +220,9 @@ export default function PortalHome({ compact = false }) {
 
       <section className="portal-section">
         <div className="portal-section-header">
-          <div>
-            <p className="portal-eyebrow">Decks</p>
-            <h2>新着公開デッキ</h2>
-          </div>
+          <h2>新着公開デッキ</h2>
           <Link className="portal-more-link" to={paths.decks}>
-            もっと見る
+            一覧へ
           </Link>
         </div>
 
@@ -184,35 +233,19 @@ export default function PortalHome({ compact = false }) {
         ) : decks.length === 0 ? (
           <div className="portal-empty">公開デッキはありません。</div>
         ) : (
-          <div className="portal-list">
+          <div className="portal-deck-list">
             {decks.map((deck) => (
-              <article key={deck.id} className="portal-row">
-                <div>
-                  <h3>
-                    <Link to={buildPath(`/decks/${deck.id}`)}>{deck.title}</Link>
-                  </h3>
-                  <p>{deck.description || "説明はありません。"}</p>
-                </div>
-                <div className="portal-meta">
-                  <span>{deck.owner?.name || "-"}</span>
-                  <span>{`${countDeckItems(deck.items)}枚`}</span>
-                  <span>{formatDate(deck.publishedAt || deck.updatedAt)}</span>
-                </div>
+              <article key={deck.id} className="portal-deck-row">
+                <DeckColorDots items={deck.items} />
+                <Link className="portal-deck-title" to={buildPath(`/decks/${deck.id}`)}>
+                  {deck.title}
+                </Link>
+                <span className="portal-deck-owner">{deck.owner?.name || "-"}</span>
+                <span className="portal-deck-date">{formatDate(deck.publishedAt || deck.updatedAt)}</span>
               </article>
             ))}
           </div>
         )}
-      </section>
-
-      <section className="portal-actions" aria-label="主要機能">
-        <Link className="portal-action-card" to={paths.search}>
-          <span>カード検索</span>
-          <strong>条件を指定してカードを探す</strong>
-        </Link>
-        <Link className="portal-action-card" to={paths.deck}>
-          <span>デッキ構築</span>
-          <strong>カードを選んでデッキを作る</strong>
-        </Link>
       </section>
     </main>
   );
