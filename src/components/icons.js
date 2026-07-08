@@ -130,3 +130,46 @@ export function LogoutIcon(props) {
     </IconBase>
   );
 }
+
+export function MapPinIcon(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+      <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z" />
+    </IconBase>
+  );
+}
+
+export function ClockIcon(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+      <path d="M12 7v5l3 3" />
+    </IconBase>
+  );
+}
+
+export function UsersIcon(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M9 7a4 4 0 1 0 0 8a4 4 0 0 0 0 -8" />
+      <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+    </IconBase>
+  );
+}
+
+export function TournamentIcon(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M5 6h14" />
+      <path d="M5 18h14" />
+      <path d="M6 6v12" />
+      <path d="M18 6v12" />
+      <path d="M8 10h4" />
+      <path d="M12 10v4" />
+      <path d="M12 14h4" />
+    </IconBase>
+  );
+}
