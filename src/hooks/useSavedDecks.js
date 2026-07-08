@@ -93,7 +93,7 @@ export function useSavedDecks() {
   );
 
   const setPublication = useCallback(
-    async ({ deckId, isPublic, description }) => {
+    async ({ deckId, isPublic, description, format }) => {
       if (!user) {
         throw new Error("ログインしてから公開設定を変更してください。");
       }
@@ -106,6 +106,7 @@ export function useSavedDecks() {
           deckId,
           isPublic,
           description,
+          format,
         });
         setSavedDecks((current) =>
           current.map((deck) =>
@@ -114,6 +115,7 @@ export function useSavedDecks() {
                   ...deck,
                   isPublic: updatedDeck.isPublic,
                   description: updatedDeck.description,
+                  format: updatedDeck.format,
                   publishedAt: updatedDeck.publishedAt,
                   updatedAt: updatedDeck.updatedAt,
                 }

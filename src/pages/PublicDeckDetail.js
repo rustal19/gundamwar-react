@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useDeck } from "../context/DeckContext";
+import CardHoverPreview from "../components/CardHoverPreview";
+import { useDeckPreview } from "../hooks/useDeckPreview";
 import { getCardCode } from "../utils/cardImages";
 import {
   DECK_EXPORT_SECTION_LABELS,
@@ -35,7 +37,7 @@ function countItems(items) {
   );
 }
 
-function DeckTypeGroups({ title, items }) {
+function DeckTypeGroups({ title, items, compact }) {
   const groups = useMemo(() => groupDeckItemsByType(items), [items]);
 
   return (
@@ -58,7 +60,11 @@ function DeckTypeGroups({ title, items }) {
                   <div key={`${item.cardId}-${normalizeZone(item)}`} className="public-deck-row">
                     <span className="public-deck-count">{item.count}</span>
                     <span className="public-deck-code">{code || "-"}</span>
-                    <span className="public-deck-name">{card.name || item.cardId}</span>
+                    <span className="public-deck-name">
+                      <CardHoverPreview card={card} compact={compact}>
+                        {card.name || item.cardId}
+                      </CardHoverPreview>
+                    </span>
                   </div>
                 );
               })}
@@ -66,6 +72,44 @@ function DeckTypeGroups({ title, items }) {
           </div>
         );
       })}
+    </section>
+  );
+}
+
+function DeckPreviewSection({ deck, mainItems, sideItems, mainCount, sideCount }) {
+  const { previewUrl, isRendering, errorMessage } = useDeckPreview({
+    open: Boolean(deck),
+    mainItems,
+    sideItems,
+    mainCount,
+    sideCount,
+  });
+
+  return (
+    <section className="public-deck-section">
+      <div className="public-deck-section-header">
+        <h2>デッキ画像</h2>
+        <span>{mainCount + sideCount}枚</span>
+      </div>
+      {previewUrl ? (
+        <a
+          className="public-deck-preview-frame"
+          href={previewUrl}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="デッキ画像を原寸表示"
+        >
+          <img
+            className="public-deck-preview-image"
+            src={previewUrl}
+            alt={`${deck.title} のデッキ画像`}
+          />
+        </a>
+      ) : (
+        <div className="results-empty-state">
+          {isRendering ? "読み込み中..." : errorMessage || "デッキ画像を表示できませんでした。"}
+        </div>
+      )}
     </section>
   );
 }
@@ -111,6 +155,8 @@ export default function PublicDeckDetail({ compact = false }) {
     () => (deck?.items || []).filter((item) => normalizeZone(item) === "side"),
     [deck]
   );
+  const mainCount = useMemo(() => countItems(mainItems), [mainItems]);
+  const sideCount = useMemo(() => countItems(sideItems), [sideItems]);
 
   const handleCopyDeck = () => {
     if (!deck) return;
@@ -137,6 +183,7 @@ export default function PublicDeckDetail({ compact = false }) {
         deckId: deck.id,
         isPublic: false,
         description: deck.description || "",
+        format: deck.format,
       });
       navigate("/decks");
     } catch (moderationError) {
@@ -157,8 +204,10 @@ export default function PublicDeckDetail({ compact = false }) {
           {deck ? (
             <div className="search-results-summary">
               {[
+                deck.format,
                 deck.owner?.name,
                 formatDate(deck.publishedAt || deck.updatedAt),
+                sideCount ? `メイン${mainCount}・サイド${sideCount}` : `メイン${mainCount}`,
               ]
                 .filter(Boolean)
                 .join(" / ")}
@@ -193,9 +242,17 @@ export default function PublicDeckDetail({ compact = false }) {
         <div className="results-empty-state">{errorMessage}</div>
       ) : deck ? (
         <>
+          {deck.format ? <div className="public-deck-format-badge">{deck.format}</div> : null}
           {deck.description ? <p className="public-deck-description">{deck.description}</p> : null}
-          <DeckTypeGroups title="メインデッキ" items={mainItems} />
-          <DeckTypeGroups title="サイドボード" items={sideItems} />
+          <DeckTypeGroups title="メインデッキ" items={mainItems} compact={compact} />
+          <DeckTypeGroups title="サイドボード" items={sideItems} compact={compact} />
+          <DeckPreviewSection
+            deck={deck}
+            mainItems={mainItems}
+            sideItems={sideItems}
+            mainCount={mainCount}
+            sideCount={sideCount}
+          />
         </>
       ) : (
         <div className="results-empty-state">公開デッキが見つかりません。</div>

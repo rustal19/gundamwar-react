@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDeckPreview } from "../hooks/useDeckPreview";
+import { FORMAT_PRESETS, OTHER_FORMAT_NAME } from "../data/formats";
 import "./DeckLoadDialog.css";
 
 function normalizeZone(item) {
@@ -56,6 +57,7 @@ export default function DeckLoadDialog({
 }) {
   const [activeDeckId, setActiveDeckId] = useState("");
   const [publicationDescription, setPublicationDescription] = useState("");
+  const [publicationFormat, setPublicationFormat] = useState("");
   const [publicationMessage, setPublicationMessage] = useState("");
 
   useEffect(() => {
@@ -90,8 +92,18 @@ export default function DeckLoadDialog({
 
   useEffect(() => {
     setPublicationDescription(activeDeck?.description || "");
+    setPublicationFormat(activeDeck?.format || "");
     setPublicationMessage("");
-  }, [activeDeck?.id, activeDeck?.description]);
+  }, [activeDeck?.id, activeDeck?.description, activeDeck?.format]);
+
+  const formatOptions = useMemo(() => {
+    const names = FORMAT_PRESETS.map((preset) => preset.name).filter(Boolean);
+    const options = [...new Set([...names, OTHER_FORMAT_NAME])];
+    if (publicationFormat && !options.includes(publicationFormat)) {
+      options.unshift(publicationFormat);
+    }
+    return options;
+  }, [publicationFormat]);
 
   const activePreview = useMemo(
     () => splitDeckItems(activeDeck?.items || []),
@@ -120,6 +132,7 @@ export default function DeckLoadDialog({
         deckId: activeDeck.id,
         isPublic: nextIsPublic,
         description: publicationDescription,
+        format: publicationFormat,
       });
       setPublicationMessage(nextIsPublic ? "公開設定を更新しました。" : "非公開にしました。");
     } catch (error) {
@@ -218,6 +231,20 @@ export default function DeckLoadDialog({
                     placeholder="デッキの説明"
                     rows={3}
                   />
+                  <label className="deck-publication-format">
+                    フォーマット
+                    <select
+                      value={publicationFormat}
+                      onChange={(event) => setPublicationFormat(event.target.value)}
+                    >
+                      <option value="">選択してください</option>
+                      {formatOptions.map((formatName) => (
+                        <option key={formatName} value={formatName}>
+                          {formatName}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   <div className="deck-publication-actions">
                     <button
                       type="button"
@@ -231,7 +258,7 @@ export default function DeckLoadDialog({
                       type="button"
                       className="deck-primary-button"
                       onClick={() => handlePublicationSubmit(true)}
-                      disabled={isPublishing || isLoading}
+                      disabled={isPublishing || isLoading || !publicationFormat}
                     >
                       {publishingDeckId === activeDeck.id
                         ? "更新中..."

@@ -81,12 +81,13 @@
 
 .public-decks-search {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, auto) auto;
   gap: 0.65rem;
   margin-bottom: 1rem;
 }
 
-.public-decks-search input {
+.public-decks-search input,
+.public-decks-search select {
   min-width: 0;
   border: 1px solid var(--gw-secondary-border);
   padding: 0.6rem 0.75rem;
@@ -106,11 +107,27 @@
 .public-deck-card h2 {
   margin: 0 0 0.35rem;
   font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .public-deck-card h2 a {
   color: var(--gw-primary);
   text-decoration: none;
+}
+
+.public-deck-format-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.35rem;
+  border: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-field-bg);
+  color: var(--gw-text);
+  padding: 0.12rem 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
 .public-deck-card p,
@@ -212,4 +229,32 @@
 .public-deck-name {
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.public-deck-preview-frame {
+  display: block;
+  overflow: auto;
+  padding: 0.9rem;
+}
+
+.public-deck-preview-image {
+  display: block;
+  width: 100%;
+  min-width: 760px;
+  height: auto;
+  background: var(--gw-field-bg);
+}
+
+@media (max-width: 700px) {
+  .public-decks-search {
+    grid-template-columns: 1fr;
+  }
+
+  .public-deck-card {
+    grid-template-columns: 1fr;
+  }
+
+  .public-deck-meta {
+    justify-items: start;
+  }
 }

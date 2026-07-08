@@ -54,6 +54,7 @@ function normalizePublicDeck(rawDeck, fallbackUser) {
     items: Array.isArray(rawDeck.items) ? rawDeck.items : [],
     isPublic: Boolean(rawDeck.isPublic),
     description: rawDeck.description || "",
+    format: typeof rawDeck.format === "string" && rawDeck.format.trim() ? rawDeck.format.trim() : null,
     publishedAt: rawDeck.publishedAt || rawDeck.published_at || "",
     createdAt: rawDeck.createdAt || rawDeck.created_at || "",
     updatedAt: rawDeck.updatedAt || rawDeck.updated_at || "",
@@ -131,15 +132,18 @@ function paginateDecks(decks, page) {
   };
 }
 
-export async function fetchPublicDecks({ page = 1, query = "", authMode } = {}) {
+export async function fetchPublicDecks({ page = 1, query = "", format = "", authMode } = {}) {
   const params = new URLSearchParams();
   params.set("page", String(getPage(page)));
   if (query) params.set("query", query);
+  if (format) params.set("format", format);
 
   if (authMode === "mock") {
     const normalizedQuery = String(query || "").trim().toLowerCase();
+    const normalizedFormat = String(format || "").trim();
     const decks = readMockPublicDecks()
       .filter((deck) => deck.isPublic)
+      .filter((deck) => !normalizedFormat || deck.format === normalizedFormat)
       .filter((deck) => {
         if (!normalizedQuery) return true;
         return [deck.title, deck.description, deck.owner?.name]
@@ -187,11 +191,17 @@ export async function setDeckPublication({
   deckId,
   isPublic,
   description = "",
+  format = null,
 }) {
   ensureUser(user);
   const deckKey = String(deckId || "");
   const nextDescription = String(description || "").trim();
   const nextIsPublic = Boolean(isPublic);
+  const nextFormat = typeof format === "string" && format.trim() ? format.trim() : null;
+
+  if (nextIsPublic && !nextFormat) {
+    throw new Error("フォーマットを選択してください。");
+  }
 
   if (authMode === "mock") {
     const now = new Date().toISOString();
@@ -245,6 +255,7 @@ export async function setDeckPublication({
       ...savedDeck,
       isPublic: nextIsPublic,
       description: nextDescription,
+      format: nextIsPublic ? nextFormat : savedDeck.format || publicDeck?.format || null,
       publishedAt,
       updatedAt: now,
     };
@@ -274,6 +285,7 @@ export async function setDeckPublication({
     body: JSON.stringify({
       isPublic: nextIsPublic,
       description: nextDescription,
+      format: nextFormat,
     }),
   });
   return normalizePublicDeck(payload.deck || payload, user);
