@@ -298,6 +298,19 @@
   z-index: 40;
 }
 
+.gw-sidebar-login-menu {
+  box-sizing: border-box;
+  min-width: 190px;
+}
+
+.gw-sidebar-login-menu .google-signin-panel-header {
+  align-items: stretch;
+}
+
+.gw-sidebar-login-menu .google-mock-button {
+  width: 100%;
+}
+
 .gw-sidebar-user-menu a,
 .gw-sidebar-user-menu button {
   align-items: center;

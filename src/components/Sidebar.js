@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { buildPathWithForcedMobileLayout } from "../utils/deviceLayout";
@@ -14,6 +14,7 @@ import {
   UserCogIcon,
   UserIcon,
 } from "./icons";
+import GoogleSignInPanel from "./GoogleSignInPanel";
 import "./AppHeader.css";
 
 const NAV_ITEMS = [
@@ -36,13 +37,10 @@ function getInitial(name) {
 export default function Sidebar({ collapsed = false, drawer = false, onNavigate }) {
   const location = useLocation();
   const {
-    authMode,
-    canUseGoogleAuth,
     displayNickname,
     isAdmin,
     isAuthenticated,
     isOrganizer,
-    signInWithMock,
     signOut,
     user,
   } = useAuth();
@@ -77,11 +75,11 @@ export default function Sidebar({ collapsed = false, drawer = false, onNavigate 
     if (onNavigate) onNavigate();
   };
 
-  const handleLogin = () => {
-    if (authMode === "mock") {
-      signInWithMock("user");
+  useEffect(() => {
+    if (isAuthenticated) {
+      setUserMenuOpen(false);
     }
-  };
+  }, [isAuthenticated]);
 
   const handleSignOut = () => {
     setUserMenuOpen(false);
@@ -185,16 +183,24 @@ export default function Sidebar({ collapsed = false, drawer = false, onNavigate 
             ) : null}
           </>
         ) : (
+          <>
           <button
             type="button"
             className="gw-sidebar-login-button"
-            onClick={handleLogin}
-            disabled={authMode !== "mock" && !canUseGoogleAuth}
+            aria-expanded={userMenuOpen}
+            aria-haspopup="dialog"
+            onClick={() => setUserMenuOpen((current) => !current)}
             title={collapsed ? "ログイン" : undefined}
           >
             <LoginIcon />
             <span className={collapsed ? "sr-only" : ""}>ログイン</span>
           </button>
+          {userMenuOpen ? (
+            <div className="gw-sidebar-user-menu gw-sidebar-login-menu" role="dialog">
+              <GoogleSignInPanel variant="header" />
+            </div>
+          ) : null}
+          </>
         )}
       </div>
     </aside>
