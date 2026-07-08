@@ -3,6 +3,8 @@ import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useDeck } from "../context/DeckContext";
 import { fetchSavedDecks } from "../services/savedDecks";
+import Bracket from "../components/Bracket";
+import RoundTabs from "../components/RoundTabs";
 import TournamentMyStatus from "../components/TournamentMyStatus";
 import {
   checkInMyEntry,
@@ -18,12 +20,14 @@ import {
   TOURNAMENT_STATUS_LABELS as STATUS_LABELS,
 } from "../data/statusLabels";
 import { defaultRegulation, validateDeck } from "../utils/deckValidation";
+import { computeStandings } from "../utils/tournament/standings";
 import "./Tournaments.css";
 
-const TABS = [
+const BASE_TABS = [
   { id: "overview", label: "概要" },
   { id: "entries", label: "参加者" },
   { id: "rounds", label: "ペアリング" },
+  { id: "results", label: "リザルト" },
   { id: "standings", label: "順位表" },
 ];
 
@@ -71,6 +75,12 @@ function buildMatchLabel(match, entries) {
   };
 }
 
+function sortedMatches(round) {
+  return (round?.matches || [])
+    .slice()
+    .sort((left, right) => Number(left.tableNo || 0) - Number(right.tableNo || 0));
+}
+
 function resultLabel(result) {
   if (result === "p1_win") return "P1勝利";
   if (result === "p2_win") return "P2勝利";
@@ -87,6 +97,9 @@ export default function TournamentDetail({ compact = false }) {
   const [tournament, setTournament] = useState(null);
   const [rounds, setRounds] = useState([]);
   const [standings, setStandings] = useState([]);
+  const [pairingRoundNumber, setPairingRoundNumber] = useState(null);
+  const [resultRoundNumber, setResultRoundNumber] = useState(null);
+  const [standingRoundNumber, setStandingRoundNumber] = useState(null);
   const [savedDecks, setSavedDecks] = useState([]);
   const [deckSource, setDeckSource] = useState("current");
   const [selectedDeckId, setSelectedDeckId] = useState("");
@@ -107,7 +120,7 @@ export default function TournamentDetail({ compact = false }) {
     try {
       const [nextTournament, nextRounds, nextStandings] = await Promise.all([
         fetchTournament(id, { authMode, user }),
-        fetchRounds(id, { authMode }),
+        fetchRounds(id, { authMode, user }),
         fetchStandings(id, { authMode }),
       ]);
       setTournament(nextTournament);
@@ -143,6 +156,16 @@ export default function TournamentDetail({ compact = false }) {
   }, [authMode, isAuthenticated, user]);
 
   const entries = tournament?.entries || [];
+  const visibleTabs = useMemo(
+    () => BASE_TABS.filter((tab) => tab.id !== "results" || tournament?.status === "completed"),
+    [tournament?.status]
+  );
+  useEffect(() => {
+    if (activeTab === "results" && tournament?.status !== "completed") {
+      setActiveTab("rounds");
+    }
+  }, [activeTab, tournament?.status]);
+
   const myEntry = useMemo(() => {
     if (tournament?.myEntry) return tournament.myEntry;
     if (!user?.id) return null;
@@ -184,6 +207,29 @@ export default function TournamentDetail({ compact = false }) {
   );
   const needsDeck = Boolean(tournament?.decklistRequired);
   const hasDeckForSubmit = submittedItems.length > 0;
+  const decklistsVisible = tournament?.status === "completed" && tournament.decklistsPublic;
+  const selectedPairingRound = useMemo(
+    () => rounds.find((round) => Number(round.number) === Number(pairingRoundNumber)) || null,
+    [pairingRoundNumber, rounds]
+  );
+  const selectedResultRound = useMemo(
+    () => rounds.find((round) => Number(round.number) === Number(resultRoundNumber)) || null,
+    [resultRoundNumber, rounds]
+  );
+  const selectedStandingRound = useMemo(
+    () => rounds.find((round) => Number(round.number) === Number(standingRoundNumber)) || null,
+    [rounds, standingRoundNumber]
+  );
+  const pointInTimeStandings = useMemo(() => {
+    if (!selectedStandingRound) return standings;
+    const matches = rounds
+      .filter((round) => Number(round.number) <= Number(selectedStandingRound.number))
+      .flatMap((round) => round.matches || []);
+    return computeStandings(entries, matches).map((standing) => ({
+      ...standing,
+      entry: findEntry(entries, standing.entryId),
+    }));
+  }, [entries, rounds, selectedStandingRound, standings]);
 
   const submitDisabled =
     isSubmitting ||
@@ -335,29 +381,100 @@ export default function TournamentDetail({ compact = false }) {
               <td>{entry.user?.name || "-"}</td>
               <td>{entry.status}</td>
               <td>
-                {entry.deckItems
-                  ? `提出済み (${countCards(entry.deckItems, "main")} / ${countCards(entry.deckItems, "side")})`
-                  : entry.decklistSubmittedAt
-                    ? "提出済み"
-                    : "未提出"}
+                {entry.deckItems ? (
+                  <>
+                    提出済み ({countCards(entry.deckItems, "main")} / {countCards(entry.deckItems, "side")})
+                    {decklistsVisible ? (
+                      <>
+                        {" "}
+                        <a href={`#decklist-${entry.id}`}>デッキリスト</a>
+                      </>
+                    ) : null}
+                  </>
+                ) : entry.decklistSubmittedAt ? (
+                  "提出済み"
+                ) : (
+                  "未提出"
+                )}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      {decklistsVisible ? (
+        <div className="tournament-decklists">
+          {entries
+            .filter((entry) => Array.isArray(entry.deckItems) && entry.deckItems.length > 0)
+            .map((entry) => (
+              <section key={entry.id} id={`decklist-${entry.id}`} className="tournament-decklist">
+                <h3>{entry.user?.name || "-"} のデッキリスト</h3>
+                <div className="tournament-deck-summary">
+                  メイン {countCards(entry.deckItems, "main")} / サイド {countCards(entry.deckItems, "side")}
+                </div>
+              </section>
+            ))}
+        </div>
+      ) : null}
     </div>
   );
 
   const renderRounds = () => (
     <div className="tournament-rounds">
       {rounds.length === 0 ? <div className="tournament-empty">ペアリングはまだありません。</div> : null}
-      {rounds.map((round) => (
-        <section key={round.id} className="tournament-round">
+      <RoundTabs rounds={rounds} selectedRoundNumber={pairingRoundNumber} onChange={setPairingRoundNumber} />
+      {selectedPairingRound ? (
+        <section className="tournament-round">
           <div className="tournament-round-header">
             <h2>
-              第{round.number}回戦 / {round.stage === "top_cut" ? "トップカット" : "スイス"}
+              第{selectedPairingRound.number}回戦 / {selectedPairingRound.stage === "top_cut" ? "トップカット" : "スイス"}
             </h2>
-            <span>{ROUND_STATUS_LABELS[round.status] || round.status}</span>
+            <span>{ROUND_STATUS_LABELS[selectedPairingRound.status] || selectedPairingRound.status}</span>
+          </div>
+          {selectedPairingRound.stage === "top_cut" ? (
+            <Bracket rounds={rounds} entries={entries} showResults={tournament.status === "completed"} />
+          ) : null}
+          <div className="tournament-table-wrap">
+            <table className="tournament-table">
+              <thead>
+                <tr>
+                  <th>卓</th>
+                  <th>プレイヤー1</th>
+                  <th>プレイヤー2</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedMatches(selectedPairingRound).map((match) => {
+                  const labels = buildMatchLabel(match, entries);
+                  const isMyMatch =
+                    myEntry &&
+                    [match.player1EntryId, match.player2EntryId].some(
+                      (entryId) => entryId != null && String(entryId) === String(myEntry.id)
+                    );
+                  return (
+                    <tr key={match.id} className={isMyMatch ? "my-match" : ""}>
+                      <td>{match.tableNo || "-"}</td>
+                      <td>{labels.p1Name}{match.player1EntryId === myEntry?.id ? "（あなた）" : ""}</td>
+                      <td>{labels.p2Name}{match.player2EntryId === myEntry?.id ? "（あなた）" : ""}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+    </div>
+  );
+
+  const renderResults = () => (
+    <div className="tournament-rounds">
+      <RoundTabs rounds={rounds} selectedRoundNumber={resultRoundNumber} onChange={setResultRoundNumber} />
+      {selectedResultRound ? (
+        <section className="tournament-round">
+          <div className="tournament-round-header">
+            <h2>
+              第{selectedResultRound.number}回戦 / {selectedResultRound.stage === "top_cut" ? "トップカット" : "スイス"}
+            </h2>
           </div>
           <div className="tournament-table-wrap">
             <table className="tournament-table">
@@ -370,7 +487,7 @@ export default function TournamentDetail({ compact = false }) {
                 </tr>
               </thead>
               <tbody>
-                {(round.matches || []).map((match) => {
+                {sortedMatches(selectedResultRound).map((match) => {
                   const labels = buildMatchLabel(match, entries);
                   return (
                     <tr key={match.id}>
@@ -385,47 +502,53 @@ export default function TournamentDetail({ compact = false }) {
             </table>
           </div>
         </section>
-      ))}
+      ) : (
+        <div className="tournament-empty">リザルトはまだありません。</div>
+      )}
     </div>
   );
 
   const renderStandings = () => (
-    <div className="tournament-table-wrap">
-      <table className="tournament-table">
-        <thead>
-          <tr>
-            <th>順位</th>
-            <th>プレイヤー</th>
-            <th>勝</th>
-            <th>敗</th>
-            <th>分</th>
-            <th>勝点</th>
-            <th>OMW%</th>
-          </tr>
-        </thead>
-        <tbody>
-          {standings.map((standing) => {
-            const entry = standing.entry || findEntry(entries, standing.entryId);
-            return (
-              <tr key={standing.entryId}>
-                <td>{standing.rank}</td>
-                <td>{entry?.user?.name || standing.entryId}</td>
-                <td>{standing.wins}</td>
-                <td>{standing.losses}</td>
-                <td>{standing.draws}</td>
-                <td>{standing.points}</td>
-                <td>{Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div>
+      <RoundTabs rounds={rounds} selectedRoundNumber={standingRoundNumber} onChange={setStandingRoundNumber} />
+      <div className="tournament-table-wrap">
+        <table className="tournament-table">
+          <thead>
+            <tr>
+              <th>順位</th>
+              <th>プレイヤー</th>
+              <th>勝</th>
+              <th>敗</th>
+              <th>分</th>
+              <th>勝点</th>
+              <th>OMW%</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pointInTimeStandings.map((standing) => {
+              const entry = standing.entry || findEntry(entries, standing.entryId);
+              return (
+                <tr key={standing.entryId}>
+                  <td>{standing.rank}</td>
+                  <td>{entry?.user?.name || standing.entryId}</td>
+                  <td>{standing.wins}</td>
+                  <td>{standing.losses}</td>
+                  <td>{standing.draws}</td>
+                  <td>{standing.points}</td>
+                  <td>{Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 
   const renderActiveTab = () => {
     if (activeTab === "entries") return renderEntries();
     if (activeTab === "rounds") return renderRounds();
+    if (activeTab === "results") return renderResults();
     if (activeTab === "standings") return renderStandings();
     return renderOverview();
   };
@@ -474,7 +597,7 @@ export default function TournamentDetail({ compact = false }) {
       {error ? <div className="tournament-alert">{error}</div> : null}
 
       <div className="tournament-tabs" aria-label="大会詳細">
-        {TABS.map((tab) => (
+        {visibleTabs.map((tab) => (
           <button
             key={tab.id}
             type="button"
