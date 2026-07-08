@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import CardHoverPreview from "../components/CardHoverPreview";
 import RoundTabs from "../components/RoundTabs";
 import { useAuth } from "../context/AuthContext";
+import { useDeckPreview } from "../hooks/useDeckPreview";
 import {
   approveEntry,
   completeRound,
@@ -23,6 +24,7 @@ import {
   updateTournament,
 } from "../services/tournaments";
 import { getCardCode } from "../utils/cardImages";
+import { buildDeckExport, groupDeckItemsByType } from "../utils/deckExport";
 import "./Tournaments.css";
 
 const DEFAULT_FORM = {
@@ -182,6 +184,45 @@ function countCards(items, zone) {
   return (Array.isArray(items) ? items : [])
     .filter((item) => !zone || item.zone === zone)
     .reduce((sum, item) => sum + Number(item.count || 0), 0);
+}
+
+function splitDeckItems(items) {
+  const deckItems = Array.isArray(items) ? items : [];
+  return {
+    mainItems: deckItems.filter((item) => item.zone !== "side"),
+    sideItems: deckItems.filter((item) => item.zone === "side"),
+  };
+}
+
+function buildEntryDeckExport(entry) {
+  const { mainItems, sideItems } = splitDeckItems(entry.deckItems);
+  const name = entry.user?.name || entry.id || "-";
+  const deckText = mainItems.length || sideItems.length
+    ? buildDeckExport(groupDeckItemsByType(mainItems), sideItems)
+    : "未提出";
+  return [`# ${name}`, deckText].join("\n");
+}
+
+function buildAllDeckExport(entries) {
+  return (entries || []).map((entry) => buildEntryDeckExport(entry)).join("\n\n---\n\n");
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+function safeFilename(value, fallback) {
+  const name = String(value || fallback || "download")
+    .replace(/[\\/:*?"<>|]+/g, "_")
+    .trim();
+  return name || fallback || "download";
 }
 
 function findEntry(entries, entryId) {
@@ -616,10 +657,47 @@ function ParticipantsPanel({
   const [manualName, setManualName] = useState("");
   const [manualDeckText, setManualDeckText] = useState("");
   const [selectedEntryId, setSelectedEntryId] = useState("");
+  const [exportMessage, setExportMessage] = useState("");
+  const [exportError, setExportError] = useState("");
   const pendingEntries = entries.filter((entry) => entry.status === "pending");
   const visibleEntries = entries.filter((entry) => !missingOnly || !entry.decklistSubmittedAt);
   const selectedEntry = entries.find((entry) => entry.id === selectedEntryId) || null;
+  const selectedDeck = useMemo(() => splitDeckItems(selectedEntry?.deckItems), [selectedEntry?.deckItems]);
+  const selectedMainCount = countCards(selectedDeck.mainItems);
+  const selectedSideCount = countCards(selectedDeck.sideItems);
+  const { previewBlob, isRendering: isPreviewRendering } = useDeckPreview({
+    open: Boolean(selectedEntry?.deckItems?.length),
+    mainItems: selectedDeck.mainItems,
+    sideItems: selectedDeck.sideItems,
+    mainCount: selectedMainCount,
+    sideCount: selectedSideCount,
+  });
   const nextRound = Math.max(1, (rounds || []).length + 1);
+
+  const copyAllDecks = async () => {
+    setExportMessage("");
+    setExportError("");
+    try {
+      await navigator.clipboard.writeText(buildAllDeckExport(entries));
+      setExportMessage("デッキリストを一括コピーしました。");
+    } catch (copyError) {
+      setExportError("クリップボードへコピーできませんでした。");
+    }
+  };
+
+  const downloadAllDecks = () => {
+    setExportMessage("");
+    setExportError("");
+    const blob = new Blob([buildAllDeckExport(entries)], { type: "text/plain;charset=utf-8" });
+    downloadBlob(blob, `${safeFilename(form.title, "tournament")}-decklists.txt`);
+    setExportMessage("デッキリストの .txt を作成しました。");
+  };
+
+  const downloadDeckImage = () => {
+    if (!previewBlob || !selectedEntry) return;
+    const fileBase = `${form.title || "tournament"}-${selectedEntry.user?.name || selectedEntry.id}`;
+    downloadBlob(previewBlob, `${safeFilename(fileBase, "deck")}.png`);
+  };
 
   return (
     <section className="tournament-tab-panel">
@@ -630,6 +708,16 @@ function ParticipantsPanel({
           未提出のみ
         </label>
       </div>
+      <div className="tournament-output-actions">
+        <button type="button" onClick={copyAllDecks} disabled={isSubmitting}>
+          デッキリスト一括コピー
+        </button>
+        <button type="button" onClick={downloadAllDecks} disabled={isSubmitting}>
+          一括ダウンロード(.txt)
+        </button>
+      </div>
+      {exportMessage ? <div className="tournament-success">{exportMessage}</div> : null}
+      {exportError ? <div className="tournament-alert">{exportError}</div> : null}
       {form.lateEntry && pendingEntries.length ? (
         <div className="pending-entry-section">
           <h3>申請中</h3>
@@ -741,6 +829,11 @@ function ParticipantsPanel({
               <div className="tournament-deck-summary">
                 提出済み (メイン {countCards(selectedEntry.deckItems, "main")} / サイド{" "}
                 {countCards(selectedEntry.deckItems, "side")})
+              </div>
+              <div className="tournament-output-actions">
+                <button type="button" onClick={downloadDeckImage} disabled={!previewBlob || isPreviewRendering}>
+                  画像を保存
+                </button>
               </div>
               <TournamentDeckRows items={selectedEntry.deckItems} compact={compact} />
             </>

@@ -18,6 +18,7 @@ import PortalHome from "./pages/PortalHome";
 import SearchResults from "./pages/SearchResults";
 import Terms from "./pages/Terms";
 import TournamentDetail from "./pages/TournamentDetail";
+import TournamentDisplay from "./pages/TournamentDisplay";
 import TournamentList from "./pages/TournamentList";
 import TournamentManage from "./pages/TournamentManage";
 import { useLayoutTier } from "./utils/deviceLayout";
@@ -26,9 +27,21 @@ import "./mobile.css";
 const AppContent = () => {
   const location = useLocation();
   const isDeckRoute = location.pathname.startsWith("/deck");
+  const isDisplayRoute = /^\/tournaments\/[^/]+\/display$/.test(location.pathname);
   const isNarrowSidebarRoute = location.pathname === "/search" || location.pathname === "/deck";
   const { isCompactDesktop, isCompactLayout, isMobileOs, isIos, isAndroid } =
     useLayoutTier(location.search);
+
+  if (isDisplayRoute) {
+    return (
+      <>
+        <RouteAnalyticsTracker />
+        <Routes>
+          <Route path="/tournaments/:id/display" element={<TournamentDisplay />} />
+        </Routes>
+      </>
+    );
+  }
 
   const shellClassName = [
     "app-shell",
@@ -60,6 +73,7 @@ const AppContent = () => {
             <Route path="/tournaments" element={<TournamentList compact={isCompactLayout} />} />
             <Route path="/tournaments/new" element={<TournamentManage compact={isCompactLayout} />} />
             <Route path="/tournaments/:id" element={<TournamentDetail compact={isCompactLayout} />} />
+            <Route path="/tournaments/:id/display" element={<TournamentDisplay />} />
             <Route path="/tournaments/:id/manage" element={<TournamentManage compact={isCompactLayout} />} />
             <Route path="/admin/users" element={<AdminUsers compact={isCompactLayout} />} />
             <Route path="/profile" element={<Profile compact={isCompactLayout} />} />
