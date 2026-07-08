@@ -10,7 +10,7 @@ jest.mock("../context/AuthContext", () => ({
 }));
 
 jest.mock("../services/tournaments", () => ({
-  fetchTournament: jest.fn(() =>
+  fetchTournament: () =>
     Promise.resolve({
       id: "t-display",
       title: "掲示テスト大会",
@@ -20,9 +20,8 @@ jest.mock("../services/tournaments", () => ({
         { id: "entry-1", user: { id: "user-1", name: "プレイヤー1" }, status: "checked_in" },
         { id: "entry-2", user: { id: "user-2", name: "プレイヤー2" }, status: "checked_in" },
       ],
-    })
-  ),
-  fetchRounds: jest.fn(() =>
+    }),
+  fetchRounds: () =>
     Promise.resolve({
       rounds: [
         {
@@ -41,8 +40,7 @@ jest.mock("../services/tournaments", () => ({
           ],
         },
       ],
-    })
-  ),
+    }),
 }));
 
 test("TournamentDisplay はシンプルな掲示用ペアリングを表示する", async () => {
