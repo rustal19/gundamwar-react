@@ -25,6 +25,7 @@ import {
 } from "../services/tournaments";
 import { getCardCode } from "../utils/cardImages";
 import { buildDeckExport, groupDeckItemsByType } from "../utils/deckExport";
+import { FORMAT_PRESETS, OTHER_FORMAT_NAME } from "../data/formats";
 import "./Tournaments.css";
 
 const DEFAULT_FORM = {
@@ -248,11 +249,32 @@ function roundIsComplete(round) {
   return (round.matches || []).every((match) => Boolean(match.result));
 }
 
+function regulationMatchesPreset(regulation, presetRegulation) {
+  return (
+    regulation?.name === presetRegulation?.name &&
+    Number(regulation?.mainMin) === Number(presetRegulation?.mainMin) &&
+    Number(regulation?.mainMax) === Number(presetRegulation?.mainMax) &&
+    Number(regulation?.sideSize) === Number(presetRegulation?.sideSize) &&
+    Number(regulation?.maxCopies) === Number(presetRegulation?.maxCopies) &&
+    listToText(regulation?.allowedSetsText ?? regulation?.allowedSets) === listToText(presetRegulation?.allowedSets) &&
+    listToText(regulation?.bannedCardsText ?? regulation?.bannedCards) === listToText(presetRegulation?.bannedCards) &&
+    listToText(regulation?.limitedCardsText ?? regulation?.limitedCards) === listToText(presetRegulation?.limitedCards)
+  );
+}
+
 function nextActionText(status, rounds) {
-  if (status === "draft") return "受付開始前です。大会情報を確認して受付を開始してください。";
-  if (status === "registration") return "参加者を確認し、準備ができたら進行開始または次ラウンド生成を行ってください。";
+  if (status === "draft") return "内容を保存して「受付開始」を押してください。";
+  if (status === "registration") return "当日になったら「進行開始」→ラウンド生成を行ってください。";
   if (status === "in_progress" && rounds.length === 0) return "第1回戦を生成してください。";
-  if (status === "in_progress") return "未報告の卓を確認し、全卓報告後にラウンドを完了してください。";
+  if (status === "in_progress") {
+    const activeRound = [...rounds].reverse().find((round) => round.status !== "completed") || rounds[rounds.length - 1];
+    if (rounds.length && rounds.every((round) => round.status === "completed")) {
+      return "「完了」を押して大会を終了してください。";
+    }
+    const unreportedCount = (activeRound?.matches || []).filter((match) => !match.result).length;
+    if (unreportedCount > 0) return `未報告卓が${unreportedCount}卓あります。結果を入力してください。`;
+    return "全卓報告済みです。「ラウンド完了」を押して次のラウンドへ進んでください。";
+  }
   if (status === "completed") return "大会は完了しています。結果訂正が必要な場合は対象ラウンドから訂正してください。";
   if (status === "cancelled") return "大会は中止されています。";
   return "大会状況を確認してください。";
@@ -857,6 +879,19 @@ function InfoPanel({
   setOnline,
   setRegulationField,
 }) {
+  const selectedPresetName =
+    FORMAT_PRESETS.find((preset) => regulationMatchesPreset(form.regulation, preset.regulation))?.name || OTHER_FORMAT_NAME;
+  const setFormatPreset = (name) => {
+    const preset = FORMAT_PRESETS.find((item) => item.name === name);
+    if (!preset) return;
+    setField("regulation", {
+      ...preset.regulation,
+      bannedCardsText: listToText(preset.regulation?.bannedCards),
+      limitedCardsText: listToText(preset.regulation?.limitedCards),
+      allowedSetsText: listToText(preset.regulation?.allowedSets),
+    });
+  };
+
   return (
     <form className="tournament-manage-form" onSubmit={onSave}>
       {regulationViolations.length ? (
@@ -966,6 +1001,17 @@ function InfoPanel({
       <section className="tournament-tab-panel">
         <h2>レギュレーション</h2>
         <div className="tournament-form-grid">
+          <label>
+            フォーマットプリセット
+            <select value={selectedPresetName} onChange={(event) => setFormatPreset(event.target.value)}>
+              {FORMAT_PRESETS.map((preset) => (
+                <option key={preset.name} value={preset.name}>
+                  {preset.name}
+                </option>
+              ))}
+              <option value={OTHER_FORMAT_NAME}>{OTHER_FORMAT_NAME}</option>
+            </select>
+          </label>
           <label>
             名称
             <input value={form.regulation.name} onChange={(event) => setRegulationField("name", event.target.value)} />
