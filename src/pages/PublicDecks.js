@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { FORMAT_PRESETS, OTHER_FORMAT_NAME } from "../data/formats";
 import { fetchPublicDecks } from "../services/publicDecks";
+import { getDeckColors } from "../utils/deckColors";
 import "./PublicDecks.css";
 
 function formatDate(value) {
@@ -20,6 +21,27 @@ function countDeckItems(items) {
   return (Array.isArray(items) ? items : []).reduce(
     (sum, item) => sum + Number(item?.count || 0),
     0
+  );
+}
+
+function DeckColorDots({ items }) {
+  const colors = getDeckColors(items);
+  const displayColors = colors.length > 0 ? colors : [{ name: "不明", value: "#d8d8d8" }];
+
+  return (
+    <span
+      className="public-deck-colors"
+      aria-label={`デッキ色: ${displayColors.map((color) => color.name).join("、")}`}
+    >
+      {displayColors.map((color) => (
+        <span
+          key={color.name}
+          className="public-deck-color-dot"
+          style={{ backgroundColor: color.value }}
+          title={color.name}
+        />
+      ))}
+    </span>
   );
 }
 
@@ -154,6 +176,7 @@ export default function PublicDecks({ compact = false }) {
             <article key={deck.id} className="public-deck-card">
               <div>
                 <h2>
+                  <DeckColorDots items={deck.items} />
                   <Link to={`/decks/${deck.id}`}>{deck.title}</Link>
                   {deck.format ? <span className="public-deck-format-badge">{deck.format}</span> : null}
                 </h2>

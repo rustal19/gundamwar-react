@@ -226,7 +226,7 @@ const DeckSearchResults = ({ compact = false }) => {
 
       <div ref={resultsViewportRef} className="deck-search-results-viewport">
         {!isLoaded ? (
-          <div className="results-empty-state">Loading...</div>
+          <div className="results-empty-state">読み込み中...</div>
         ) : results.length === 0 ? (
           <div className="results-empty-state">検索結果がありません。</div>
         ) : (

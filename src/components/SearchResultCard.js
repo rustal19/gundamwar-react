@@ -59,41 +59,61 @@ const SearchResultCard = ({
 
   if (viewMode === "image") {
     const label = [cardCode, card.name].filter(Boolean).join(" ");
+    const imageFrame = (
+      <div className="result-card-image-frame" title={label}>
+        <CardImage card={card} />
+        {showDeckActions && deckCount > 0 ? (
+          <span className="result-card-image-count">{deckCount}</span>
+        ) : null}
+      </div>
+    );
 
     return (
-      <article className="card-item result-card-image-only">
-        <div className="result-card-image-stack">
-          <div className="result-card-image-frame" title={label}>
-            <CardImage card={card} />
+      <>
+        <article className="card-item result-card-image-only">
+          <div className="result-card-image-stack">
+            {enableImagePreview ? (
+              <button
+                type="button"
+                className="result-card-image-trigger"
+                onClick={openImagePreview}
+                aria-label={imagePreviewLabel}
+              >
+                {imageFrame}
+              </button>
+            ) : (
+              imageFrame
+            )}
+            {showDeckActions ? (
+              <div className="result-card-image-zone-actions">
+                <button
+                  className="deck-action-button primary"
+                  type="button"
+                  onClick={() => addCard(card, 1, "main")}
+                  aria-label={label ? `${label} をメインデッキに追加` : "メインデッキに追加"}
+                >
+                  メイン
+                </button>
+                <button
+                  className="deck-action-button"
+                  type="button"
+                  onClick={() => addCard(card, 1, "side")}
+                  aria-label={label ? `${label} をサイドボードに追加` : "サイドボードに追加"}
+                >
+                  サイド
+                </button>
+              </div>
+            ) : null}
             {showDeckActions && deckCount > 0 ? (
-              <span className="result-card-image-count">{deckCount}</span>
+              <div className="result-card-image-meta">{`M ${mainCount} / S ${sideCount}`}</div>
             ) : null}
           </div>
-          {showDeckActions ? (
-            <div className="result-card-image-zone-actions">
-              <button
-                className="deck-action-button primary"
-                type="button"
-                onClick={() => addCard(card, 1, "main")}
-                aria-label={label ? `${label} をメインデッキに追加` : "メインデッキに追加"}
-              >
-                メイン
-              </button>
-              <button
-                className="deck-action-button"
-                type="button"
-                onClick={() => addCard(card, 1, "side")}
-                aria-label={label ? `${label} をサイドボードに追加` : "サイドボードに追加"}
-              >
-                サイド
-              </button>
-            </div>
-          ) : null}
-          {showDeckActions && deckCount > 0 ? (
-            <div className="result-card-image-meta">{`M ${mainCount} / S ${sideCount}`}</div>
-          ) : null}
-        </div>
-      </article>
+        </article>
+
+        {enableImagePreview ? (
+          <CardImagePreviewDialog card={card} isOpen={isImagePreviewOpen} onClose={closeImagePreview} />
+        ) : null}
+      </>
     );
   }
 
