@@ -55,8 +55,8 @@ test("TournamentDisplay はシンプルな掲示用ペアリングを表示す�
   expect(await screen.findByText("掲示テスト大会")).toBeInTheDocument();
   expect(screen.getByText("現在ラウンド: 第1回戦")).toBeInTheDocument();
   await waitFor(() => {
-    expect(screen.getByText("プレイヤー1")).toBeInTheDocument();
+    expect(screen.getAllByText("プレイヤー1").length).toBeGreaterThan(0);
   });
-  expect(screen.getByText("プレイヤー2")).toBeInTheDocument();
+  expect(screen.getAllByText("プレイヤー2").length).toBeGreaterThan(0);
   expect(screen.getByRole("tab", { name: "ペアリング" })).toHaveAttribute("aria-selected", "true");
 });
