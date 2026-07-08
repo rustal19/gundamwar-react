@@ -1,4 +1,4 @@
-import { getMyStatusPhase } from "./TournamentMyStatus";
+import { getMyStatusPhase, getRoundCountdown } from "./TournamentMyStatus";
 
 const entry = { id: "entry-1", status: "registered" };
 
@@ -45,5 +45,39 @@ describe("getMyStatusPhase", () => {
     );
 
     expect(phase).toBe("not_entered");
+  });
+});
+
+describe("getRoundCountdown", () => {
+  it("returns a remaining time label from the timer start and round minutes", () => {
+    const countdown = getRoundCountdown(
+      "2026-07-08T10:00:00.000Z",
+      50,
+      new Date("2026-07-08T10:12:34.000Z")
+    );
+
+    expect(countdown).toMatchObject({
+      label: "残り 37:26",
+      expired: false,
+    });
+  });
+
+  it("returns time up after the round time has elapsed", () => {
+    const countdown = getRoundCountdown(
+      "2026-07-08T10:00:00.000Z",
+      50,
+      new Date("2026-07-08T10:50:01.000Z")
+    );
+
+    expect(countdown).toEqual({
+      remainingMs: 0,
+      label: "時間切れ",
+      expired: true,
+    });
+  });
+
+  it("returns null when timer data is incomplete", () => {
+    expect(getRoundCountdown(null, 50, new Date("2026-07-08T10:00:00.000Z"))).toBeNull();
+    expect(getRoundCountdown("2026-07-08T10:00:00.000Z", null, new Date("2026-07-08T10:00:00.000Z"))).toBeNull();
   });
 });

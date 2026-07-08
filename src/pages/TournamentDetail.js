@@ -7,6 +7,7 @@ import Bracket from "../components/Bracket";
 import CardHoverPreview from "../components/CardHoverPreview";
 import RoundTabs from "../components/RoundTabs";
 import TournamentMyStatus from "../components/TournamentMyStatus";
+import { MegaphoneIcon } from "../components/icons";
 import { getCardCode } from "../utils/cardImages";
 import {
   checkInMyEntry,
@@ -596,6 +597,16 @@ export default function TournamentDetail({ compact = false }) {
           {STATUS_LABELS[tournament.status] || tournament.status}
         </div>
       </div>
+
+      {tournament.announcement ? (
+        <section className="tournament-announcement-band">
+          <MegaphoneIcon title="アナウンス" />
+          <div>
+            <p className="tournament-eyebrow">アナウンス</p>
+            <p>{tournament.announcement}</p>
+          </div>
+        </section>
+      ) : null}
 
       <TournamentMyStatus
         tournament={tournament}
