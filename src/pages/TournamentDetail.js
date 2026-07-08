@@ -24,6 +24,7 @@ import {
 } from "../data/statusLabels";
 import { defaultRegulation, validateDeck } from "../utils/deckValidation";
 import { computeStandings } from "../utils/tournament/standings";
+import NotFound from "./NotFound";
 import "./Tournaments.css";
 
 const BASE_TABS = [
@@ -69,12 +70,17 @@ function findEntry(entries, entryId) {
   return entries.find((entry) => entry.id === entryId) || null;
 }
 
-function buildMatchLabel(match, entries) {
+function UserNameLink({ user, fallback = "-" }) {
+  const label = user?.name || fallback;
+  return user?.id ? <Link to={`/users/${user.id}`}>{label}</Link> : <span>{label}</span>;
+}
+
+function buildMatchPlayers(match, entries) {
   const p1 = findEntry(entries, match.player1EntryId);
   const p2 = match.player2EntryId == null ? null : findEntry(entries, match.player2EntryId);
   return {
-    p1Name: p1?.user?.name || "-",
-    p2Name: p2?.user?.name || "不戦勝",
+    p1,
+    p2,
   };
 }
 
@@ -154,7 +160,7 @@ export default function TournamentDetail({ compact = false }) {
       setRounds(nextRounds.rounds || []);
       setStandings(nextStandings.items || nextStandings.standings || []);
     } catch (loadError) {
-      setError(loadError.message);
+      setError(loadError.code === "not_found" || loadError.status === 404 ? "大会が見つかりません。" : loadError.message);
     } finally {
       if (!silent) setIsLoading(false);
     }
@@ -378,6 +384,10 @@ export default function TournamentDetail({ compact = false }) {
     return <main className="tournament-page">読み込み中...</main>;
   }
 
+  if (!tournament && /not found|見つかりません/i.test(error || "")) {
+    return <NotFound />;
+  }
+
   if (!tournament) {
     return (
       <main className="tournament-page">
@@ -461,7 +471,7 @@ export default function TournamentDetail({ compact = false }) {
           {entries.map((entry, index) => (
             <tr key={entry.id}>
               <td>{index + 1}</td>
-              <td>{entry.user?.name || "-"}</td>
+              <td><UserNameLink user={entry.user} /></td>
               <td>{entry.status}</td>
               <td>
                 {entry.deckItems ? (
@@ -490,7 +500,7 @@ export default function TournamentDetail({ compact = false }) {
             .filter((entry) => Array.isArray(entry.deckItems) && entry.deckItems.length > 0)
             .map((entry) => (
               <section key={entry.id} id={`decklist-${entry.id}`} className="tournament-decklist">
-                <h3>{entry.user?.name || "-"} のデッキリスト</h3>
+                <h3><UserNameLink user={entry.user} /> のデッキリスト</h3>
                 <div className="tournament-deck-summary">
                   メイン {countCards(entry.deckItems, "main")} / サイド {countCards(entry.deckItems, "side")}
                 </div>
@@ -528,7 +538,7 @@ export default function TournamentDetail({ compact = false }) {
               </thead>
               <tbody>
                 {sortedMatches(selectedPairingRound).map((match) => {
-                  const labels = buildMatchLabel(match, entries);
+                  const players = buildMatchPlayers(match, entries);
                   const isMyMatch =
                     myEntry &&
                     [match.player1EntryId, match.player2EntryId].some(
@@ -537,8 +547,14 @@ export default function TournamentDetail({ compact = false }) {
                   return (
                     <tr key={match.id} className={isMyMatch ? "my-match" : ""}>
                       <td>{match.tableNo || "-"}</td>
-                      <td>{labels.p1Name}{match.player1EntryId === myEntry?.id ? "（あなた）" : ""}</td>
-                      <td>{labels.p2Name}{match.player2EntryId === myEntry?.id ? "（あなた）" : ""}</td>
+                      <td>
+                        <UserNameLink user={players.p1?.user} />
+                        {match.player1EntryId === myEntry?.id ? "（あなた）" : ""}
+                      </td>
+                      <td>
+                        <UserNameLink user={players.p2?.user} fallback="不戦勝" />
+                        {match.player2EntryId === myEntry?.id ? "（あなた）" : ""}
+                      </td>
                     </tr>
                   );
                 })}
@@ -572,12 +588,12 @@ export default function TournamentDetail({ compact = false }) {
               </thead>
               <tbody>
                 {sortedMatches(selectedResultRound).map((match) => {
-                  const labels = buildMatchLabel(match, entries);
+                  const players = buildMatchPlayers(match, entries);
                   return (
                     <tr key={match.id}>
                       <td>{match.tableNo || "-"}</td>
-                      <td>{labels.p1Name}</td>
-                      <td>{labels.p2Name}</td>
+                      <td><UserNameLink user={players.p1?.user} /></td>
+                      <td><UserNameLink user={players.p2?.user} fallback="不戦勝" /></td>
                       <td>{resultLabel(match.result)}</td>
                     </tr>
                   );
@@ -614,7 +630,7 @@ export default function TournamentDetail({ compact = false }) {
               return (
                 <tr key={standing.entryId}>
                   <td>{standing.rank}</td>
-                  <td>{entry?.user?.name || standing.entryId}</td>
+                      <td><UserNameLink user={entry?.user} fallback={standing.entryId} /></td>
                   <td>{standing.wins}</td>
                   <td>{standing.losses}</td>
                   <td>{standing.draws}</td>

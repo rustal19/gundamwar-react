@@ -546,6 +546,8 @@ async function requestJson(path, options = {}) {
 
   if (!response.ok) {
     const error = new Error(payload?.error || `Request failed with status ${response.status}`);
+    error.status = response.status;
+    if (response.status === 404) error.code = "not_found";
     if (payload?.violations) error.violations = payload.violations;
     throw error;
   }

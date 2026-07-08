@@ -110,7 +110,10 @@ async function requestJson(path, options = {}) {
     .catch(() => ({ error: `Request failed with status ${response.status}` }));
 
   if (!response.ok) {
-    throw new Error(payload?.error || `Request failed with status ${response.status}`);
+    const error = new Error(payload?.error || `Request failed with status ${response.status}`);
+    error.status = response.status;
+    if (response.status === 404) error.code = "not_found";
+    throw error;
   }
 
   return payload;
@@ -174,7 +177,9 @@ export async function fetchPublicDeck(id, { authMode } = {}) {
   if (authMode === "mock") {
     const deck = readMockPublicDecks().find((item) => item.id === deckId && item.isPublic);
     if (!deck) {
-      throw new Error("公開デッキが見つかりません。");
+      const error = new Error("公開デッキが見つかりません。");
+      error.code = "not_found";
+      throw error;
     }
     return deck;
   }
