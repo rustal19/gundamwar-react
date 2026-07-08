@@ -35,6 +35,7 @@ describe("publicDecks mock service", () => {
       deckId: "deck-1",
       isPublic: true,
       description: "A test deck",
+      format: "スタンダード",
     });
 
     expect(deck).toMatchObject({
@@ -42,6 +43,7 @@ describe("publicDecks mock service", () => {
       title: "Blue Control",
       isPublic: true,
       description: "A test deck",
+      format: "スタンダード",
       owner: user,
     });
 
@@ -59,6 +61,7 @@ describe("publicDecks mock service", () => {
           title: "Green Rush",
           isPublic: true,
           description: "",
+          format: "スタンダード",
           publishedAt: "2026-01-01T00:00:00.000Z",
           owner: user,
         },
@@ -67,6 +70,7 @@ describe("publicDecks mock service", () => {
           title: "Blue Control",
           isPublic: true,
           description: "search target",
+          format: "その他",
           publishedAt: "2026-02-01T00:00:00.000Z",
           owner: user,
         },
@@ -75,6 +79,7 @@ describe("publicDecks mock service", () => {
           title: "Private Blue",
           isPublic: false,
           description: "search target",
+          format: "その他",
           publishedAt: "2026-03-01T00:00:00.000Z",
           owner: user,
         },
@@ -86,6 +91,55 @@ describe("publicDecks mock service", () => {
     expect(result.total).toBe(1);
     expect(result.items.map((deck) => deck.id)).toEqual(["new"]);
     expect(result.pageSize).toBe(20);
+  });
+
+  test("requires format when publishing a deck", async () => {
+    writeSavedDecks([
+      {
+        id: "deck-1",
+        title: "Blue Control",
+        items: [],
+      },
+    ]);
+
+    await expect(
+      setDeckPublication({
+        authMode: "mock",
+        user,
+        deckId: "deck-1",
+        isPublic: true,
+        description: "A test deck",
+      })
+    ).rejects.toThrow("フォーマットを選択してください。");
+
+    expect(window.localStorage.getItem(PUBLIC_STORAGE_KEY)).toBeNull();
+  });
+
+  test("filters public decks by format", async () => {
+    window.localStorage.setItem(
+      PUBLIC_STORAGE_KEY,
+      JSON.stringify([
+        {
+          id: "standard",
+          title: "Standard Deck",
+          isPublic: true,
+          format: "スタンダード",
+          owner: user,
+        },
+        {
+          id: "other",
+          title: "Other Deck",
+          isPublic: true,
+          format: "その他",
+          owner: user,
+        },
+      ])
+    );
+
+    const result = await fetchPublicDecks({ authMode: "mock", page: 1, format: "その他" });
+
+    expect(result.total).toBe(1);
+    expect(result.items[0]).toMatchObject({ id: "other", format: "その他" });
   });
 
   test("fetches a public deck detail and hides unpublished decks", async () => {

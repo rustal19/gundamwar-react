@@ -4,8 +4,10 @@ import { useAuth } from "../context/AuthContext";
 import { useDeck } from "../context/DeckContext";
 import { fetchSavedDecks } from "../services/savedDecks";
 import Bracket from "../components/Bracket";
+import CardHoverPreview from "../components/CardHoverPreview";
 import RoundTabs from "../components/RoundTabs";
 import TournamentMyStatus from "../components/TournamentMyStatus";
+import { getCardCode } from "../utils/cardImages";
 import {
   checkInMyEntry,
   createEntry,
@@ -87,6 +89,30 @@ function resultLabel(result) {
   if (result === "draw") return "引き分け";
   if (result === "bye") return "不戦勝";
   return "未報告";
+}
+
+function TournamentDeckRows({ items, compact }) {
+  return (
+    <table className="tournament-table tournament-decklist-table">
+      <tbody>
+        {(items || []).map((item, index) => {
+          const card = item.card || {};
+          return (
+            <tr key={`${item.cardId || card.name}-${item.zone || "main"}-${index}`}>
+              <td>{item.zone === "side" ? "サイド" : "メイン"}</td>
+              <td>{getCardCode(card) || "-"}</td>
+              <td>
+                <CardHoverPreview card={card} compact={compact}>
+                  {card.name || item.cardId}
+                </CardHoverPreview>
+              </td>
+              <td>{item.count}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
 }
 
 export default function TournamentDetail({ compact = false }) {
@@ -411,6 +437,7 @@ export default function TournamentDetail({ compact = false }) {
                 <div className="tournament-deck-summary">
                   メイン {countCards(entry.deckItems, "main")} / サイド {countCards(entry.deckItems, "side")}
                 </div>
+                <TournamentDeckRows items={entry.deckItems} compact={compact} />
               </section>
             ))}
         </div>

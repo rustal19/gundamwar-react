@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import CardHoverPreview from "../components/CardHoverPreview";
 import RoundTabs from "../components/RoundTabs";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -21,6 +22,7 @@ import {
   updateRoundMatches,
   updateTournament,
 } from "../services/tournaments";
+import { getCardCode } from "../utils/cardImages";
 import "./Tournaments.css";
 
 const DEFAULT_FORM = {
@@ -176,6 +178,12 @@ function payloadFromForm(form) {
   };
 }
 
+function countCards(items, zone) {
+  return (Array.isArray(items) ? items : [])
+    .filter((item) => !zone || item.zone === zone)
+    .reduce((sum, item) => sum + Number(item.count || 0), 0);
+}
+
 function findEntry(entries, entryId) {
   return entries.find((entry) => entry.id === entryId) || null;
 }
@@ -247,6 +255,38 @@ function remainingTime(round, minutes, now) {
   const mm = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
   const ss = String(totalSeconds % 60).padStart(2, "0");
   return remainingMs <= 0 ? "時間切れ" : `${mm}:${ss}`;
+}
+
+function TournamentDeckRows({ items, compact }) {
+  return (
+    <table className="tournament-table tournament-decklist-table">
+      <thead>
+        <tr>
+          <th>区分</th>
+          <th>番号</th>
+          <th>カード</th>
+          <th>枚数</th>
+        </tr>
+      </thead>
+      <tbody>
+        {(items || []).map((item, index) => {
+          const card = item.card || {};
+          return (
+            <tr key={`${item.cardId || card.name}-${item.zone || "main"}-${index}`}>
+              <td>{item.zone === "side" ? "サイド" : "メイン"}</td>
+              <td>{getCardCode(card) || "-"}</td>
+              <td>
+                <CardHoverPreview card={card} compact={compact}>
+                  {card.name || item.cardId}
+                </CardHoverPreview>
+              </td>
+              <td>{item.count}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
 }
 
 function RoundManagePanel({
@@ -561,6 +601,7 @@ function RoundManagePanel({
 }
 
 function ParticipantsPanel({
+  compact,
   entries,
   form,
   isSubmitting,
@@ -574,8 +615,10 @@ function ParticipantsPanel({
   const [missingOnly, setMissingOnly] = useState(false);
   const [manualName, setManualName] = useState("");
   const [manualDeckText, setManualDeckText] = useState("");
+  const [selectedEntryId, setSelectedEntryId] = useState("");
   const pendingEntries = entries.filter((entry) => entry.status === "pending");
   const visibleEntries = entries.filter((entry) => !missingOnly || !entry.decklistSubmittedAt);
+  const selectedEntry = entries.find((entry) => entry.id === selectedEntryId) || null;
   const nextRound = Math.max(1, (rounds || []).length + 1);
 
   return (
@@ -667,6 +710,9 @@ function ParticipantsPanel({
                   ) : null}
                 </td>
                 <td className="tournament-row-actions">
+                  <button type="button" onClick={() => setSelectedEntryId(entry.id)} disabled={isSubmitting}>
+                    閲覧
+                  </button>
                   <button type="button" onClick={() => onDeckRegister(entry.id)} disabled={isSubmitting}>
                     デッキ登録
                   </button>
@@ -682,6 +728,27 @@ function ParticipantsPanel({
           </tbody>
         </table>
       </div>
+      {selectedEntry ? (
+        <div className="tournament-deck-viewer">
+          <div className="tournament-round-header">
+            <h3>{selectedEntry.user?.name || "-"} のデッキリスト</h3>
+            <button type="button" onClick={() => setSelectedEntryId("")}>
+              閉じる
+            </button>
+          </div>
+          {selectedEntry.deckItems?.length ? (
+            <>
+              <div className="tournament-deck-summary">
+                提出済み (メイン {countCards(selectedEntry.deckItems, "main")} / サイド{" "}
+                {countCards(selectedEntry.deckItems, "side")})
+              </div>
+              <TournamentDeckRows items={selectedEntry.deckItems} compact={compact} />
+            </>
+          ) : (
+            <div className="tournament-muted">デッキリストは提出されていません。</div>
+          )}
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -1215,6 +1282,7 @@ export default function TournamentManage({ compact = false }) {
 
       {!isNew && activeTab === "participants" ? (
         <ParticipantsPanel
+          compact={compact}
           entries={entries}
           form={form}
           isSubmitting={isSubmitting}

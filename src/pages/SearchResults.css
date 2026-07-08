@@ -149,6 +149,18 @@
   background: var(--gw-surface);
 }
 
+.result-card-image-trigger {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-align: inherit;
+}
+
 .result-card-image-zone-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;

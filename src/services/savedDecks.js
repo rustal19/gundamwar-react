@@ -30,6 +30,7 @@ function normalizeSavedDeck(rawDeck) {
     items: Array.isArray(rawDeck.items) ? rawDeck.items : [],
     isPublic: Boolean(rawDeck.isPublic),
     description: rawDeck.description || "",
+    format: typeof rawDeck.format === "string" && rawDeck.format.trim() ? rawDeck.format.trim() : null,
     publishedAt: rawDeck.publishedAt || rawDeck.published_at || "",
     createdAt: rawDeck.createdAt || rawDeck.created_at || "",
     updatedAt: rawDeck.updatedAt || rawDeck.updated_at || "",
