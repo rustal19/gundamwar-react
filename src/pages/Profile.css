@@ -1,6 +1,8 @@
 .profile-page {
-  width: min(960px, calc(100% - 2rem));
+  width: min(1040px, calc(100% - 2rem));
   margin: 1.25rem auto 0;
+  display: grid;
+  gap: 1rem;
 }
 
 .profile-panel {
@@ -8,56 +10,78 @@
   background: var(--gw-surface);
   padding: 1.25rem;
   display: grid;
-  gap: 1.1rem;
-}
-
-.profile-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   gap: 1rem;
 }
 
-.profile-heading h1 {
-  margin: 0 0 0.35rem;
+.profile-panel h1,
+.profile-panel h2,
+.profile-panel h3 {
+  margin: 0;
   color: var(--gw-text-strong);
+}
+
+.profile-panel h1 {
   font-size: 1.35rem;
 }
 
-.profile-note {
+.profile-panel h2 {
+  font-size: 1.08rem;
+}
+
+.profile-panel h3 {
+  font-size: 0.95rem;
+}
+
+.profile-note,
+.profile-empty {
   margin: 0;
   color: var(--gw-text-muted);
-  font-size: 0.94rem;
+  font-size: 0.92rem;
 }
 
-.profile-current,
-.profile-private-info {
-  border: 1px solid var(--gw-secondary-border-soft);
-  background: var(--gw-field-bg);
-  padding: 0.75rem;
+.profile-identity {
+  grid-template-columns: auto minmax(0, 1fr) minmax(260px, 360px);
+  align-items: center;
+}
+
+.profile-avatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
   display: grid;
-  gap: 0.18rem;
+  place-items: center;
+  background: var(--gw-primary-soft);
+  color: var(--gw-primary-strong);
+  border: 1px solid var(--gw-secondary-border);
+  font-weight: 800;
 }
 
-.profile-current {
-  min-width: 180px;
-  text-align: right;
+.profile-identity-main {
+  min-width: 0;
+  display: grid;
+  gap: 0.25rem;
 }
 
-.profile-current span,
-.profile-private-info span {
+.profile-google-name {
+  margin: 0;
   color: var(--gw-text-muted);
-  font-size: 0.78rem;
+  font-size: 11px;
 }
 
-.profile-current strong,
-.profile-private-info strong {
+.profile-public-link {
   color: var(--gw-primary);
+  font-size: 0.88rem;
+  text-decoration: none;
+}
+
+.profile-public-link:hover {
+  text-decoration: underline;
 }
 
 .profile-form {
-  display: grid;
-  gap: 0.9rem;
+  display: flex;
+  align-items: end;
+  gap: 0.65rem;
 }
 
 .profile-field {
@@ -65,7 +89,8 @@
   gap: 0.35rem;
   color: var(--gw-primary);
   font-weight: 700;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
+  flex: 1;
 }
 
 .profile-field input {
@@ -75,12 +100,6 @@
   padding: 0.58rem 0.7rem;
   font: inherit;
   box-sizing: border-box;
-}
-
-.profile-private-info p {
-  margin: 0;
-  color: var(--gw-text-muted);
-  font-size: 0.84rem;
 }
 
 .profile-error,
@@ -97,17 +116,130 @@
   color: var(--gw-success-alt);
 }
 
-.profile-actions {
-  display: flex;
-  justify-content: flex-end;
+.profile-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
 }
 
-@media (max-width: 720px) {
-  .profile-heading {
+.profile-metrics > div {
+  border: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-surface);
+  padding: 0.9rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.profile-metrics span {
+  color: var(--gw-text-muted);
+  font-size: 0.78rem;
+}
+
+.profile-metrics strong {
+  color: var(--gw-text-strong);
+  font-size: 1.4rem;
+}
+
+.profile-section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.profile-section-heading span {
+  color: var(--gw-text-muted);
+  font-size: 0.84rem;
+}
+
+.profile-list-section {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.profile-tournament-list,
+.profile-results-list {
+  display: grid;
+  border-top: 1px solid var(--gw-secondary-border-soft);
+}
+
+.profile-tournament-row,
+.profile-result-row {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--gw-secondary-border-soft);
+  padding: 0.72rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-tournament-row strong,
+.profile-result-row strong {
+  display: block;
+  color: var(--gw-text-strong);
+  font-size: 0.95rem;
+}
+
+.profile-tournament-row span,
+.profile-result-row span {
+  color: var(--gw-text-muted);
+  font-size: 0.82rem;
+}
+
+.profile-row-meta {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.profile-badge {
+  border: 1px solid var(--gw-secondary-border);
+  background: var(--gw-field-bg);
+  color: var(--gw-text-muted);
+  padding: 0.18rem 0.45rem;
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.profile-badge.accent {
+  border-color: var(--gw-accent);
+  color: var(--gw-accent-strong);
+}
+
+.profile-badge.soft {
+  background: var(--gw-primary-soft);
+  color: var(--gw-primary-strong);
+}
+
+@media (max-width: 820px) {
+  .profile-identity {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .profile-nickname-form {
+    grid-column: 1 / -1;
+  }
+
+  .profile-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .profile-page {
+    width: min(100% - 1rem, 1040px);
+  }
+
+  .profile-form,
+  .profile-tournament-row,
+  .profile-result-row {
     display: grid;
   }
 
-  .profile-current {
-    text-align: left;
+  .profile-row-meta {
+    justify-content: flex-start;
   }
 }
