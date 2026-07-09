@@ -61,13 +61,17 @@
   padding: 0.85rem 0.65rem;
   position: fixed;
   top: 0;
-  transition: width 0.16s ease, box-shadow 0.16s ease;
+  transition: width 0.16s ease, padding 0.16s ease, box-shadow 0.16s ease;
   width: 200px;
   z-index: 30;
 }
 
+@keyframes gw-sidebar-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .gw-sidebar-collapsed {
-  align-items: center;
   padding-left: 0.35rem;
   padding-right: 0.35rem;
   width: 56px;
@@ -75,7 +79,6 @@
 
 .gw-sidebar-collapsed:hover,
 .gw-sidebar-collapsed:focus-within {
-  align-items: stretch;
   box-shadow: 0 8px 24px var(--gw-shadow-popover-color);
   padding-left: 0.65rem;
   padding-right: 0.65rem;
@@ -84,12 +87,13 @@
 
 .gw-sidebar-collapsed:hover .sr-only,
 .gw-sidebar-collapsed:focus-within .sr-only {
+  animation: gw-sidebar-fade-in 0.14s ease 0.08s both;
   clip: auto;
   height: auto;
   margin: 0;
   overflow: visible;
   position: static;
-  white-space: normal;
+  white-space: nowrap;
   width: auto;
 }
 
@@ -111,12 +115,14 @@
   font-size: 1.05rem;
   font-weight: 800;
   line-height: 1.1;
+  white-space: nowrap;
 }
 
 .gw-sidebar-brand-subtitle {
   color: var(--gw-text-muted);
   font-size: 11px;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .gw-sidebar-collapsed .gw-sidebar-brand-subtitle,
@@ -128,6 +134,7 @@
 .gw-sidebar-collapsed:hover .gw-sidebar-brand-title,
 .gw-sidebar-collapsed:focus-within .gw-sidebar-brand-subtitle,
 .gw-sidebar-collapsed:focus-within .gw-sidebar-brand-title {
+  animation: gw-sidebar-fade-in 0.14s ease 0.08s both;
   display: block;
 }
 
@@ -150,6 +157,7 @@
   letter-spacing: 0;
   margin: 0 0 0.15rem;
   padding: 0 0.55rem;
+  white-space: nowrap;
 }
 
 .gw-sidebar-collapsed .gw-sidebar-section-title {
@@ -158,6 +166,7 @@
 
 .gw-sidebar-collapsed:hover .gw-sidebar-section-title,
 .gw-sidebar-collapsed:focus-within .gw-sidebar-section-title {
+  animation: gw-sidebar-fade-in 0.14s ease 0.08s both;
   display: block;
 }
 
@@ -170,6 +179,7 @@
   min-height: 38px;
   padding: 0 0.55rem;
   text-decoration: none;
+  transition: padding 0.16s ease;
 }
 
 .gw-sidebar-link:hover,
@@ -191,21 +201,23 @@
 .gw-sidebar-link-label {
   font-size: 0.9rem;
   line-height: 1.1;
+  white-space: nowrap;
 }
 
 .gw-sidebar-collapsed .gw-sidebar-link {
-  justify-content: center;
-  padding-left: 0;
+  padding-left: 0.72rem;
   padding-right: 0;
-  width: 38px;
 }
 
 .gw-sidebar-collapsed:hover .gw-sidebar-link,
 .gw-sidebar-collapsed:focus-within .gw-sidebar-link {
-  justify-content: flex-start;
   padding-left: 0.55rem;
   padding-right: 0.55rem;
-  width: auto;
+}
+
+.gw-sidebar-collapsed:hover .gw-sidebar-link-label,
+.gw-sidebar-collapsed:focus-within .gw-sidebar-link-label {
+  animation: gw-sidebar-fade-in 0.14s ease 0.08s both;
 }
 
 .gw-sidebar-user {
