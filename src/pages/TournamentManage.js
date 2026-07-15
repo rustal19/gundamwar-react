@@ -920,13 +920,59 @@ function InfoPanel({
           </ul>
         </div>
       ) : null}
-      <section className="tournament-tab-panel">
-        <h2>大会情報</h2>
+      <section className="manage-form-section">
+        <h2>基本情報</h2>
         <div className="tournament-form-grid">
           <label>
             タイトル
             <input value={form.title} onChange={(event) => setField("title", event.target.value)} required />
           </label>
+          <label>
+            定員
+            <input type="number" min="1" value={form.capacity} placeholder="制限なし" onChange={(event) => setField("capacity", event.target.value)} />
+          </label>
+          <label className="tournament-form-wide">
+            説明
+            <textarea value={form.description} onChange={(event) => setField("description", event.target.value)} />
+          </label>
+        </div>
+      </section>
+
+      <section className="manage-form-section">
+        <h2>日時と会場</h2>
+        <div className="tournament-form-grid">
+          <label>
+            開始日時
+            <input type="datetime-local" value={form.startsAt} onChange={(event) => setField("startsAt", event.target.value)} />
+          </label>
+          <label>
+            受付締切
+            <input
+              type="datetime-local"
+              value={form.registrationClosesAt}
+              onChange={(event) => setField("registrationClosesAt", event.target.value)}
+            />
+          </label>
+          <label>
+            開催地
+            <input value={form.venue} placeholder="オンラインの場合は空で可" onChange={(event) => setField("venue", event.target.value)} />
+          </label>
+          <div className="manage-inline-checks">
+            <label className="tournament-checkbox">
+              <input type="checkbox" checked={form.isOnline} onChange={(event) => setOnline(event.target.checked)} />
+              オンライン大会
+            </label>
+            <label className="tournament-checkbox">
+              <input type="checkbox" checked={form.selfCheckin} onChange={(event) => setField("selfCheckin", event.target.checked)} />
+              セルフチェックインを許可
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section className="manage-form-section">
+        <h2>進行方式</h2>
+        <div className="tournament-form-grid">
           <label title={hasRounds ? "ラウンド生成後は変更できません" : ""}>
             形式 {hasRounds ? "🔒" : ""}
             <select value={form.format} onChange={(event) => setField("format", event.target.value)} disabled={hasRounds}>
@@ -957,22 +1003,6 @@ function InfoPanel({
             />
           </label>
           <label>
-            開始日時
-            <input type="datetime-local" value={form.startsAt} onChange={(event) => setField("startsAt", event.target.value)} />
-          </label>
-          <label>
-            受付締切
-            <input
-              type="datetime-local"
-              value={form.registrationClosesAt}
-              onChange={(event) => setField("registrationClosesAt", event.target.value)}
-            />
-          </label>
-          <label>
-            定員
-            <input type="number" min="1" value={form.capacity} placeholder="制限なし" onChange={(event) => setField("capacity", event.target.value)} />
-          </label>
-          <label>
             ラウンド制限時間
             <input
               type="number"
@@ -982,39 +1012,24 @@ function InfoPanel({
               onChange={(event) => setField("roundTimeMinutes", event.target.value)}
             />
           </label>
-          <label>
-            開催地
-            <input value={form.venue} placeholder="オンラインの場合は空で可" onChange={(event) => setField("venue", event.target.value)} />
-          </label>
+        </div>
+      </section>
+
+      <section className="manage-form-section">
+        <h2>デッキとレギュレーション</h2>
+        <div className="tournament-form-grid">
           <label className="tournament-checkbox">
-            <input type="checkbox" checked={form.isOnline} onChange={(event) => setOnline(event.target.checked)} />
-            オンライン大会
-          </label>
-          <label className="tournament-checkbox">
-            <input type="checkbox" checked={form.selfCheckin} onChange={(event) => setField("selfCheckin", event.target.checked)} />
-            セルフチェックインを許可
+            <input type="checkbox" checked={form.decklistRequired} onChange={(event) => setField("decklistRequired", event.target.checked)} />
+            デッキリスト必須
           </label>
           <label className="tournament-checkbox">
             <input type="checkbox" checked={form.decklistsPublic} onChange={(event) => setField("decklistsPublic", event.target.checked)} />
             終了後にデッキリストを公開
           </label>
           <label className="tournament-checkbox">
-            <input type="checkbox" checked={form.decklistRequired} onChange={(event) => setField("decklistRequired", event.target.checked)} />
-            デッキリスト必須
-          </label>
-          <label className="tournament-checkbox">
             <input type="checkbox" checked={form.lateEntry} onChange={(event) => setField("lateEntry", event.target.checked)} />
             途中参加を許可
           </label>
-          <label className="tournament-form-wide">
-            説明
-            <textarea value={form.description} onChange={(event) => setField("description", event.target.value)} />
-          </label>
-        </div>
-      </section>
-      <section className="tournament-tab-panel">
-        <h2>レギュレーション</h2>
-        <div className="tournament-form-grid">
           <label>
             フォーマットプリセット
             <select value={selectedPresetName} onChange={(event) => setFormatPreset(event.target.value)}>
@@ -1026,39 +1041,44 @@ function InfoPanel({
               <option value={OTHER_FORMAT_NAME}>{OTHER_FORMAT_NAME}</option>
             </select>
           </label>
-          <label>
-            名称
-            <input value={form.regulation.name} onChange={(event) => setRegulationField("name", event.target.value)} />
-          </label>
-          <label>
-            メイン下限
-            <input type="number" value={form.regulation.mainMin} onChange={(event) => setRegulationField("mainMin", event.target.value)} />
-          </label>
-          <label>
-            メイン上限
-            <input type="number" value={form.regulation.mainMax} onChange={(event) => setRegulationField("mainMax", event.target.value)} />
-          </label>
-          <label>
-            サイド枚数
-            <input type="number" value={form.regulation.sideSize} onChange={(event) => setRegulationField("sideSize", event.target.value)} />
-          </label>
-          <label>
-            同名上限
-            <input type="number" value={form.regulation.maxCopies} onChange={(event) => setRegulationField("maxCopies", event.target.value)} />
-          </label>
-          <label>
-            使用可能セット
-            <textarea value={form.regulation.allowedSetsText ?? ""} onChange={(event) => setRegulationField("allowedSetsText", event.target.value)} />
-          </label>
-          <label>
-            禁止カード
-            <textarea value={form.regulation.bannedCardsText ?? ""} onChange={(event) => setRegulationField("bannedCardsText", event.target.value)} />
-          </label>
-          <label>
-            制限カード
-            <textarea value={form.regulation.limitedCardsText ?? ""} onChange={(event) => setRegulationField("limitedCardsText", event.target.value)} />
-          </label>
         </div>
+        <details className="manage-regulation-details">
+          <summary>詳細を編集</summary>
+          <div className="tournament-form-grid">
+            <label>
+              名称
+              <input value={form.regulation.name} onChange={(event) => setRegulationField("name", event.target.value)} />
+            </label>
+            <label>
+              メイン下限
+              <input type="number" value={form.regulation.mainMin} onChange={(event) => setRegulationField("mainMin", event.target.value)} />
+            </label>
+            <label>
+              メイン上限
+              <input type="number" value={form.regulation.mainMax} onChange={(event) => setRegulationField("mainMax", event.target.value)} />
+            </label>
+            <label>
+              サイド枚数
+              <input type="number" value={form.regulation.sideSize} onChange={(event) => setRegulationField("sideSize", event.target.value)} />
+            </label>
+            <label>
+              同名上限
+              <input type="number" value={form.regulation.maxCopies} onChange={(event) => setRegulationField("maxCopies", event.target.value)} />
+            </label>
+            <label>
+              使用可能セット
+              <textarea value={form.regulation.allowedSetsText ?? ""} onChange={(event) => setRegulationField("allowedSetsText", event.target.value)} />
+            </label>
+            <label>
+              禁止カード
+              <textarea value={form.regulation.bannedCardsText ?? ""} onChange={(event) => setRegulationField("bannedCardsText", event.target.value)} />
+            </label>
+            <label>
+              制限カード
+              <textarea value={form.regulation.limitedCardsText ?? ""} onChange={(event) => setRegulationField("limitedCardsText", event.target.value)} />
+            </label>
+          </div>
+        </details>
       </section>
       <div className="tournament-entry-actions tournament-manage-actions">
         <button type="submit" disabled={isSubmitting}>
