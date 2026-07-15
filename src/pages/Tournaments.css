@@ -29,7 +29,9 @@
 }
 
 .tournament-page h2 {
-  font-size: 1.05rem;
+  margin-bottom: 8px;
+  font-size: 1.15rem;
+  font-weight: 700;
 }
 
 .tournament-eyebrow {
@@ -51,6 +53,13 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+
+.tournament-filter {
+  border: 1px solid var(--gw-border);
+  border-radius: var(--gw-radius);
+  background: var(--gw-surface);
+  padding: 12px;
 }
 
 .tournament-output-actions {
@@ -580,8 +589,6 @@
 .manage-form-section h2 {
   border-bottom: 1px solid var(--gw-divider);
   color: var(--gw-primary-strong);
-  font-size: 1.05rem;
-  font-weight: 800;
   padding-bottom: 10px;
 }
 
@@ -765,13 +772,19 @@
 .tournament-table th,
 .tournament-table td {
   border-bottom: 1px solid var(--gw-divider);
-  padding: 10px 8px;
+  padding: 8px 12px;
   text-align: left;
 }
 
 .tournament-table th {
   color: var(--gw-text-muted);
   font-size: 12px;
+  font-weight: 500;
+}
+
+.tournament-table .num,
+.tournament-display-table .num {
+  text-align: right;
 }
 
 .tournament-table tbody tr:hover {
@@ -970,6 +983,7 @@
   background: var(--gw-surface);
   color: var(--gw-text);
   padding: 6px;
+  text-align: right;
 }
 
 .pairing-editor {
@@ -1265,6 +1279,10 @@
 
 .tournament-display-table-wrap {
   overflow-x: auto;
+  border: 1px solid var(--gw-border);
+  border-radius: var(--gw-radius);
+  background: var(--gw-surface);
+  padding: 12px 16px;
 }
 
 .tournament-display-table {
@@ -1276,14 +1294,14 @@
 .tournament-display-table th,
 .tournament-display-table td {
   border-bottom: 1px solid var(--gw-divider);
-  padding: 14px 12px;
+  padding: 8px 12px;
   text-align: left;
 }
 
 .tournament-display-table th {
   color: var(--gw-text-muted);
-  font-size: 14px;
-  font-weight: 900;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .tournament-display-table td {

@@ -135,7 +135,7 @@ export default function TournamentDisplay() {
               <table className="tournament-display-table">
                 <thead>
                   <tr>
-                    <th>卓</th>
+                    <th className="num">卓</th>
                     <th>プレイヤー1</th>
                     <th>プレイヤー2</th>
                     <th>結果</th>
@@ -147,7 +147,7 @@ export default function TournamentDisplay() {
                     const player2 = match.player2EntryId == null ? null : findEntry(entries, match.player2EntryId);
                     return (
                       <tr key={match.id}>
-                        <td className="tournament-display-table-no">{match.tableNo || "-"}</td>
+                        <td className="tournament-display-table-no num">{match.tableNo || "-"}</td>
                         <td>{player1?.user?.name || "-"}</td>
                         <td>{player2?.user?.name || "Bye"}</td>
                         <td>{resultLabel(match)}</td>
@@ -169,25 +169,25 @@ export default function TournamentDisplay() {
             <table className="tournament-display-table">
               <thead>
                 <tr>
-                  <th>順位</th>
+                  <th className="num">順位</th>
                   <th>プレイヤー</th>
-                  <th>勝</th>
-                  <th>敗</th>
-                  <th>分</th>
-                  <th>勝点</th>
-                  <th>OMW%</th>
+                  <th className="num">勝</th>
+                  <th className="num">敗</th>
+                  <th className="num">分</th>
+                  <th className="num">勝点</th>
+                  <th className="num">OMW%</th>
                 </tr>
               </thead>
               <tbody>
                 {standings.map((standing) => (
                   <tr key={standing.entryId}>
-                    <td className="tournament-display-table-no">{standing.rank}</td>
+                    <td className="tournament-display-table-no num">{standing.rank}</td>
                     <td>{standing.entry?.user?.name || standing.entryId}</td>
-                    <td>{standing.wins}</td>
-                    <td>{standing.losses}</td>
-                    <td>{standing.draws}</td>
-                    <td>{standing.points}</td>
-                    <td>{Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%</td>
+                    <td className="num">{standing.wins}</td>
+                    <td className="num">{standing.losses}</td>
+                    <td className="num">{standing.draws}</td>
+                    <td className="num">{standing.points}</td>
+                    <td className="num">{Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%</td>
                   </tr>
                 ))}
               </tbody>
