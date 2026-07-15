@@ -22,13 +22,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 10px;
+  margin-bottom: 0;
 }
 
 .portal-section-header h2 {
-  margin: 0;
+  margin: 0 0 8px;
   color: var(--gw-text-strong);
   font-size: 1.15rem;
+  font-weight: 700;
 }
 
 .portal-more-link {
@@ -244,7 +245,10 @@
 }
 
 .portal-deck-list {
-  border-top: 1px solid var(--gw-divider);
+  border: 1px solid var(--gw-border);
+  border-radius: var(--gw-radius);
+  background: var(--gw-surface);
+  padding: 12px 16px;
 }
 
 .portal-deck-row {

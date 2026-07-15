@@ -113,7 +113,7 @@ function TournamentDeckRows({ items, compact }) {
                   {card.name || item.cardId}
                 </CardHoverPreview>
               </td>
-              <td>{item.count}</td>
+              <td className="num">{item.count}</td>
             </tr>
           );
         })}
@@ -461,7 +461,7 @@ export default function TournamentDetail({ compact = false }) {
       <table className="tournament-table">
         <thead>
           <tr>
-            <th>#</th>
+            <th className="num">#</th>
             <th>プレイヤー</th>
             <th>ステータス</th>
             <th>デッキ</th>
@@ -470,7 +470,7 @@ export default function TournamentDetail({ compact = false }) {
         <tbody>
           {entries.map((entry, index) => (
             <tr key={entry.id}>
-              <td>{index + 1}</td>
+              <td className="num">{index + 1}</td>
               <td><UserNameLink user={entry.user} /></td>
               <td>{entry.status}</td>
               <td>
@@ -531,7 +531,7 @@ export default function TournamentDetail({ compact = false }) {
             <table className="tournament-table">
               <thead>
                 <tr>
-                  <th>卓</th>
+                  <th className="num">卓</th>
                   <th>プレイヤー1</th>
                   <th>プレイヤー2</th>
                 </tr>
@@ -546,7 +546,7 @@ export default function TournamentDetail({ compact = false }) {
                     );
                   return (
                     <tr key={match.id} className={isMyMatch ? "my-match" : ""}>
-                      <td>{match.tableNo || "-"}</td>
+                      <td className="num">{match.tableNo || "-"}</td>
                       <td>
                         <UserNameLink user={players.p1?.user} />
                         {match.player1EntryId === myEntry?.id ? "（あなた）" : ""}
@@ -580,7 +580,7 @@ export default function TournamentDetail({ compact = false }) {
             <table className="tournament-table">
               <thead>
                 <tr>
-                  <th>卓</th>
+                  <th className="num">卓</th>
                   <th>プレイヤー1</th>
                   <th>プレイヤー2</th>
                   <th>結果</th>
@@ -591,7 +591,7 @@ export default function TournamentDetail({ compact = false }) {
                   const players = buildMatchPlayers(match, entries);
                   return (
                     <tr key={match.id}>
-                      <td>{match.tableNo || "-"}</td>
+                      <td className="num">{match.tableNo || "-"}</td>
                       <td><UserNameLink user={players.p1?.user} /></td>
                       <td><UserNameLink user={players.p2?.user} fallback="不戦勝" /></td>
                       <td>{resultLabel(match.result)}</td>
@@ -615,13 +615,13 @@ export default function TournamentDetail({ compact = false }) {
         <table className="tournament-table">
           <thead>
             <tr>
-              <th>順位</th>
+              <th className="num">順位</th>
               <th>プレイヤー</th>
-              <th>勝</th>
-              <th>敗</th>
-              <th>分</th>
-              <th>勝点</th>
-              <th>OMW%</th>
+              <th className="num">勝</th>
+              <th className="num">敗</th>
+              <th className="num">分</th>
+              <th className="num">勝点</th>
+              <th className="num">OMW%</th>
             </tr>
           </thead>
           <tbody>
@@ -629,13 +629,13 @@ export default function TournamentDetail({ compact = false }) {
               const entry = standing.entry || findEntry(entries, standing.entryId);
               return (
                 <tr key={standing.entryId}>
-                  <td>{standing.rank}</td>
+                  <td className="num">{standing.rank}</td>
                       <td><UserNameLink user={entry?.user} fallback={standing.entryId} /></td>
-                  <td>{standing.wins}</td>
-                  <td>{standing.losses}</td>
-                  <td>{standing.draws}</td>
-                  <td>{standing.points}</td>
-                  <td>{Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%</td>
+                  <td className="num">{standing.wins}</td>
+                  <td className="num">{standing.losses}</td>
+                  <td className="num">{standing.draws}</td>
+                  <td className="num">{standing.points}</td>
+                  <td className="num">{Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%</td>
                 </tr>
               );
             })}

@@ -342,7 +342,7 @@ function TournamentDeckRows({ items, compact }) {
           <th>区分</th>
           <th>番号</th>
           <th>カード</th>
-          <th>枚数</th>
+          <th className="num">枚数</th>
         </tr>
       </thead>
       <tbody>
@@ -357,7 +357,7 @@ function TournamentDeckRows({ items, compact }) {
                   {card.name || item.cardId}
                 </CardHoverPreview>
               </td>
-              <td>{item.count}</td>
+              <td className="num">{item.count}</td>
             </tr>
           );
         })}
@@ -470,7 +470,7 @@ function RoundManagePanel({
             <table className="tournament-table manage-table">
               <thead>
                 <tr>
-                  <th>卓</th>
+                  <th className="num">卓</th>
                   <th>プレイヤー1</th>
                   <th>プレイヤー2</th>
                   <th>結果</th>
@@ -483,7 +483,7 @@ function RoundManagePanel({
                   const isBye = !match.player2EntryId || match.result === "bye";
                   return (
                     <tr key={match.id} className={!isReported ? "unreported-match" : ""}>
-                      <td>{match.tableNo}</td>
+                      <td className="num">{match.tableNo}</td>
                       <td>{entryName(entries, match.player1EntryId)}</td>
                       <td>{isBye ? "Bye" : entryName(entries, match.player2EntryId)}</td>
                       <td>
@@ -806,7 +806,7 @@ function ParticipantsPanel({
         <table className="tournament-table">
           <thead>
             <tr>
-              <th>#</th>
+              <th className="num">#</th>
               <th>名前</th>
               <th>状態</th>
               <th>提出状況</th>
@@ -817,7 +817,7 @@ function ParticipantsPanel({
           <tbody>
             {visibleEntries.map((entry, index) => (
               <tr key={entry.id}>
-                <td>{index + 1}</td>
+                <td className="num">{index + 1}</td>
                 <td>{entry.user?.name || "-"}</td>
                 <td>{ENTRY_STATUS_LABELS[entry.status] || entry.status}</td>
                 <td>
@@ -1098,13 +1098,13 @@ function StandingsPanel({ entries, rounds, selectedRoundNumber, setSelectedRound
         <table className="tournament-table">
           <thead>
             <tr>
-              <th>順位</th>
+              <th className="num">順位</th>
               <th>プレイヤー</th>
-              <th>勝</th>
-              <th>敗</th>
-              <th>分</th>
-              <th>勝点</th>
-              <th>OMW%</th>
+              <th className="num">勝</th>
+              <th className="num">敗</th>
+              <th className="num">分</th>
+              <th className="num">勝点</th>
+              <th className="num">OMW%</th>
             </tr>
           </thead>
           <tbody>
@@ -1112,13 +1112,13 @@ function StandingsPanel({ entries, rounds, selectedRoundNumber, setSelectedRound
               const entry = standing.entry || findEntry(entries, standing.entryId);
               return (
                 <tr key={standing.entryId}>
-                  <td>{standing.rank}</td>
+                  <td className="num">{standing.rank}</td>
                   <td>{entry?.user?.name || standing.entryId}</td>
-                  <td>{standing.wins}</td>
-                  <td>{standing.losses}</td>
-                  <td>{standing.draws}</td>
-                  <td>{standing.points}</td>
-                  <td>{Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%</td>
+                  <td className="num">{standing.wins}</td>
+                  <td className="num">{standing.losses}</td>
+                  <td className="num">{standing.draws}</td>
+                  <td className="num">{standing.points}</td>
+                  <td className="num">{Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%</td>
                 </tr>
               );
             })}

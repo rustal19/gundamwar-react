@@ -6,7 +6,8 @@
 }
 
 .profile-panel {
-  border: 1px solid var(--gw-secondary-border-soft);
+  border: 1px solid var(--gw-border);
+  border-radius: var(--gw-radius);
   background: var(--gw-surface);
   padding: 1.25rem;
   display: grid;
@@ -25,7 +26,9 @@
 }
 
 .profile-panel h2 {
-  font-size: 1.08rem;
+  margin-bottom: 8px;
+  font-size: 1.15rem;
+  font-weight: 700;
 }
 
 .profile-panel h3 {
@@ -123,7 +126,8 @@
 }
 
 .profile-metrics > div {
-  border: 1px solid var(--gw-secondary-border-soft);
+  border: 1px solid var(--gw-border);
+  border-radius: var(--gw-radius);
   background: var(--gw-surface);
   padding: 0.9rem;
   display: grid;
