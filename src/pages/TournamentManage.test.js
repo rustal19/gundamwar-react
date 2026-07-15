@@ -212,3 +212,12 @@ test("次にやることのガイド行とフォーマットプリセット展�
   expect(screen.getByLabelText("同名上限")).toHaveValue(3);
   expect(screen.getByLabelText("メイン下限")).toHaveValue(50);
 });
+
+test("ラウンド制限時間が未設定ならタイマー設定ヒントを表示する", async () => {
+  seedStore({ tournament: { roundTimeMinutes: null } });
+  renderManage();
+
+  expect(
+    await screen.findByText("大会情報タブでラウンド制限時間を設定すると、残り時間タイマーを表示できます。")
+  ).toBeInTheDocument();
+});

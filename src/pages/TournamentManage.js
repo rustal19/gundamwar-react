@@ -434,6 +434,9 @@ function RoundManagePanel({
             次ラウンド生成
           </button>
         </div>
+        {!form.roundTimeMinutes ? (
+          <p className="tournament-muted">大会情報タブでラウンド制限時間を設定すると、残り時間タイマーを表示できます。</p>
+        ) : null}
         <div className="tournament-empty">まだラウンドがありません。</div>
       </section>
     );
@@ -449,6 +452,9 @@ function RoundManagePanel({
           次ラウンド生成
         </button>
       </div>
+      {!form.roundTimeMinutes ? (
+        <p className="tournament-muted">大会情報タブでラウンド制限時間を設定すると、残り時間タイマーを表示できます。</p>
+      ) : null}
       <RoundTabs
         rounds={rounds.map((round) => ({ ...round, isCurrent: round.status !== "completed" }))}
         selectedRoundNumber={selectedRoundNumber}

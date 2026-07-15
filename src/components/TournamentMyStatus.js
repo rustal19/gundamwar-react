@@ -120,7 +120,7 @@ function DeckCountPreview({ items }) {
 
 function MatchHistory({ rounds, entries, myEntry }) {
   const [open, setOpen] = useState(false);
-  if (!myEntry) return null;
+  if (!myEntry || !Array.isArray(rounds) || rounds.length === 0) return null;
 
   const rows = (rounds || [])
     .map((round) => {
@@ -273,9 +273,6 @@ function EntryForm({
           </select>
         </label>
       ) : null}
-      <div className="tournament-deck-summary">
-        メイン {countCards(submittedItems, "main")} / サイド {countCards(submittedItems, "side")}
-      </div>
       {deckViolations.length > 0 ? (
         <div className="tournament-validation-alert">
           <strong>デッキリストを提出できません。</strong>

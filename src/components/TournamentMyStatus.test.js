@@ -1,4 +1,5 @@
-import { getMyStatusPhase, getRoundCountdown } from "./TournamentMyStatus";
+import { render, screen } from "@testing-library/react";
+import TournamentMyStatus, { getMyStatusPhase, getRoundCountdown } from "./TournamentMyStatus";
 
 const entry = { id: "entry-1", status: "registered" };
 
@@ -80,4 +81,58 @@ describe("getRoundCountdown", () => {
     expect(getRoundCountdown(null, 50, new Date("2026-07-08T10:00:00.000Z"))).toBeNull();
     expect(getRoundCountdown("2026-07-08T10:00:00.000Z", null, new Date("2026-07-08T10:00:00.000Z"))).toBeNull();
   });
+});
+
+function statusProps(overrides = {}) {
+  return {
+    tournament: {
+      status: "registration",
+      startsAt: new Date(2099, 0, 1, 10, 0).toISOString(),
+      decklistRequired: true,
+    },
+    myEntry: { ...entry, decklistSubmittedAt: new Date().toISOString() },
+    entries: [entry],
+    rounds: [],
+    isAuthenticated: true,
+    canRegister: true,
+    canUpdateDeck: true,
+    canLateEntry: false,
+    canCancel: true,
+    deckSource: "current",
+    onDeckSourceChange: jest.fn(),
+    selectedDeckId: "",
+    onSelectedDeckChange: jest.fn(),
+    savedDecks: [],
+    submittedItems: [
+      { id: "main-1", zone: "main", count: 2 },
+      { id: "side-1", zone: "side", count: 1 },
+    ],
+    deckViolations: [],
+    onSubmitEntry: jest.fn(),
+    onRequestLateEntry: jest.fn(),
+    onCancelEntry: jest.fn(),
+    onCheckIn: jest.fn(),
+    submitDisabled: false,
+    isSubmitting: false,
+    ...overrides,
+  };
+}
+
+test("デッキ枚数は提出デッキ行だけに表示し、開始前は対戦履歴を表示しない", () => {
+  render(<TournamentMyStatus {...statusProps()} />);
+
+  expect(screen.getAllByText("メイン 2 / サイド 1")).toHaveLength(1);
+  expect(screen.queryByRole("button", { name: "対戦履歴" })).not.toBeInTheDocument();
+});
+
+test("ラウンド生成後は対戦履歴を表示する", () => {
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        rounds: [{ id: "round-1", number: 1, status: "in_progress", matches: [] }],
+      })}
+    />
+  );
+
+  expect(screen.getByRole("button", { name: "対戦履歴" })).toBeInTheDocument();
 });
