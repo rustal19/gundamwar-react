@@ -569,6 +569,22 @@
   margin-top: 12px;
 }
 
+.manage-form-section {
+  border: 1px solid var(--gw-border);
+  border-radius: var(--gw-radius);
+  background: var(--gw-surface);
+  box-shadow: var(--gw-shadow-card);
+  padding: 18px;
+}
+
+.manage-form-section h2 {
+  border-bottom: 1px solid var(--gw-divider);
+  color: var(--gw-primary-strong);
+  font-size: 1.05rem;
+  font-weight: 800;
+  padding-bottom: 10px;
+}
+
 .tournament-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -609,6 +625,45 @@
 .tournament-checkbox {
   align-items: center;
   grid-template-columns: auto 1fr;
+}
+
+.manage-inline-checks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  min-height: 36px;
+}
+
+.manage-inline-checks .tournament-checkbox {
+  display: inline-grid;
+  grid-column: auto;
+}
+
+.manage-regulation-details {
+  margin-top: 12px;
+}
+
+.manage-regulation-details summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  border: 1px solid var(--gw-primary);
+  border-radius: var(--gw-radius-sm);
+  background: var(--gw-surface);
+  color: var(--gw-primary);
+  cursor: pointer;
+  font-weight: 700;
+  list-style: none;
+  padding: 8px 12px;
+}
+
+.manage-regulation-details summary:hover {
+  background: var(--gw-primary-soft);
+}
+
+.manage-regulation-details summary::-webkit-details-marker {
+  display: none;
 }
 
 .tournament-manage-actions {
