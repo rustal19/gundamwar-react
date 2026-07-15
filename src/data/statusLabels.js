@@ -18,3 +18,10 @@ export const ROUND_STATUS_LABELS = {
   in_progress: "進行中",
   completed: "完了",
 };
+
+export const ENTRY_STATUS_LABELS = {
+  pending: "申請中",
+  registered: "登録済み",
+  checked_in: "チェックイン済み",
+  dropped: "ドロップ",
+};

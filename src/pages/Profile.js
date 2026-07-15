@@ -4,6 +4,7 @@ import GoogleSignInPanel from "../components/GoogleSignInPanel";
 import { useAuth, validateNickname } from "../context/AuthContext";
 import { fetchPublicDecks } from "../services/publicDecks";
 import { fetchMyTournaments, fetchRounds, fetchStandings } from "../services/tournaments";
+import { ENTRY_STATUS_LABELS } from "../data/statusLabels";
 import { computeUserResults, formatRecord } from "../utils/userResults";
 import "./Profile.css";
 
@@ -56,7 +57,7 @@ function TournamentGroup({ title, items, emptyText }) {
             <Link key={tournament.id} to={`/tournaments/${tournament.id}`} className="profile-tournament-row">
               <div>
                 <strong>{tournament.title}</strong>
-                <span>{formatDate(tournament.startsAt)} / {entry.status}</span>
+                <span>{formatDate(tournament.startsAt)} / {ENTRY_STATUS_LABELS[entry.status] || entry.status}</span>
               </div>
               <div className="profile-row-meta">
                 {needsDecklist ? <span className="profile-badge accent">未提出</span> : null}

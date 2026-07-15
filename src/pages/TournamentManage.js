@@ -24,6 +24,7 @@ import {
   updateTournament,
 } from "../services/tournaments";
 import { getCardCode } from "../utils/cardImages";
+import { ENTRY_STATUS_LABELS, TOURNAMENT_STATUS_LABELS } from "../data/statusLabels";
 import { buildDeckExport, groupDeckItemsByType } from "../utils/deckExport";
 import { FORMAT_PRESETS, OTHER_FORMAT_NAME } from "../data/formats";
 import "./Tournaments.css";
@@ -58,20 +59,7 @@ const DEFAULT_FORM = {
   },
 };
 
-const STATUS_LABELS = {
-  draft: "下書き",
-  registration: "受付中",
-  in_progress: "進行中",
-  completed: "完了",
-  cancelled: "中止",
-};
-
-const ENTRY_STATUS_LABELS = {
-  pending: "申請中",
-  registered: "登録済み",
-  checked_in: "チェックイン",
-  dropped: "ドロップ",
-};
+const STATUS_LABELS = TOURNAMENT_STATUS_LABELS;
 
 const TABS = [
   ["rounds", "ラウンド運営"],
@@ -262,14 +250,40 @@ function regulationMatchesPreset(regulation, presetRegulation) {
   );
 }
 
-function nextActionText(status, rounds) {
+function hasMoreRoundsToPlay(form, rounds, activeEntryCount) {
+  const completed = rounds.filter((round) => round.status === "completed");
+  const lastCompleted = completed[completed.length - 1];
+
+  if (form.format === "single_elim") {
+    return !lastCompleted || (lastCompleted.matches || []).length > 1;
+  }
+
+  const topCutCompleted = completed.filter((round) => round.stage === "top_cut");
+  if (topCutCompleted.length > 0) {
+    const lastTopCut = topCutCompleted[topCutCompleted.length - 1];
+    return (lastTopCut.matches || []).length > 1;
+  }
+
+  const swissCompleted = completed.filter((round) => round.stage !== "top_cut").length;
+  const swissLimit =
+    Number(form.swissRounds) > 0
+      ? Number(form.swissRounds)
+      : Math.max(1, Math.ceil(Math.log2(Math.max(2, activeEntryCount))));
+  if (swissCompleted < swissLimit) return true;
+  return Boolean(numberOrNull(form.topCutSize));
+}
+
+function nextActionText(form, rounds, activeEntryCount) {
+  const status = form.status;
   if (status === "draft") return "内容を保存して「受付開始」を押してください。";
   if (status === "registration") return "当日になったら「進行開始」→ラウンド生成を行ってください。";
   if (status === "in_progress" && rounds.length === 0) return "第1回戦を生成してください。";
   if (status === "in_progress") {
     const activeRound = [...rounds].reverse().find((round) => round.status !== "completed") || rounds[rounds.length - 1];
     if (rounds.length && rounds.every((round) => round.status === "completed")) {
-      return "「完了」を押して大会を終了してください。";
+      return hasMoreRoundsToPlay(form, rounds, activeEntryCount)
+        ? "次のラウンドを生成してください。"
+        : "「完了」を押して大会を終了してください。";
     }
     const unreportedCount = (activeRound?.matches || []).filter((match) => !match.result).length;
     if (unreportedCount > 0) return `未報告卓が${unreportedCount}卓あります。結果を入力してください。`;
@@ -1349,7 +1363,8 @@ export default function TournamentManage({ compact = false }) {
       {!isNew ? (
         <>
           <div className="next-action-band">
-            <strong>次にやること:</strong> {nextActionText(form.status, rounds)}
+            <strong>次にやること:</strong>{" "}
+            {nextActionText(form, rounds, entries.filter((entry) => entry.status !== "dropped" && entry.status !== "pending").length)}
           </div>
           <div className="status-action-row">
             <button type="button" disabled={isSubmitting || form.status !== "draft"} onClick={() => changeStatus("registration")}>
@@ -1357,7 +1372,7 @@ export default function TournamentManage({ compact = false }) {
             </button>
             <button
               type="button"
-              disabled={isSubmitting || !["registration", "draft"].includes(form.status)}
+              disabled={isSubmitting || form.status !== "registration"}
               onClick={() => changeStatus("in_progress")}
             >
               進行開始
