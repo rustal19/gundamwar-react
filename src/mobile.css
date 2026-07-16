@@ -329,11 +329,11 @@
   min-width: 0;
 }
 
-.app-shell-mobile .form-row > th {
+.app-shell-mobile .form-row > .form-th {
   white-space: nowrap;
 }
 
-.app-shell-mobile .form-row > th br {
+.app-shell-mobile .form-row > .form-th br {
   display: none;
 }
 
