@@ -26,7 +26,13 @@ import {
 
 const STORAGE_KEY = "gundamwar.tournaments.v1";
 const MOCK_USER_KEY = "gundamwar.auth.mockUser.v1";
-const user = { id: "test-user", name: "テストユーザー" };
+const user = {
+  id: "test-user",
+  name: "非公開の本名",
+  email: "private@example.test",
+  nickname: "テストニックネーム",
+  displayNickname: "表示ニックネーム",
+};
 const originalFetch = global.fetch;
 
 function setMockUser() {
@@ -148,6 +154,9 @@ describe("tournaments service mock mode", () => {
 
     const created = await createEntry({ tournamentId: "t1", deckItems, authMode: "mock", user });
     expect(created.user.id).toBe(user.id);
+    expect(created.user.name).toBe("表示ニックネーム");
+    expect(created.user.name).not.toBe(user.name);
+    expect(created.user.name).not.toBe(user.email);
     expect(created.deckItems).toHaveLength(17);
 
     const updatedItems = buildValidDeck("updated-card");
@@ -161,6 +170,25 @@ describe("tournaments service mock mode", () => {
 
     await deleteMyEntry("t1", { authMode: "mock", user });
     expect(readStore().entries.t1).toEqual([]);
+  });
+
+  it("uses only the stored nickname for a public player name", async () => {
+    setRegistrationTournament();
+    window.localStorage.setItem(
+      MOCK_USER_KEY,
+      JSON.stringify({
+        id: "stored-user",
+        name: "保存された本名",
+        email: "stored-private@example.test",
+        nickname: "保存ニックネーム",
+      })
+    );
+
+    const entry = await createEntry({ tournamentId: "t1", authMode: "mock" });
+
+    expect(entry.user).toEqual({ id: "stored-user", name: "保存ニックネーム" });
+    expect(JSON.stringify(entry)).not.toContain("保存された本名");
+    expect(JSON.stringify(entry)).not.toContain("stored-private@example.test");
   });
 
   it("allows entry without a decklist even when the tournament requires it", async () => {

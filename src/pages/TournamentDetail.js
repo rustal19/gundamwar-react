@@ -19,6 +19,7 @@ import {
   updateMyEntry,
 } from "../services/tournaments";
 import {
+  ENTRY_STATUS_LABELS,
   ROUND_STATUS_LABELS,
   TOURNAMENT_STATUS_LABELS as STATUS_LABELS,
 } from "../data/statusLabels";
@@ -472,7 +473,7 @@ export default function TournamentDetail({ compact = false }) {
             <tr key={entry.id}>
               <td className="num">{index + 1}</td>
               <td><UserNameLink user={entry.user} /></td>
-              <td>{entry.status}</td>
+              <td>{ENTRY_STATUS_LABELS[entry.status] || entry.status}</td>
               <td>
                 {entry.deckItems ? (
                   <>
