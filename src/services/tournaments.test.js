@@ -191,20 +191,31 @@ describe("tournaments service mock mode", () => {
     expect(JSON.stringify(entry)).not.toContain("stored-private@example.test");
   });
 
-  it("allows entry without a decklist even when the tournament requires it", async () => {
+  it("rejects entry without a decklist when the tournament requires it", async () => {
     setRegistrationTournament({ decklistRequired: true });
 
-    const entry = await createEntry({ tournamentId: "t1", authMode: "mock", user });
+    await expect(
+      createEntry({ tournamentId: "t1", authMode: "mock", user })
+    ).rejects.toThrow("デッキリストがレギュレーションに違反しています。");
+    expect(readStore().entries.t1).toEqual([]);
+  });
+
+  it("allows entry without a decklist when the decklist is optional", async () => {
+    setRegistrationTournament({ decklistRequired: false });
+
+    const entry = await createEntry({ tournamentId: "t1", deckItems: [], authMode: "mock", user });
+
     expect(entry.deckItems).toBeNull();
     expect(entry.decklistSubmittedAt).toBeNull();
+  });
 
-    const myTournaments = await fetchMyTournaments({ authMode: "mock", user });
-    expect(myTournaments.items).toEqual([
-      expect.objectContaining({
-        entry: expect.objectContaining({ id: entry.id }),
-        needsDecklist: true,
-      }),
-    ]);
+  it("rejects updating an entry with an empty decklist", async () => {
+    setRegistrationTournament();
+    await createEntry({ tournamentId: "t1", authMode: "mock", user });
+
+    await expect(
+      updateMyEntry({ tournamentId: "t1", deckItems: [], authMode: "mock", user })
+    ).rejects.toThrow("デッキリストがレギュレーションに違反しています。");
   });
 
   it("hides other players decklists before completed", async () => {

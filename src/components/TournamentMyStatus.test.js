@@ -136,3 +136,41 @@ test("ラウンド生成後は対戦履歴を表示する", () => {
 
   expect(screen.getByRole("button", { name: "対戦履歴" })).toBeInTheDocument();
 });
+
+test("エントリー済みで提出デッキが空なら更新を無効化して理由を表示する", () => {
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        submittedItems: [],
+        deckViolations: [{ code: "main_count", message: "メインデッキが不足しています。" }],
+        submitDisabled: true,
+      })}
+    />
+  );
+
+  expect(screen.getByRole("button", { name: "提出を更新" })).toBeDisabled();
+  expect(
+    screen.getByText("提出するデッキがありません。完成したデッキを選択してください。")
+  ).toBeInTheDocument();
+});
+
+test("任意大会の未エントリー状態ではデッキなしエントリーを案内する", () => {
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        tournament: {
+          status: "registration",
+          startsAt: new Date(2099, 0, 1, 10, 0).toISOString(),
+          decklistRequired: false,
+        },
+        myEntry: null,
+        submittedItems: [],
+        deckViolations: [{ code: "main_count", message: "メインデッキが不足しています。" }],
+      })}
+    />
+  );
+
+  expect(screen.getByRole("button", { name: "エントリー" })).toBeEnabled();
+  expect(screen.getByText("デッキリストを添付せずにエントリーします。")).toBeInTheDocument();
+  expect(screen.queryByText("デッキリストを提出できません。")).not.toBeInTheDocument();
+});
