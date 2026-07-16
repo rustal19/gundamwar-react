@@ -24,6 +24,7 @@ const DeckSearchResults = ({ compact = false }) => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_SAMPLE_PAGE_SIZE);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const [viewMode, setViewMode] = useState("detail");
 
   useEffect(() => {
@@ -37,10 +38,12 @@ const DeckSearchResults = ({ compact = false }) => {
       setTotal(0);
       setPage(1);
       setPageSize(requestedPageSize);
+      setHasSearched(false);
       setIsLoaded(true);
       return undefined;
     }
 
+    setHasSearched(true);
     setPage(requestedPage);
     setPageSize(requestedPageSize);
     setIsLoaded(false);
@@ -227,6 +230,8 @@ const DeckSearchResults = ({ compact = false }) => {
       <div ref={resultsViewportRef} className="deck-search-results-viewport">
         {!isLoaded ? (
           <div className="results-empty-state">読み込み中...</div>
+        ) : !hasSearched ? (
+          <div className="results-empty-state">検索条件を指定してください。</div>
         ) : results.length === 0 ? (
           <div className="results-empty-state">検索結果がありません。</div>
         ) : (
