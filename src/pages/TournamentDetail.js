@@ -99,6 +99,13 @@ function resultLabel(result) {
   return "未報告";
 }
 
+function matchScoreLabel(match) {
+  if (match.result === "bye") return "不戦勝";
+  if (match.result == null) return "未報告";
+  if (match.player1Games == null || match.player2Games == null) return resultLabel(match.result);
+  return `${match.player1Games} - ${match.player2Games}（${resultLabel(match.result)}）`;
+}
+
 function TournamentDeckRows({ items, compact }) {
   return (
     <table className="tournament-table tournament-decklist-table">
@@ -535,6 +542,7 @@ export default function TournamentDetail({ compact = false }) {
                   <th className="num">卓</th>
                   <th>プレイヤー1</th>
                   <th>プレイヤー2</th>
+                  <th>結果</th>
                 </tr>
               </thead>
               <tbody>
@@ -556,6 +564,7 @@ export default function TournamentDetail({ compact = false }) {
                         <UserNameLink user={players.p2?.user} fallback="不戦勝" />
                         {match.player2EntryId === myEntry?.id ? "（あなた）" : ""}
                       </td>
+                      <td>{matchScoreLabel(match)}</td>
                     </tr>
                   );
                 })}
