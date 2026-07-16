@@ -33,7 +33,7 @@ function readMockUser() {
     if (!id) return null;
     return {
       id: String(id),
-      name: user.name || user.displayName || user.email || "プレイヤー",
+      name: user.displayNickname || user.nickname || "プレイヤー",
     };
   } catch (error) {
     console.warn("Failed to read mock user.", error);
@@ -42,14 +42,16 @@ function readMockUser() {
 }
 
 function getCurrentUser(user) {
-  const currentUser = user?.id ? user : readMockUser();
+  const currentUser = user?.id
+    ? {
+        id: String(user.id),
+        name: user.displayNickname || user.nickname || "プレイヤー",
+      }
+    : readMockUser();
   if (!currentUser?.id) {
     throw new Error("ログインしてから操作してください。");
   }
-  return {
-    id: String(currentUser.id),
-    name: currentUser.name || currentUser.email || "プレイヤー",
-  };
+  return currentUser;
 }
 
 function nowIso() {
