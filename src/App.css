@@ -57,7 +57,13 @@
   color: var(--gw-on-primary);
 }
 
-/* 各行：ラベルと入力グループを2列に配置 */
+.grid-form .form-th {
+  font-weight: 700;
+  text-align: center;
+  padding: 1px;
+}
+
+/* 各行：ラベルと入力グループを2列に配置 */
 .form-row {
   display: grid;
   grid-template-columns: 100px auto;
