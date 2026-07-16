@@ -393,11 +393,17 @@ function isMatchParticipant(match, viewer, entries) {
   );
 }
 
-function sanitizeMatchForViewer(match, tournament, viewer, entries) {
+function sanitizeMatchForViewer(match, tournament, viewer, entries, roundStatus) {
   const nextWinnerEntryId = winnerEntryId(match);
   const isOrganizer = viewer?.id && tournament.createdBy?.id === String(viewer.id);
   const isAdmin = viewer?.role === "admin";
-  if (tournament.status === "completed" || isOrganizer || isAdmin || isMatchParticipant(match, viewer, entries)) {
+  if (
+    tournament.status === "completed" ||
+    roundStatus === "completed" ||
+    isOrganizer ||
+    isAdmin ||
+    isMatchParticipant(match, viewer, entries)
+  ) {
     return { ...match, winnerEntryId: nextWinnerEntryId };
   }
   return {
@@ -405,7 +411,7 @@ function sanitizeMatchForViewer(match, tournament, viewer, entries) {
     player1Games: null,
     player2Games: null,
     result: null,
-    winnerEntryId: nextWinnerEntryId,
+    winnerEntryId: null,
   };
 }
 
@@ -413,7 +419,7 @@ function sanitizeRoundsForViewer(rounds, tournament, viewer, entries) {
   return rounds.map((round) => ({
     ...round,
     matches: (round.matches || []).map((match) =>
-      sanitizeMatchForViewer(match, tournament, viewer, entries)
+      sanitizeMatchForViewer(match, tournament, viewer, entries, round.status)
     ),
   }));
 }

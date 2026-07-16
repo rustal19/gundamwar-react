@@ -351,12 +351,24 @@ describe("tournaments service mock mode", () => {
   it("computes standings from mock rounds using tournament utility", async () => {
     const standings = await fetchStandings("mock-tournament-1", { authMode: "mock" });
 
-    expect(standings.items[0].points).toBe(3);
-    expect(standings.items.map((standing) => standing.entryId)).toContain("entry-1");
-    expect(standings.items.map((standing) => standing.entryId)).toContain("entry-3");
+    expect(standings.items.find((standing) => standing.entryId === "entry-1")).toMatchObject({
+      wins: 1,
+      losses: 0,
+      points: 3,
+    });
+    expect(standings.items.find((standing) => standing.entryId === "entry-3")).toMatchObject({
+      wins: 1,
+      losses: 0,
+      points: 3,
+    });
+    expect(standings.items.find((standing) => standing.entryId === "entry-2")).toMatchObject({
+      wins: 0,
+      losses: 1,
+      points: 0,
+    });
   });
 
-  it("hides match results from non-participants until the tournament is completed", async () => {
+  it("shows completed round results to third parties during an in-progress tournament", async () => {
     setRegistrationTournament({ status: "in_progress" });
     const store = readStore();
     store.entries.t1 = ["1", "2", "3", "4"].map((suffix) => ({
@@ -402,31 +414,89 @@ describe("tournaments service mock mode", () => {
     ];
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
 
-    const playerView = await fetchRounds("t1", {
+    const thirdPartyView = await fetchRounds("t1", {
       authMode: "mock",
-      user: { id: "player-1", name: "Player 1" },
+      user: { id: "spectator", name: "観戦者" },
     });
-    expect(playerView.rounds[0].matches[0].result).toBe("p1_win");
-    expect(playerView.rounds[0].matches[1]).toMatchObject({
-      result: null,
-      player1Games: null,
-      player2Games: null,
+    expect(thirdPartyView.rounds[0].matches[0]).toMatchObject({
+      result: "p1_win",
+      player1Games: 2,
+      player2Games: 0,
+      winnerEntryId: "entry-1",
+    });
+    expect(thirdPartyView.rounds[0].matches[1]).toMatchObject({
+      result: "p2_win",
+      player1Games: 1,
+      player2Games: 2,
       winnerEntryId: "entry-4",
     });
 
-    const manageView = await fetchRoundsForManage("t1", { authMode: "mock" });
-    expect(manageView.rounds[0].matches[1].result).toBe("p2_win");
-
-    const organizerView = await fetchRounds("t1", {
-      authMode: "mock",
-      user: { id: "org", name: "主催者", role: "organizer" },
+    window.localStorage.removeItem(MOCK_USER_KEY);
+    const guestView = await fetchRounds("t1", { authMode: "mock" });
+    expect(guestView.rounds[0].matches[1]).toMatchObject({
+      result: "p2_win",
+      player1Games: 1,
+      player2Games: 2,
+      winnerEntryId: "entry-4",
     });
-    expect(organizerView.rounds[0].matches[1].result).toBe("p2_win");
+  });
 
-    store.tournaments[0].status = "completed";
+  it("hides in-progress round results and winnerEntryId from third parties", async () => {
+    setRegistrationTournament({ status: "in_progress" });
+    const store = readStore();
+    store.entries.t1 = ["1", "2"].map((suffix) => ({
+      id: `entry-${suffix}`,
+      tournamentId: "t1",
+      user: { id: `player-${suffix}`, name: `Player ${suffix}` },
+      deckItems: null,
+      decklistSubmittedAt: null,
+      status: "checked_in",
+      createdAt: new Date().toISOString(),
+    }));
+    store.rounds.t1 = [
+      {
+        id: "round-1",
+        tournamentId: "t1",
+        number: 1,
+        stage: "swiss",
+        status: "in_progress",
+        timerStartedAt: null,
+        matches: [
+          {
+            id: "match-1",
+            roundId: "round-1",
+            tableNo: 1,
+            player1EntryId: "entry-1",
+            player2EntryId: "entry-2",
+            player1Games: 2,
+            player2Games: 0,
+            result: "p1_win",
+            winnerEntryId: "entry-1",
+          },
+        ],
+      },
+    ];
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-    const completedView = await fetchRounds("t1", { authMode: "mock", user });
-    expect(completedView.rounds[0].matches[1].result).toBe("p2_win");
+
+    const thirdPartyView = await fetchRounds("t1", {
+      authMode: "mock",
+      user: { id: "spectator", name: "観戦者" },
+    });
+    expect(thirdPartyView.rounds[0].matches[0]).toMatchObject({
+      result: null,
+      player1Games: null,
+      player2Games: null,
+      winnerEntryId: null,
+    });
+
+    const participantView = await fetchRounds("t1", {
+      authMode: "mock",
+      user: { id: "player-1", name: "Player 1" },
+    });
+    expect(participantView.rounds[0].matches[0]).toMatchObject({
+      result: "p1_win",
+      winnerEntryId: "entry-1",
+    });
   });
 
   it("recomputes standings at the selected round", async () => {
