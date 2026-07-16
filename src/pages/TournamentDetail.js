@@ -61,6 +61,10 @@ function isBefore(value) {
   return Date.now() < new Date(value).getTime();
 }
 
+export function formatCardCountRange(min, max) {
+  return Number(min) === Number(max) ? `${min}枚` : `${min} - ${max}枚`;
+}
+
 function countCards(items, zone) {
   return (Array.isArray(items) ? items : [])
     .filter((item) => !zone || item.zone === zone)
@@ -454,17 +458,15 @@ export default function TournamentDetail({ compact = false }) {
           </div>
           <div>
             <dt>メイン</dt>
-            <dd>
-              {regulation.mainMin} - {regulation.mainMax}
-            </dd>
+            <dd>{formatCardCountRange(regulation.mainMin, regulation.mainMax)}</dd>
           </div>
           <div>
             <dt>サイド</dt>
-            <dd>{regulation.sideSize}</dd>
+            <dd>{regulation.sideSize}枚</dd>
           </div>
           <div>
             <dt>同名上限</dt>
-            <dd>{regulation.maxCopies}</dd>
+            <dd>{regulation.maxCopies}枚</dd>
           </div>
         </dl>
       </section>

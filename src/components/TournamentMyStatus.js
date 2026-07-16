@@ -397,6 +397,17 @@ export default function TournamentMyStatus({
       );
     }
 
+    if (!canRegister) {
+      return (
+        <section className="tournament-my-status-band default">
+          <div>
+            <p className="tournament-eyebrow">マイステータス</p>
+            <h2>受付が終了しました。</h2>
+          </div>
+        </section>
+      );
+    }
+
     return (
       <section className="tournament-my-status-band default">
         <div>

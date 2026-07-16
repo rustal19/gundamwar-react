@@ -174,3 +174,79 @@ test("任意大会の未エントリー状態ではデッキなしエントリ�
   expect(screen.getByText("デッキリストを添付せずにエントリーします。")).toBeInTheDocument();
   expect(screen.queryByText("デッキリストを提出できません。")).not.toBeInTheDocument();
 });
+
+test("受付中の未エントリー状態ではエントリーフォームを表示する", () => {
+  render(<TournamentMyStatus {...statusProps({ myEntry: null })} />);
+
+  expect(screen.getByRole("button", { name: "エントリー" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "デッキを選ぶ" })).toBeInTheDocument();
+  expect(screen.queryByText("受付が終了しました。")).not.toBeInTheDocument();
+});
+
+test("受付終了後の未エントリー状態ではフォームを隠して終了メッセージだけを表示する", () => {
+  render(<TournamentMyStatus {...statusProps({ myEntry: null, canRegister: false })} />);
+
+  expect(screen.getByText("受付が終了しました。")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "エントリー" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "デッキを選ぶ" })).not.toBeInTheDocument();
+  expect(screen.queryByText("保存デッキまたは現在のデッキを選んで提出してください。")).not.toBeInTheDocument();
+});
+
+test("エントリー済みなら通常受付終了後も提出更新UIを表示する", () => {
+  render(<TournamentMyStatus {...statusProps({ canRegister: false })} />);
+
+  expect(screen.getByRole("heading", { name: "エントリー済み" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "提出を更新" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "取り消し" })).toBeInTheDocument();
+  expect(screen.queryByText("受付が終了しました。")).not.toBeInTheDocument();
+});
+
+test("進行中で途中参加可能なら受付終了表示ではなく途中参加申請UIを表示する", () => {
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        tournament: { ...statusProps().tournament, status: "in_progress", lateEntry: true },
+        myEntry: null,
+        canRegister: false,
+        canLateEntry: true,
+      })}
+    />
+  );
+
+  expect(screen.getByRole("heading", { name: "途中参加申請" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "参加申請" })).toBeInTheDocument();
+  expect(screen.queryByText("受付が終了しました。")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "デッキを選ぶ" })).not.toBeInTheDocument();
+});
+
+test("進行中で途中参加不可なら受付終了だけを表示する", () => {
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        tournament: { ...statusProps().tournament, status: "in_progress", lateEntry: false },
+        myEntry: null,
+        canRegister: false,
+        canLateEntry: false,
+      })}
+    />
+  );
+
+  expect(screen.getByText("受付が終了しました。")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "参加申請" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "デッキを選ぶ" })).not.toBeInTheDocument();
+});
+
+test("完了済み大会の未エントリー状態では受付終了だけを表示する", () => {
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        tournament: { ...statusProps().tournament, status: "completed" },
+        myEntry: null,
+        canRegister: false,
+      })}
+    />
+  );
+
+  expect(screen.getByText("受付が終了しました。")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "エントリー" })).not.toBeInTheDocument();
+});

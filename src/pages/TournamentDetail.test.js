@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import TournamentDetail from "./TournamentDetail";
+import TournamentDetail, { formatCardCountRange } from "./TournamentDetail";
 import { createEntry, fetchTournament, updateMyEntry } from "../services/tournaments";
 
 let mockAuthState = {
@@ -98,6 +98,24 @@ beforeEach(() => {
   );
   createEntry.mockReset().mockResolvedValue({});
   updateMyEntry.mockReset().mockResolvedValue({});
+});
+
+test("レギュレーション枚数は同値を単一表記、異なる値を範囲表記にする", () => {
+  expect(formatCardCountRange(50, 50)).toBe("50枚");
+  expect(formatCardCountRange(50, 60)).toBe("50 - 60枚");
+});
+
+test("大会情報のレギュレーションに枚数単位を表示する", async () => {
+  mockTournament = registrationTournament({
+    regulation: { mainMin: 50, mainMax: 50, sideSize: 10, maxCopies: 3 },
+  });
+
+  renderDetail();
+
+  expect(await screen.findByText("50枚")).toBeInTheDocument();
+  expect(screen.getByText("10枚")).toBeInTheDocument();
+  expect(screen.getByText("3枚")).toBeInTheDocument();
+  expect(screen.queryByText("50 - 50")).not.toBeInTheDocument();
 });
 
 test("参加者ステータスを日本語ラベルで表示する", async () => {
