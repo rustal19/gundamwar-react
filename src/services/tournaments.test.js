@@ -132,6 +132,46 @@ describe("tournaments service mock mode", () => {
     });
   });
 
+  it("shows a draft only to its creator while keeping public tournaments visible", async () => {
+    setRegistrationTournament();
+    const draft = {
+      ...readStore().tournaments[0],
+      id: "draft-1",
+      title: "作成者の下書き大会",
+      status: "draft",
+      createdBy: { id: user.id, name: user.name },
+    };
+    const publicTournament = {
+      ...draft,
+      id: "public-1",
+      title: "公開中の大会",
+      status: "registration",
+    };
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        tournaments: [draft, publicTournament],
+        entries: { "draft-1": [], "public-1": [] },
+        rounds: { "draft-1": [], "public-1": [] },
+      })
+    );
+
+    const creatorPayload = await fetchTournaments({ authMode: "mock", user });
+    const otherUserPayload = await fetchTournaments({
+      authMode: "mock",
+      user: { ...user, id: "other-user" },
+    });
+    window.localStorage.removeItem(MOCK_USER_KEY);
+    const guestPayload = await fetchTournaments({ authMode: "mock", user: null });
+
+    expect(creatorPayload.items.map((tournament) => tournament.id)).toEqual([
+      "draft-1",
+      "public-1",
+    ]);
+    expect(otherUserPayload.items.map((tournament) => tournament.id)).toEqual(["public-1"]);
+    expect(guestPayload.items.map((tournament) => tournament.id)).toEqual(["public-1"]);
+  });
+
   it("uses the real API unless authMode is mock", async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,

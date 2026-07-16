@@ -54,6 +54,9 @@ function formatTournamentFormat(tournament) {
 
 function buildDetailPath(tournament, buildPath) {
   const basePath = `/tournaments/${tournament.id}`;
+  if (tournament.status === "draft") {
+    return buildPath(`${basePath}/manage`);
+  }
   if (tournament.status === "in_progress") {
     return buildPath(`${basePath}?tab=rounds`);
   }
@@ -76,7 +79,7 @@ export default function TournamentCard({ tournament, buildPath = (path) => path 
       <div className="tournament-card-main">
         <div className="tournament-card-title-row">
           <h3>
-            <Link to={buildPath(`/tournaments/${tournament.id}`)}>{tournament.title}</Link>
+            <Link to={buildDetailPath(tournament, buildPath)}>{tournament.title}</Link>
           </h3>
           <span className={`tournament-status ${tournament.status}`}>
             {STATUS_LABELS[tournament.status] || tournament.status}
