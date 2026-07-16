@@ -141,6 +141,8 @@ const SearchForm = ({ onSearch, compact = false }) => {
         } catch (e) {
           newState[key] = [];
         }
+      } else if (typeof INITIAL_STATE[key] === "boolean") {
+        newState[key] = value === "true";
       } else {
         newState[key] = value;
       }
@@ -297,7 +299,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
     <form onSubmit={handleSubmit} className="grid-form">
       {/* カード名検索 */}
       <div className="form-row">
-        <th htmlFor="name">カード名</th>
+        <label className="form-th" htmlFor="name">カード名</label>
         <div className="input-group">
           <input
             type="text"
@@ -326,7 +328,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
         <>
           {/* カードタイプ */}
           <div className="form-row">
-            <th>カードタイプ</th>
+            <span className="form-th">カードタイプ</span>
             <div className="checkbox-group">
               {CARD_TYPE_OPTIONS.map(({ label, value }) => (
                 <label key={value}>
@@ -345,8 +347,8 @@ const SearchForm = ({ onSearch, compact = false }) => {
 
           {/* 色 */}
           <div className="form-row">
-            <th>色</th>
-            <td className="c1">
+            <span className="form-th">色</span>
+            <div className="c1">
               <div className={compact ? "grid-2row-8col mobile-color-grid" : "grid-2row-8col"}>
                 {compact ? (
                   COLOR_INCLUDE_OPTIONS.map(({ label, value }, index) => (
@@ -421,12 +423,12 @@ const SearchForm = ({ onSearch, compact = false }) => {
                   </select>
                 </div>
               </div>
-            </td>
+            </div>
           </div>
 
           {/* カードテキスト検索 */}
           <div className="form-row">
-            <th>カード<br />テキスト</th>
+            <span className="form-th">カード<br />テキスト</span>
             <input
               type="text"
               name="text"
@@ -443,7 +445,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
         <>
           {/* 国力 */}
           <div className="form-row">
-            <th>国力</th>
+            <span className="form-th">国力</span>
             <div className="inline-container four-col">
               {renderCostSelectPair("spCostMin", "spCostMax", "≦ 指定 ≦", COST_NUMERIC_OPTIONS)}
               {renderCostSelectPair("totalCostMin", "totalCostMax", "≦ 合計 ≦", COST_NUMERIC_OPTIONS)}
@@ -464,7 +466,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
 
           {/* 格闘、射撃、防御 */}
           <div className="form-row">
-            <th>戦闘修正</th>
+            <span className="form-th">戦闘修正</span>
             <div className="inline-container four-col">
               {renderCostSelectPair("fightMin", "fightMax", "≦ 格闘 ≦", COMBAT_NUMERIC_OPTIONS)}
               {renderCostSelectPair("shootMin", "shootMax", "≦ 射撃 ≦", COMBAT_NUMERIC_OPTIONS)}
@@ -485,7 +487,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
 
           {/* 地形適正 */}
           <div className="form-row">
-            <th>地形適正</th>
+            <span className="form-th">地形適正</span>
             <div className="checkbox-group">
               {TERRAIN_OPTIONS.map((terrain) => (
                 <label key={terrain}>
@@ -508,8 +510,8 @@ const SearchForm = ({ onSearch, compact = false }) => {
         <>
           {/* UNIT特徴指定 */}
           <div className="form-row">
-            <th>UNIT<br />特徴指定</th>
-            <td
+            <span className="form-th">UNIT<br />特徴指定</span>
+            <div
               className="c1"
               style={{
                 display: 'flex',
@@ -541,13 +543,13 @@ const SearchForm = ({ onSearch, compact = false }) => {
                   placeholder="追加特徴を選択"
                 />
               </div>
-            </td>
+            </div>
           </div>
 
           {/* CHARACTER特徴指定 */}
           <div className="form-row">
-            <th>CHARACTER<br />特徴指定</th>
-            <td
+            <span className="form-th">CHARACTER<br />特徴指定</span>
+            <div
               className="c1"
               style={{
                 display: 'flex',
@@ -579,12 +581,12 @@ const SearchForm = ({ onSearch, compact = false }) => {
                   placeholder="追加特徴を選択"
                 />
               </div>
-            </td>
+            </div>
           </div>
 
           {/* その他特徴指定 */}
           <div className="form-row">
-            <th>その他<br />特徴指定</th>
+            <span className="form-th">その他<br />特徴指定</span>
             <div className="checkbox-group">
               {OTHER_FEATURE_OPTIONS.map(({ label, value }) => (
                 <label key={value}>
@@ -603,7 +605,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
 
           {/* 所属/系統指定 */}
           <div className="form-row">
-            <th>所属/系統</th>
+            <span className="form-th">所属/系統</span>
             <input
               type="text"
               name="traitText"
@@ -616,7 +618,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
 
           {/* 特徴の一致条件 */}
           <div className="form-row">
-            <th>特徴の<br />一致条件</th>
+            <span className="form-th">特徴の<br />一致条件</span>
             <select
               name="traits_logic"
               className="nselect"
@@ -630,7 +632,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
 
           {/* 専用検索 */}
           <div className="form-row">
-            <th>専用</th>
+            <span className="form-th">専用</span>
             <input
               type="text"
               name="exclusivePilotText"
@@ -647,7 +649,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
         <>
           {/* 構築範囲 */}
           <div className="form-row">
-            <th>構築範囲</th>
+            <span className="form-th">構築範囲</span>
             <div className="inline-group deck-range-group">
               <label>
                 <input
@@ -710,7 +712,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
 
           {/* 収録弾 */}
           <div className="form-row">
-            <th>収録弾</th>
+            <span className="form-th">収録弾</span>
             <div>
               <div className="checkbox-grid6">
                 {SET_INCLUDED_OPTIONS.map(({ label, value }) => (
@@ -768,7 +770,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
 
       {/* 表示件数 */}
       <div className="form-row">
-        <th>表示件数</th>
+        <span className="form-th">表示件数</span>
         <select
           name="pageSize"
           className="nselect"
