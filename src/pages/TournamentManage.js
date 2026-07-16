@@ -808,8 +808,11 @@ function ParticipantsPanel({
           追加
         </button>
       </div>
-      <div className="tournament-table-wrap">
-        <table className="tournament-table">
+      {entries.length === 0 ? (
+        <div className="tournament-empty">参加登録されていません</div>
+      ) : (
+        <div className="tournament-table-wrap">
+          <table className="tournament-table">
           <thead>
             <tr>
               <th className="num">#</th>
@@ -856,8 +859,9 @@ function ParticipantsPanel({
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+          </table>
+        </div>
+      )}
       {selectedEntry ? (
         <div className="tournament-deck-viewer">
           <div className="tournament-round-header">
@@ -949,7 +953,7 @@ function InfoPanel({
         <div className="tournament-form-grid">
           <label>
             開始日時
-            <input type="datetime-local" value={form.startsAt} onChange={(event) => setField("startsAt", event.target.value)} />
+            <input type="datetime-local" value={form.startsAt} onChange={(event) => setField("startsAt", event.target.value)} required />
           </label>
           <label>
             受付締切
@@ -1232,6 +1236,7 @@ export default function TournamentManage({ compact = false }) {
 
   const saveTournament = async (event) => {
     event.preventDefault();
+    if (!event.currentTarget.checkValidity()) return;
     await runAction(async () => {
       const payload = payloadFromForm(form);
       if (isNew) {

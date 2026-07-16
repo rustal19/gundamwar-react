@@ -118,6 +118,17 @@ function renderManage() {
   );
 }
 
+function renderNewTournament() {
+  return render(
+    <MemoryRouter initialEntries={["/tournaments/new"]}>
+      <Routes>
+        <Route path="/tournaments/new" element={<TournamentManage />} />
+        <Route path="/tournaments/:id/manage" element={<TournamentManage />} />
+      </Routes>
+    </MemoryRouter>
+  );
+}
+
 beforeEach(() => {
   window.localStorage.clear();
 });
@@ -220,4 +231,45 @@ test("ラウンド制限時間が未設定ならタイマー設定ヒントを�
   expect(
     await screen.findByText("大会情報タブでラウンド制限時間を設定すると、残り時間タイマーを表示できます。")
   ).toBeInTheDocument();
+});
+
+test("大会作成時は開始日時が必須で、未入力では作成できない", () => {
+  renderNewTournament();
+  fireEvent.change(screen.getByLabelText("タイトル"), { target: { value: "開始日時なし大会" } });
+
+  const startsAtInput = screen.getByLabelText("開始日時");
+  expect(startsAtInput).toBeRequired();
+  expect(startsAtInput.closest("form")).not.toBeValid();
+  fireEvent.click(screen.getByRole("button", { name: "作成" }));
+
+  expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
+});
+
+test("大会編集時は開始日時を空にして保存できない", async () => {
+  seedStore();
+  renderManage();
+
+  fireEvent.click(await screen.findByRole("button", { name: "大会情報" }));
+  const startsAtInput = screen.getByLabelText("開始日時");
+  const originalStartsAt = JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0].startsAt;
+  fireEvent.change(startsAtInput, { target: { value: "" } });
+
+  expect(startsAtInput).toBeRequired();
+  expect(startsAtInput.closest("form")).not.toBeValid();
+  fireEvent.click(screen.getByRole("button", { name: "保存" }));
+
+  expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0].startsAt).toBe(originalStartsAt);
+});
+
+test("参加者が0人なら空状態メッセージを表示する", async () => {
+  seedStore();
+  const store = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
+  store.entries["t-ui"] = [];
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  renderManage();
+
+  fireEvent.click(await screen.findByRole("button", { name: "参加者" }));
+
+  expect(screen.getByText("参加登録されていません")).toBeInTheDocument();
+  expect(screen.queryByRole("columnheader", { name: "名前" })).not.toBeInTheDocument();
 });
