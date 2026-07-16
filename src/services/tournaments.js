@@ -304,8 +304,8 @@ function assertCanEnter(tournament, entries, currentUser) {
   }
 }
 
-function assertDeckIsValid(deckItems, regulation) {
-  if (!Array.isArray(deckItems) || deckItems.length === 0) return;
+function assertDeckIsValid(deckItems, regulation, { required = false } = {}) {
+  if ((!Array.isArray(deckItems) || deckItems.length === 0) && !required) return;
   const violations = validateDeck(deckItems, regulation);
   if (violations.length === 0) return;
 
@@ -690,7 +690,7 @@ export async function createEntry({ tournamentId, deckItems = null, authMode, us
     const tournament = getTournamentOrThrow(store, tournamentId);
     const entries = getEntries(store, tournamentId);
     assertCanEnter(tournament, entries, currentUser);
-    assertDeckIsValid(deckItems, tournament.regulation);
+    assertDeckIsValid(deckItems, tournament.regulation, { required: tournament.decklistRequired });
 
     const now = nowIso();
     const isLatePending = tournament.status === "in_progress" && tournament.lateEntry;
@@ -716,7 +716,9 @@ export async function createEntry({ tournamentId, deckItems = null, authMode, us
 
   return requestJson(`/api/tournaments/${tournamentId}/entries`, {
     method: "POST",
-    body: JSON.stringify({ deckItems: Array.isArray(deckItems) ? deckItems : undefined }),
+    body: JSON.stringify({
+      deckItems: Array.isArray(deckItems) && deckItems.length > 0 ? deckItems : undefined,
+    }),
   });
 }
 
@@ -726,7 +728,7 @@ export async function updateMyEntry({ tournamentId, deckItems = null, authMode, 
     const store = readStore();
     const tournament = getTournamentOrThrow(store, tournamentId);
     assertCanChangeEntry(tournament);
-    assertDeckIsValid(deckItems, tournament.regulation);
+    assertDeckIsValid(deckItems, tournament.regulation, { required: true });
     const entries = getEntries(store, tournamentId);
     const existing = entries.find(
       (entry) => entry.user.id === currentUser.id && entry.status !== "dropped"
@@ -748,7 +750,9 @@ export async function updateMyEntry({ tournamentId, deckItems = null, authMode, 
 
   return requestJson(`/api/tournaments/${tournamentId}/entries/me`, {
     method: "PUT",
-    body: JSON.stringify({ deckItems: Array.isArray(deckItems) ? deckItems : undefined }),
+    body: JSON.stringify({
+      deckItems: Array.isArray(deckItems) && deckItems.length > 0 ? deckItems : undefined,
+    }),
   });
 }
 

@@ -173,6 +173,7 @@ function MatchHistory({ rounds, entries, myEntry }) {
 }
 
 function EntryForm({
+  tournament,
   deckSource,
   onDeckSourceChange,
   selectedDeckId,
@@ -191,6 +192,8 @@ function EntryForm({
 }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const selectedSavedDeck = (savedDecks || []).find((deck) => deck.id === selectedDeckId);
+  const hasSubmittedItems = Array.isArray(submittedItems) && submittedItems.length > 0;
+  const canEnterWithoutDeck = !myEntry && !tournament?.decklistRequired && !hasSubmittedItems;
 
   return (
     <div className="tournament-entry-controls">
@@ -273,7 +276,20 @@ function EntryForm({
           </select>
         </label>
       ) : null}
-      {deckViolations.length > 0 ? (
+      {!hasSubmittedItems && myEntry ? (
+        <div className="tournament-validation-alert">
+          <strong>提出するデッキがありません。完成したデッキを選択してください。</strong>
+        </div>
+      ) : null}
+      {!hasSubmittedItems && !myEntry && tournament?.decklistRequired ? (
+        <div className="tournament-validation-alert">
+          <strong>エントリーには完成したデッキが必要です。</strong>
+        </div>
+      ) : null}
+      {canEnterWithoutDeck ? (
+        <p className="tournament-muted">デッキリストを添付せずにエントリーします。</p>
+      ) : null}
+      {deckViolations.length > 0 && !canEnterWithoutDeck ? (
         <div className="tournament-validation-alert">
           <strong>デッキリストを提出できません。</strong>
           <ul>
@@ -404,6 +420,7 @@ export default function TournamentMyStatus({
           canUpdateDeck={canUpdateDeck}
           isSubmitting={isSubmitting}
           myEntry={myEntry}
+          tournament={tournament}
         />
       </section>
     );
@@ -483,6 +500,7 @@ export default function TournamentMyStatus({
         {needsDeckWarning ? <p className="tournament-my-warning">デッキリストが未提出です。</p> : null}
       </div>
       <EntryForm
+        tournament={tournament}
         deckSource={deckSource}
         onDeckSourceChange={onDeckSourceChange}
         selectedDeckId={selectedDeckId}

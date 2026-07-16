@@ -263,9 +263,11 @@ export default function TournamentDetail({ compact = false }) {
     [tournament?.regulation]
   );
   const deckViolations = useMemo(() => {
-    if (!submittedItems.length) return [];
     return validateDeck(submittedItems, regulation);
   }, [regulation, submittedItems]);
+  const canEnterWithoutDeck = Boolean(
+    !myEntry && !tournament?.decklistRequired && submittedItems.length === 0
+  );
 
   const canRegister = Boolean(
     tournament &&
@@ -315,11 +317,11 @@ export default function TournamentDetail({ compact = false }) {
   const submitDisabled =
     isSubmitting ||
     !isAuthenticated ||
-    deckViolations.length > 0 ||
+    (deckViolations.length > 0 && !canEnterWithoutDeck) ||
     (!canRegister && !canUpdateDeck);
 
   const submitEntry = async () => {
-    if (deckViolations.length > 0) return;
+    if (deckViolations.length > 0 && !canEnterWithoutDeck) return;
     setIsSubmitting(true);
     setError("");
     setMessage("");
@@ -328,8 +330,13 @@ export default function TournamentDetail({ compact = false }) {
         await updateMyEntry({ tournamentId: id, deckItems: submittedItems, authMode, user });
         setMessage("デッキリストを提出しました。");
       } else {
-        await createEntry({ tournamentId: id, deckItems: submittedItems, authMode, user });
-        setMessage("エントリーしました。");
+        const deckItems = submittedItems.length > 0 ? submittedItems : null;
+        await createEntry({ tournamentId: id, deckItems, authMode, user });
+        setMessage(
+          deckItems
+            ? "エントリーし、デッキリストを提出しました。"
+            : "エントリーしました。"
+        );
       }
       await loadTournament();
       const nextStandings = await fetchStandings(id, { authMode });
