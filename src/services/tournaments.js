@@ -563,13 +563,18 @@ async function requestJson(path, options = {}) {
   return payload;
 }
 
-export async function fetchTournaments({ status = "", page = 1, authMode } = {}) {
+export async function fetchTournaments({ status = "", page = 1, authMode, user } = {}) {
   if (authMode === "mock") {
     const store = readStore();
+    const currentUserId = user?.id ? String(user.id) : readMockUser()?.id;
     const visible = store.tournaments
       .map((tournament) => normalizeTournament(tournament, getEntries(store, tournament.id)))
       .filter(Boolean)
-      .filter((tournament) => tournament.status !== "draft")
+      .filter(
+        (tournament) =>
+          tournament.status !== "draft" ||
+          (currentUserId && String(tournament.createdBy?.id) === currentUserId)
+      )
       .filter((tournament) => !status || tournament.status === status)
       .sort((left, right) => String(right.startsAt || "").localeCompare(String(left.startsAt || "")));
     const safePage = Math.max(1, Number(page) || 1);

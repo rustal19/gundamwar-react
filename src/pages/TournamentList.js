@@ -7,7 +7,7 @@ import { TOURNAMENT_STATUS_OPTIONS as STATUS_OPTIONS } from "../data/statusLabel
 import "./Tournaments.css";
 
 export default function TournamentList({ compact = false }) {
-  const { authMode, isOrganizer } = useAuth();
+  const { authMode, isOrganizer, user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const status = searchParams.get("status") || "";
   const page = Math.max(1, Number(searchParams.get("page") || "1"));
@@ -19,7 +19,7 @@ export default function TournamentList({ compact = false }) {
     let cancelled = false;
     setIsLoading(true);
     setError("");
-    fetchTournaments({ status, page, authMode })
+    fetchTournaments({ status, page, authMode, user })
       .then((nextPayload) => {
         if (!cancelled) setPayload(nextPayload);
       })
@@ -32,7 +32,7 @@ export default function TournamentList({ compact = false }) {
     return () => {
       cancelled = true;
     };
-  }, [authMode, page, status]);
+  }, [authMode, page, status, user]);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil((payload.total || 0) / (payload.pageSize || 10))),
