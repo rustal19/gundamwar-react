@@ -1,3 +1,5 @@
+import kansaiFormats from "./kansaiFormats.json";
+
 export const FORMAT_PRESETS = [
   {
     name: "スタンダード",
@@ -12,6 +14,11 @@ export const FORMAT_PRESETS = [
       allowedSets: null,
     },
   },
+  ...kansaiFormats.formats.map(({ name, regulation, note }) => ({
+    name,
+    regulation,
+    note,
+  })),
 ];
 
 export const OTHER_FORMAT_NAME = "その他";

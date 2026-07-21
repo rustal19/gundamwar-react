@@ -23,6 +23,7 @@ import {
   ROUND_STATUS_LABELS,
   TOURNAMENT_STATUS_LABELS as STATUS_LABELS,
 } from "../data/statusLabels";
+import { FORMAT_PRESETS } from "../data/formats";
 import { defaultRegulation, validateDeck } from "../utils/deckValidation";
 import { computeStandings } from "../utils/tournament/standings";
 import NotFound from "./NotFound";
@@ -266,6 +267,10 @@ export default function TournamentDetail({ compact = false }) {
     () => defaultRegulation(tournament?.regulation),
     [tournament?.regulation]
   );
+  const regulationNote = useMemo(
+    () => FORMAT_PRESETS.find((preset) => preset.regulation?.name === regulation.name)?.note || "",
+    [regulation]
+  );
   const deckViolations = useMemo(() => {
     return validateDeck(submittedItems, regulation);
   }, [regulation, submittedItems]);
@@ -468,6 +473,12 @@ export default function TournamentDetail({ compact = false }) {
             <dt>同名上限</dt>
             <dd>{regulation.maxCopies}枚</dd>
           </div>
+          {regulationNote ? (
+            <div>
+              <dt>補足</dt>
+              <dd>{regulationNote}</dd>
+            </div>
+          ) : null}
         </dl>
       </section>
     </div>

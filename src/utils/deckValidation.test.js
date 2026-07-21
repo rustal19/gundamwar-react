@@ -118,6 +118,14 @@ describe("deckValidation", () => {
     );
   });
 
+  it("skips allowed_sets validation when set metadata is unavailable", () => {
+    const deck = validDeck({
+      "card-1": { card: { sets: [] } },
+    });
+
+    expect(validateDeck(deck, { allowedSets: ["S1"] })).toEqual([]);
+  });
+
   it("extracts sets from the search result card fields and string fallbacks", () => {
     expect(getCardSets({ sets: ["BB1", "ST1"] })).toEqual(["BB1", "ST1"]);
     expect(getCardSets({ setName: "BB1 / ST1" })).toEqual(["BB1", "ST1"]);
