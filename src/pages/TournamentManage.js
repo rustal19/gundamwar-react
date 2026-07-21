@@ -903,8 +903,10 @@ function InfoPanel({
   setOnline,
   setRegulationField,
 }) {
-  const selectedPresetName =
-    FORMAT_PRESETS.find((preset) => regulationMatchesPreset(form.regulation, preset.regulation))?.name || OTHER_FORMAT_NAME;
+  const selectedPreset = FORMAT_PRESETS.find((preset) =>
+    regulationMatchesPreset(form.regulation, preset.regulation)
+  );
+  const selectedPresetName = selectedPreset?.name || OTHER_FORMAT_NAME;
   const setFormatPreset = (name) => {
     const preset = FORMAT_PRESETS.find((item) => item.name === name);
     if (!preset) return;
@@ -1052,6 +1054,9 @@ function InfoPanel({
             </select>
           </label>
         </div>
+        {selectedPreset?.note ? (
+          <p className="tournament-muted">補足: {selectedPreset.note}</p>
+        ) : null}
         <details className="manage-regulation-details">
           <summary>詳細を編集</summary>
           <div className="tournament-form-grid">

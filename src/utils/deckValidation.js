@@ -151,7 +151,10 @@ export function validateDeck(items, regulation) {
     countsByCardKey.forEach(({ item }) => {
       const card = getCard(item);
       const sets = getCardSets(card);
-      const isAllowed = sets.length > 0 && sets.some((setName) => allowedSet.has(setName));
+      // Older saved decks and manually entered cards may not include set metadata.
+      // In that case the set cannot be verified, so leave it to the ID-based rules.
+      if (sets.length === 0) return;
+      const isAllowed = sets.some((setName) => allowedSet.has(setName));
       if (!isAllowed) {
         const cardName = getCardName(item);
         violations.push({
