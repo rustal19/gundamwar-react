@@ -1,4 +1,7 @@
 import kansaiFormats from "./kansaiFormats.json";
+import gwCupFormats from "./gwCupFormats.json";
+
+const mapPreset = ({ name, regulation, note }) => ({ name, regulation, note });
 
 export const FORMAT_PRESETS = [
   {
@@ -14,11 +17,8 @@ export const FORMAT_PRESETS = [
       allowedSets: null,
     },
   },
-  ...kansaiFormats.formats.map(({ name, regulation, note }) => ({
-    name,
-    regulation,
-    note,
-  })),
+  ...kansaiFormats.formats.map(mapPreset),
+  ...gwCupFormats.formats.map(mapPreset),
 ];
 
 export const OTHER_FORMAT_NAME = "その他";
