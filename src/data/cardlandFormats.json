@@ -1,0 +1,31 @@
+{
+  "formats": [
+    {
+      "name": "βスタンダード",
+      "regulation": {
+        "name": "βスタンダード",
+        "mainMin": 50,
+        "mainMax": 50,
+        "sideSize": 10,
+        "maxCopies": 3,
+        "allowedSets": null,
+        "bannedCards": [
+          "102030045",
+          "103031014",
+          "104040043",
+          "107010012"
+        ],
+        "limitedCards": [
+          "102020180",
+          "102130001",
+          "102040082",
+          "104020118",
+          "105043038"
+        ]
+      },
+      "note": "カードランド秋葉原店のフォーマット。スタンダードより禁止・制限が少なめ。禁止・制限以外の全カードが使用可能。",
+      "source": "note.com/cardland/n/n58aeb6fe925d"
+    }
+  ],
+  "generatedAt": "2026-07-22"
+}

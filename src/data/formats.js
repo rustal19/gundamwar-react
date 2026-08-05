@@ -1,5 +1,6 @@
 import kansaiFormats from "./kansaiFormats.json";
 import gwCupFormats from "./gwCupFormats.json";
+import cardlandFormats from "./cardlandFormats.json";
 
 const mapPreset = ({ name, regulation, note }) => ({ name, regulation, note });
 
@@ -19,6 +20,7 @@ export const FORMAT_PRESETS = [
   },
   ...kansaiFormats.formats.map(mapPreset),
   ...gwCupFormats.formats.map(mapPreset),
+  ...cardlandFormats.formats.map(mapPreset),
 ];
 
 export const OTHER_FORMAT_NAME = "その他";
