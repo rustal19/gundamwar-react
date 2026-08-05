@@ -201,6 +201,60 @@
   font-size: 0.9rem;
 }
 
+.result-card-format-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
+.result-card-format-badges-overlay {
+  position: absolute;
+  z-index: 1;
+  top: 0.4rem;
+  left: 0.4rem;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 0;
+  pointer-events: none;
+}
+
+.result-card-format-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.55rem;
+  padding: 0.12rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  box-sizing: border-box;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 18%);
+}
+
+.result-card-format-badge.banned {
+  border-color: var(--gw-danger-strong);
+  background: var(--gw-danger);
+  color: #fff;
+}
+
+.result-card-format-badge.limited {
+  border-color: #7b3e08;
+  background: #a75a10;
+  color: #fff;
+}
+
+.result-card-format-badge.out-of-pool {
+  border-color: var(--gw-border-strong);
+  background: var(--gw-surface);
+  color: var(--gw-text-muted);
+  font-weight: 700;
+  box-shadow: none;
+}
+
 .result-card-media {
   align-self: start;
 }

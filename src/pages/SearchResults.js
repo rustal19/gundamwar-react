@@ -1,8 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import SearchResultCard from "../components/SearchResultCard";
+import { FORMAT_PRESETS } from "../data/formats";
 import { buildPathWithForcedMobileLayout } from "../utils/deviceLayout";
-import { API_SEARCH_URL, parseSearchParams } from "../utils/searchResults";
+import {
+  API_SEARCH_URL,
+  getCardFormatStatus,
+  parseSearchParams,
+} from "../utils/searchResults";
 import "./SearchResults.css";
 
 const NON_CRITERIA_KEYS = new Set(["page", "pageSize", "mobileLayout", "sortMethod", "sortOrder"]);
@@ -39,9 +44,19 @@ const SearchResults = ({ compact = false }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [needsCriteria, setNeedsCriteria] = useState(false);
   const [viewMode, setViewMode] = useState("detail");
+  const selectedFormat = useMemo(() => {
+    const formatName = new URLSearchParams(location.search).get("formatName");
+    return FORMAT_PRESETS.find(({ name }) => name === formatName) || null;
+  }, [location.search]);
 
   useEffect(() => {
     const parsedSearchParams = parseSearchParams(location.search);
+    const apiSearchParams = { ...parsedSearchParams };
+    delete apiSearchParams.formatName;
+    if (FORMAT_PRESETS.some(({ name }) => name === parsedSearchParams.formatName)) {
+      apiSearchParams.deckRangeType = "none";
+      delete apiSearchParams.deckRangeDetail;
+    }
     setPage(Number(parsedSearchParams.page) || 1);
     setPageSize(Number(parsedSearchParams.pageSize) || 50);
     setIsLoaded(false);
@@ -64,7 +79,7 @@ const SearchResults = ({ compact = false }) => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(parsedSearchParams),
+          body: JSON.stringify(apiSearchParams),
           mode: "cors",
           signal: abortController.signal,
         });
@@ -236,16 +251,22 @@ const SearchResults = ({ compact = false }) => {
         <div className="results-empty-state">検索結果がありません。</div>
       ) : (
         <div className={viewMode === "image" ? "results-list results-image-grid" : "results-list"}>
-          {results.map((card) => (
-            <SearchResultCard
-              key={card.cardId}
-              card={card}
-              viewMode={viewMode}
-              showDeckActions={false}
-              compactDetailLayout={compact}
-              enableImagePreview={compact || viewMode === "image"}
-            />
-          ))}
+          {results.map((card) => {
+            const formatStatus = selectedFormat
+              ? getCardFormatStatus(card, selectedFormat.regulation)
+              : undefined;
+            return (
+              <SearchResultCard
+                key={card.cardId}
+                card={card}
+                viewMode={viewMode}
+                showDeckActions={false}
+                compactDetailLayout={compact}
+                enableImagePreview={compact || viewMode === "image"}
+                formatStatus={formatStatus}
+              />
+            );
+          })}
         </div>
       )}
 

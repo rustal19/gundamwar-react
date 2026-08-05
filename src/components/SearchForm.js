@@ -29,6 +29,10 @@ import {
   UNIT_EXTRA_OPTIONS,
   UNIT_FEATURE_OPTIONS,
 } from "../data/searchOptions";
+import { FORMAT_PRESETS } from "../data/formats";
+
+const DECK_RANGE_VALUE_PREFIX = "range:";
+const FORMAT_VALUE_PREFIX = "format:";
 
 // 各入力項目の初期状態
 const INITIAL_STATE = {
@@ -91,6 +95,7 @@ const INITIAL_STATE = {
   // 構築範囲
   deckRangeType: "none",
   deckRangeDetail: "",
+  formatName: "",
 
   // 禁止制限（ラジオボタン）
   exclude: "no",             // "banned", "restricted", "no"（すべて表示）
@@ -164,6 +169,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
       setFormValues(prev => ({
         ...prev,
         deckRangeType: value,
+        formatName: "",
         deckRangeDetail:
           DECK_RANGE_PRESET_CUTOFFS[value]
             ? DECK_RANGE_PRESET_CUTOFFS[value]
@@ -177,6 +183,35 @@ const SearchForm = ({ onSearch, compact = false }) => {
     } else {
       setFormValues(prev => ({ ...prev, [name]: value }));
     }
+  };
+
+  const handleDeckRangeSelectionChange = (e) => {
+    const { value } = e.target;
+
+    if (value.startsWith(FORMAT_VALUE_PREFIX)) {
+      setFormValues(prev => ({
+        ...prev,
+        deckRangeType: "none",
+        deckRangeDetail: "",
+        formatName: value.slice(FORMAT_VALUE_PREFIX.length),
+      }));
+      return;
+    }
+
+    const deckRangeType = value.startsWith(DECK_RANGE_VALUE_PREFIX)
+      ? value.slice(DECK_RANGE_VALUE_PREFIX.length)
+      : "none";
+    setFormValues(prev => ({
+      ...prev,
+      deckRangeType,
+      formatName: "",
+      deckRangeDetail:
+        DECK_RANGE_PRESET_CUTOFFS[deckRangeType]
+          ? DECK_RANGE_PRESET_CUTOFFS[deckRangeType]
+          : deckRangeType === "tensaku" && prev.deckRangeType === "tensaku"
+            ? prev.deckRangeDetail
+            : "",
+    }));
   };
 
   // react-select 用 onChange ハンドラ
@@ -233,6 +268,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
       include_color_count: Array.isArray(params.colorInclude) ? params.colorInclude.length : 0,
       exclude_color_count: Array.isArray(params.colorExclude) ? params.colorExclude.length : 0,
       deck_range_type: params.deckRangeType || "none",
+      format_name: params.formatName || "",
       page_size: Number(params.pageSize || 0),
     });
     const queryString = buildQueryString(params);
@@ -294,6 +330,11 @@ const SearchForm = ({ onSearch, compact = false }) => {
       </select>
     </div>
   );
+
+  const selectedFormat = FORMAT_PRESETS.find(({ name }) => name === formValues.formatName) || null;
+  const deckRangeSelection = selectedFormat
+    ? `${FORMAT_VALUE_PREFIX}${selectedFormat.name}`
+    : `${DECK_RANGE_VALUE_PREFIX}${formValues.deckRangeType}`;
 
   return (
     <form onSubmit={handleSubmit} className="grid-form">
@@ -649,64 +690,51 @@ const SearchForm = ({ onSearch, compact = false }) => {
         <>
           {/* 構築範囲 */}
           <div className="form-row">
-            <span className="form-th">構築範囲</span>
-            <div className="inline-group deck-range-group">
-              <label>
-                <input
-                  type="radio"
-                  name="deckRangeType"
-                  value="none"
-                  checked={formValues.deckRangeType === 'none'}
-                  onChange={handleChange}
-                />
-                指定なし
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="deckRangeType"
-                  value="tensaku"
-                  checked={formValues.deckRangeType === 'tensaku'}
-                  onChange={handleChange}
-                />
-                添削杯
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="deckRangeType"
-                  value="classic"
-                  checked={formValues.deckRangeType === 'classic'}
-                  onChange={handleChange}
-                />
-                クラシック
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="deckRangeType"
-                  value="rising"
-                  checked={formValues.deckRangeType === 'rising'}
-                  onChange={handleChange}
-                />
-                ライジング
-              </label>
-
-              {/* ドロップダウンは「添削杯」が選ばれているときのみ表示 */}
-              {formValues.deckRangeType === 'tensaku' && (
+            <label className="form-th" htmlFor="deckRangeSelection">構築範囲</label>
+            <div className="deck-range-group">
+              <div className="deck-range-select-row">
                 <select
-                  name="deckRangeDetail"
-                  className="ntext"
-                  value={formValues.deckRangeDetail}
-                  onChange={handleChange}
-                  style={{ marginLeft: '8px' }}
+                  id="deckRangeSelection"
+                  className="ntext deck-range-select"
+                  value={deckRangeSelection}
+                  onChange={handleDeckRangeSelectionChange}
                 >
-                  <option value="">選択してください</option>
-                  {TENSAKU_OPTIONS.map(({ label, value }) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
+                  <optgroup label="収録日による範囲">
+                    <option value={`${DECK_RANGE_VALUE_PREFIX}none`}>指定なし</option>
+                    <option value={`${DECK_RANGE_VALUE_PREFIX}tensaku`}>添削杯</option>
+                    <option value={`${DECK_RANGE_VALUE_PREFIX}classic`}>クラシック</option>
+                    <option value={`${DECK_RANGE_VALUE_PREFIX}rising`}>ライジング</option>
+                  </optgroup>
+                  <optgroup label="大会フォーマット">
+                    {FORMAT_PRESETS.map(({ name }) => (
+                      <option key={name} value={`${FORMAT_VALUE_PREFIX}${name}`}>{name}</option>
+                    ))}
+                  </optgroup>
                 </select>
-              )}
+
+                {/* ドロップダウンは「添削杯」が選ばれているときのみ表示 */}
+                {formValues.deckRangeType === 'tensaku' && !selectedFormat && (
+                  <select
+                    name="deckRangeDetail"
+                    className="ntext deck-range-detail-select"
+                    value={formValues.deckRangeDetail}
+                    onChange={handleChange}
+                    aria-label="添削杯の開催回"
+                  >
+                    <option value="">回を選択してください</option>
+                    {TENSAKU_OPTIONS.map(({ label, value }) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {selectedFormat ? (
+                <p className="deck-range-format-note">
+                  <strong>大会フォーマット: {selectedFormat.name}</strong>
+                  {selectedFormat.note ? <span>{selectedFormat.note}</span> : null}
+                </p>
+              ) : null}
             </div>
           </div>
 

@@ -16,6 +16,7 @@ const SearchResultCard = ({
   showDeckActions = false,
   compactDetailLayout = false,
   enableImagePreview = false,
+  formatStatus = null,
 }) => {
   const { addCard, countsByZoneByCardId } = useDeck();
   const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
@@ -33,6 +34,38 @@ const SearchResultCard = ({
     ? `${card.name} の画像を拡大表示`
     : "カード画像を拡大表示";
   const hasStatus = card.melee1 || card.shooting1 || card.defense1;
+  const formatBadges = [
+    formatStatus?.isBanned
+      ? { key: "banned", label: "禁止", className: "banned" }
+      : null,
+    formatStatus?.isLimited
+      ? { key: "limited", label: "制限", className: "limited" }
+      : null,
+    formatStatus?.isOutOfPool
+      ? { key: "out-of-pool", label: "範囲外", className: "out-of-pool" }
+      : null,
+  ].filter(Boolean);
+
+  const renderFormatBadges = (overlay = false) => {
+    if (formatBadges.length === 0) return null;
+    return (
+      <div
+        className={[
+          "result-card-format-badges",
+          overlay ? "result-card-format-badges-overlay" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        aria-label="大会フォーマット判定"
+      >
+        {formatBadges.map(({ key, label, className }) => (
+          <span key={key} className={`result-card-format-badge ${className}`}>
+            {label}
+          </span>
+        ))}
+      </div>
+    );
+  };
 
   const openImagePreview = useCallback(() => {
     if (!enableImagePreview) return;
@@ -62,6 +95,7 @@ const SearchResultCard = ({
     const imageFrame = (
       <div className="result-card-image-frame" title={label}>
         <CardImage card={card} />
+        {renderFormatBadges(true)}
         {showDeckActions && deckCount > 0 ? (
           <span className="result-card-image-count">{deckCount}</span>
         ) : null}
@@ -162,6 +196,7 @@ const SearchResultCard = ({
                 {modelName} {card.name}
               </strong>
             </div>
+            {renderFormatBadges()}
             {compactDetailLayout ? statusBlock : null}
           </div>
 

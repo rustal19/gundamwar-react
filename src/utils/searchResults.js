@@ -1,3 +1,5 @@
+import { getCardSets } from "./deckValidation";
+
 export const API_SEARCH_URL =
   process.env.REACT_APP_API_SEARCH_URL || "https://gundamwar.net/api/search";
 
@@ -57,6 +59,16 @@ function autoConvert(value) {
   return Number.isNaN(numericValue) ? value : numericValue;
 }
 
+function normalizeFormatValue(value) {
+  return String(value ?? "").trim();
+}
+
+function normalizeFormatList(values) {
+  return (Array.isArray(values) ? values : [])
+    .map(normalizeFormatValue)
+    .filter(Boolean);
+}
+
 export function parseSearchParams(search) {
   const params = new URLSearchParams(search);
   const parsed = {};
@@ -91,6 +103,25 @@ export function parseSearchParams(search) {
   }
 
   return parsed;
+}
+
+export function getCardFormatStatus(card, regulation) {
+  const cardId = normalizeFormatValue(card?.cardId);
+  const bannedCardIds = new Set(normalizeFormatList(regulation?.bannedCards));
+  const limitedCardIds = new Set(normalizeFormatList(regulation?.limitedCards));
+  const cardSets = getCardSets(card).map(normalizeFormatValue).filter(Boolean);
+  const allowedSets = Array.isArray(regulation?.allowedSets)
+    ? new Set(normalizeFormatList(regulation.allowedSets))
+    : null;
+
+  return {
+    isBanned: Boolean(cardId) && bannedCardIds.has(cardId),
+    isLimited: Boolean(cardId) && limitedCardIds.has(cardId),
+    isOutOfPool:
+      allowedSets !== null
+      && cardSets.length > 0
+      && !cardSets.some((setName) => allowedSets.has(setName)),
+  };
 }
 
 export function buildBackgroundStyle(card) {

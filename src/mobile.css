@@ -178,41 +178,18 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 0.45rem;
+  min-width: 0;
 }
 
-.app-shell-mobile .form-row:has(input[name="deckRangeType"]) .deck-range-group {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.45rem 0.7rem;
+.app-shell-mobile .deck-range-select-row {
+  display: grid;
+  grid-template-columns: 1fr;
 }
 
-.app-shell-mobile .form-row:has(input[name="deckRangeType"]) .deck-range-group > label:nth-of-type(1) {
-  order: 1;
-}
-
-.app-shell-mobile .form-row:has(input[name="deckRangeType"]) .deck-range-group > label:nth-of-type(2) {
-  order: 2;
-}
-
-.app-shell-mobile
-  .form-row:has(input[name="deckRangeType"])
-  .deck-range-group
-  > select[name="deckRangeDetail"] {
-  order: 3;
-  grid-column: 1 / -1;
-}
-
-.app-shell-mobile .form-row:has(input[name="deckRangeType"]) .deck-range-group > label:nth-of-type(3) {
-  order: 4;
-}
-
-.app-shell-mobile .form-row:has(input[name="deckRangeType"]) .deck-range-group > label:nth-of-type(4) {
-  order: 5;
-}
-
-.app-shell-mobile .deck-range-group > label,
-.app-shell-mobile .deck-range-group > select[name="deckRangeDetail"] {
-  order: initial;
-  margin-left: 0 !important;
+.app-shell-mobile .deck-range-select,
+.app-shell-mobile .deck-range-detail-select {
+  width: 100%;
+  min-width: 0;
 }
 
 .app-shell-mobile .grid-2row-8col {
