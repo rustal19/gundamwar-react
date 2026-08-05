@@ -25,6 +25,73 @@
       },
       "note": "カードランド秋葉原店のフォーマット。スタンダードより禁止・制限が少なめ。禁止・制限以外の全カードが使用可能。",
       "source": "note.com/cardland/n/n58aeb6fe925d"
+    },
+    {
+      "name": "αスタンダード",
+      "regulation": {
+        "name": "αスタンダード",
+        "mainMin": 50,
+        "mainMax": 50,
+        "sideSize": 10,
+        "maxCopies": 3,
+        "allowedSets": null,
+        "bannedCards": [],
+        "limitedCards": []
+      },
+      "note": "カードランド秋葉原店のフォーマット。次のカテゴリを全て使用不可: カードタイプ【ACE】/特徴【ユニーク】/特徴【弩級】/能力【ヴァリアブル】を持つユニット/国力発生キャラ(12弾収録)全種/2国発生G(5弾収録)全種/タメG(22弾収録)全種。加えて個別の禁止カードも指定あり(出所は画像のため未反映・要テキスト)。",
+      "source": "note.com/cardland/n/nda07fcf8feb3"
+    },
+    {
+      "name": "クラシック(15弾)",
+      "regulation": {
+        "name": "クラシック(15弾)",
+        "mainMin": 50,
+        "mainMax": 50,
+        "sideSize": 10,
+        "maxCopies": 3,
+        "allowedSets": [
+          "1st",
+          "2nd",
+          "DS1_1",
+          "DS1_2",
+          "3rd",
+          "4th",
+          "DS2_1",
+          "DS2_2",
+          "DS2_3",
+          "5th",
+          "DB1",
+          "6th",
+          "BS1",
+          "DB2",
+          "7th",
+          "BB1",
+          "8th",
+          "DS3",
+          "9th",
+          "BB2",
+          "10th",
+          "DB3",
+          "DS4",
+          "11th",
+          "SB",
+          "CB1",
+          "12th",
+          "BB3",
+          "13th",
+          "EX1",
+          "DB4",
+          "EX2",
+          "14th",
+          "DS5",
+          "DB5",
+          "15th"
+        ],
+        "bannedCards": [],
+        "limitedCards": []
+      },
+      "note": "カードランド秋葉原店のフォーマット。15弾(禁忌の胎動)までの旧式カードのみ使用可。クイック・サイコミュは旧ルール、変形は新ルール。個別の禁止制限は公表記事なし。",
+      "source": "note.com/cardland/n/n4a329d6e60ce"
     }
   ],
   "generatedAt": "2026-07-22"
