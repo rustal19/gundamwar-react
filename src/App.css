@@ -164,24 +164,41 @@
   white-space: nowrap;
 }
 
-.deck-range-group > label:nth-of-type(1) {
-  order: 1;
+.deck-range-group {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
 }
 
-.deck-range-group > label:nth-of-type(2) {
-  order: 2;
+.deck-range-select-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.deck-range-group > select[name="deckRangeDetail"] {
-  order: 3;
+.deck-range-select {
+  width: min(100%, 28rem);
+  min-width: 16rem;
 }
 
-.deck-range-group > label:nth-of-type(3) {
-  order: 4;
+.deck-range-detail-select {
+  min-width: 11rem;
 }
 
-.deck-range-group > label:nth-of-type(4) {
-  order: 5;
+.deck-range-format-note {
+  display: grid;
+  gap: 0.2rem;
+  max-width: 72ch;
+  margin: 0;
+  color: var(--gw-text-muted);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  white-space: normal;
+}
+
+.deck-range-format-note strong {
+  color: var(--gw-text);
 }
 
 /* inline-container を横並びにし、必要に応じて折り返す */
