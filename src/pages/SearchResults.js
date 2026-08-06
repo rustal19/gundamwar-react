@@ -6,6 +6,7 @@ import { buildPathWithForcedMobileLayout } from "../utils/deviceLayout";
 import {
   API_SEARCH_URL,
   getCardFormatStatus,
+  getFormatSetCodes,
   parseSearchParams,
 } from "../utils/searchResults";
 import "./SearchResults.css";
@@ -53,9 +54,17 @@ const SearchResults = ({ compact = false }) => {
     const parsedSearchParams = parseSearchParams(location.search);
     const apiSearchParams = { ...parsedSearchParams };
     delete apiSearchParams.formatName;
-    if (FORMAT_PRESETS.some(({ name }) => name === parsedSearchParams.formatName)) {
+    const activeFormat = FORMAT_PRESETS.find(
+      ({ name }) => name === parsedSearchParams.formatName
+    );
+    if (activeFormat) {
+      // フォーマット選択時は使用可能収録弾でサーバー側フィルタし、範囲外カードを結果に出さない。
       apiSearchParams.deckRangeType = "none";
       delete apiSearchParams.deckRangeDetail;
+      const setCodes = getFormatSetCodes(activeFormat.regulation);
+      if (setCodes) {
+        apiSearchParams.setIncluded = setCodes;
+      }
     }
     setPage(Number(parsedSearchParams.page) || 1);
     setPageSize(Number(parsedSearchParams.pageSize) || 50);

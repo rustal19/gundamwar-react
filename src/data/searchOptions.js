@@ -187,6 +187,19 @@ export const SET_EXTRA_OPTIONS_EX = [
   { label: "コラボカード", value: "joke" },
 ];
 
+// 収録弾の日本語名 → 検索APIの収録弾コード(setIncluded用)の逆引き。
+// フォーマットのallowedSetsは日本語名で保持している(デッキ検証がcard.setsの名前と
+// 直接照合するため)ので、検索でプールをサーバー側フィルタする際にコードへ変換する。
+export const SET_NAME_TO_CODE = Object.fromEntries(
+  [
+    ...SET_INCLUDED_OPTIONS,
+    ...SET_EXTRA_OPTIONS_BB,
+    ...SET_EXTRA_OPTIONS_ST,
+    ...SET_EXTRA_OPTIONS_DB,
+    ...SET_EXTRA_OPTIONS_EX,
+  ].map(({ label, value }) => [label, value])
+);
+
 export const TERRAIN_OPTIONS = ["宇宙", "地球"];
 
 export const PAGE_SIZE_OPTIONS = [10, 20, 50, 100, 200];

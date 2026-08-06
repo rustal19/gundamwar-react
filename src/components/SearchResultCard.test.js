@@ -44,20 +44,4 @@ describe("SearchResultCardの大会フォーマットバッジ", () => {
 
     expect(screen.getByText("制限")).toHaveClass("result-card-format-badge", "limited");
   });
-
-  test("使用可能な収録弾がないカードに範囲外バッジを表示する", () => {
-    const card = { cardId: "test-card", name: "範囲外カード", sets: ["29th"] };
-
-    render(
-      <SearchResultCard
-        card={card}
-        formatStatus={getCardFormatStatus(card, regulation)}
-      />
-    );
-
-    expect(screen.getByText("範囲外")).toHaveClass(
-      "result-card-format-badge",
-      "out-of-pool"
-    );
-  });
 });

@@ -1,5 +1,5 @@
 import { FORMAT_PRESETS } from "../data/formats";
-import { getCardFormatStatus } from "./searchResults";
+import { getCardFormatStatus, getFormatSetCodes } from "./searchResults";
 
 const kansaiGlorious = FORMAT_PRESETS.find(({ name }) => name === "関西グロリアス");
 
@@ -28,39 +28,23 @@ describe("getCardFormatStatus", () => {
     });
   });
 
-  test("使用可能な収録弾が一つもないカードを範囲外にする", () => {
+});
+
+describe("getFormatSetCodes", () => {
+  test("使用可能収録弾の日本語名を検索APIの収録弾コードへ変換する", () => {
     expect(
-      getCardFormatStatus(
-        { cardId: "test-card", sets: ["29th"] },
-        { allowedSets: ["28th", "PR"] }
-      ).isOutOfPool
-    ).toBe(true);
+      getFormatSetCodes({ allowedSets: ["GUNDAM WAR", "宿命の螺旋", "プロモカード"] })
+    ).toEqual(["1st", "12th", "PR"]);
   });
 
-  test("複数の収録弾のうち一つでも使用可能なら範囲内にする", () => {
-    expect(
-      getCardFormatStatus(
-        { cardId: "test-card", sets: ["29th", "PR"] },
-        { allowedSets: ["28th", "PR"] }
-      ).isOutOfPool
-    ).toBe(false);
+  test("allowedSetsがnullならnull(全弾許可・プール絞り込みなし)を返す", () => {
+    expect(getFormatSetCodes({ allowedSets: null })).toBeNull();
+    expect(getFormatSetCodes({})).toBeNull();
   });
 
-  test("収録弾情報がないカードはプール判定をスキップする", () => {
-    expect(
-      getCardFormatStatus(
-        { cardId: "test-card" },
-        { allowedSets: ["28th"] }
-      ).isOutOfPool
-    ).toBe(false);
-  });
-
-  test("allowedSetsがnullならプール判定を行わない", () => {
-    expect(
-      getCardFormatStatus(
-        { cardId: "test-card", sets: ["29th"] },
-        { allowedSets: null }
-      ).isOutOfPool
-    ).toBe(false);
+  test("関西グロリアスのプールに新しい収録弾コードが含まれる", () => {
+    const codes = getFormatSetCodes(kansaiGlorious.regulation);
+    expect(codes).toContain("28th");
+    expect(codes).toContain("12th");
   });
 });

@@ -41,9 +41,6 @@ const SearchResultCard = ({
     formatStatus?.isLimited
       ? { key: "limited", label: "制限", className: "limited" }
       : null,
-    formatStatus?.isOutOfPool
-      ? { key: "out-of-pool", label: "範囲外", className: "out-of-pool" }
-      : null,
   ].filter(Boolean);
 
   const renderFormatBadges = (overlay = false) => {

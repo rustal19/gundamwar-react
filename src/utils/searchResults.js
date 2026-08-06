@@ -1,4 +1,4 @@
-import { getCardSets } from "./deckValidation";
+import { SET_NAME_TO_CODE } from "../data/searchOptions";
 
 export const API_SEARCH_URL =
   process.env.REACT_APP_API_SEARCH_URL || "https://gundamwar.net/api/search";
@@ -109,19 +109,22 @@ export function getCardFormatStatus(card, regulation) {
   const cardId = normalizeFormatValue(card?.cardId);
   const bannedCardIds = new Set(normalizeFormatList(regulation?.bannedCards));
   const limitedCardIds = new Set(normalizeFormatList(regulation?.limitedCards));
-  const cardSets = getCardSets(card).map(normalizeFormatValue).filter(Boolean);
-  const allowedSets = Array.isArray(regulation?.allowedSets)
-    ? new Set(normalizeFormatList(regulation.allowedSets))
-    : null;
 
   return {
     isBanned: Boolean(cardId) && bannedCardIds.has(cardId),
     isLimited: Boolean(cardId) && limitedCardIds.has(cardId),
-    isOutOfPool:
-      allowedSets !== null
-      && cardSets.length > 0
-      && !cardSets.some((setName) => allowedSets.has(setName)),
   };
+}
+
+// フォーマットの使用可能収録弾(日本語名で保持)を、検索APIのsetIncludedが
+// 期待する収録弾コードへ変換する。allowedSetsが無い(全弾許可)場合はnullを返し、
+// プールのサーバー側フィルタを行わない。範囲外カードは結果に出さない方針のため、
+// クライアント側の「範囲外」判定は持たない。
+export function getFormatSetCodes(regulation) {
+  if (!Array.isArray(regulation?.allowedSets)) return null;
+  const codes = normalizeFormatList(regulation.allowedSets)
+    .map((name) => SET_NAME_TO_CODE[name] || name);
+  return codes.length > 0 ? codes : null;
 }
 
 export function buildBackgroundStyle(card) {
