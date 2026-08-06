@@ -7,33 +7,10 @@ import {
   API_SEARCH_URL,
   getCardFormatStatus,
   getFormatSetCodes,
+  hasSearchCriteria,
   parseSearchParams,
 } from "../utils/searchResults";
 import "./SearchResults.css";
-
-const NON_CRITERIA_KEYS = new Set(["page", "pageSize", "mobileLayout", "sortMethod", "sortOrder"]);
-
-const NON_CRITERIA_DEFAULTS = {
-  colorMulti: "able",
-  deckRangeType: "none",
-  exclude: "no",
-  includeAltStats: true,
-  name_forward: false,
-  traits_logic: "and",
-};
-
-function hasSearchCriteria(params) {
-  return Object.entries(params).some(([key, value]) => {
-    if (NON_CRITERIA_KEYS.has(key)) return false;
-    if (Object.prototype.hasOwnProperty.call(NON_CRITERIA_DEFAULTS, key)) {
-      return value !== NON_CRITERIA_DEFAULTS[key];
-    }
-    if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === "string") return value.trim() !== "";
-    if (typeof value === "boolean") return value;
-    return value !== null && value !== undefined && value !== "";
-  });
-}
 
 const SearchResults = ({ compact = false }) => {
   const navigate = useNavigate();
@@ -222,6 +199,12 @@ const SearchResults = ({ compact = false }) => {
 
     return <div className="pagination">{buttons}</div>;
   }, [handlePageChange, page, totalPages]);
+
+  // デスクトップでは検索条件が無いときフォームを表示するため、結果パネルは出さない
+  // (フォームと結果を排他表示。本番と同じ挙動)。モバイルは従来どおり縦積み。
+  if (!compact && !hasSearchCriteria(parseSearchParams(location.search))) {
+    return null;
+  }
 
   return (
     <div id="search-results-container">

@@ -105,6 +105,41 @@ export function parseSearchParams(search) {
   return parsed;
 }
 
+// ページング・並び順・レイアウトフラグは「検索条件」に数えない。
+const NON_CRITERIA_KEYS = new Set([
+  "page",
+  "pageSize",
+  "mobileLayout",
+  "sortMethod",
+  "sortOrder",
+]);
+
+// 既定値のままなら実質的な絞り込みではないので条件に数えない。
+const NON_CRITERIA_DEFAULTS = {
+  colorMulti: "able",
+  deckRangeType: "none",
+  exclude: "no",
+  includeAltStats: true,
+  name_forward: false,
+  traits_logic: "and",
+};
+
+// URLのパラメータに実質的な検索条件が含まれているか。
+// /search でフォーム表示と結果表示を排他的に切り替えるために使う
+// (条件なし=フォーム、条件あり=結果。本番と同じ挙動)。
+export function hasSearchCriteria(params) {
+  return Object.entries(params).some(([key, value]) => {
+    if (NON_CRITERIA_KEYS.has(key)) return false;
+    if (Object.prototype.hasOwnProperty.call(NON_CRITERIA_DEFAULTS, key)) {
+      return value !== NON_CRITERIA_DEFAULTS[key];
+    }
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === "string") return value.trim() !== "";
+    if (typeof value === "boolean") return value;
+    return value !== null && value !== undefined && value !== "";
+  });
+}
+
 export function getCardFormatStatus(card, regulation) {
   const cardId = normalizeFormatValue(card?.cardId);
   const bannedCardIds = new Set(normalizeFormatList(regulation?.bannedCards));

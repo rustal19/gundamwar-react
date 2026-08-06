@@ -6,6 +6,7 @@ import NicknameGate from "./components/NicknameGate";
 import RouteAnalyticsTracker from "./components/RouteAnalyticsTracker";
 import SearchForm from "./components/SearchForm";
 import Sidebar from "./components/Sidebar";
+import { hasSearchCriteria, parseSearchParams } from "./utils/searchResults";
 import { AuthProvider } from "./context/AuthContext";
 import { DeckProvider } from "./context/DeckContext";
 import AdminUsers from "./pages/AdminUsers";
@@ -33,6 +34,11 @@ const AppContent = () => {
   const isNarrowSidebarRoute = location.pathname === "/search" || location.pathname === "/deck";
   const { isCompactDesktop, isCompactLayout, isMobileOs, isIos, isAndroid } =
     useLayoutTier(location.search);
+  // /search はフォームと結果を排他表示する(本番同様)。検索条件があれば結果、
+  // なければフォーム。モバイルは従来どおりフォームを常時表示(縦積み)。
+  const isSearchActive =
+    location.pathname === "/search" &&
+    hasSearchCriteria(parseSearchParams(location.search));
 
   if (isDisplayRoute) {
     return (
@@ -65,7 +71,9 @@ const AppContent = () => {
         {isCompactLayout ? <MobileAppHeader /> : <Sidebar collapsed={isNarrowSidebarRoute} />}
         <main className="app-main">
           <NicknameGate />
-          {location.pathname === "/search" ? <SearchForm compact={isCompactLayout} /> : null}
+          {location.pathname === "/search" && (isCompactLayout || !isSearchActive) ? (
+            <SearchForm compact={isCompactLayout} />
+          ) : null}
           <Routes>
             <Route path="/" element={<PortalHome compact={isCompactLayout} />} />
             <Route path="/search" element={<SearchResults compact={isCompactLayout} />} />
