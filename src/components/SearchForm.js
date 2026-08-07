@@ -16,7 +16,6 @@ import {
   COLOR_INCLUDE_OPTIONS,
   COMBAT_NUMERIC_OPTIONS,
   COST_NUMERIC_OPTIONS,
-  DECK_RANGE_PRESET_CUTOFFS,
   OTHER_FEATURE_OPTIONS,
   PAGE_SIZE_OPTIONS,
   SET_EXTRA_OPTIONS_BB,
@@ -24,15 +23,40 @@ import {
   SET_EXTRA_OPTIONS_EX,
   SET_EXTRA_OPTIONS_ST,
   SET_INCLUDED_OPTIONS,
-  TENSAKU_OPTIONS,
   TERRAIN_OPTIONS,
   UNIT_EXTRA_OPTIONS,
   UNIT_FEATURE_OPTIONS,
 } from "../data/searchOptions";
 import { FORMAT_PRESETS } from "../data/formats";
 
-const DECK_RANGE_VALUE_PREFIX = "range:";
-const FORMAT_VALUE_PREFIX = "format:";
+// 構築範囲ラジオ: 単独ラジオに「外出し」するフォーマット。
+const KANSAI_CLASSIC = "関西クラシック";
+const KANSAI_RISING = "関西ライジング";
+const ALPHA_STANDARD = "αスタンダード";
+const STANDALONE_RANGE_FORMATS = [KANSAI_CLASSIC, KANSAI_RISING, ALPHA_STANDARD];
+
+// 「添削杯」ラジオ配下(ドロップダウンで回を選択)。
+const TENSAKU_FORMAT_NAMES = FORMAT_PRESETS.filter((f) =>
+  f.name.startsWith("添削杯")
+).map((f) => f.name);
+
+// 「その他」ラジオ配下: 外出し・添削杯・無制限スタンダードを除く残り全部。
+const OTHER_FORMAT_NAMES = FORMAT_PRESETS.filter(
+  (f) =>
+    f.name !== "スタンダード" &&
+    !f.name.startsWith("添削杯") &&
+    !STANDALONE_RANGE_FORMATS.includes(f.name)
+).map((f) => f.name);
+
+// formatName からアクティブなラジオ区分を求める。
+function deriveRangeGroup(formatName) {
+  if (!formatName || formatName === "スタンダード") return "none";
+  if (formatName === KANSAI_CLASSIC) return "kansaiClassic";
+  if (formatName === KANSAI_RISING) return "kansaiRising";
+  if (formatName === ALPHA_STANDARD) return "alphaStd";
+  if (formatName.startsWith("添削杯")) return "tensaku";
+  return "other";
+}
 
 // 各入力項目の初期状態
 const INITIAL_STATE = {
@@ -165,18 +189,6 @@ const SearchForm = ({ onSearch, compact = false }) => {
           ? [...prev[name], value]
           : prev[name].filter(v => v !== value)
       }));
-    } else if (name === "deckRangeType") {
-      setFormValues(prev => ({
-        ...prev,
-        deckRangeType: value,
-        formatName: "",
-        deckRangeDetail:
-          DECK_RANGE_PRESET_CUTOFFS[value]
-            ? DECK_RANGE_PRESET_CUTOFFS[value]
-            : value === "tensaku" && prev.deckRangeType === "tensaku"
-              ? prev.deckRangeDetail
-              : ""
-      }));
     } else if (type === "checkbox") {
       // 単一のチェックボックス（例：name_forward）
       setFormValues(prev => ({ ...prev, [name]: checked }));
@@ -185,32 +197,32 @@ const SearchForm = ({ onSearch, compact = false }) => {
     }
   };
 
-  const handleDeckRangeSelectionChange = (e) => {
-    const { value } = e.target;
-
-    if (value.startsWith(FORMAT_VALUE_PREFIX)) {
-      setFormValues(prev => ({
-        ...prev,
-        deckRangeType: "none",
-        deckRangeDetail: "",
-        formatName: value.slice(FORMAT_VALUE_PREFIX.length),
-      }));
-      return;
-    }
-
-    const deckRangeType = value.startsWith(DECK_RANGE_VALUE_PREFIX)
-      ? value.slice(DECK_RANGE_VALUE_PREFIX.length)
-      : "none";
-    setFormValues(prev => ({
+  // 構築範囲ラジオの選択。すべて formatName に一本化する
+  // (指定なし=空。添削杯/その他はグループの先頭を初期選択し、ドロップダウンで変更)。
+  const selectRangeGroup = (group) => {
+    const formatName =
+      group === "kansaiClassic" ? KANSAI_CLASSIC :
+      group === "kansaiRising" ? KANSAI_RISING :
+      group === "alphaStd" ? ALPHA_STANDARD :
+      group === "tensaku" ? (TENSAKU_FORMAT_NAMES[0] || "") :
+      group === "other" ? (OTHER_FORMAT_NAMES[0] || "") :
+      "";
+    setFormValues((prev) => ({
       ...prev,
-      deckRangeType,
-      formatName: "",
-      deckRangeDetail:
-        DECK_RANGE_PRESET_CUTOFFS[deckRangeType]
-          ? DECK_RANGE_PRESET_CUTOFFS[deckRangeType]
-          : deckRangeType === "tensaku" && prev.deckRangeType === "tensaku"
-            ? prev.deckRangeDetail
-            : "",
+      formatName,
+      deckRangeType: "none",
+      deckRangeDetail: "",
+    }));
+  };
+
+  // 添削杯/その他ラジオ配下のドロップダウンで具体フォーマットを選択。
+  const handleFormatNameChange = (e) => {
+    const { value } = e.target;
+    setFormValues((prev) => ({
+      ...prev,
+      formatName: value,
+      deckRangeType: "none",
+      deckRangeDetail: "",
     }));
   };
 
@@ -332,9 +344,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
   );
 
   const selectedFormat = FORMAT_PRESETS.find(({ name }) => name === formValues.formatName) || null;
-  const deckRangeSelection = selectedFormat
-    ? `${FORMAT_VALUE_PREFIX}${selectedFormat.name}`
-    : `${DECK_RANGE_VALUE_PREFIX}${formValues.deckRangeType}`;
+  const rangeGroup = deriveRangeGroup(formValues.formatName);
 
   return (
     <form onSubmit={handleSubmit} className="grid-form">
@@ -690,49 +700,103 @@ const SearchForm = ({ onSearch, compact = false }) => {
         <>
           {/* 構築範囲 */}
           <div className="form-row">
-            <label className="form-th" htmlFor="deckRangeSelection">構築範囲</label>
+            <span className="form-th">構築範囲</span>
             <div className="deck-range-group">
-              <div className="deck-range-select-row">
-                <select
-                  id="deckRangeSelection"
-                  className="ntext deck-range-select"
-                  value={deckRangeSelection}
-                  onChange={handleDeckRangeSelectionChange}
-                >
-                  <optgroup label="収録日による範囲">
-                    <option value={`${DECK_RANGE_VALUE_PREFIX}none`}>指定なし</option>
-                    <option value={`${DECK_RANGE_VALUE_PREFIX}tensaku`}>添削杯</option>
-                    <option value={`${DECK_RANGE_VALUE_PREFIX}classic`}>クラシック</option>
-                    <option value={`${DECK_RANGE_VALUE_PREFIX}rising`}>ライジング</option>
-                  </optgroup>
-                  <optgroup label="大会フォーマット">
-                    {FORMAT_PRESETS.map(({ name }) => (
-                      <option key={name} value={`${FORMAT_VALUE_PREFIX}${name}`}>{name}</option>
-                    ))}
-                  </optgroup>
-                </select>
+              <div className="inline-group deck-range-radio-row">
+                <label>
+                  <input
+                    type="radio"
+                    name="rangeGroup"
+                    checked={rangeGroup === "none"}
+                    onChange={() => selectRangeGroup("none")}
+                  />
+                  指定なし
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="rangeGroup"
+                    checked={rangeGroup === "kansaiClassic"}
+                    onChange={() => selectRangeGroup("kansaiClassic")}
+                  />
+                  クラシック
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="rangeGroup"
+                    checked={rangeGroup === "kansaiRising"}
+                    onChange={() => selectRangeGroup("kansaiRising")}
+                  />
+                  ライジング
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="rangeGroup"
+                    checked={rangeGroup === "alphaStd"}
+                    onChange={() => selectRangeGroup("alphaStd")}
+                  />
+                  αスタンダード
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="rangeGroup"
+                    checked={rangeGroup === "tensaku"}
+                    onChange={() => selectRangeGroup("tensaku")}
+                  />
+                  添削杯
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="rangeGroup"
+                    checked={rangeGroup === "other"}
+                    onChange={() => selectRangeGroup("other")}
+                  />
+                  その他
+                </label>
 
-                {/* ドロップダウンは「添削杯」が選ばれているときのみ表示 */}
-                {formValues.deckRangeType === 'tensaku' && !selectedFormat && (
+                {/* 添削杯: 回をドロップダウンで選択 */}
+                {rangeGroup === "tensaku" && (
                   <select
-                    name="deckRangeDetail"
+                    name="formatName"
                     className="ntext deck-range-detail-select"
-                    value={formValues.deckRangeDetail}
-                    onChange={handleChange}
+                    value={formValues.formatName}
+                    onChange={handleFormatNameChange}
                     aria-label="添削杯の開催回"
+                    style={{ marginLeft: "8px" }}
                   >
-                    <option value="">回を選択してください</option>
-                    {TENSAKU_OPTIONS.map(({ label, value }) => (
-                      <option key={value} value={value}>{label}</option>
+                    {TENSAKU_FORMAT_NAMES.map((name) => (
+                      <option key={name} value={name}>
+                        {name.replace(/^添削杯\s*/, "")}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                {/* その他: 残りのフォーマットをドロップダウンで選択 */}
+                {rangeGroup === "other" && (
+                  <select
+                    name="formatName"
+                    className="ntext deck-range-detail-select"
+                    value={formValues.formatName}
+                    onChange={handleFormatNameChange}
+                    aria-label="その他のフォーマット"
+                    style={{ marginLeft: "8px" }}
+                  >
+                    {OTHER_FORMAT_NAMES.map((name) => (
+                      <option key={name} value={name}>{name}</option>
                     ))}
                   </select>
                 )}
               </div>
 
-              {selectedFormat ? (
+              {selectedFormat && selectedFormat.note ? (
                 <p className="deck-range-format-note">
-                  <strong>大会フォーマット: {selectedFormat.name}</strong>
-                  {selectedFormat.note ? <span>{selectedFormat.note}</span> : null}
+                  <strong>{selectedFormat.name}</strong>
+                  <span>{selectedFormat.note}</span>
                 </p>
               ) : null}
             </div>
