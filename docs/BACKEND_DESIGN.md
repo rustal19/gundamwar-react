@@ -19,6 +19,36 @@ SSH接続情報は親フォルダの「マニュアル/MySQL関係.txt」。
 
 確認結果は本書に追記してから実装タスクに進む。
 
+## 1.5 確認結果(2026-08-24 / SSH実機調査)
+
+コードはサーバー稼働中のものを **ローカルへ git clone 済み**(`gundam war homepage/gundamwar-api/`)。
+スクレイピング対策作業+DB調査で §1 の大半が判明:
+
+- **フレームワーク**: Express。ルートは `index.js`(`/api/search`)+ `auth-routes.js`
+  (`/api/auth/*`, `/api/decks`, `/api/decks/:id`)。
+- **DB**: mysql2 プール(`promisePool`)。接続情報は `.env`(`DB_HOST/PORT/USER/PASSWORD/NAME`)。
+- **セッション**: cookie `gw_session`。`auth_sessions` に sha256 ハッシュ保存。
+  `requireAuthenticatedUser` ミドルウェアで解決。
+- **CORS**: `cors()` で `localhost:3000` / `gundamwar.net`(credentials 可)。
+- **起動方式**: **systemd `gundamwar-api.service`**。再起動 `sudo systemctl restart gundamwar-api`
+  (pm2 は**フロント react-app 専用**。API は pm2 管理ではない)。
+- **⚠ 実スキーマは設計の想定と相違**(重要):
+  - ユーザーは **`auth_users`**、**`id BIGINT UNSIGNED`(自動採番)**。`google_sub` は別カラム。
+    → 設計の「users.id = Google sub の VARCHAR(64)」は**誤り**。大会系の `created_by`/`user_id` は
+    **`BIGINT UNSIGNED`(auth_users.id 参照)** とする。
+  - デッキは **`saved_decks`**(`user_id BIGINT UNSIGNED`, `items_json LONGTEXT`)。
+  - `nickname`/`role`/`is_public` 等はまだ無い → §2 の ALTER は `auth_users`/`saved_decks` を対象に修正。
+  - **修正版マイグレーションは `gundamwar-api/migrations/001_portal_schema.sql` に作成済み(加算のみ・未適用)**。
+
+### 本番を壊さないための実施方針(このプロジェクト全体の原則)
+- **開発は全てローカル**(clone 済みリポジトリ+ローカル or トンネル DB)。本番へは触れない。
+- **マイグレーションは加算のみ**(新規テーブル+NULL/DEFAULT カラム)。既存の検索/認証/デッキは無改変。
+  適用前に必ず `mysqldump` バックアップ。
+- **反映は既存の安全フロー**: バックアップ → `node --check` → scp → サーバーで `node --check`
+  → `sudo systemctl restart gundamwar-api` → 読み取り curl で検証 → 問題あれば `.bak` からロールバック。
+- **本番に触れる操作(DB適用・デプロイ)は都度ユーザーに確認**してから(Claude Code は本番書き込み/sudo が
+  分類器でブロックされるため、実行はユーザー。読み取り SSH は可)。
+
 ## 2. DB スキーマ(MySQL)
 
 既存テーブルは ALTER、新規4テーブルを追加。適用した SQL は `migrations/` に保存する。
