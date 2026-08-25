@@ -28,35 +28,15 @@ import {
   UNIT_FEATURE_OPTIONS,
 } from "../data/searchOptions";
 import { FORMAT_PRESETS } from "../data/formats";
-
-// 構築範囲ラジオ: 単独ラジオに「外出し」するフォーマット。
-const KANSAI_CLASSIC = "関西クラシック";
-const KANSAI_RISING = "関西ライジング";
-const ALPHA_STANDARD = "αスタンダード";
-const STANDALONE_RANGE_FORMATS = [KANSAI_CLASSIC, KANSAI_RISING, ALPHA_STANDARD];
-
-// 「添削杯」ラジオ配下(ドロップダウンで回を選択)。
-const TENSAKU_FORMAT_NAMES = FORMAT_PRESETS.filter((f) =>
-  f.name.startsWith("添削杯")
-).map((f) => f.name);
-
-// 「その他」ラジオ配下: 外出し・添削杯・無制限スタンダードを除く残り全部。
-const OTHER_FORMAT_NAMES = FORMAT_PRESETS.filter(
-  (f) =>
-    f.name !== "スタンダード" &&
-    !f.name.startsWith("添削杯") &&
-    !STANDALONE_RANGE_FORMATS.includes(f.name)
-).map((f) => f.name);
-
-// formatName からアクティブなラジオ区分を求める。
-function deriveRangeGroup(formatName) {
-  if (!formatName || formatName === "スタンダード") return "none";
-  if (formatName === KANSAI_CLASSIC) return "kansaiClassic";
-  if (formatName === KANSAI_RISING) return "kansaiRising";
-  if (formatName === ALPHA_STANDARD) return "alphaStd";
-  if (formatName.startsWith("添削杯")) return "tensaku";
-  return "other";
-}
+import {
+  FORMAT_GROUP_KEYS,
+  OTHER_FORMAT_NAMES,
+  SEARCH_FORMAT_GROUPS,
+  TENSAKU_FORMAT_NAMES,
+  deriveSearchFormatGroup,
+  getDefaultFormatName,
+  getTensakuRoundLabel,
+} from "../data/formatGroups";
 
 // 各入力項目の初期状態
 const INITIAL_STATE = {
@@ -200,13 +180,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
   // 構築範囲ラジオの選択。すべて formatName に一本化する
   // (指定なし=空。添削杯/その他はグループの先頭を初期選択し、ドロップダウンで変更)。
   const selectRangeGroup = (group) => {
-    const formatName =
-      group === "kansaiClassic" ? KANSAI_CLASSIC :
-      group === "kansaiRising" ? KANSAI_RISING :
-      group === "alphaStd" ? ALPHA_STANDARD :
-      group === "tensaku" ? (TENSAKU_FORMAT_NAMES[0] || "") :
-      group === "other" ? (OTHER_FORMAT_NAMES[0] || "") :
-      "";
+    const formatName = getDefaultFormatName(group);
     setFormValues((prev) => ({
       ...prev,
       formatName,
@@ -344,7 +318,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
   );
 
   const selectedFormat = FORMAT_PRESETS.find(({ name }) => name === formValues.formatName) || null;
-  const rangeGroup = deriveRangeGroup(formValues.formatName);
+  const rangeGroup = deriveSearchFormatGroup(formValues.formatName);
 
   return (
     <form onSubmit={handleSubmit} className="grid-form">
@@ -703,63 +677,20 @@ const SearchForm = ({ onSearch, compact = false }) => {
             <span className="form-th">構築範囲</span>
             <div className="deck-range-group">
               <div className="inline-group deck-range-radio-row">
-                <label>
-                  <input
-                    type="radio"
-                    name="rangeGroup"
-                    checked={rangeGroup === "none"}
-                    onChange={() => selectRangeGroup("none")}
-                  />
-                  指定なし
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="rangeGroup"
-                    checked={rangeGroup === "kansaiClassic"}
-                    onChange={() => selectRangeGroup("kansaiClassic")}
-                  />
-                  クラシック
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="rangeGroup"
-                    checked={rangeGroup === "kansaiRising"}
-                    onChange={() => selectRangeGroup("kansaiRising")}
-                  />
-                  ライジング
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="rangeGroup"
-                    checked={rangeGroup === "alphaStd"}
-                    onChange={() => selectRangeGroup("alphaStd")}
-                  />
-                  αスタンダード
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="rangeGroup"
-                    checked={rangeGroup === "tensaku"}
-                    onChange={() => selectRangeGroup("tensaku")}
-                  />
-                  添削杯
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="rangeGroup"
-                    checked={rangeGroup === "other"}
-                    onChange={() => selectRangeGroup("other")}
-                  />
-                  その他
-                </label>
+                {SEARCH_FORMAT_GROUPS.map(({ key, label }) => (
+                  <label key={key}>
+                    <input
+                      type="radio"
+                      name="rangeGroup"
+                      checked={rangeGroup === key}
+                      onChange={() => selectRangeGroup(key)}
+                    />
+                    {label}
+                  </label>
+                ))}
 
                 {/* 添削杯: 回をドロップダウンで選択 */}
-                {rangeGroup === "tensaku" && (
+                {rangeGroup === FORMAT_GROUP_KEYS.TENSAKU && (
                   <select
                     name="formatName"
                     className="ntext deck-range-detail-select"
@@ -770,14 +701,14 @@ const SearchForm = ({ onSearch, compact = false }) => {
                   >
                     {TENSAKU_FORMAT_NAMES.map((name) => (
                       <option key={name} value={name}>
-                        {name.replace(/^添削杯\s*/, "")}
+                        {getTensakuRoundLabel(name)}
                       </option>
                     ))}
                   </select>
                 )}
 
                 {/* その他: 残りのフォーマットをドロップダウンで選択 */}
-                {rangeGroup === "other" && (
+                {rangeGroup === FORMAT_GROUP_KEYS.OTHER && (
                   <select
                     name="formatName"
                     className="ntext deck-range-detail-select"

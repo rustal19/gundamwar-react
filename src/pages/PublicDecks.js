@@ -1,7 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { FORMAT_PRESETS, OTHER_FORMAT_NAME } from "../data/formats";
+import {
+  FORMAT_GROUP_KEYS,
+  PUBLIC_DECK_FORMAT_GROUPS,
+  deriveFormatGroup,
+  getDefaultFormatName,
+  getTensakuRoundLabel,
+} from "../data/formatGroups";
 import { fetchPublicDecks } from "../services/publicDecks";
 import { getDeckColors } from "../utils/deckColors";
 import "./PublicDecks.css";
@@ -59,14 +65,12 @@ export default function PublicDecks({ compact = false }) {
   const query = params.get("query") || "";
   const format = params.get("format") || "";
   const [searchText, setSearchText] = useState(query);
-  const [formatFilter, setFormatFilter] = useState(format);
   const [result, setResult] = useState({ items: [], total: 0, page: 1, pageSize: 20 });
   const [isLoaded, setIsLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     setSearchText(query);
-    setFormatFilter(format);
   }, [format, query]);
 
   useEffect(() => {
@@ -94,10 +98,15 @@ export default function PublicDecks({ compact = false }) {
   }, [authMode, format, page, query]);
 
   const totalPages = Math.max(1, Math.ceil(result.total / result.pageSize || 1));
-  const formatOptions = useMemo(
-    () => [...new Set([...FORMAT_PRESETS.map((preset) => preset.name).filter(Boolean), OTHER_FORMAT_NAME])],
-    []
+  const activeFormatGroup = format
+    ? deriveFormatGroup(format)
+    : FORMAT_GROUP_KEYS.ALL;
+  const activeFormatConfig = PUBLIC_DECK_FORMAT_GROUPS.find(
+    ({ key }) => key === activeFormatGroup
   );
+  const formatDetailOptions = activeFormatConfig?.formatNames.includes(format)
+    ? activeFormatConfig.formatNames
+    : [format, ...(activeFormatConfig?.formatNames || [])].filter(Boolean);
 
   const navigateToPage = useCallback(
     (nextPage) => {
@@ -110,11 +119,54 @@ export default function PublicDecks({ compact = false }) {
     [location.search, navigate]
   );
 
+  const navigateToFormat = useCallback(
+    (nextFormat) => {
+      const nextParams = new URLSearchParams(location.search);
+      if (nextFormat) nextParams.set("format", nextFormat);
+      else nextParams.delete("format");
+      nextParams.set("page", "1");
+      if (!nextParams.get("query")) nextParams.delete("query");
+      navigate(`/decks?${nextParams.toString()}`);
+    },
+    [location.search, navigate]
+  );
+
+  const handleFormatTabChange = (groupKey) => {
+    const nextFormat =
+      groupKey === FORMAT_GROUP_KEYS.ALL
+        ? ""
+        : groupKey === activeFormatGroup && format
+          ? format
+          : getDefaultFormatName(groupKey, PUBLIC_DECK_FORMAT_GROUPS);
+    navigateToFormat(nextFormat);
+  };
+
+  const handleFormatTabKeyDown = (event, currentIndex) => {
+    let nextIndex = null;
+    if (event.key === "ArrowRight") {
+      nextIndex = (currentIndex + 1) % PUBLIC_DECK_FORMAT_GROUPS.length;
+    } else if (event.key === "ArrowLeft") {
+      nextIndex =
+        (currentIndex - 1 + PUBLIC_DECK_FORMAT_GROUPS.length) %
+        PUBLIC_DECK_FORMAT_GROUPS.length;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = PUBLIC_DECK_FORMAT_GROUPS.length - 1;
+    }
+
+    if (nextIndex === null) return;
+    event.preventDefault();
+    const nextTab = event.currentTarget.parentElement?.querySelectorAll('[role="tab"]')[nextIndex];
+    nextTab?.focus();
+    handleFormatTabChange(PUBLIC_DECK_FORMAT_GROUPS[nextIndex].key);
+  };
+
   const handleSearch = (event) => {
     event.preventDefault();
-    const nextParams = new URLSearchParams();
+    const nextParams = new URLSearchParams(location.search);
     if (searchText.trim()) nextParams.set("query", searchText.trim());
-    if (formatFilter) nextParams.set("format", formatFilter);
+    else nextParams.delete("query");
     nextParams.set("page", "1");
     navigate(`/decks?${nextParams.toString()}`);
   };
@@ -143,6 +195,62 @@ export default function PublicDecks({ compact = false }) {
         </Link>
       </div>
 
+      <section className="public-decks-format-filter" aria-label="フォーマット絞り込み">
+        <div className="public-decks-format-tabs" role="tablist" aria-label="フォーマット">
+          {PUBLIC_DECK_FORMAT_GROUPS.map(({ key, label }, index) => {
+            const isActive = activeFormatGroup === key;
+            return (
+              <button
+                key={key}
+                id={`public-decks-format-tab-${key}`}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-controls="public-decks-results"
+                tabIndex={isActive ? 0 : -1}
+                className={isActive ? "public-decks-format-tab active" : "public-decks-format-tab"}
+                onClick={() => handleFormatTabChange(key)}
+                onKeyDown={(event) => handleFormatTabKeyDown(event, index)}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+
+        {activeFormatGroup === FORMAT_GROUP_KEYS.TENSAKU ? (
+          <label className="public-decks-format-detail">
+            <span>開催回</span>
+            <select
+              value={format}
+              onChange={(event) => navigateToFormat(event.target.value)}
+              aria-label="添削杯の開催回"
+            >
+              {formatDetailOptions.map((formatName) => (
+                <option key={formatName} value={formatName}>
+                  {getTensakuRoundLabel(formatName)}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : activeFormatGroup === FORMAT_GROUP_KEYS.OTHER ? (
+          <label className="public-decks-format-detail">
+            <span>フォーマット</span>
+            <select
+              value={format}
+              onChange={(event) => navigateToFormat(event.target.value)}
+              aria-label="その他のフォーマット"
+            >
+              {formatDetailOptions.map((formatName) => (
+                <option key={formatName} value={formatName}>
+                  {formatName}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+      </section>
+
       <form className="public-decks-search" onSubmit={handleSearch}>
         <input
           type="search"
@@ -150,54 +258,50 @@ export default function PublicDecks({ compact = false }) {
           onChange={(event) => setSearchText(event.target.value)}
           placeholder="デッキ名・説明・ユーザー名で検索"
         />
-        <select
-          value={formatFilter}
-          onChange={(event) => setFormatFilter(event.target.value)}
-          aria-label="フォーマットで絞り込み"
-        >
-          <option value="">すべてのフォーマット</option>
-          {formatOptions.map((formatName) => (
-            <option key={formatName} value={formatName}>
-              {formatName}
-            </option>
-          ))}
-        </select>
         <button type="submit" className="deck-action-button primary">
           検索
         </button>
       </form>
 
-      {pagination}
+      <div
+        id="public-decks-results"
+        role="tabpanel"
+        aria-labelledby={`public-decks-format-tab-${activeFormatGroup}`}
+      >
+        {pagination}
 
-      {!isLoaded ? (
-        <div className="results-empty-state">読み込み中...</div>
-      ) : errorMessage ? (
-        <div className="results-empty-state">{errorMessage}</div>
-      ) : result.items.length === 0 ? (
-        <div className="results-empty-state">公開デッキはありません。</div>
-      ) : (
-        <div className="results-list">
-          {result.items.map((deck) => (
-            <article key={deck.id} className="public-deck-card">
-              <div>
-                <h2>
-                  <DeckColorDots items={deck.items} />
-                  <Link to={`/decks/${deck.id}`}>{deck.title}</Link>
-                  {deck.format ? <span className="public-deck-format-badge">{deck.format}</span> : null}
-                </h2>
-                <p>{deck.description || "説明はありません。"}</p>
-              </div>
-              <div className="public-deck-meta">
-                <OwnerLink owner={deck.owner} />
-                <span>{`${countDeckItems(deck.items)}枚`}</span>
-                <span>{formatDate(deck.publishedAt || deck.updatedAt)}</span>
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
+        {!isLoaded ? (
+          <div className="results-empty-state">読み込み中...</div>
+        ) : errorMessage ? (
+          <div className="results-empty-state">{errorMessage}</div>
+        ) : result.items.length === 0 ? (
+          <div className="results-empty-state">公開デッキはありません。</div>
+        ) : (
+          <div className="results-list">
+            {result.items.map((deck) => (
+              <article key={deck.id} className="public-deck-card">
+                <div>
+                  <h2>
+                    <DeckColorDots items={deck.items} />
+                    <Link to={`/decks/${deck.id}`}>{deck.title}</Link>
+                    {deck.format ? (
+                      <span className="public-deck-format-badge">{deck.format}</span>
+                    ) : null}
+                  </h2>
+                  <p>{deck.description || "説明はありません。"}</p>
+                </div>
+                <div className="public-deck-meta">
+                  <OwnerLink owner={deck.owner} />
+                  <span>{`${countDeckItems(deck.items)}枚`}</span>
+                  <span>{formatDate(deck.publishedAt || deck.updatedAt)}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
 
-      {pagination}
+        {pagination}
+      </div>
     </main>
   );
 }
