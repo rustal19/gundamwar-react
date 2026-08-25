@@ -48,6 +48,7 @@ function registrationTournament(overrides = {}) {
     status: "registration",
     startsAt: "2099-07-20T10:00:00.000Z",
     registrationClosesAt: "2099-07-19T10:00:00.000Z",
+    checkinOpensAt: null,
     capacity: 16,
     venue: "テスト会場",
     isOnline: false,
@@ -117,6 +118,17 @@ test("大会情報のレギュレーションにデッキ枚数を表示し同�
   expect(screen.queryByText("同名上限")).not.toBeInTheDocument();
   expect(screen.queryByText("3枚")).not.toBeInTheDocument();
   expect(screen.queryByText("50 - 50")).not.toBeInTheDocument();
+});
+
+test("大会情報にチェックイン開始時刻を月日と時刻で表示する", async () => {
+  mockTournament = registrationTournament({
+    checkinOpensAt: new Date(2030, 0, 2, 9, 0).toISOString(),
+  });
+
+  renderDetail();
+
+  expect(await screen.findByText("チェックイン開始")).toBeInTheDocument();
+  expect(screen.getByText("1月2日 09:00")).toBeInTheDocument();
 });
 
 test("参加者ステータスを日本語ラベルで表示する", async () => {

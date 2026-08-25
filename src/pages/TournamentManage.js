@@ -38,6 +38,7 @@ const DEFAULT_FORM = {
   status: "draft",
   startsAt: "",
   registrationClosesAt: "",
+  checkinOpensAt: "",
   capacity: "",
   venue: "",
   isOnline: false,
@@ -116,6 +117,7 @@ function formFromTournament(tournament) {
     topCutSize: tournament.topCutSize ?? "",
     startsAt: toDateTimeLocal(tournament.startsAt),
     registrationClosesAt: toDateTimeLocal(tournament.registrationClosesAt),
+    checkinOpensAt: toDateTimeLocal(tournament.checkinOpensAt),
     capacity: tournament.capacity ?? "",
     venue: tournament.venue || "",
     announcement: tournament.announcement || "",
@@ -145,6 +147,7 @@ function payloadFromForm(form) {
     status: form.status,
     startsAt: fromDateTimeLocal(form.startsAt),
     registrationClosesAt: fromDateTimeLocal(form.registrationClosesAt),
+    checkinOpensAt: fromDateTimeLocal(form.checkinOpensAt) || null,
     capacity: numberOrNull(form.capacity),
     venue: form.venue?.trim() ? form.venue.trim() : null,
     isOnline: Boolean(form.isOnline),
@@ -1010,6 +1013,16 @@ function InfoPanel({
               type="datetime-local"
               value={form.registrationClosesAt}
               onChange={(event) => setField("registrationClosesAt", event.target.value)}
+            />
+          </label>
+          <label>
+            チェックイン開始
+            <input
+              type="datetime-local"
+              value={form.checkinOpensAt}
+              max={form.startsAt || undefined}
+              onChange={(event) => setField("checkinOpensAt", event.target.value)}
+              title="大会の開始日時以前を設定してください"
             />
           </label>
           <label>

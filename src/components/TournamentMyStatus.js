@@ -16,13 +16,32 @@ function compareLocalDate(left, right) {
   return a === b ? 0 : a < b ? -1 : 1;
 }
 
+function formatMonthDayTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "設定された時刻";
+  return `${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, "0")}:${String(
+    date.getMinutes()
+  ).padStart(2, "0")}`;
+}
+
+export function isSelfCheckinOpen(tournament, now = new Date()) {
+  if (!tournament) return false;
+  if (tournament.checkinOpensAt) {
+    const opensAt = new Date(tournament.checkinOpensAt).getTime();
+    const current = now instanceof Date ? now.getTime() : new Date(now).getTime();
+    return !Number.isNaN(opensAt) && !Number.isNaN(current) && current >= opensAt;
+  }
+  return toLocalDateKey(tournament.startsAt) === toLocalDateKey(now);
+}
+
 export function getMyStatusPhase(tournament, myEntry, rounds = [], now = new Date()) {
   if (!tournament || !myEntry) return "not_entered";
   if (Array.isArray(rounds) && rounds.length > 0) return "round";
+  if (tournament.checkinOpensAt && isSelfCheckinOpen(tournament, now)) return "checkin";
   if (tournament.status === "registration" && compareLocalDate(now, tournament.startsAt) < 0) {
     return "before_start";
   }
-  if (toLocalDateKey(tournament.startsAt) === toLocalDateKey(now)) return "checkin";
+  if (!tournament.checkinOpensAt && isSelfCheckinOpen(tournament, now)) return "checkin";
   return "entered";
 }
 
@@ -353,6 +372,12 @@ export default function TournamentMyStatus({
     : null;
   const isWaitingNextPairing = phase === "round" && currentRound?.status === "completed";
   const checkedIn = myEntry?.status === "checked_in";
+  const selfCheckinOpen = isSelfCheckinOpen(tournament, now);
+  const selfCheckinUnavailableReason = selfCheckinOpen
+    ? ""
+    : tournament?.checkinOpensAt
+      ? `セルフチェックインは${formatMonthDayTime(tournament.checkinOpensAt)}から利用できます。`
+      : "セルフチェックインは開催日当日のみ利用できます。";
   const bandTone =
     phase === "checkin" && !checkedIn
       ? "accent"
@@ -367,6 +392,25 @@ export default function TournamentMyStatus({
     const intervalId = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(intervalId);
   }, [currentRound?.timerStartedAt, isRoundRunning, tournament?.roundTimeMinutes]);
+
+  useEffect(() => {
+    if (
+      checkedIn ||
+      selfCheckinOpen ||
+      !tournament?.selfCheckin ||
+      !tournament?.checkinOpensAt
+    ) {
+      return undefined;
+    }
+    const opensAt = new Date(tournament.checkinOpensAt).getTime();
+    if (Number.isNaN(opensAt)) return undefined;
+    const remaining = opensAt - now.getTime();
+    const timeoutId = window.setTimeout(
+      () => setNow(new Date()),
+      Math.min(Math.max(remaining + 50, 50), 2147483647)
+    );
+    return () => window.clearTimeout(timeoutId);
+  }, [checkedIn, now, selfCheckinOpen, tournament?.checkinOpensAt, tournament?.selfCheckin]);
 
   if (!isAuthenticated) {
     return (
@@ -460,9 +504,17 @@ export default function TournamentMyStatus({
         </div>
         {!checkedIn && tournament?.selfCheckin ? (
           <div className="tournament-entry-actions">
-            <button type="button" onClick={onCheckIn} disabled={isSubmitting}>
+            <button
+              type="button"
+              onClick={onCheckIn}
+              disabled={isSubmitting || !selfCheckinOpen}
+              title={selfCheckinUnavailableReason || undefined}
+            >
               チェックインする
             </button>
+            {selfCheckinUnavailableReason ? (
+              <p className="tournament-my-warning">{selfCheckinUnavailableReason}</p>
+            ) : null}
           </div>
         ) : null}
       </section>
@@ -509,6 +561,23 @@ export default function TournamentMyStatus({
         <h2>エントリー済み</h2>
         <p>デッキリスト: {deckStatusLabel(myEntry)}</p>
         {needsDeckWarning ? <p className="tournament-my-warning">デッキリストが未提出です。</p> : null}
+        {!checkedIn && tournament?.selfCheckin ? (
+          <>
+            <div className="tournament-entry-actions">
+              <button
+                type="button"
+                onClick={onCheckIn}
+                disabled={isSubmitting || !selfCheckinOpen}
+                title={selfCheckinUnavailableReason || undefined}
+              >
+                チェックインする
+              </button>
+            </div>
+            {selfCheckinUnavailableReason ? (
+              <p className="tournament-my-warning">{selfCheckinUnavailableReason}</p>
+            ) : null}
+          </>
+        ) : null}
       </div>
       <EntryForm
         tournament={tournament}
