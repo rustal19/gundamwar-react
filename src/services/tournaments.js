@@ -72,6 +72,15 @@ function daysFromNow(days) {
 
 function createInitialStore() {
   const tournamentId = "mock-tournament-1";
+  const checkedInDeckMetadata = {
+    deckFormat: null,
+    deckLockedAt: daysFromNow(-1),
+    deckUpdatedBy: null,
+    deckUpdatedAt: null,
+    deckUnlockedBy: null,
+    deckUnlockedAt: null,
+    finalRank: null,
+  };
   const entries = [
     {
       id: "entry-1",
@@ -79,6 +88,7 @@ function createInitialStore() {
       user: { id: "mock-player-1", name: "プレイヤー1" },
       deckItems: null,
       decklistSubmittedAt: null,
+      ...checkedInDeckMetadata,
       status: "checked_in",
       createdAt: daysFromNow(-5),
     },
@@ -88,6 +98,7 @@ function createInitialStore() {
       user: { id: "mock-player-2", name: "プレイヤー2" },
       deckItems: null,
       decklistSubmittedAt: null,
+      ...checkedInDeckMetadata,
       status: "checked_in",
       createdAt: daysFromNow(-5),
     },
@@ -97,6 +108,7 @@ function createInitialStore() {
       user: { id: "mock-player-3", name: "プレイヤー3" },
       deckItems: null,
       decklistSubmittedAt: null,
+      ...checkedInDeckMetadata,
       status: "checked_in",
       createdAt: daysFromNow(-5),
     },
@@ -219,9 +231,30 @@ function normalizeTournament(tournament, entries = []) {
   };
 }
 
-function normalizeEntry(entry) {
-  if (!entry?.id) return null;
+function normalizeEntryActor(actor) {
+  if (actor == null) return null;
+  if (typeof actor !== "object") {
+    return { id: String(actor), name: "主催者" };
+  }
+  if (actor.id == null) return null;
   return {
+    id: String(actor.id),
+    name: actor.name || "主催者",
+  };
+}
+
+function deriveDecklistState(entry, tournament) {
+  // §2 explicitly keeps a checked-in but unsubmitted entry in `none`;
+  // deckLockedAt still blocks submission independently.
+  if (!entry.decklistSubmittedAt) return "none";
+  if (tournament?.status === "completed" && tournament.decklistsPublic) return "revealed";
+  if (entry.deckLockedAt) return "locked";
+  return "submitted";
+}
+
+function normalizeEntry(entry, tournament) {
+  if (!entry?.id) return null;
+  const normalized = {
     ...entry,
     id: String(entry.id),
     tournamentId: String(entry.tournamentId),
@@ -231,10 +264,33 @@ function normalizeEntry(entry) {
     },
     deckItems: Array.isArray(entry.deckItems) ? entry.deckItems : null,
     decklistSubmittedAt: entry.decklistSubmittedAt || null,
+    deckFormat: entry.deckFormat || null,
+    deckLockedAt: entry.deckLockedAt || null,
+    deckUpdatedBy: normalizeEntryActor(entry.deckUpdatedBy),
+    deckUpdatedAt: entry.deckUpdatedAt || null,
+    deckUnlockedBy: normalizeEntryActor(entry.deckUnlockedBy),
+    deckUnlockedAt: entry.deckUnlockedAt || null,
+    finalRank:
+      entry.finalRank == null || !Number.isFinite(Number(entry.finalRank))
+        ? null
+        : Number(entry.finalRank),
     status: entry.status || "registered",
     joinedAtRound: Math.max(1, Number(entry.joinedAtRound || 1)),
     createdAt: entry.createdAt || nowIso(),
   };
+  return {
+    ...normalized,
+    decklistState: deriveDecklistState(normalized, tournament),
+  };
+}
+
+function withoutDerivedEntryState(entry) {
+  const { decklistState, ...storedEntry } = entry;
+  return storedEntry;
+}
+
+function setEntries(store, tournamentId, entries) {
+  store.entries[String(tournamentId)] = entries.map(withoutDerivedEntryState);
 }
 
 function readStore() {
@@ -287,6 +343,26 @@ function getCurrentViewer(user) {
   };
 }
 
+function getAuditActor(user, tournament) {
+  const viewer = user?.id ? user : readMockViewer();
+  if (!viewer?.id) {
+    throw createServiceError("ログインしてから操作してください。", 401);
+  }
+  const id = String(viewer.id);
+  const isCreator = String(tournament.createdBy?.id) === id;
+  const name = user?.id
+    ? user.displayNickname ||
+      user.nickname ||
+      user.name ||
+      (isCreator ? tournament.createdBy?.name : null)
+    : viewer.name;
+  return { id, name: name || "主催者" };
+}
+
+function deckFormatForTournament(tournament) {
+  return tournament?.regulation?.name || DEFAULT_REGULATION.name || null;
+}
+
 function assertCanManageTournament(tournament, viewer) {
   if (viewer.role === "admin") return;
   if (viewer.role !== "organizer") {
@@ -298,7 +374,12 @@ function assertCanManageTournament(tournament, viewer) {
 }
 
 function getEntries(store, tournamentId) {
-  return (store.entries[String(tournamentId)] || []).map(normalizeEntry).filter(Boolean);
+  const tournament = store.tournaments.find(
+    (item) => String(item.id) === String(tournamentId)
+  );
+  return (store.entries[String(tournamentId)] || [])
+    .map((entry) => normalizeEntry(entry, tournament))
+    .filter(Boolean);
 }
 
 function getRounds(store, tournamentId) {
@@ -347,12 +428,15 @@ function assertDeckIsValid(deckItems, regulation, { required = false } = {}) {
   throw error;
 }
 
-function assertCanChangeEntry(tournament) {
+function assertCanChangeEntry(tournament, entry) {
   if (!["registration", "in_progress"].includes(tournament.status)) {
     throw new Error("この大会のエントリーは変更できません。");
   }
   if (!isBefore(tournament.registrationClosesAt)) {
     throw new Error("デッキリスト提出締切を過ぎています。");
+  }
+  if (entry.deckLockedAt) {
+    throw new Error("デッキリストはロックされています。主催者にお問い合わせください。");
   }
 }
 
@@ -732,17 +816,22 @@ export async function createEntry({ tournamentId, deckItems = null, authMode, us
 
     const now = nowIso();
     const isLatePending = tournament.status === "in_progress" && tournament.lateEntry;
-    const entry = normalizeEntry({
-      id: `entry-${Date.now()}`,
-      tournamentId,
-      user: currentUser,
-      deckItems: Array.isArray(deckItems) && deckItems.length > 0 ? deckItems : null,
-      decklistSubmittedAt: Array.isArray(deckItems) && deckItems.length > 0 ? now : null,
-      status: isLatePending ? "pending" : "registered",
-      joinedAtRound: isLatePending ? nextJoinRound(store, tournamentId) : 1,
-      createdAt: now,
-    });
-    store.entries[String(tournamentId)] = [entry, ...entries];
+    const hasDeckItems = Array.isArray(deckItems) && deckItems.length > 0;
+    const entry = normalizeEntry(
+      {
+        id: `entry-${Date.now()}`,
+        tournamentId,
+        user: currentUser,
+        deckItems: hasDeckItems ? deckItems : null,
+        decklistSubmittedAt: hasDeckItems ? now : null,
+        deckFormat: hasDeckItems ? deckFormatForTournament(tournament) : null,
+        status: isLatePending ? "pending" : "registered",
+        joinedAtRound: isLatePending ? nextJoinRound(store, tournamentId) : 1,
+        createdAt: now,
+      },
+      tournament
+    );
+    setEntries(store, tournamentId, [entry, ...entries]);
     store.tournaments = store.tournaments.map((item) =>
       String(item.id) === String(tournamentId)
         ? { ...item, entryCount: store.entries[String(tournamentId)].length, updatedAt: now }
@@ -765,22 +854,30 @@ export async function updateMyEntry({ tournamentId, deckItems = null, authMode, 
     const currentUser = getCurrentUser(user);
     const store = readStore();
     const tournament = getTournamentOrThrow(store, tournamentId);
-    assertCanChangeEntry(tournament);
-    assertDeckIsValid(deckItems, tournament.regulation, { required: true });
     const entries = getEntries(store, tournamentId);
     const existing = entries.find(
       (entry) => entry.user.id === currentUser.id && entry.status !== "dropped"
     );
     if (!existing) throw new Error("エントリーが見つかりません。");
+    assertCanChangeEntry(tournament, existing);
+    assertDeckIsValid(deckItems, tournament.regulation, { required: true });
 
     const now = nowIso();
-    const updated = normalizeEntry({
-      ...existing,
-      deckItems: Array.isArray(deckItems) && deckItems.length > 0 ? deckItems : null,
-      decklistSubmittedAt: Array.isArray(deckItems) && deckItems.length > 0 ? now : null,
-    });
-    store.entries[String(tournamentId)] = entries.map((entry) =>
-      entry.id === updated.id ? updated : entry
+    const hasDeckItems = Array.isArray(deckItems) && deckItems.length > 0;
+    const updated = normalizeEntry(
+      {
+        ...existing,
+        deckItems: hasDeckItems ? deckItems : null,
+        decklistSubmittedAt: hasDeckItems ? now : null,
+        deckFormat: hasDeckItems ? deckFormatForTournament(tournament) : null,
+        deckLockedAt: existing.deckUnlockedAt ? now : null,
+      },
+      tournament
+    );
+    setEntries(
+      store,
+      tournamentId,
+      entries.map((entry) => (entry.id === updated.id ? updated : entry))
     );
     writeStore(store);
     return updated;
@@ -803,7 +900,7 @@ export async function deleteMyEntry(tournamentId, { authMode, user } = {}) {
     const entries = getEntries(store, tournamentId);
     const nextEntries = entries.filter((entry) => entry.user.id !== currentUser.id);
     if (nextEntries.length === entries.length) throw new Error("エントリーが見つかりません。");
-    store.entries[String(tournamentId)] = nextEntries;
+    setEntries(store, tournamentId, nextEntries);
     store.tournaments = store.tournaments.map((item) =>
       String(item.id) === String(tournamentId)
         ? { ...item, entryCount: nextEntries.length, updatedAt: nowIso() }
@@ -973,9 +1070,18 @@ export async function checkInMyEntry({ tournamentId, authMode, user }) {
     );
     if (!existing) throw new Error("エントリーが見つかりません。");
 
-    const updated = normalizeEntry({ ...existing, status: "checked_in" });
-    store.entries[String(tournamentId)] = entries.map((entry) =>
-      entry.id === updated.id ? updated : entry
+    const updated = normalizeEntry(
+      {
+        ...existing,
+        status: "checked_in",
+        deckLockedAt: existing.deckLockedAt || nowIso(),
+      },
+      tournament
+    );
+    setEntries(
+      store,
+      tournamentId,
+      entries.map((entry) => (entry.id === updated.id ? updated : entry))
     );
     writeStore(store);
     return updated;
@@ -1010,17 +1116,24 @@ export async function createManualEntry({ tournamentId, name, deckItems = null, 
     assertDeckIsValid(deckItems, tournament.regulation);
 
     const now = nowIso();
-    const entry = normalizeEntry({
-      id: `entry-manual-${Date.now()}`,
-      tournamentId,
-      user: { id: null, name: String(name).trim() },
-      deckItems: Array.isArray(deckItems) && deckItems.length > 0 ? deckItems : null,
-      decklistSubmittedAt: Array.isArray(deckItems) && deckItems.length > 0 ? now : null,
-      status: "registered",
-      joinedAtRound: tournament.status === "in_progress" ? nextJoinRound(store, tournamentId) : 1,
-      createdAt: now,
-    });
-    store.entries[String(tournamentId)] = [entry, ...entries];
+    const hasDeckItems = Array.isArray(deckItems) && deckItems.length > 0;
+    const entry = normalizeEntry(
+      {
+        id: `entry-manual-${Date.now()}`,
+        tournamentId,
+        user: { id: null, name: String(name).trim() },
+        deckItems: hasDeckItems ? deckItems : null,
+        decklistSubmittedAt: hasDeckItems ? now : null,
+        deckFormat: hasDeckItems ? deckFormatForTournament(tournament) : null,
+        deckLockedAt: tournament.status === "in_progress" ? now : null,
+        status: "registered",
+        joinedAtRound:
+          tournament.status === "in_progress" ? nextJoinRound(store, tournamentId) : 1,
+        createdAt: now,
+      },
+      tournament
+    );
+    setEntries(store, tournamentId, [entry, ...entries]);
     store.tournaments = store.tournaments.map((item) =>
       String(item.id) === String(tournamentId)
         ? { ...item, entryCount: store.entries[String(tournamentId)].length, updatedAt: now }
@@ -1039,19 +1152,24 @@ export async function createManualEntry({ tournamentId, name, deckItems = null, 
 export async function approveEntry({ tournamentId, entryId, authMode }) {
   if (authMode === "mock") {
     const store = readStore();
-    getTournamentOrThrow(store, tournamentId);
+    const tournament = getTournamentOrThrow(store, tournamentId);
     const entries = getEntries(store, tournamentId);
     const existing = entries.find((entry) => entry.id === String(entryId));
     if (!existing || existing.status !== "pending") {
       throw new Error("承認できる申請中の参加者が見つかりません。");
     }
-    const updated = normalizeEntry({
-      ...existing,
-      status: "registered",
-      joinedAtRound: nextJoinRound(store, tournamentId),
-    });
-    store.entries[String(tournamentId)] = entries.map((entry) =>
-      entry.id === updated.id ? updated : entry
+    const updated = normalizeEntry(
+      {
+        ...existing,
+        status: "registered",
+        joinedAtRound: nextJoinRound(store, tournamentId),
+      },
+      tournament
+    );
+    setEntries(
+      store,
+      tournamentId,
+      entries.map((entry) => (entry.id === updated.id ? updated : entry))
     );
     writeStore(store);
     return updated;
@@ -1073,7 +1191,7 @@ export async function rejectEntry({ tournamentId, entryId, authMode }) {
       throw new Error("却下できる申請中の参加者が見つかりません。");
     }
     const nextEntries = entries.filter((entry) => entry.id !== String(entryId));
-    store.entries[String(tournamentId)] = nextEntries;
+    setEntries(store, tournamentId, nextEntries);
     store.tournaments = store.tournaments.map((item) =>
       String(item.id) === String(tournamentId)
         ? { ...item, entryCount: nextEntries.length, updatedAt: nowIso() }
@@ -1089,29 +1207,84 @@ export async function rejectEntry({ tournamentId, entryId, authMode }) {
   });
 }
 
-export async function updateEntryStatus({ tournamentId, entryId, status, deckItems, authMode }) {
+export async function updateEntryStatus({
+  tournamentId,
+  entryId,
+  status,
+  deckItems,
+  decklistLocked,
+  authMode,
+  user,
+}) {
   if (authMode === "mock") {
     if (status && !["registered", "checked_in", "dropped"].includes(status)) {
       throw new Error("不正な参加ステータスです。");
     }
+    if (decklistLocked !== undefined && typeof decklistLocked !== "boolean") {
+      throw new Error("不正なデッキロック状態です。");
+    }
+    const viewer = getCurrentViewer(user);
     const store = readStore();
     const tournament = getTournamentOrThrow(store, tournamentId);
+    assertCanManageTournament(tournament, viewer);
     const entries = getEntries(store, tournamentId);
     const existing = entries.find((entry) => entry.id === String(entryId));
     if (!existing) throw new Error("参加者が見つかりません。");
+    if (decklistLocked === false && tournament.status === "completed") {
+      throw new Error("大会終了後はデッキリストのロックを解除できません。");
+    }
+    if (
+      tournament.status === "completed" &&
+      tournament.decklistsPublic &&
+      (deckItems !== undefined || decklistLocked !== undefined)
+    ) {
+      throw new Error("公開済みのデッキリストは変更できません。");
+    }
     if (deckItems !== undefined) {
       assertDeckIsValid(deckItems, tournament.regulation);
     }
+    const now = nowIso();
     const hasDeckItems = Array.isArray(deckItems) && deckItems.length > 0;
-    const updated = normalizeEntry({
-      ...existing,
-      status: status || existing.status,
-      deckItems: deckItems === undefined ? existing.deckItems : hasDeckItems ? deckItems : null,
-      decklistSubmittedAt:
-        deckItems === undefined ? existing.decklistSubmittedAt : hasDeckItems ? nowIso() : null,
-    });
-    store.entries[String(tournamentId)] = entries.map((entry) =>
-      entry.id === updated.id ? updated : entry
+    const isLockedDeckUpdate = deckItems !== undefined && Boolean(existing.deckLockedAt);
+    const isUnlocking = decklistLocked === false && Boolean(existing.deckLockedAt);
+    const auditActor = isLockedDeckUpdate || isUnlocking ? getAuditActor(user, tournament) : null;
+    let nextDeckLockedAt = existing.deckLockedAt;
+    let nextDeckUnlockedBy = existing.deckUnlockedBy;
+    let nextDeckUnlockedAt = existing.deckUnlockedAt;
+    if (status === "checked_in") {
+      nextDeckLockedAt = existing.deckLockedAt || now;
+    } else if (decklistLocked === false && existing.deckLockedAt) {
+      nextDeckLockedAt = null;
+      nextDeckUnlockedBy = auditActor;
+      nextDeckUnlockedAt = now;
+    } else if (decklistLocked === true) {
+      nextDeckLockedAt = existing.deckLockedAt || now;
+    }
+    const updated = normalizeEntry(
+      {
+        ...existing,
+        status: status || existing.status,
+        deckItems: deckItems === undefined ? existing.deckItems : hasDeckItems ? deckItems : null,
+        decklistSubmittedAt:
+          deckItems === undefined ? existing.decklistSubmittedAt : hasDeckItems ? now : null,
+        deckFormat:
+          deckItems === undefined
+            ? existing.deckFormat
+            : hasDeckItems
+              ? deckFormatForTournament(tournament)
+              : null,
+        deckLockedAt: nextDeckLockedAt,
+        deckUpdatedBy: isLockedDeckUpdate ? auditActor : existing.deckUpdatedBy,
+        deckUpdatedAt: isLockedDeckUpdate ? now : existing.deckUpdatedAt,
+        deckUnlockedBy: nextDeckUnlockedBy,
+        deckUnlockedAt: nextDeckUnlockedAt,
+      },
+      tournament
+    );
+    setEntries(
+      store,
+      tournamentId,
+      entries.map((entry) => (entry.id === updated.id ? updated : entry))
     );
     writeStore(store);
     return updated;
@@ -1119,7 +1292,11 @@ export async function updateEntryStatus({ tournamentId, entryId, status, deckIte
 
   return requestJson(`/api/tournaments/${tournamentId}/entries/${entryId}`, {
     method: "PUT",
-    body: JSON.stringify({ status, deckItems: Array.isArray(deckItems) ? deckItems : undefined }),
+    body: JSON.stringify({
+      status,
+      deckItems: Array.isArray(deckItems) ? deckItems : undefined,
+      decklistLocked: typeof decklistLocked === "boolean" ? decklistLocked : undefined,
+    }),
   });
 }
 
