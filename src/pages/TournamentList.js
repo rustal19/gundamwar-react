@@ -26,6 +26,17 @@ function normalizeMyTournaments(payload, { status, page }) {
   };
 }
 
+function normalizeListedTournaments(payload) {
+  const sourceItems = payload?.items || [];
+  const items = sourceItems.filter((tournament) => tournament?.isListed !== false);
+  const hiddenCount = sourceItems.length - items.length;
+  return {
+    ...payload,
+    items,
+    total: Math.max(0, Number(payload?.total ?? sourceItems.length) - hiddenCount),
+  };
+}
+
 export default function TournamentList({ compact = false }) {
   const { authMode, isAuthenticated, isOrganizer, isReady, user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -72,7 +83,7 @@ export default function TournamentList({ compact = false }) {
         ? fetchMyTournaments({ authMode, user }).then((nextPayload) =>
             normalizeMyTournaments(nextPayload, { status, page })
           )
-        : fetchTournaments({ status, page, authMode, user });
+        : fetchTournaments({ status, page, authMode, user }).then(normalizeListedTournaments);
 
     request
       .then((nextPayload) => {

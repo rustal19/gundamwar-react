@@ -563,6 +563,46 @@ describe("publicDecks mock service", () => {
     ]);
   });
 
+  test("非掲載大会でも完了済みかつデッキ公開設定なら大会デッキを公開する", async () => {
+    const unlistedTournament = tournament({
+      id: "unlisted-tournament",
+      title: "URL限定大会",
+      isListed: false,
+      status: "completed",
+      decklistsPublic: true,
+    });
+    writeTournamentStore({
+      tournaments: [unlistedTournament],
+      entries: {
+        [unlistedTournament.id]: [
+          tournamentEntry({
+            id: "unlisted-entry",
+            tournamentId: unlistedTournament.id,
+          }),
+        ],
+      },
+    });
+
+    const result = await fetchPublicDecks({ authMode: "mock", page: 1 });
+
+    expect(result.items).toEqual([
+      expect.objectContaining({
+        id: "entry:unlisted-entry",
+        sourceType: "tournament",
+        tournament: expect.objectContaining({
+          id: "unlisted-tournament",
+          title: "URL限定大会",
+        }),
+      }),
+    ]);
+    await expect(
+      fetchPublicDeck("entry:unlisted-entry", { authMode: "mock" })
+    ).resolves.toMatchObject({
+      id: "entry:unlisted-entry",
+      tournament: { id: "unlisted-tournament", title: "URL限定大会" },
+    });
+  });
+
   test("接頭辞付きIDを系統別に解決し、数値のみの既存URLは保存デッキとして扱う", async () => {
     window.localStorage.setItem(
       PUBLIC_STORAGE_KEY,

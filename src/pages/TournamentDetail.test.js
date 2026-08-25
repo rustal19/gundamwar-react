@@ -325,6 +325,43 @@ test("SEはブラケットとSE内連番で表示し、順位表はスイス結�
   ]);
 });
 
+test("非掲載大会はURLから詳細を開けることを示し、通常どおりエントリーできる", async () => {
+  mockAuthState = {
+    authMode: "mock",
+    isAuthenticated: true,
+    user: { id: "player-1", name: "テストユーザー" },
+  };
+  mockTournament = registrationTournament({
+    title: "URL限定大会",
+    isListed: false,
+  });
+  fetchTournament.mockClear();
+
+  renderDetail();
+
+  expect(await screen.findByRole("heading", { name: "URL限定大会" })).toBeInTheDocument();
+  expect(screen.getByText("ローカル大会（非掲載）")).toBeInTheDocument();
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "この大会は一覧に表示されません。大会URLを共有された人が通常どおり参加できます。"
+  );
+  expect(fetchTournament).toHaveBeenCalledWith("t-detail", {
+    authMode: "mock",
+    user: mockAuthState.user,
+  });
+
+  const entryButton = screen.getByRole("button", { name: "エントリー" });
+  expect(entryButton).toBeEnabled();
+  fireEvent.click(entryButton);
+
+  expect(createEntry).toHaveBeenCalledWith({
+    tournamentId: "t-detail",
+    deckItems: null,
+    authMode: "mock",
+    user: mockAuthState.user,
+  });
+  expect(await screen.findByText("エントリーしました。")).toBeInTheDocument();
+});
+
 test("任意大会ではデッキなしでエントリーし未提出として扱う", async () => {
   mockAuthState = {
     authMode: "mock",

@@ -687,6 +687,56 @@ test("ラウンド制限時間が未設定ならタイマー設定ヒントを�
   ).toBeInTheDocument();
 });
 
+test("大会作成フォームは既定で一覧掲載になり、説明を確認して非掲載で作成できる", async () => {
+  renderNewTournament();
+
+  const listingCheckbox = screen.getByRole("checkbox", { name: "大会一覧に掲載する" });
+  expect(listingCheckbox).toBeChecked();
+  expect(listingCheckbox).toHaveAccessibleDescription(
+    "オフにするとローカル大会になり、大会一覧とホームの新着には表示されません。大会URLを知っている人だけが詳細を開き、通常どおり参加登録できます。"
+  );
+
+  fireEvent.change(screen.getByLabelText("タイトル"), { target: { value: "非掲載テスト大会" } });
+  fireEvent.change(screen.getByLabelText("開始日時"), { target: { value: "2030-01-02T10:00" } });
+  fireEvent.click(listingCheckbox);
+  fireEvent.click(screen.getByRole("button", { name: "作成" }));
+
+  await waitFor(() => {
+    const store = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
+    const createdTournament = store.tournaments.find(
+      (tournament) => tournament.title === "非掲載テスト大会"
+    );
+    expect(createdTournament).toMatchObject({
+      title: "非掲載テスト大会",
+      isListed: false,
+    });
+  });
+});
+
+test("掲載フラグがない既存大会は掲載として読み込む", async () => {
+  seedStore({ rounds: [] });
+  renderManage();
+
+  fireEvent.click(await screen.findByRole("button", { name: "大会情報" }));
+
+  expect(screen.getByRole("checkbox", { name: "大会一覧に掲載する" })).toBeChecked();
+});
+
+test("大会編集で非掲載から掲載へ切り替えて保存できる", async () => {
+  seedStore({ tournament: { isListed: false }, rounds: [] });
+  renderManage();
+
+  fireEvent.click(await screen.findByRole("button", { name: "大会情報" }));
+  const listingCheckbox = screen.getByRole("checkbox", { name: "大会一覧に掲載する" });
+  expect(listingCheckbox).not.toBeChecked();
+
+  fireEvent.click(listingCheckbox);
+  fireEvent.click(screen.getByRole("button", { name: "保存" }));
+
+  expect(await screen.findByText("大会情報を保存しました。")).toBeInTheDocument();
+  expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0].isListed).toBe(true);
+});
+
 test("大会作成時は開始日時が必須で、未入力では作成できない", () => {
   renderNewTournament();
   fireEvent.change(screen.getByLabelText("タイトル"), { target: { value: "開始日時なし大会" } });

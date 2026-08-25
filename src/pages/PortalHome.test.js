@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { BrowserRouter, MemoryRouter } from "react-router-dom";
 import { fetchPublicDecks } from "../services/publicDecks";
 import { fetchMyTournaments, fetchTournaments } from "../services/tournaments";
@@ -115,6 +115,50 @@ test("PortalHome は道具箱トップ構成で大会と公開デッキを最大
     "/tournaments?mobileLayout=ios"
   );
   expect(screen.getAllByLabelText("デッキ色: 青")).toHaveLength(3);
+});
+
+test("ホーム新着では非掲載大会を除外し、あなたの大会には参加中の非掲載大会を表示する", async () => {
+  const unlistedTournament = {
+    ...registrationTournaments[0],
+    id: "home-unlisted",
+    title: "参加中のURL限定大会",
+    isListed: false,
+  };
+  const listedTournament = {
+    ...registrationTournaments[1],
+    id: "home-listed",
+    title: "ホーム掲載大会",
+    isListed: true,
+  };
+  fetchMyTournaments.mockResolvedValue({
+    items: [
+      {
+        tournament: unlistedTournament,
+        entry: { id: "home-unlisted-entry", status: "registered" },
+        needsDecklist: false,
+      },
+    ],
+  });
+  fetchTournaments.mockImplementation(({ status }) =>
+    Promise.resolve({
+      items: status === "registration" ? [unlistedTournament, listedTournament] : [],
+    })
+  );
+
+  render(
+    <MemoryRouter>
+      <PortalHome />
+    </MemoryRouter>
+  );
+
+  const mySection = (await screen.findByRole("heading", { name: "あなたの大会" })).closest(
+    "section"
+  );
+  const featuredSection = screen.getByRole("heading", { name: "大会" }).closest("section");
+
+  expect(within(mySection).getByText("参加中のURL限定大会")).toBeInTheDocument();
+  expect(within(featuredSection).getByText("ホーム掲載大会")).toBeInTheDocument();
+  expect(within(featuredSection).queryByText("参加中のURL限定大会")).not.toBeInTheDocument();
 });
 
 test("カード名検索は SearchForm と同じ name パラメータで遷移する", async () => {

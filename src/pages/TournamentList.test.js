@@ -92,11 +92,32 @@ test("作成者の情報で一覧を取得し、下書き大会を管理ペー�
       user: mockOrganizer,
     })
   );
-  expect(screen.getByText("下書き")).toBeInTheDocument();
+  expect(await screen.findByText("下書き")).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "作成中の大会" })).toHaveAttribute(
     "href",
     "/tournaments/draft-1/manage"
   );
+});
+
+test("全大会では非掲載大会を除外し、掲載設定のない既存大会は表示する", async () => {
+  fetchTournaments.mockResolvedValue({
+    items: [
+      tournament({ id: "legacy-listed", title: "既存の掲載大会" }),
+      tournament({
+        id: "unlisted-1",
+        title: "URL限定の非掲載大会",
+        isListed: false,
+      }),
+    ],
+    total: 2,
+    page: 1,
+    pageSize: 10,
+  });
+
+  renderList();
+
+  expect(await screen.findByText("既存の掲載大会")).toBeInTheDocument();
+  expect(screen.queryByText("URL限定の非掲載大会")).not.toBeInTheDocument();
 });
 
 test("自分の大会へ切り替えると参加中と参加済みの大会を表示してURLへ反映する", async () => {
@@ -162,6 +183,27 @@ test("URLから自分の大会表示を復元する", async () => {
       name: "自分の大会",
     })
   ).toHaveAttribute("aria-pressed", "true");
+});
+
+test("自分の大会では運営している非掲載大会を表示する", async () => {
+  fetchMyTournaments.mockResolvedValue({
+    items: [
+      {
+        tournament: tournament({
+          id: "managed-unlisted",
+          title: "運営中のURL限定大会",
+          isListed: false,
+        }),
+        entry: null,
+        needsDecklist: false,
+      },
+    ],
+  });
+
+  renderList("/tournaments?view=mine");
+
+  expect(await screen.findByText("運営中のURL限定大会")).toBeInTheDocument();
+  expect(fetchTournaments).not.toHaveBeenCalled();
 });
 
 test("自分の参加大会が0件なら既存の空状態文言を表示する", async () => {

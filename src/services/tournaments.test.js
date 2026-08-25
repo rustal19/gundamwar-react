@@ -487,6 +487,112 @@ describe("tournaments service mock mode", () => {
     expect(guestPayload.items.map((tournament) => tournament.id)).toEqual(["public-1"]);
   });
 
+  it("treats a missing isListed flag as listed and excludes explicit false from the public list", async () => {
+    setRegistrationTournament();
+    const store = readStore();
+    const legacyTournament = store.tournaments[0];
+    const unlistedTournament = {
+      ...legacyTournament,
+      id: "unlisted-1",
+      title: "URL限定大会",
+      isListed: false,
+    };
+    store.tournaments = [unlistedTournament, legacyTournament];
+    store.entries[unlistedTournament.id] = [];
+    store.rounds[unlistedTournament.id] = [];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const payload = await fetchTournaments({ authMode: "mock", page: 1 });
+
+    expect(payload.items.map((tournament) => tournament.id)).toEqual(["t1"]);
+    expect(payload.items[0].isListed).toBe(true);
+    expect(payload.total).toBe(1);
+  });
+
+  it("allows direct access and entry for an unlisted tournament and exposes it only in related users' own list", async () => {
+    setRegistrationTournament({ isListed: false });
+    const unrelatedOrganizer = {
+      id: "unrelated-organizer",
+      name: "無関係な主催者",
+      role: "organizer",
+    };
+
+    const directDetail = await fetchTournament("t1", {
+      authMode: "mock",
+      user: unrelatedOrganizer,
+    });
+    expect(directDetail).toMatchObject({ id: "t1", isListed: false });
+
+    const entry = await createEntry({ tournamentId: "t1", authMode: "mock", user });
+    expect(entry).toMatchObject({ tournamentId: "t1", user: { id: user.id } });
+
+    const participantPayload = await fetchMyTournaments({ authMode: "mock", user });
+    expect(participantPayload.items).toEqual([
+      expect.objectContaining({
+        tournament: expect.objectContaining({ id: "t1", isListed: false }),
+        entry: expect.objectContaining({ id: entry.id, user: { id: user.id, name: "表示ニックネーム" } }),
+      }),
+    ]);
+
+    const creatorPayload = await fetchMyTournaments({ authMode: "mock", user: organizer });
+    expect(creatorPayload.items).toEqual([
+      expect.objectContaining({
+        tournament: expect.objectContaining({ id: "t1", isListed: false }),
+        entry: null,
+        needsDecklist: false,
+      }),
+    ]);
+
+    const unrelatedPayload = await fetchMyTournaments({
+      authMode: "mock",
+      user: unrelatedOrganizer,
+    });
+    expect(unrelatedPayload.items).toEqual([]);
+  });
+
+  it("defaults created tournaments to listed and preserves explicit isListed values on create and update", async () => {
+    jest.useFakeTimers("modern");
+    jest.setSystemTime(new Date("2030-01-01T00:00:00.000Z"));
+    const listedByDefault = await createTournament({
+      title: "既定の掲載大会",
+      authMode: "mock",
+      user,
+    });
+
+    jest.setSystemTime(new Date("2030-01-01T00:00:00.001Z"));
+    const createdUnlisted = await createTournament({
+      title: "作成時からURL限定",
+      isListed: false,
+      authMode: "mock",
+      user,
+    });
+
+    expect(listedByDefault.isListed).toBe(true);
+    expect(createdUnlisted.isListed).toBe(false);
+
+    const updatedUnlisted = await updateTournament({
+      id: listedByDefault.id,
+      isListed: false,
+      authMode: "mock",
+      user,
+    });
+    const updatedListed = await updateTournament({
+      id: createdUnlisted.id,
+      isListed: true,
+      authMode: "mock",
+      user,
+    });
+
+    expect(updatedUnlisted.isListed).toBe(false);
+    expect(updatedListed.isListed).toBe(true);
+    expect(
+      readStore().tournaments.find((tournament) => tournament.id === listedByDefault.id)?.isListed
+    ).toBe(false);
+    expect(
+      readStore().tournaments.find((tournament) => tournament.id === createdUnlisted.id)?.isListed
+    ).toBe(true);
+  });
+
   it("uses the real API unless authMode is mock", async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
