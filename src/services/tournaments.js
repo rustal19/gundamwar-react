@@ -1014,7 +1014,14 @@ async function requestJson(path, options = {}) {
   if (!response.ok) {
     const error = new Error(payload?.error || `Request failed with status ${response.status}`);
     error.status = response.status;
-    if (response.status === 404) error.code = "not_found";
+    if (payload?.code) error.code = payload.code;
+    if (response.status === 404 && !error.code) error.code = "not_found";
+    if (payload?.firstDiscardedRoundNumber != null) {
+      error.firstDiscardedRoundNumber = Number(payload.firstDiscardedRoundNumber);
+    }
+    if (payload?.discardedRoundCount != null) {
+      error.discardedRoundCount = Number(payload.discardedRoundCount);
+    }
     if (payload?.violations) error.violations = payload.violations;
     throw error;
   }
@@ -1700,6 +1707,16 @@ export async function reportMatchResult({ matchId, player1Games, player2Games, r
     });
     if (!found) throw new Error("試合が見つかりません。");
 
+    const tournament = getTournamentOrThrow(store, found.tournamentId);
+    if (tournament.status === "completed") {
+      throw new Error("完了した大会のラウンド結果は修正できません。");
+    }
+    if (found.round.status === "completed") {
+      throw new Error(
+        "完了済みラウンドの結果を修正するには、先にラウンドを完了前へ戻してください。"
+      );
+    }
+
     const isBye = found.match.player2EntryId == null || found.match.result === "bye" || result === "bye";
     const nextResult =
       result === null && player1Games == null && player2Games == null
@@ -1707,7 +1724,6 @@ export async function reportMatchResult({ matchId, player1Games, player2Games, r
         : deriveResultFromGames({ player1Games, player2Games, result, isBye });
     const oldWinner = winnerEntryId(found.match);
     const nextWinner = nextResult ? winnerEntryId(found.match, nextResult) : null;
-    const tournament = getTournamentOrThrow(store, found.tournamentId);
     const isElimination = found.round.stage === "top_cut" || tournament.format === "single_elim";
     const hasLaterRounds = getRounds(store, found.tournamentId).some(
       (round) => Number(round.number) > Number(found.round.number)
@@ -1904,5 +1920,92 @@ export async function completeRound(roundId, { authMode } = {}) {
   return requestJson(`/api/rounds/${roundId}`, {
     method: "PUT",
     body: JSON.stringify({ status: "completed" }),
+  });
+}
+
+export async function reopenRound(
+  roundId,
+  { authMode, discardLaterRounds = false } = {}
+) {
+  if (authMode === "mock") {
+    const store = readStore();
+    let tournamentIdForRound = "";
+    let targetRound = null;
+
+    Object.keys(store.rounds).forEach((tournamentId) => {
+      const round = getRounds(store, tournamentId).find((item) => item.id === roundId);
+      if (round) {
+        tournamentIdForRound = tournamentId;
+        targetRound = round;
+      }
+    });
+
+    if (!targetRound) throw new Error("ラウンドが見つかりません。");
+
+    const tournament = getTournamentOrThrow(store, tournamentIdForRound);
+    if (tournament.status === "completed") {
+      throw new Error("完了した大会のラウンドは巻き戻せません。");
+    }
+    if (tournament.status !== "in_progress") {
+      throw new Error("進行中の大会のラウンドのみ巻き戻せます。");
+    }
+    if (targetRound.status !== "completed") {
+      throw new Error("完了済みのラウンドのみ巻き戻せます。");
+    }
+
+    const rounds = getRounds(store, tournamentIdForRound);
+    const latestCompletedRound = rounds
+      .filter((round) => round.status === "completed")
+      .reduce(
+        (latest, round) =>
+          !latest || Number(round.number) > Number(latest.number) ? round : latest,
+        null
+      );
+
+    if (!latestCompletedRound || latestCompletedRound.id !== targetRound.id) {
+      const latestRoundLabel = latestCompletedRound
+        ? `第${latestCompletedRound.number}回戦`
+        : "直前に完了したラウンド";
+      throw new Error(
+        `修正できるのは直前に完了した${latestRoundLabel}のみです。第${targetRound.number}回戦は巻き戻せません。`
+      );
+    }
+
+    const laterRounds = rounds.filter(
+      (round) => Number(round.number) > Number(targetRound.number)
+    );
+    if (laterRounds.length > 0 && !discardLaterRounds) {
+      const firstDiscardedRoundNumber = Math.min(
+        ...laterRounds.map((round) => Number(round.number))
+      );
+      const error = createServiceError(
+        `第${firstDiscardedRoundNumber}回戦以降のラウンドと対戦結果を破棄する確認が必要です。`,
+        409
+      );
+      error.code = "later_rounds_exist";
+      error.firstDiscardedRoundNumber = firstDiscardedRoundNumber;
+      error.discardedRoundCount = laterRounds.length;
+      throw error;
+    }
+
+    const reopenedRound = { ...targetRound, status: "in_progress" };
+    store.rounds[tournamentIdForRound] = rounds
+      .filter((round) => Number(round.number) <= Number(targetRound.number))
+      .map((round) => (round.id === targetRound.id ? reopenedRound : round));
+    store.tournaments = store.tournaments.map((item) =>
+      String(item.id) === String(tournamentIdForRound)
+        ? { ...item, updatedAt: nowIso() }
+        : item
+    );
+    writeStore(store);
+    return reopenedRound;
+  }
+
+  return requestJson(`/api/rounds/${roundId}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      status: "in_progress",
+      discardLaterRounds: Boolean(discardLaterRounds),
+    }),
   });
 }

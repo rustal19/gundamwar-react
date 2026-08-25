@@ -113,6 +113,30 @@ function seedStore(overrides = {}) {
   );
 }
 
+function makeUiResultRound(number, status, result = "p1_win") {
+  const roundId = `round-ui-${number}`;
+  return {
+    id: roundId,
+    tournamentId: "t-ui",
+    number,
+    stage: "swiss",
+    status,
+    timerStartedAt: null,
+    matches: [
+      {
+        id: `match-ui-${number}`,
+        roundId,
+        tableNo: 1,
+        player1EntryId: "entry-1",
+        player2EntryId: "entry-2",
+        player1Games: result === "p1_win" ? 2 : 0,
+        player2Games: result === "p2_win" ? 2 : 0,
+        result,
+      },
+    ],
+  };
+}
+
 function renderManage() {
   return render(
     <MemoryRouter initialEntries={["/tournaments/t-ui/manage"]}>
@@ -156,7 +180,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-test("BO3入力からスコア表示、ラウンド完了、訂正まで操作できる", async () => {
+test("BO3入力後にラウンドを完了前へ戻して結果を訂正できる", async () => {
   seedStore();
   renderManage();
 
@@ -179,9 +203,96 @@ test("BO3入力からスコア表示、ラウンド完了、訂正まで操作�
   fireEvent.click(screen.getByRole("button", { name: "ラウンド完了" }));
   expect(await screen.findByText("ラウンドを完了しました。")).toBeInTheDocument();
 
+  expect(screen.queryByRole("button", { name: "訂正" })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "結果を修正" }));
+  expect(
+    await screen.findByText("第1回戦を完了前に戻しました。結果を修正してください。")
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)).rounds["t-ui"][0].status).toBe(
+    "in_progress"
+  );
+
   fireEvent.click(screen.getByRole("button", { name: "訂正" }));
   fireEvent.click(screen.getByRole("button", { name: "2-0" }));
   expect(await screen.findByText((content, element) => element?.classList.contains("score-badge") && content === "2-0")).toBeInTheDocument();
+});
+
+test("後続ラウンドは専用確認ダイアログで明示してから結果ごと破棄する", async () => {
+  seedStore({
+    rounds: [
+      makeUiResultRound(1, "completed"),
+      makeUiResultRound(2, "in_progress", "p2_win"),
+    ],
+  });
+  const nativeConfirm = jest.spyOn(window, "confirm");
+  renderManage();
+
+  fireEvent.click(await screen.findByRole("button", { name: "第1回戦" }));
+  fireEvent.click(screen.getByRole("button", { name: "結果を修正" }));
+
+  let dialog = await screen.findByRole("dialog", { name: "後続ラウンド破棄の確認" });
+  expect(
+    within(dialog).getByText(
+      /第1回戦の結果を修正するため、第2回戦以降のラウンドと対戦結果をすべて破棄します/
+    )
+  ).toBeInTheDocument();
+  expect(nativeConfirm).not.toHaveBeenCalled();
+
+  fireEvent.click(within(dialog).getByRole("button", { name: "キャンセル" }));
+  expect(screen.queryByRole("dialog", { name: "後続ラウンド破棄の確認" })).not.toBeInTheDocument();
+  expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)).rounds["t-ui"]).toHaveLength(2);
+
+  fireEvent.click(screen.getByRole("button", { name: "結果を修正" }));
+  dialog = await screen.findByRole("dialog", { name: "後続ラウンド破棄の確認" });
+  fireEvent.click(
+    within(dialog).getByRole("button", { name: "第2回戦以降を破棄して修正" })
+  );
+
+  expect(
+    await screen.findByText("第1回戦を完了前に戻しました。結果を修正してください。")
+  ).toBeInTheDocument();
+  await waitFor(() => {
+    const storedRounds = JSON.parse(window.localStorage.getItem(STORAGE_KEY)).rounds["t-ui"];
+    expect(storedRounds).toHaveLength(1);
+    expect(storedRounds[0]).toMatchObject({ id: "round-ui-1", status: "in_progress" });
+    expect(storedRounds[0].matches.map((match) => match.id)).not.toContain("match-ui-2");
+  });
+});
+
+test("直前より前の完了ラウンドは理由を示して巻き戻し操作を拒否する", async () => {
+  seedStore({
+    rounds: [
+      makeUiResultRound(1, "completed"),
+      makeUiResultRound(2, "completed", "p2_win"),
+    ],
+  });
+  renderManage();
+
+  fireEvent.click(await screen.findByRole("button", { name: "第1回戦" }));
+  const reopenButton = screen.getByRole("button", { name: "結果を修正" });
+  expect(reopenButton).toBeDisabled();
+  expect(reopenButton).toHaveAttribute(
+    "title",
+    "修正できるのは直前に完了した第2回戦だけです。"
+  );
+  expect(screen.getByText("修正できるのは直前に完了した第2回戦だけです。")).toBeInTheDocument();
+});
+
+test("完了した大会はラウンドを巻き戻せないことを表示する", async () => {
+  seedStore({
+    tournament: { status: "completed" },
+    rounds: [makeUiResultRound(1, "completed")],
+  });
+  renderManage();
+
+  const reopenButton = await screen.findByRole("button", { name: "結果を修正" });
+  expect(reopenButton).toBeDisabled();
+  expect(reopenButton).toHaveAttribute(
+    "title",
+    "大会が完了しているため結果を修正できません。"
+  );
+  expect(screen.getByText("大会は完了しています。完了後はラウンド結果を修正できません。")).toBeInTheDocument();
 });
 
 test("別の主催者には権限エラーだけを表示して管理操作を隠す", async () => {

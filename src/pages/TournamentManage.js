@@ -17,6 +17,7 @@ import {
   fetchStandings,
   fetchTournament,
   rejectEntry,
+  reopenRound,
   reportMatchResult,
   startRoundTimer,
   updateEntryStatus,
@@ -330,7 +331,7 @@ function nextActionText(form, rounds, activeEntryCount) {
     if (unreportedCount > 0) return `未報告卓が${unreportedCount}卓あります。結果を入力してください。`;
     return "全卓報告済みです。「ラウンド完了」を押して次のラウンドへ進んでください。";
   }
-  if (status === "completed") return "大会は完了しています。結果訂正が必要な場合は対象ラウンドから訂正してください。";
+  if (status === "completed") return "大会は完了しています。完了後はラウンド結果を修正できません。";
   if (status === "cancelled") return "大会は中止されています。";
   return "大会状況を確認してください。";
 }
@@ -417,6 +418,46 @@ function TournamentDeckRows({ items, compact }) {
   );
 }
 
+function RoundRollbackConfirmDialog({
+  firstDiscardedRoundNumber,
+  isSubmitting,
+  onCancel,
+  onConfirm,
+  targetRoundNumber,
+}) {
+  return (
+    <div className="tournament-dialog-backdrop" role="presentation">
+      <div
+        className="tournament-deck-dialog tournament-confirm-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="round-rollback-dialog-title"
+        aria-describedby="round-rollback-dialog-description"
+      >
+        <div className="tournament-dialog-header">
+          <h3 id="round-rollback-dialog-title">後続ラウンド破棄の確認</h3>
+        </div>
+        <p id="round-rollback-dialog-description">
+          {`第${targetRoundNumber}回戦の結果を修正するため、第${firstDiscardedRoundNumber}回戦以降のラウンドと対戦結果をすべて破棄します。破棄した内容は元に戻せません。続行しますか？`}
+        </p>
+        <div className="tournament-entry-actions tournament-confirm-actions">
+          <button type="button" className="danger-button" onClick={onConfirm} disabled={isSubmitting}>
+            第{firstDiscardedRoundNumber}回戦以降を破棄して修正
+          </button>
+          <button
+            type="button"
+            className="tournament-secondary-button"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            キャンセル
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function RoundManagePanel({
   entries,
   form,
@@ -424,6 +465,7 @@ function RoundManagePanel({
   onFinishRound,
   onGenerateRound,
   onReportScore,
+  onReopenRound,
   onRepairRound,
   onSaveAnnouncement,
   onSavePairings,
@@ -440,6 +482,17 @@ function RoundManagePanel({
   const selectedRound = useMemo(
     () => rounds.find((round) => Number(round.number) === Number(selectedRoundNumber)) || rounds[rounds.length - 1],
     [rounds, selectedRoundNumber]
+  );
+  const latestCompletedRound = useMemo(
+    () =>
+      rounds
+        .filter((round) => round.status === "completed")
+        .reduce(
+          (latest, round) =>
+            !latest || Number(round.number) > Number(latest.number) ? round : latest,
+          null
+        ),
+    [rounds]
   );
   const activeEntries = useMemo(
     () =>
@@ -524,6 +577,12 @@ function RoundManagePanel({
   }
 
   const canEditPairing = selectedRound?.status !== "completed";
+  const reopenDisabledReason =
+    form.status === "completed"
+      ? "大会が完了しているため結果を修正できません。"
+      : latestCompletedRound?.id !== selectedRound?.id
+        ? `修正できるのは直前に完了した第${latestCompletedRound?.number || "-"}回戦だけです。`
+        : "";
 
   return (
     <section className="tournament-tab-panel">
@@ -555,7 +614,11 @@ function RoundManagePanel({
             <span>{selectedRound.status === "completed" ? "完了" : "進行中"}</span>
             {form.roundTimeMinutes ? <span>残り {remainingTime(selectedRound, form.roundTimeMinutes, now)}</span> : null}
             {form.roundTimeMinutes ? (
-              <button type="button" onClick={() => onStartTimer(selectedRound.id)} disabled={isSubmitting}>
+              <button
+                type="button"
+                onClick={() => onStartTimer(selectedRound.id)}
+                disabled={isSubmitting || selectedRound.status === "completed" || form.status === "completed"}
+              >
                 {selectedRound.timerStartedAt ? "タイマー再開始" : "タイマー開始"}
               </button>
             ) : null}
@@ -592,6 +655,8 @@ function RoundManagePanel({
                       <td className="tournament-score-actions">
                         {isBye ? (
                           <span className="tournament-muted">自動</span>
+                        ) : selectedRound.status === "completed" || form.status === "completed" ? (
+                          <span className="tournament-muted">完了</span>
                         ) : editingMatchId === match.id || !isReported ? (
                           <>
                             {BO3_PRESETS.map(([p1, p2]) => (
@@ -748,13 +813,29 @@ function RoundManagePanel({
             </div>
           </details>
           <div className="tournament-entry-actions tournament-manage-actions">
-            <button
-              type="button"
-              disabled={selectedRound.status === "completed" || !roundIsComplete(selectedRound) || isSubmitting}
-              onClick={() => onFinishRound(selectedRound.id)}
-            >
-              ラウンド完了
-            </button>
+            {selectedRound.status === "completed" ? (
+              <>
+                <button
+                  type="button"
+                  disabled={Boolean(reopenDisabledReason) || isSubmitting}
+                  title={reopenDisabledReason || undefined}
+                  onClick={() => onReopenRound(selectedRound.id)}
+                >
+                  結果を修正
+                </button>
+                {reopenDisabledReason ? (
+                  <span className="tournament-muted">{reopenDisabledReason}</span>
+                ) : null}
+              </>
+            ) : (
+              <button
+                type="button"
+                disabled={!roundIsComplete(selectedRound) || isSubmitting || form.status === "completed"}
+                onClick={() => onFinishRound(selectedRound.id)}
+              >
+                ラウンド完了
+              </button>
+            )}
           </div>
           <div className="announcement-editor">
             <label>
@@ -1323,6 +1404,7 @@ export default function TournamentManage({ compact = false }) {
   const [error, setError] = useState("");
   const [isAccessDenied, setIsAccessDenied] = useState(false);
   const [regulationViolations, setRegulationViolations] = useState([]);
+  const [roundRollbackConfirmation, setRoundRollbackConfirmation] = useState(null);
 
   const latestRoundNumber = rounds.length ? rounds[rounds.length - 1].number : null;
   const detailUrl = isNew ? "" : `${window.location.origin}/tournaments/${id}`;
@@ -1462,6 +1544,37 @@ export default function TournamentManage({ compact = false }) {
     );
 
   const finishRound = (roundId) => runAction(async () => completeRound(roundId, { authMode }), "ラウンドを完了しました。");
+
+  const reopenCompletedRound = async (roundId, { discardLaterRounds = false } = {}) => {
+    setIsSubmitting(true);
+    setError("");
+    setMessage("");
+    try {
+      const reopened = await reopenRound(roundId, { authMode, discardLaterRounds });
+      setRoundRollbackConfirmation(null);
+      setMessage(`第${reopened.number}回戦を完了前に戻しました。結果を修正してください。`);
+      await loadAll();
+    } catch (actionError) {
+      if (!discardLaterRounds && actionError.code === "later_rounds_exist") {
+        const targetRound = rounds.find((round) => round.id === roundId);
+        setRoundRollbackConfirmation({
+          roundId,
+          targetRoundNumber: targetRound?.number,
+          firstDiscardedRoundNumber:
+            actionError.firstDiscardedRoundNumber || Number(targetRound?.number || 0) + 1,
+        });
+      } else {
+        setError(actionError.message);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const confirmRoundRollback = () => {
+    if (!roundRollbackConfirmation) return;
+    reopenCompletedRound(roundRollbackConfirmation.roundId, { discardLaterRounds: true });
+  };
 
   const savePairings = (roundId, matches) =>
     runAction(
@@ -1657,6 +1770,7 @@ export default function TournamentManage({ compact = false }) {
           onFinishRound={finishRound}
           onGenerateRound={generateRound}
           onReportScore={reportScore}
+          onReopenRound={reopenCompletedRound}
           onRepairRound={repairRound}
           onSaveAnnouncement={saveAnnouncement}
           onSavePairings={savePairings}
@@ -1690,6 +1804,16 @@ export default function TournamentManage({ compact = false }) {
           selectedRoundNumber={selectedRoundNumber}
           setSelectedRoundNumber={setSelectedRoundNumber}
           standings={standings}
+        />
+      ) : null}
+
+      {roundRollbackConfirmation ? (
+        <RoundRollbackConfirmDialog
+          firstDiscardedRoundNumber={roundRollbackConfirmation.firstDiscardedRoundNumber}
+          isSubmitting={isSubmitting}
+          onCancel={() => setRoundRollbackConfirmation(null)}
+          onConfirm={confirmRoundRollback}
+          targetRoundNumber={roundRollbackConfirmation.targetRoundNumber}
         />
       ) : null}
     </main>
