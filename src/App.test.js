@@ -9,9 +9,11 @@ jest.mock("./services/tournaments", () => ({
   fetchTournaments: jest.fn(() => Promise.resolve({ items: [] })),
 }));
 
+// CRA既定の resetMocks で実装が消えないよう、素の関数でモックする。
 jest.mock("./services/publicDecks", () => ({
   __esModule: true,
-  fetchPublicDecks: jest.fn(() => Promise.resolve({ items: [] })),
+  fetchPublicDeck: () => new Promise(() => {}),
+  fetchPublicDecks: () => Promise.resolve({ items: [] }),
 }));
 
 function renderApp(path = "/") {
@@ -37,6 +39,10 @@ function setMockUser(role) {
 
 beforeEach(() => {
   window.localStorage.clear();
+  Object.defineProperty(HTMLElement.prototype, "scrollTo", {
+    configurable: true,
+    value: jest.fn(),
+  });
   Object.defineProperty(window, "innerWidth", {
     configurable: true,
     writable: true,
@@ -67,6 +73,23 @@ test("/search renders the search form and collapsed sidebar", () => {
   expect(container.querySelector("#name")).toBeInTheDocument();
   expect(container.querySelector(".gw-sidebar")).toHaveClass("gw-sidebar-collapsed");
   expect(container.querySelector('a[href="/search"]')).toHaveAttribute("title");
+});
+
+test("only the deck builder route uses the viewport-locked app shell", () => {
+  const deckBuilderView = renderApp("/deck");
+  expect(deckBuilderView.container.querySelector(".app-shell")).toHaveClass("app-shell-deck");
+  deckBuilderView.unmount();
+
+  const publicDeckListView = renderApp("/decks");
+  expect(publicDeckListView.container.querySelector(".app-shell")).not.toHaveClass(
+    "app-shell-deck"
+  );
+  publicDeckListView.unmount();
+
+  const publicDeckDetailView = renderApp("/decks/deck-1");
+  expect(publicDeckDetailView.container.querySelector(".app-shell")).not.toHaveClass(
+    "app-shell-deck"
+  );
 });
 
 test("footer renders the portal name and legal links", () => {

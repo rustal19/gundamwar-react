@@ -93,6 +93,35 @@ describe("publicDecks mock service", () => {
     expect(result.pageSize).toBe(20);
   });
 
+  test("paginates every public deck without truncating the total count", async () => {
+    const decks = Array.from({ length: 25 }, (_, index) => {
+      const number = index + 1;
+      return {
+        id: `deck-${number}`,
+        title: `Deck ${number}`,
+        isPublic: true,
+        publishedAt: `2026-01-${String(number).padStart(2, "0")}T00:00:00.000Z`,
+        owner: user,
+      };
+    });
+    window.localStorage.setItem(PUBLIC_STORAGE_KEY, JSON.stringify(decks));
+
+    const firstPage = await fetchPublicDecks({ authMode: "mock", page: 1 });
+    const secondPage = await fetchPublicDecks({ authMode: "mock", page: 2 });
+
+    expect(firstPage).toMatchObject({ total: 25, page: 1, pageSize: 20 });
+    expect(firstPage.items).toHaveLength(20);
+    expect(firstPage.items[0].id).toBe("deck-25");
+    expect(secondPage).toMatchObject({ total: 25, page: 2, pageSize: 20 });
+    expect(secondPage.items.map((deck) => deck.id)).toEqual([
+      "deck-5",
+      "deck-4",
+      "deck-3",
+      "deck-2",
+      "deck-1",
+    ]);
+  });
+
   test("requires format when publishing a deck", async () => {
     writeSavedDecks([
       {
