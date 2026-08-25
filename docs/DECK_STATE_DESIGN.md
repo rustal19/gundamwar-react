@@ -57,10 +57,13 @@ registration_closes_at があり かつ 現在 < 締切    → 提出可
 |---|---|---|---|
 | `none`(未提出) | `decklist_submitted_at IS NULL` かつ `deck_locked_at IS NULL` | 提出できる | 代理提出できる |
 | `submitted`(提出済み・差し替え可) | `decklist_submitted_at` あり かつ `deck_locked_at IS NULL` | 差し替えできる | 差し替えできる |
-| `locked`(ロック済み) | `deck_locked_at` あり かつ 大会が `completed` でない | **不可** | 可(記録が残る) |
+| `locked`(ロック済み) | `deck_locked_at` あり かつ `revealed` でない | **不可** | 可(記録が残る。ただし completed 後は不可) |
 | `revealed`(公開中) | 大会が `completed` かつ `decklists_public` | 不可 | 不可 |
 
 - **ロックの契機はチェックイン**。`status` が `checked_in` になった瞬間に `deck_locked_at` を打つ。
+- **完了したが `decklists_public` が false の大会は `locked` のまま**(`revealed` にはならない)。
+  ここを `submitted` に落とすと画面が「差し替え可」と誤表示するため、`locked` は completed かどうかで
+  切らず「公開されていないロック済み」を指す状態とする。
 - 未提出のままチェックインした場合も `deck_locked_at` を打ち、`none` のまま扱う
   (= 主催者が代理提出しない限り提出不能)。デッキ必須の大会でこれを許すかは運用判断に委ねる。
 - **チェックインの取り消しではロックを解除しない**。解除は主催者の明示操作(§4.3)だけで起きる。
