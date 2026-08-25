@@ -29,7 +29,9 @@ import "./mobile.css";
 
 const AppContent = () => {
   const location = useLocation();
-  const isDeckRoute = location.pathname.startsWith("/deck");
+  // /deck(デッキ構築)だけに二カラム固定レイアウトを適用。
+  // /decks(公開デッキ一覧)・/decks/:id(詳細)は通常のスクロールするレイアウトにする。
+  const isDeckRoute = location.pathname === "/deck";
   const isDisplayRoute = /^\/tournaments\/[^/]+\/display$/.test(location.pathname);
   const isNarrowSidebarRoute = location.pathname === "/search" || location.pathname === "/deck";
   const { isCompactDesktop, isCompactLayout, isMobileOs, isIos, isAndroid } =
