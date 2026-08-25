@@ -87,6 +87,29 @@ test("20件以下の公開デッキをすべて表示し、不要なページャ
   expect(within(firstDeck).getByText("スタンダード")).toBeInTheDocument();
 });
 
+test("各公開デッキのメインとサイドの枚数を分けて表示する", async () => {
+  const [mainOnly, withSide, empty] = createDecks(1, 3);
+  mainOnly.items = [{ cardId: "main-1", count: 50 }];
+  withSide.items = [
+    { cardId: "main-2", count: 50, zone: "main" },
+    { cardId: "side-2", count: 10, zone: "side" },
+  ];
+  empty.items = [];
+  fetchPublicDecks.mockResolvedValue({
+    items: [mainOnly, withSide, empty],
+    total: 3,
+    page: 1,
+    pageSize: 20,
+  });
+
+  renderPublicDecks("/decks");
+
+  const deckCards = await screen.findAllByRole("article");
+  expect(within(deckCards[0]).getByText("メイン50 / サイド0")).toBeInTheDocument();
+  expect(within(deckCards[1]).getByText("メイン50 / サイド10")).toBeInTheDocument();
+  expect(within(deckCards[2]).getByText("メイン0 / サイド0")).toBeInTheDocument();
+});
+
 test("20件を超える公開デッキは条件を維持したまま次ページへ移動できる", async () => {
   fetchPublicDecks.mockImplementation(({ page }) =>
     Promise.resolve({

@@ -9,6 +9,7 @@ import {
   getTensakuRoundLabel,
 } from "../data/formatGroups";
 import { fetchPublicDecks } from "../services/publicDecks";
+import { formatDeckCountSummary, getDeckCounts } from "../utils/deckCounts";
 import { getDeckColors } from "../utils/deckColors";
 import "./PublicDecks.css";
 
@@ -23,11 +24,9 @@ function formatDate(value) {
   });
 }
 
-function countDeckItems(items) {
-  return (Array.isArray(items) ? items : []).reduce(
-    (sum, item) => sum + Number(item?.count || 0),
-    0
-  );
+function formatDeckItemsCount(items) {
+  const { mainCount, sideCount } = getDeckCounts(items);
+  return formatDeckCountSummary(mainCount, sideCount);
 }
 
 function OwnerLink({ owner }) {
@@ -292,7 +291,7 @@ export default function PublicDecks({ compact = false }) {
                 </div>
                 <div className="public-deck-meta">
                   <OwnerLink owner={deck.owner} />
-                  <span>{`${countDeckItems(deck.items)}枚`}</span>
+                  <span>{formatDeckItemsCount(deck.items)}</span>
                   <span>{formatDate(deck.publishedAt || deck.updatedAt)}</span>
                 </div>
               </article>

@@ -13,6 +13,7 @@ import { useSavedDecks } from "../hooks/useSavedDecks";
 import { getCardCode, getCardTypeLabel } from "../utils/cardImages";
 import { createBasicGCard } from "../utils/basicG";
 import { trackEvent } from "../utils/analytics";
+import { formatDeckCountSummary } from "../utils/deckCounts";
 import {
   buildDeckCostLabel,
   buildDeckExport,
@@ -551,8 +552,14 @@ const DeckBuilder = ({ compact = false }) => {
 
               <div className="deck-current-summary-row">
                 {typeSummaryText ? <p className="deck-panel-note deck-type-summary">{typeSummaryText}</p> : null}
-                <strong className={mainCount > 50 ? "deck-zone-count over-limit" : "deck-zone-count"}>
-                  {`${mainCount} / 50`}
+                <strong
+                  className={
+                    mainCount > 50 || sideCount > 10
+                      ? "deck-zone-count over-limit"
+                      : "deck-zone-count"
+                  }
+                >
+                  {formatDeckCountSummary(mainCount, sideCount)}
                 </strong>
               </div>
 
