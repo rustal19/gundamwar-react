@@ -803,7 +803,7 @@ function flattenMatches(rounds) {
 }
 
 function activeEntriesForPairing(entries) {
-  return entries.filter((entry) => !["dropped", "pending"].includes(entry.status));
+  return entries.filter((entry) => entry.status === "checked_in");
 }
 
 function activeEntriesForRound(entries, roundNumber) {
@@ -812,12 +812,8 @@ function activeEntriesForRound(entries, roundNumber) {
   );
 }
 
-function completedRoundCount(store, tournamentId) {
-  return completedRounds(getRounds(store, tournamentId)).length;
-}
-
 function nextJoinRound(store, tournamentId) {
-  return completedRoundCount(store, tournamentId) + 1;
+  return getRounds(store, tournamentId).length + 1;
 }
 
 function deriveResultFromGames({ player1Games, player2Games, result, isBye }) {
@@ -952,14 +948,16 @@ function updateTournamentStatusIfDone(tournament, rounds, activeCount) {
 
 function buildNextRound(store, tournamentId) {
   const tournament = getTournamentOrThrow(store, tournamentId);
-  let entries = activeEntriesForPairing(getEntries(store, tournamentId));
-  if (entries.length === 0) throw new Error("参加者がいません。");
-
   const rounds = getRounds(store, tournamentId);
   assertNoOpenRound(rounds);
 
   const nextNumber = rounds.length + 1;
-  entries = activeEntriesForRound(entries, nextNumber);
+  const entries = activeEntriesForRound(getEntries(store, tournamentId), nextNumber);
+  if (entries.length < 2) {
+    throw new Error(
+      `次ラウンド生成にはチェックイン済みの参加者が2人以上必要です（現在${entries.length}人）。`
+    );
+  }
   let pairs = [];
   let stage = "swiss";
 
