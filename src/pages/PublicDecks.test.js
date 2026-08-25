@@ -14,7 +14,7 @@ jest.mock("../context/AuthContext", () => ({
 }));
 
 jest.mock("../services/publicDecks", () => ({
-  __esModule: true,
+  ...jest.requireActual("../services/publicDecks"),
   fetchPublicDecks: jest.fn(),
 }));
 

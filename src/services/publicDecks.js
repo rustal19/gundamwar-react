@@ -67,6 +67,22 @@ function parsePublicDeckId(value) {
   return { sourceType: SAVED_DECK_SOURCE, sourceId: id };
 }
 
+export function isTournamentDeck(deck) {
+  const sourceType = firstNonEmptyText(deck?.sourceType, deck?.source_type).toLowerCase();
+  if (sourceType) {
+    return ["tournament", "tournament_deck", "entry"].includes(sourceType);
+  }
+  return parsePublicDeckId(deck?.id).sourceType === TOURNAMENT_DECK_SOURCE;
+}
+
+export function getTournamentRank(deck) {
+  return deck?.finalRank ?? deck?.tournament?.finalRank ?? null;
+}
+
+export function getTournamentParticipantCount(deck) {
+  return deck?.participantCount ?? deck?.tournament?.participantCount ?? null;
+}
+
 function buildPublicDeckId(sourceType, sourceId) {
   return `${sourceType === TOURNAMENT_DECK_SOURCE ? "entry" : "saved"}:${sourceId}`;
 }

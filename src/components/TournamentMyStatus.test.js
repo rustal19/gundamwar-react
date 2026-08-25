@@ -90,7 +90,12 @@ function statusProps(overrides = {}) {
       startsAt: new Date(2099, 0, 1, 10, 0).toISOString(),
       decklistRequired: true,
     },
-    myEntry: { ...entry, decklistSubmittedAt: new Date().toISOString() },
+    myEntry: {
+      ...entry,
+      decklistState: "submitted",
+      decklistSubmittedAt: new Date().toISOString(),
+      deckLockedAt: null,
+    },
     entries: [entry],
     rounds: [],
     isAuthenticated: true,
@@ -135,6 +140,33 @@ test("ラウンド生成後は対戦履歴を表示する", () => {
   );
 
   expect(screen.getByRole("button", { name: "対戦履歴" })).toBeInTheDocument();
+});
+
+test("ラウンド中でもロック解除後は再提出UIを表示する", () => {
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        myEntry: {
+          ...entry,
+          decklistState: "submitted",
+          decklistSubmittedAt: new Date().toISOString(),
+          deckLockedAt: null,
+          deckUnlockedAt: new Date().toISOString(),
+        },
+        rounds: [{ id: "round-1", number: 1, status: "in_progress", matches: [] }],
+        canUpdateDeck: true,
+      })}
+    />
+  );
+
+  expect(screen.getByText("デッキリストは提出済みです。差し替えできます。")).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      "主催者がロックを解除しています。再提出するとデッキリストは再びロックされます。"
+    )
+  ).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "提出を更新" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "デッキを選ぶ" })).toBeInTheDocument();
 });
 
 test("エントリー済みで提出デッキが空なら更新を無効化して理由を表示する", () => {
@@ -199,6 +231,52 @@ test("エントリー済みなら通常受付終了後も提出更新UIを表示
   expect(screen.getByRole("button", { name: "提出を更新" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "取り消し" })).toBeInTheDocument();
   expect(screen.queryByText("受付が終了しました。")).not.toBeInTheDocument();
+});
+
+test("ロック中は変更不可を案内し提出UIを描画しない", () => {
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        myEntry: {
+          ...entry,
+          decklistState: "locked",
+          decklistSubmittedAt: new Date().toISOString(),
+          deckLockedAt: new Date().toISOString(),
+        },
+        canUpdateDeck: true,
+      })}
+    />
+  );
+
+  expect(
+    screen.getByText(
+      "チェックイン済みのためデッキリストは変更できません(修正が必要な場合は主催者へ)"
+    )
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "提出を更新" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "デッキを選ぶ" })).not.toBeInTheDocument();
+});
+
+test("公開中は差し替え不可を案内し提出UIを描画しない", () => {
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        tournament: { ...statusProps().tournament, status: "completed", decklistsPublic: true },
+        myEntry: {
+          ...entry,
+          decklistState: "revealed",
+          decklistSubmittedAt: new Date().toISOString(),
+          deckLockedAt: new Date().toISOString(),
+        },
+        canUpdateDeck: true,
+        canCancel: false,
+      })}
+    />
+  );
+
+  expect(screen.getByText("デッキリストは公開中のため差し替えできません。")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "提出を更新" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "デッキを選ぶ" })).not.toBeInTheDocument();
 });
 
 test("進行中で途中参加可能なら受付終了表示ではなく途中参加申請UIを表示する", () => {

@@ -20,7 +20,7 @@ jest.mock("../context/DeckContext", () => ({
 }));
 
 jest.mock("../services/publicDecks", () => ({
-  __esModule: true,
+  ...jest.requireActual("../services/publicDecks"),
   fetchPublicDeck: jest.fn(),
   setDeckPublication: jest.fn(),
 }));

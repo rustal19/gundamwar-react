@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { DECKLIST_STATE_LABELS } from "../data/statusLabels";
 
 function toLocalDateKey(value) {
   if (!value) return "";
@@ -54,14 +55,6 @@ function countCards(items, zone) {
     .reduce((sum, item) => sum + Number(item.count || 0), 0);
 }
 
-function deckStatusLabel(entry) {
-  if (!entry) return "未提出";
-  if (Array.isArray(entry.deckItems) && entry.deckItems.length > 0) {
-    return `提出済み (メイン ${countCards(entry.deckItems, "main")} / サイド ${countCards(entry.deckItems, "side")})`;
-  }
-  return entry.decklistSubmittedAt ? "提出済み" : "未提出";
-}
-
 function latestRound(rounds) {
   const items = Array.isArray(rounds) ? rounds : [];
   return [...items].sort(
@@ -115,6 +108,91 @@ function DeckCountPreview({ items }) {
     <span className="tournament-deck-summary">
       メイン {countCards(items, "main")} / サイド {countCards(items, "side")}
     </span>
+  );
+}
+
+function DecklistStatusNotice({ entry, canUpdateDeck }) {
+  if (!entry?.decklistState) return null;
+
+  const state = entry.decklistState;
+  const isUnsubmittedAndLocked = state === "none" && Boolean(entry.deckLockedAt);
+  let message = "デッキリストの状態を確認してください。";
+
+  if (state === "none") {
+    message = isUnsubmittedAndLocked
+      ? "チェックイン済みのためデッキリストは変更できません(修正が必要な場合は主催者へ)"
+      : canUpdateDeck
+        ? "デッキリストが未提出です。デッキを選んで提出してください。"
+        : "デッキリストは未提出です。現在は提出できません。";
+  } else if (state === "submitted") {
+    message = canUpdateDeck
+      ? "デッキリストは提出済みです。差し替えできます。"
+      : "デッキリストは提出済みです。現在は差し替えできません。";
+  } else if (state === "locked") {
+    message = "チェックイン済みのためデッキリストは変更できません(修正が必要な場合は主催者へ)";
+  } else if (state === "revealed") {
+    message = "デッキリストは公開中のため差し替えできません。";
+  }
+
+  return (
+    <div className={`tournament-decklist-status ${state}`}>
+      <span className={`decklist-state-badge ${state}`}>
+        {DECKLIST_STATE_LABELS[state] || state}
+        {isUnsubmittedAndLocked ? "・ロック中" : ""}
+      </span>
+      <p>{message}</p>
+      {state !== "none" && Array.isArray(entry.deckItems) && entry.deckItems.length > 0 ? (
+        <DeckCountPreview items={entry.deckItems} />
+      ) : null}
+    </div>
+  );
+}
+
+function CheckInConfirmDialog({ decklistState, isSubmitting, onCancel, onConfirm }) {
+  return (
+    <div className="tournament-dialog-backdrop" role="presentation">
+      <div
+        className="tournament-deck-dialog tournament-confirm-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="checkin-confirm-dialog-title"
+        aria-describedby={
+          decklistState === "none"
+            ? "checkin-confirm-dialog-deck-warning checkin-confirm-dialog-description"
+            : "checkin-confirm-dialog-description"
+        }
+      >
+        <div className="tournament-dialog-header">
+          <h3 id="checkin-confirm-dialog-title">チェックインの確認</h3>
+        </div>
+        {decklistState === "none" ? (
+          <div
+            id="checkin-confirm-dialog-deck-warning"
+            className="tournament-validation-alert"
+          >
+            <strong>
+              デッキリストが未提出です。このままチェックインすると自分では提出できなくなります。
+            </strong>
+          </div>
+        ) : null}
+        <p id="checkin-confirm-dialog-description">
+          チェックインするとデッキリストがロックされ、以降は自分で変更できなくなります。修正が必要になった場合は主催者に連絡してください。チェックインしますか?
+        </p>
+        <div className="tournament-entry-actions tournament-confirm-actions">
+          <button type="button" onClick={onConfirm} disabled={isSubmitting}>
+            チェックインする
+          </button>
+          <button
+            type="button"
+            className="tournament-secondary-button"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            キャンセル
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -206,7 +284,11 @@ function EntryForm({
           デッキを選ぶ
         </button>
       </div>
-      <p className="tournament-muted">締切までは何度でも差し替えできます。</p>
+      <p className="tournament-muted">
+        {myEntry?.deckUnlockedAt && !myEntry.deckLockedAt
+          ? "主催者がロックを解除しています。再提出するとデッキリストは再びロックされます。"
+          : "締切までは何度でも差し替えできます。"}
+      </p>
       {isDialogOpen ? (
         <div className="tournament-dialog-backdrop" role="presentation">
           <div className="tournament-deck-dialog" role="dialog" aria-modal="true" aria-labelledby="deck-submit-dialog-title">
@@ -342,8 +424,11 @@ export default function TournamentMyStatus({
   isSubmitting,
 }) {
   const [now, setNow] = useState(() => new Date());
+  const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false);
   const phase = getMyStatusPhase(tournament, myEntry, rounds, now);
-  const needsDeckWarning = Boolean(tournament?.decklistRequired && myEntry && !myEntry.decklistSubmittedAt);
+  const needsDeckWarning = Boolean(
+    tournament?.decklistRequired && myEntry?.decklistState === "none"
+  );
   const currentRound = latestRound(rounds);
   const myMatch = findMyMatch(currentRound, myEntry?.id);
   const result = myResultInfo(myMatch, myEntry?.id);
@@ -353,6 +438,11 @@ export default function TournamentMyStatus({
     : null;
   const isWaitingNextPairing = phase === "round" && currentRound?.status === "completed";
   const checkedIn = myEntry?.status === "checked_in";
+  const canEditDecklist = Boolean(
+    canUpdateDeck &&
+      ["none", "submitted"].includes(myEntry?.decklistState) &&
+      !myEntry?.deckLockedAt
+  );
   const bandTone =
     phase === "checkin" && !checkedIn
       ? "accent"
@@ -361,6 +451,31 @@ export default function TournamentMyStatus({
         : checkedIn
           ? "primary"
           : "default";
+  const decklistEntryForm = canEditDecklist ? (
+    <EntryForm
+      tournament={tournament}
+      deckSource={deckSource}
+      onDeckSourceChange={onDeckSourceChange}
+      selectedDeckId={selectedDeckId}
+      onSelectedDeckChange={onSelectedDeckChange}
+      savedDecks={savedDecks}
+      submittedItems={submittedItems}
+      deckViolations={deckViolations}
+      onSubmitEntry={onSubmitEntry}
+      onCancelEntry={onCancelEntry}
+      submitDisabled={submitDisabled}
+      canCancel={canCancel}
+      canRegister={canRegister}
+      canUpdateDeck={canUpdateDeck}
+      isSubmitting={isSubmitting}
+      myEntry={myEntry}
+    />
+  ) : null;
+  const confirmCheckIn = () => {
+    if (isSubmitting) return;
+    setIsCheckInDialogOpen(false);
+    onCheckIn();
+  };
 
   useEffect(() => {
     if (!isRoundRunning || !currentRound?.timerStartedAt || tournament?.roundTimeMinutes == null) return undefined;
@@ -444,8 +559,10 @@ export default function TournamentMyStatus({
           <p className="tournament-eyebrow">マイステータス</p>
           <h2>申請中(主催者の承認待ち)</h2>
           <p>承認されると第{myEntry.joinedAtRound || 1}回戦まで不戦敗として追加されます。</p>
+          <DecklistStatusNotice entry={myEntry} canUpdateDeck={canEditDecklist} />
           <MatchHistory rounds={rounds} entries={entries} myEntry={myEntry} />
         </div>
+        {decklistEntryForm}
       </section>
     );
   }
@@ -457,13 +574,27 @@ export default function TournamentMyStatus({
           <p className="tournament-eyebrow">マイステータス</p>
           <h2>{checkedIn ? "チェックイン済み" : "チェックイン待ち"}</h2>
           <p>{checkedIn ? "ペアリング発表までお待ちください。" : "会場受付でチェックインしてください。"}</p>
+          <DecklistStatusNotice entry={myEntry} canUpdateDeck={canEditDecklist} />
         </div>
+        {decklistEntryForm}
         {!checkedIn && tournament?.selfCheckin ? (
           <div className="tournament-entry-actions">
-            <button type="button" onClick={onCheckIn} disabled={isSubmitting}>
+            <button
+              type="button"
+              onClick={() => setIsCheckInDialogOpen(true)}
+              disabled={isSubmitting}
+            >
               チェックインする
             </button>
           </div>
+        ) : null}
+        {isCheckInDialogOpen ? (
+          <CheckInConfirmDialog
+            decklistState={myEntry.decklistState}
+            isSubmitting={isSubmitting}
+            onCancel={() => setIsCheckInDialogOpen(false)}
+            onConfirm={confirmCheckIn}
+          />
         ) : null}
       </section>
     );
@@ -487,7 +618,9 @@ export default function TournamentMyStatus({
               {countdown ? <p className="tournament-round-timer">{countdown.label}</p> : null}
             </>
           )}
+          <DecklistStatusNotice entry={myEntry} canUpdateDeck={canEditDecklist} />
         </div>
+        {decklistEntryForm}
         <div className="tournament-my-status-result">
           {result ? (
             <span className={`tournament-result-badge ${result.tone}`}>
@@ -507,27 +640,16 @@ export default function TournamentMyStatus({
       <div>
         <p className="tournament-eyebrow">マイステータス</p>
         <h2>エントリー済み</h2>
-        <p>デッキリスト: {deckStatusLabel(myEntry)}</p>
-        {needsDeckWarning ? <p className="tournament-my-warning">デッキリストが未提出です。</p> : null}
+        <DecklistStatusNotice entry={myEntry} canUpdateDeck={canEditDecklist} />
+        {needsDeckWarning ? <p className="tournament-my-warning">提出状況を確認してください。</p> : null}
       </div>
-      <EntryForm
-        tournament={tournament}
-        deckSource={deckSource}
-        onDeckSourceChange={onDeckSourceChange}
-        selectedDeckId={selectedDeckId}
-        onSelectedDeckChange={onSelectedDeckChange}
-        savedDecks={savedDecks}
-        submittedItems={submittedItems}
-        deckViolations={deckViolations}
-        onSubmitEntry={onSubmitEntry}
-        onCancelEntry={onCancelEntry}
-        submitDisabled={submitDisabled}
-        canCancel={canCancel}
-        canRegister={canRegister}
-        canUpdateDeck={canUpdateDeck}
-        isSubmitting={isSubmitting}
-        myEntry={myEntry}
-      />
+      {decklistEntryForm || (canCancel ? (
+        <div className="tournament-entry-actions">
+          <button type="button" onClick={onCancelEntry} disabled={isSubmitting}>
+            取り消し
+          </button>
+        </div>
+      ) : null)}
       {myEntry ? <MatchHistory rounds={rounds} entries={entries} myEntry={myEntry} /> : null}
     </section>
   );

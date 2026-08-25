@@ -8,7 +8,12 @@ import {
   getDefaultFormatName,
   getTensakuRoundLabel,
 } from "../data/formatGroups";
-import { fetchPublicDecks } from "../services/publicDecks";
+import {
+  fetchPublicDecks,
+  getTournamentParticipantCount,
+  getTournamentRank,
+  isTournamentDeck,
+} from "../services/publicDecks";
 import { formatDeckCountSummary, getDeckCounts } from "../utils/deckCounts";
 import { getDeckColors } from "../utils/deckColors";
 import "./PublicDecks.css";
@@ -27,18 +32,6 @@ function formatDate(value) {
 function formatDeckItemsCount(items) {
   const { mainCount, sideCount } = getDeckCounts(items);
   return formatDeckCountSummary(mainCount, sideCount);
-}
-
-function isTournamentDeck(deck) {
-  return deck?.sourceType === "tournament" || String(deck?.id || "").startsWith("entry:");
-}
-
-function getTournamentRank(deck) {
-  return deck?.finalRank ?? deck?.tournament?.finalRank ?? null;
-}
-
-function getTournamentParticipantCount(deck) {
-  return deck?.participantCount ?? deck?.tournament?.participantCount ?? null;
 }
 
 function OwnerLink({ owner }) {

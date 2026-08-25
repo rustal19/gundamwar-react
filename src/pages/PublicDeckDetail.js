@@ -15,7 +15,13 @@ import {
   DECK_TYPE_ORDER,
   groupDeckItemsByType,
 } from "../utils/deckExport";
-import { fetchPublicDeck, setDeckPublication } from "../services/publicDecks";
+import {
+  fetchPublicDeck,
+  getTournamentParticipantCount,
+  getTournamentRank,
+  isTournamentDeck,
+  setDeckPublication,
+} from "../services/publicDecks";
 import NotFound from "./NotFound";
 import "./PublicDecks.css";
 
@@ -43,10 +49,6 @@ function getOwnerReference(owner) {
   return id && name ? { id, name } : null;
 }
 
-function isTournamentDeck(deck) {
-  return deck?.sourceType === "tournament" || String(deck?.id || "").startsWith("entry:");
-}
-
 function DeckMeta({ deck, mainCount, sideCount }) {
   const tournamentDeck = isTournamentDeck(deck);
   const linkedOwner = getOwnerReference(deck.owner);
@@ -59,9 +61,8 @@ function DeckMeta({ deck, mainCount, sideCount }) {
       ? tournament?.startsAt
       : deck.publishedAt || deck.updatedAt
   );
-  const finalRank = deck.finalRank ?? tournament?.finalRank ?? null;
-  const participantCount =
-    deck.participantCount ?? tournament?.participantCount ?? null;
+  const finalRank = getTournamentRank(deck);
+  const participantCount = getTournamentParticipantCount(deck);
 
   return (
     <dl className="public-deck-detail-meta" aria-label="デッキ情報">
