@@ -1033,6 +1033,61 @@ describe("tournaments service mock mode", () => {
     expect(latest.items.find((standing) => standing.entryId === "entry-3").points).toBe(6);
   });
 
+  it("keeps top-cut results out of swiss standings", async () => {
+    setRegistrationTournament({ status: "completed", swissRounds: 1, topCutSize: 4 });
+    const store = readStore();
+    store.entries.t1 = ["1", "2", "3", "4"].map((suffix) => ({
+      id: `entry-${suffix}`,
+      tournamentId: "t1",
+      user: { id: `player-${suffix}`, name: `Player ${suffix}` },
+      deckItems: null,
+      decklistSubmittedAt: null,
+      status: "checked_in",
+      createdAt: new Date().toISOString(),
+    }));
+    store.rounds.t1 = [
+      {
+        id: "round-1",
+        tournamentId: "t1",
+        number: 1,
+        stage: "swiss",
+        status: "completed",
+        matches: [
+          { id: "swiss-1", roundId: "round-1", tableNo: 1, player1EntryId: "entry-1", player2EntryId: "entry-2", result: "p1_win" },
+          { id: "swiss-2", roundId: "round-1", tableNo: 2, player1EntryId: "entry-3", player2EntryId: "entry-4", result: "p1_win" },
+        ],
+      },
+      {
+        id: "round-2",
+        tournamentId: "t1",
+        number: 2,
+        stage: "top_cut",
+        status: "completed",
+        matches: [
+          { id: "se-1", roundId: "round-2", tableNo: 1, player1EntryId: "entry-1", player2EntryId: "entry-2", result: "p2_win" },
+          { id: "se-2", roundId: "round-2", tableNo: 2, player1EntryId: "entry-3", player2EntryId: "entry-4", result: "p2_win" },
+        ],
+      },
+    ];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const latest = await fetchStandings("t1", { authMode: "mock" });
+    const throughTopCutRound = await fetchStandings("t1", { authMode: "mock", round: 2 });
+
+    [latest, throughTopCutRound].forEach((payload) => {
+      expect(payload.items.find((standing) => standing.entryId === "entry-1")).toMatchObject({
+        wins: 1,
+        losses: 0,
+        points: 3,
+      });
+      expect(payload.items.find((standing) => standing.entryId === "entry-2")).toMatchObject({
+        wins: 0,
+        losses: 1,
+        points: 0,
+      });
+    });
+  });
+
   it("creates and updates organizer tournaments with forward status transitions", async () => {
     const startsAt = "2030-01-02T10:00:00.000Z";
     const checkinOpensAt = "2030-01-02T09:00:00.000Z";
@@ -1405,6 +1460,99 @@ describe("tournaments service mock mode", () => {
 
     const tournament = await fetchTournament("t1", { authMode: "mock", user });
     expect(tournament.status).toBe("completed");
+  });
+
+  it("rejects direct and game-score draws in a top-cut round", async () => {
+    setRegistrationTournament({ status: "registration", format: "single_elim" });
+    const store = readStore();
+    store.entries.t1 = ["1", "2"].map((suffix) => ({
+      id: `entry-${suffix}`,
+      tournamentId: "t1",
+      user: { id: `player-${suffix}`, name: `Player ${suffix}` },
+      deckItems: null,
+      decklistSubmittedAt: null,
+      status: "checked_in",
+      createdAt: new Date().toISOString(),
+    }));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const round = await createNextRound("t1", { authMode: "mock" });
+    const matchId = round.matches[0].id;
+    const drawError =
+      "SEラウンドでは引き分けにできません。勝者が決まる結果を入力してください。";
+
+    await expect(
+      reportMatchResult({ matchId, result: "draw", authMode: "mock" })
+    ).rejects.toThrow(drawError);
+    await expect(
+      reportMatchResult({
+        matchId,
+        player1Games: 1,
+        player2Games: 1,
+        authMode: "mock",
+      })
+    ).rejects.toThrow(drawError);
+
+    expect(readStore().rounds.t1[0].matches[0]).toMatchObject({
+      player1Games: null,
+      player2Games: null,
+      result: null,
+    });
+  });
+
+  it("rejects top-cut draws before sending an API request", async () => {
+    global.fetch = jest.fn();
+    const drawError =
+      "SEラウンドでは引き分けにできません。勝者が決まる結果を入力してください。";
+
+    await expect(
+      reportMatchResult({
+        matchId: "api-match",
+        result: "draw",
+        stage: "top_cut",
+        authMode: "api",
+      })
+    ).rejects.toThrow(drawError);
+    await expect(
+      reportMatchResult({
+        matchId: "api-match",
+        player1Games: 1,
+        player2Games: 1,
+        stage: "top_cut",
+        authMode: "api",
+      })
+    ).rejects.toThrow(drawError);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("continues to allow draws in swiss rounds", async () => {
+    setRegistrationTournament({ status: "registration" });
+    const store = readStore();
+    store.entries.t1 = ["1", "2"].map((suffix) => ({
+      id: `entry-${suffix}`,
+      tournamentId: "t1",
+      user: { id: `player-${suffix}`, name: `Player ${suffix}` },
+      deckItems: null,
+      decklistSubmittedAt: null,
+      status: "checked_in",
+      createdAt: new Date().toISOString(),
+    }));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const round = await createNextRound("t1", { authMode: "mock" });
+    const matchId = round.matches[0].id;
+
+    await expect(
+      reportMatchResult({ matchId, result: "draw", authMode: "mock" })
+    ).resolves.toMatchObject({ result: "draw" });
+    await expect(
+      reportMatchResult({
+        matchId,
+        player1Games: 1,
+        player2Games: 1,
+        authMode: "mock",
+      })
+    ).resolves.toMatchObject({ player1Games: 1, player2Games: 1, result: "draw" });
   });
 
   it("derives match results from BO3 game scores", async () => {

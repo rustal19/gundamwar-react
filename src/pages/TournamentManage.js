@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import Bracket from "../components/Bracket";
 import CardHoverPreview from "../components/CardHoverPreview";
 import RegulationCardInput, {
   createRegulationCardState,
@@ -38,6 +39,8 @@ import {
 } from "../data/statusLabels";
 import { buildDeckExport, groupDeckItemsByType } from "../utils/deckExport";
 import { FORMAT_PRESETS, OTHER_FORMAT_NAME } from "../data/formats";
+import { getRoundLabel, getRoundLabelForNumber } from "../utils/tournament/roundLabel";
+import { computeStandings } from "../utils/tournament/standings";
 import "./Tournaments.css";
 
 const DEFAULT_FORM = {
@@ -365,7 +368,9 @@ function nextActionText(form, rounds, activeEntryCount) {
   const status = form.status;
   if (status === "draft") return "内容を保存して「受付開始」を押してください。";
   if (status === "registration") return "当日になったら「進行開始」→ラウンド生成を行ってください。";
-  if (status === "in_progress" && rounds.length === 0) return "第1回戦を生成してください。";
+  if (status === "in_progress" && rounds.length === 0) {
+    return `${getRoundLabelForNumber(1, rounds, form)}を生成してください。`;
+  }
   if (status === "in_progress") {
     const activeRound = [...rounds].reverse().find((round) => round.status !== "completed") || rounds[rounds.length - 1];
     if (rounds.length && rounds.every((round) => round.status === "completed")) {
@@ -465,22 +470,22 @@ function TournamentDeckRows({ items, compact }) {
 }
 
 function RoundRollbackConfirmDialog({
-  firstDiscardedRoundNumber,
+  firstDiscardedRoundLabel,
   isSubmitting,
   onCancel,
   onConfirm,
   releasesTournamentCompletion,
-  targetRoundNumber,
+  targetRoundLabel,
 }) {
-  const hasLaterRounds = firstDiscardedRoundNumber != null;
+  const hasLaterRounds = Boolean(firstDiscardedRoundLabel);
   const dialogTitle = hasLaterRounds ? "後続ラウンド破棄の確認" : "大会完了解除の確認";
   const description = [
-    `第${targetRoundNumber}回戦を完了前に戻して結果を修正します。`,
+    `${targetRoundLabel}を完了前に戻して結果を修正します。`,
     releasesTournamentCompletion
       ? "大会の完了状態も解除され、進行中に戻ります。"
       : "",
     hasLaterRounds
-      ? `第${firstDiscardedRoundNumber}回戦以降のラウンドと対戦結果をすべて破棄します。破棄した内容は元に戻せません。`
+      ? `${firstDiscardedRoundLabel}以降のラウンドと対戦結果をすべて破棄します。破棄した内容は元に戻せません。`
       : "",
     "続行しますか？",
   ].join("");
@@ -501,7 +506,7 @@ function RoundRollbackConfirmDialog({
         <div className="tournament-entry-actions tournament-confirm-actions">
           <button type="button" className="danger-button" onClick={onConfirm} disabled={isSubmitting}>
             {hasLaterRounds
-              ? `第${firstDiscardedRoundNumber}回戦以降を破棄して修正`
+              ? `${firstDiscardedRoundLabel}以降を破棄して修正`
               : "大会の完了状態を解除して修正"}
           </button>
           <button
@@ -639,7 +644,9 @@ function RoundManagePanel({
   const canEditPairing = selectedRound?.status !== "completed";
   const reopenDisabledReason =
     latestCompletedRound?.id !== selectedRound?.id
-      ? `修正できるのは直前に完了した第${latestCompletedRound?.number || "-"}回戦だけです。`
+      ? `修正できるのは直前に完了した${
+          latestCompletedRound ? getRoundLabel(latestCompletedRound, rounds) : "ラウンド"
+        }だけです。`
       : !["in_progress", "completed"].includes(form.status)
         ? "進行中または完了した大会のラウンドのみ修正できます。"
         : "";
@@ -670,7 +677,7 @@ function RoundManagePanel({
       {selectedRound ? (
         <>
           <div className="tournament-manage-strip">
-            <span>第{selectedRound.number}回戦</span>
+            <span>{getRoundLabel(selectedRound, rounds)}</span>
             <span>{selectedRound.status === "completed" ? "完了" : "進行中"}</span>
             {form.roundTimeMinutes ? <span>残り {remainingTime(selectedRound, form.roundTimeMinutes, now)}</span> : null}
             {form.roundTimeMinutes ? (
@@ -683,6 +690,9 @@ function RoundManagePanel({
               </button>
             ) : null}
           </div>
+          {selectedRound.stage === "top_cut" ? (
+            <Bracket rounds={rounds} entries={entries} showResults />
+          ) : null}
           <div className="tournament-table-wrap">
             <table className="tournament-table manage-table">
               <thead>
@@ -719,7 +729,9 @@ function RoundManagePanel({
                           <span className="tournament-muted">完了</span>
                         ) : editingMatchId === match.id || !isReported ? (
                           <>
-                            {BO3_PRESETS.map(([p1, p2]) => (
+                            {BO3_PRESETS.filter(
+                              ([p1, p2]) => selectedRound.stage !== "top_cut" || p1 !== p2
+                            ).map(([p1, p2]) => (
                               <button
                                 key={`${match.id}-${p1}-${p2}`}
                                 type="button"
@@ -744,6 +756,12 @@ function RoundManagePanel({
                               <span className="custom-score-input">
                                 <input
                                   aria-label="プレイヤー1ゲーム数"
+                                  aria-invalid={
+                                    selectedRound.stage === "top_cut" &&
+                                    customScore.player1Games !== "" &&
+                                    customScore.player2Games !== "" &&
+                                    Number(customScore.player1Games) === Number(customScore.player2Games)
+                                  }
                                   type="number"
                                   min="0"
                                   max="2"
@@ -754,6 +772,12 @@ function RoundManagePanel({
                                 />
                                 <input
                                   aria-label="プレイヤー2ゲーム数"
+                                  aria-invalid={
+                                    selectedRound.stage === "top_cut" &&
+                                    customScore.player1Games !== "" &&
+                                    customScore.player2Games !== "" &&
+                                    Number(customScore.player1Games) === Number(customScore.player2Games)
+                                  }
                                   type="number"
                                   min="0"
                                   max="2"
@@ -764,6 +788,12 @@ function RoundManagePanel({
                                 />
                                 <button
                                   type="button"
+                                  disabled={
+                                    customScore.player1Games === "" ||
+                                    customScore.player2Games === "" ||
+                                    (selectedRound.stage === "top_cut" &&
+                                      Number(customScore.player1Games) === Number(customScore.player2Games))
+                                  }
                                   onClick={() =>
                                     onReportScore(
                                       match.id,
@@ -774,6 +804,14 @@ function RoundManagePanel({
                                 >
                                   保存
                                 </button>
+                                {selectedRound.stage === "top_cut" &&
+                                customScore.player1Games !== "" &&
+                                customScore.player2Games !== "" &&
+                                Number(customScore.player1Games) === Number(customScore.player2Games) ? (
+                                  <span className="tournament-checkin-warning" role="alert">
+                                    SEラウンドでは同数のスコアを保存できません。
+                                  </span>
+                                ) : null}
                               </span>
                             ) : null}
                           </>
@@ -1001,7 +1039,11 @@ function ParticipantsPanel({
               <div>
                 <strong>{entry.user?.name || entry.id}</strong>
                 <p>
-                  {`許可後にチェックインすると、第${entry.joinedAtRound || nextRound}回戦からペアリング対象になります。それ以前は不戦敗として扱われます。`}
+                  {`許可後にチェックインすると、${getRoundLabelForNumber(
+                    entry.joinedAtRound || nextRound,
+                    rounds,
+                    form
+                  )}からペアリング対象になります。それ以前は不戦敗として扱われます。`}
                 </p>
               </div>
               <div className="tournament-row-actions">
@@ -1111,7 +1153,9 @@ function ParticipantsPanel({
                   <td>
                     {entry.user?.id == null ? <span className="mini-badge">ゲスト</span> : null}
                     {Number(entry.joinedAtRound || 1) > 1 ? (
-                      <span className="mini-badge">第{entry.joinedAtRound}回戦から</span>
+                      <span className="mini-badge">
+                        {getRoundLabelForNumber(entry.joinedAtRound, rounds, form)}から
+                      </span>
                     ) : null}
                   </td>
                   <td className="tournament-row-actions">
@@ -1434,41 +1478,81 @@ function InfoPanel({
 }
 
 function StandingsPanel({ entries, rounds, selectedRoundNumber, setSelectedRoundNumber, standings }) {
+  const swissRounds = useMemo(
+    () => (rounds || []).filter((round) => round.stage !== "top_cut"),
+    [rounds]
+  );
+  const topCutRounds = useMemo(
+    () => (rounds || []).filter((round) => round.stage === "top_cut"),
+    [rounds]
+  );
+  const selectedSwissRound = swissRounds.find(
+    (round) => Number(round.number) === Number(selectedRoundNumber)
+  );
+  const swissStandings = useMemo(() => {
+    if (!swissRounds.length) return topCutRounds.length ? [] : standings;
+    const matches = swissRounds
+      .filter(
+        (round) =>
+          !selectedSwissRound || Number(round.number) <= Number(selectedSwissRound.number)
+      )
+      .flatMap((round) => round.matches || []);
+    return computeStandings(entries, matches);
+  }, [entries, selectedSwissRound, standings, swissRounds, topCutRounds.length]);
+  const showSwissStandings = swissRounds.length > 0 || topCutRounds.length === 0;
+
   return (
     <section className="tournament-tab-panel">
-      <h2>順位表</h2>
-      <RoundTabs rounds={rounds} selectedRoundNumber={selectedRoundNumber} onChange={setSelectedRoundNumber} />
-      <div className="tournament-table-wrap">
-        <table className="tournament-table">
-          <thead>
-            <tr>
-              <th className="num">順位</th>
-              <th>プレイヤー</th>
-              <th className="num">勝</th>
-              <th className="num">敗</th>
-              <th className="num">分</th>
-              <th className="num">勝点</th>
-              <th className="num">OMW%</th>
-            </tr>
-          </thead>
-          <tbody>
-            {standings.map((standing) => {
-              const entry = standing.entry || findEntry(entries, standing.entryId);
-              return (
-                <tr key={standing.entryId}>
-                  <td className="num">{standing.rank}</td>
-                  <td>{entry?.user?.name || standing.entryId}</td>
-                  <td className="num">{standing.wins}</td>
-                  <td className="num">{standing.losses}</td>
-                  <td className="num">{standing.draws}</td>
-                  <td className="num">{standing.points}</td>
-                  <td className="num">{Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%</td>
+      <h2>{topCutRounds.length ? "大会結果" : "順位表"}</h2>
+      {topCutRounds.length ? (
+        <div className="tournament-rounds">
+          <h3>トップカット</h3>
+          <Bracket rounds={rounds} entries={entries} showResults />
+        </div>
+      ) : null}
+      {showSwissStandings ? (
+        <div className="tournament-rounds">
+          {topCutRounds.length ? <h3>スイス順位表</h3> : null}
+          <RoundTabs
+            rounds={swissRounds}
+            selectedRoundNumber={selectedRoundNumber}
+            onChange={setSelectedRoundNumber}
+          />
+          <div className="tournament-table-wrap">
+            <table className="tournament-table">
+              <thead>
+                <tr>
+                  <th className="num">順位</th>
+                  <th>プレイヤー</th>
+                  <th className="num">勝</th>
+                  <th className="num">敗</th>
+                  <th className="num">分</th>
+                  <th className="num">勝点</th>
+                  <th className="num">OMW%</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {swissStandings.map((standing) => {
+                  const entry = standing.entry || findEntry(entries, standing.entryId);
+                  return (
+                    <tr key={standing.entryId}>
+                      <td className="num">{standing.rank}</td>
+                      <td>{entry?.user?.name || standing.entryId}</td>
+                      <td className="num">{standing.wins}</td>
+                      <td className="num">{standing.losses}</td>
+                      <td className="num">{standing.draws}</td>
+                      <td className="num">{standing.points}</td>
+                      <td className="num">
+                        {Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -1484,6 +1568,7 @@ export default function TournamentManage({ compact = false }) {
   const [standings, setStandings] = useState([]);
   const [activeTab, setActiveTab] = useState("rounds");
   const [selectedRoundNumber, setSelectedRoundNumber] = useState(null);
+  const [selectedStandingRoundNumber, setSelectedStandingRoundNumber] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -1520,6 +1605,12 @@ export default function TournamentManage({ compact = false }) {
             : nextRounds[nextRounds.length - 1].number
         );
       }
+      const nextSwissRounds = nextRounds.filter((round) => round.stage !== "top_cut");
+      setSelectedStandingRoundNumber((current) =>
+        nextSwissRounds.some((round) => Number(round.number) === Number(current))
+          ? current
+          : nextSwissRounds[nextSwissRounds.length - 1]?.number ?? null
+      );
     } catch (loadError) {
       if (loadError.status === 403) setIsAccessDenied(true);
       setError(loadError.message);
@@ -1645,11 +1736,22 @@ export default function TournamentManage({ compact = false }) {
 
   const generateRound = () => runAction(async () => createNextRound(id, { authMode }), "次ラウンドを生成しました。");
 
-  const reportScore = (matchId, player1Games, player2Games) =>
-    runAction(
-      async () => reportMatchResult({ matchId, player1Games, player2Games, authMode }),
+  const reportScore = (matchId, player1Games, player2Games) => {
+    const round = rounds.find((item) =>
+      (item.matches || []).some((match) => match.id === matchId)
+    );
+    return runAction(
+      async () =>
+        reportMatchResult({
+          matchId,
+          player1Games,
+          player2Games,
+          stage: round?.stage,
+          authMode,
+        }),
       "結果を保存しました。"
     );
+  };
 
   const finishRound = (roundId) => runAction(async () => completeRound(roundId, { authMode }), "ラウンドを完了しました。");
 
@@ -1679,9 +1781,18 @@ export default function TournamentManage({ compact = false }) {
       setRoundRollbackConfirmation({
         roundId,
         targetRoundNumber: targetRound.number,
+        targetRoundLabel: getRoundLabel(targetRound, rounds),
         firstDiscardedRoundNumber: laterRounds.length
           ? Math.min(...laterRounds.map((round) => Number(round.number)))
           : null,
+        firstDiscardedRoundLabel: laterRounds.length
+          ? getRoundLabel(
+              laterRounds.reduce((first, round) =>
+                Number(round.number) < Number(first.number) ? round : first
+              ),
+              rounds
+            )
+          : "",
         releasesTournamentCompletion: true,
       });
       return;
@@ -1693,15 +1804,25 @@ export default function TournamentManage({ compact = false }) {
     try {
       const reopened = await reopenRound(roundId, { authMode, discardLaterRounds });
       setRoundRollbackConfirmation(null);
-      setMessage(`第${reopened.number}回戦を完了前に戻しました。結果を修正してください。`);
+      setMessage(
+        `${getRoundLabel(reopened, rounds)}を完了前に戻しました。結果を修正してください。`
+      );
       await loadAll();
     } catch (actionError) {
       if (!discardLaterRounds && actionError.code === "later_rounds_exist") {
+        const firstDiscardedRoundNumber =
+          actionError.firstDiscardedRoundNumber || Number(targetRound?.number || 0) + 1;
+        const firstDiscardedRound = rounds.find(
+          (round) => Number(round.number) === Number(firstDiscardedRoundNumber)
+        );
         setRoundRollbackConfirmation({
           roundId,
           targetRoundNumber: targetRound?.number,
-          firstDiscardedRoundNumber:
-            actionError.firstDiscardedRoundNumber || Number(targetRound?.number || 0) + 1,
+          targetRoundLabel: targetRound ? getRoundLabel(targetRound, rounds) : "対象ラウンド",
+          firstDiscardedRoundNumber,
+          firstDiscardedRoundLabel: firstDiscardedRound
+            ? getRoundLabel(firstDiscardedRound, rounds)
+            : getRoundLabelForNumber(firstDiscardedRoundNumber, rounds, form),
           releasesTournamentCompletion: form.status === "completed",
         });
       } else {
@@ -1946,20 +2067,20 @@ export default function TournamentManage({ compact = false }) {
         <StandingsPanel
           entries={entries}
           rounds={rounds}
-          selectedRoundNumber={selectedRoundNumber}
-          setSelectedRoundNumber={setSelectedRoundNumber}
+          selectedRoundNumber={selectedStandingRoundNumber}
+          setSelectedRoundNumber={setSelectedStandingRoundNumber}
           standings={standings}
         />
       ) : null}
 
       {roundRollbackConfirmation ? (
         <RoundRollbackConfirmDialog
-          firstDiscardedRoundNumber={roundRollbackConfirmation.firstDiscardedRoundNumber}
+          firstDiscardedRoundLabel={roundRollbackConfirmation.firstDiscardedRoundLabel}
           isSubmitting={isSubmitting}
           onCancel={() => setRoundRollbackConfirmation(null)}
           onConfirm={confirmRoundRollback}
           releasesTournamentCompletion={roundRollbackConfirmation.releasesTournamentCompletion}
-          targetRoundNumber={roundRollbackConfirmation.targetRoundNumber}
+          targetRoundLabel={roundRollbackConfirmation.targetRoundLabel}
         />
       ) : null}
     </main>

@@ -4,6 +4,8 @@ import TournamentDetail, { formatCardCountRange } from "./TournamentDetail";
 import {
   checkInMyEntry,
   createEntry,
+  fetchRounds,
+  fetchStandings,
   fetchTournament,
   updateMyEntry,
 } from "../services/tournaments";
@@ -30,8 +32,8 @@ jest.mock("../services/tournaments", () => ({
   deleteMyEntry: jest.fn(),
   updateMyEntry: jest.fn(),
   fetchTournament: jest.fn(),
-  fetchRounds: () => Promise.resolve({ rounds: [] }),
-  fetchStandings: () => Promise.resolve({ items: [] }),
+  fetchRounds: jest.fn(),
+  fetchStandings: jest.fn(),
 }));
 
 function renderDetail() {
@@ -141,6 +143,8 @@ beforeEach(() => {
   createEntry.mockReset().mockResolvedValue({});
   checkInMyEntry.mockReset().mockResolvedValue({});
   updateMyEntry.mockReset().mockResolvedValue({});
+  fetchRounds.mockReset().mockResolvedValue({ rounds: [] });
+  fetchStandings.mockReset().mockResolvedValue({ items: [] });
 });
 
 test("レギュレーション枚数は同値を単一表記、異なる値を範囲表記にする", () => {
@@ -183,6 +187,98 @@ test("参加者ステータスを日本語ラベルで表示する", async () =>
   expect(screen.getByText("申請中")).toBeInTheDocument();
   expect(screen.queryByText("checked_in")).not.toBeInTheDocument();
   expect(screen.queryByText("pending")).not.toBeInTheDocument();
+});
+
+test("SEはブラケットとSE内連番で表示し、順位表はスイス結果だけを集計する", async () => {
+  const entries = [
+    { id: "entry-1", user: { id: "player-1", name: "選手1" }, status: "checked_in" },
+    { id: "entry-2", user: { id: "player-2", name: "選手2" }, status: "checked_in" },
+  ];
+  mockTournament = registrationTournament({
+    format: "swiss",
+    status: "in_progress",
+    swissRounds: 1,
+    topCutSize: 2,
+    entries,
+  });
+  fetchRounds.mockResolvedValue({
+    rounds: [
+      {
+        id: "round-1",
+        number: 1,
+        stage: "swiss",
+        status: "completed",
+        matches: [
+          {
+            id: "match-1",
+            tableNo: 1,
+            player1EntryId: "entry-1",
+            player2EntryId: "entry-2",
+            player1Games: 2,
+            player2Games: 0,
+            result: "p1_win",
+          },
+        ],
+      },
+      {
+        id: "round-2",
+        number: 2,
+        stage: "top_cut",
+        status: "completed",
+        matches: [
+          {
+            id: "match-2",
+            tableNo: 1,
+            player1EntryId: "entry-1",
+            player2EntryId: "entry-2",
+            player1Games: 0,
+            player2Games: 2,
+            result: "p2_win",
+          },
+        ],
+      },
+      {
+        id: "round-3",
+        number: 3,
+        stage: "top_cut",
+        status: "in_progress",
+        matches: [
+          {
+            id: "match-3",
+            tableNo: 1,
+            player1EntryId: "entry-2",
+            player2EntryId: null,
+            player1Games: null,
+            player2Games: null,
+            result: null,
+          },
+        ],
+      },
+    ],
+  });
+
+  renderDetail();
+
+  fireEvent.click(await screen.findByRole("button", { name: "ペアリング" }));
+  expect(await screen.findByRole("button", { name: "SE2回戦" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "SE2回戦 / トップカット" })).toBeInTheDocument();
+  expect(screen.getByText("0 - 2（P2勝利）")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "順位表" }));
+  expect(await screen.findByRole("heading", { name: "スイス順位表" })).toBeInTheDocument();
+  const roundTabs = screen.getByLabelText("ラウンド切替");
+  expect(within(roundTabs).getByRole("button", { name: "第1回戦" })).toBeInTheDocument();
+  expect(within(roundTabs).queryByRole("button", { name: /SE/ })).not.toBeInTheDocument();
+
+  const player1Row = within(screen.getByRole("table")).getByRole("row", { name: /選手1/ });
+  expect(within(player1Row).getAllByRole("cell").slice(0, 6).map((cell) => cell.textContent)).toEqual([
+    "1",
+    "選手1",
+    "1",
+    "0",
+    "0",
+    "3",
+  ]);
 });
 
 test("任意大会ではデッキなしでエントリーし未提出として扱う", async () => {

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo } from "react";
+import { getRoundLabel } from "../utils/tournament/roundLabel";
 
 export default function RoundTabs({ rounds, selectedRoundNumber, onChange, className = "" }) {
   const items = useMemo(
@@ -32,7 +33,7 @@ export default function RoundTabs({ rounds, selectedRoundNumber, onChange, class
           onClick={() => onChange(round.number)}
         >
           {round.isCurrent ? <span className="round-tab-dot" aria-hidden="true" /> : null}
-          第{round.number}回戦
+          {getRoundLabel(round, items)}
         </button>
       ))}
     </div>
