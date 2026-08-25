@@ -175,7 +175,15 @@ describe("publicDecks mock service", () => {
     window.localStorage.setItem(
       PUBLIC_STORAGE_KEY,
       JSON.stringify([
-        { id: "deck-1", title: "Public", isPublic: true, items: [], owner: user },
+        {
+          id: "deck-1",
+          title: "Public",
+          isPublic: true,
+          items: [],
+          owner: user,
+          tournamentId: "tournament-1",
+          tournamentName: "テスト大会",
+        },
         { id: "deck-2", title: "Private", isPublic: false, items: [], owner: user },
       ])
     );
@@ -183,6 +191,7 @@ describe("publicDecks mock service", () => {
     await expect(fetchPublicDeck("deck-1", { authMode: "mock" })).resolves.toMatchObject({
       id: "deck-1",
       title: "Public",
+      tournament: { id: "tournament-1", title: "テスト大会" },
     });
     await expect(fetchPublicDeck("deck-2", { authMode: "mock" })).rejects.toThrow(
       "公開デッキが見つかりません。"
