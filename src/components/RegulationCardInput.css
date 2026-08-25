@@ -1,0 +1,199 @@
+.regulation-card-input {
+  min-width: 0;
+  margin: 6px 0 0;
+  border: 1px solid var(--gw-border);
+  border-radius: var(--gw-radius-sm);
+  padding: 12px;
+}
+
+.regulation-card-input legend {
+  color: var(--gw-text);
+  font-weight: 800;
+  padding: 0 5px;
+}
+
+.regulation-card-search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+}
+
+.regulation-card-control,
+.regulation-card-bulk {
+  display: grid;
+  gap: 5px;
+}
+
+.regulation-card-control label,
+.regulation-card-bulk label {
+  color: var(--gw-text-muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.regulation-card-search-row button,
+.regulation-card-bulk > button,
+.regulation-card-unresolved-actions button,
+.regulation-card-row-candidates button {
+  min-height: 36px;
+}
+
+.regulation-card-search-error {
+  margin: 8px 0 0;
+  color: var(--gw-danger-text-alt);
+  font-weight: 700;
+}
+
+.regulation-card-search-results {
+  margin-top: 8px;
+  border: 1px solid var(--gw-border);
+  border-radius: var(--gw-radius-sm);
+  background: var(--gw-surface);
+  padding: 8px;
+}
+
+.regulation-card-search-results p {
+  margin: 0 0 6px;
+  color: var(--gw-text-muted);
+  font-size: 0.88rem;
+}
+
+.regulation-card-search-results ul {
+  display: grid;
+  gap: 4px;
+  max-height: 240px;
+  margin: 0;
+  overflow-y: auto;
+  padding: 0;
+  list-style: none;
+}
+
+.regulation-card-search-results button {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: var(--gw-radius-sm);
+  background: var(--gw-primary-soft);
+  color: var(--gw-text);
+  cursor: pointer;
+  padding: 7px 9px;
+  text-align: left;
+}
+
+.regulation-card-search-results button:hover,
+.regulation-card-search-results button:focus-visible {
+  border-color: var(--gw-primary);
+}
+
+.regulation-card-selected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.regulation-card-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  border: 1px solid var(--gw-primary);
+  border-radius: 999px;
+  background: var(--gw-primary-soft);
+  color: var(--gw-primary-strong);
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 4px 5px 4px 9px;
+}
+
+.regulation-card-chip > span {
+  overflow-wrap: anywhere;
+}
+
+.regulation-card-chip button {
+  display: inline-grid;
+  width: 24px;
+  min-height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  place-items: center;
+}
+
+.regulation-card-chip button:hover,
+.regulation-card-chip button:focus-visible {
+  background: var(--gw-surface);
+}
+
+.regulation-card-bulk {
+  margin-top: 12px;
+}
+
+.regulation-card-bulk p {
+  margin: 0;
+}
+
+.regulation-card-bulk > button {
+  justify-self: start;
+}
+
+.regulation-card-unresolved {
+  margin-top: 10px;
+  border: 1px solid var(--gw-danger-border);
+  border-radius: var(--gw-radius-sm);
+  background: var(--gw-danger-soft-alt);
+  color: var(--gw-danger-text-alt);
+  padding: 10px;
+}
+
+.regulation-card-unresolved > ul {
+  display: grid;
+  gap: 9px;
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.regulation-card-unresolved-row {
+  min-width: 0;
+}
+
+.regulation-card-unresolved-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.regulation-card-row-candidates {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.regulation-card-row-candidates button {
+  border: 1px solid var(--gw-danger-border);
+  border-radius: var(--gw-radius-sm);
+  background: var(--gw-surface);
+  color: var(--gw-text);
+  cursor: pointer;
+  padding: 5px 8px;
+}
+
+@media (max-width: 760px) {
+  .regulation-card-search-row,
+  .regulation-card-unresolved-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .regulation-card-search-row button,
+  .regulation-card-unresolved-actions button {
+    justify-self: start;
+  }
+}

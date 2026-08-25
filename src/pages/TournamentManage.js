@@ -1,6 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import CardHoverPreview from "../components/CardHoverPreview";
+import RegulationCardInput, {
+  createRegulationCardState,
+  getRegulationCardErrors,
+  getRegulationCardIds,
+  getRegulationCardReferences,
+} from "../components/RegulationCardInput";
 import RoundTabs from "../components/RoundTabs";
 import { useAuth } from "../context/AuthContext";
 import { useDeckPreview } from "../hooks/useDeckPreview";
@@ -61,6 +67,8 @@ const DEFAULT_FORM = {
     maxCopies: 3,
     bannedCards: [],
     limitedCards: [],
+    bannedCardInput: createRegulationCardState([]),
+    limitedCardInput: createRegulationCardState([]),
     allowedSets: null,
   },
 };
@@ -108,13 +116,22 @@ function textToList(value) {
     .filter(Boolean);
 }
 
+function normalizeReferenceList(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item ?? "").trim()).filter(Boolean);
+  }
+  return textToList(value);
+}
+
 function numberOrNull(value) {
   if (value === "" || value == null) return null;
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
 }
 
-function formFromTournament(tournament) {
+function formFromTournament(tournament, knownRegulation = null) {
+  const bannedCards = normalizeReferenceList(tournament.regulation?.bannedCards);
+  const limitedCards = normalizeReferenceList(tournament.regulation?.limitedCards);
   return {
     ...DEFAULT_FORM,
     ...tournament,
@@ -135,8 +152,16 @@ function formFromTournament(tournament) {
     regulation: {
       ...DEFAULT_FORM.regulation,
       ...(tournament.regulation || {}),
-      bannedCardsText: listToText(tournament.regulation?.bannedCards),
-      limitedCardsText: listToText(tournament.regulation?.limitedCards),
+      bannedCards,
+      limitedCards,
+      bannedCardInput: createRegulationCardState(bannedCards, {
+        trustExistingIds: true,
+        knownCards: knownRegulation?.bannedCardInput?.selectedCards,
+      }),
+      limitedCardInput: createRegulationCardState(limitedCards, {
+        trustExistingIds: true,
+        knownCards: knownRegulation?.limitedCardInput?.selectedCards,
+      }),
       allowedSetsText: listToText(tournament.regulation?.allowedSets),
     },
   };
@@ -168,8 +193,12 @@ function payloadFromForm(form) {
       mainMax: Number(form.regulation.mainMax) || 0,
       sideSize: Number(form.regulation.sideSize) || 0,
       maxCopies: Number(form.regulation.maxCopies) || 0,
-      bannedCards: textToList(form.regulation.bannedCardsText ?? form.regulation.bannedCards),
-      limitedCards: textToList(form.regulation.limitedCardsText ?? form.regulation.limitedCards),
+      bannedCards: form.regulation.bannedCardInput
+        ? getRegulationCardIds(form.regulation.bannedCardInput)
+        : normalizeReferenceList(form.regulation.bannedCards),
+      limitedCards: form.regulation.limitedCardInput
+        ? getRegulationCardIds(form.regulation.limitedCardInput)
+        : normalizeReferenceList(form.regulation.limitedCards),
       allowedSets: textToList(form.regulation.allowedSetsText ?? form.regulation.allowedSets).length
         ? textToList(form.regulation.allowedSetsText ?? form.regulation.allowedSets)
         : null,
@@ -246,16 +275,33 @@ function roundIsComplete(round) {
 }
 
 function regulationMatchesPreset(regulation, presetRegulation) {
+  const bannedCards = regulation?.bannedCardInput
+    ? getRegulationCardIds(regulation.bannedCardInput)
+    : normalizeReferenceList(regulation?.bannedCards);
+  const limitedCards = regulation?.limitedCardInput
+    ? getRegulationCardIds(regulation.limitedCardInput)
+    : normalizeReferenceList(regulation?.limitedCards);
+  const hasUnresolvedCards =
+    getRegulationCardErrors("禁止カード", regulation?.bannedCardInput).length > 0 ||
+    getRegulationCardErrors("制限カード", regulation?.limitedCardInput).length > 0;
   return (
+    !hasUnresolvedCards &&
     regulation?.name === presetRegulation?.name &&
     Number(regulation?.mainMin) === Number(presetRegulation?.mainMin) &&
     Number(regulation?.mainMax) === Number(presetRegulation?.mainMax) &&
     Number(regulation?.sideSize) === Number(presetRegulation?.sideSize) &&
     Number(regulation?.maxCopies) === Number(presetRegulation?.maxCopies) &&
     listToText(regulation?.allowedSetsText ?? regulation?.allowedSets) === listToText(presetRegulation?.allowedSets) &&
-    listToText(regulation?.bannedCardsText ?? regulation?.bannedCards) === listToText(presetRegulation?.bannedCards) &&
-    listToText(regulation?.limitedCardsText ?? regulation?.limitedCards) === listToText(presetRegulation?.limitedCards)
+    listToText(bannedCards) === listToText(presetRegulation?.bannedCards) &&
+    listToText(limitedCards) === listToText(presetRegulation?.limitedCards)
   );
+}
+
+function regulationCardInputErrors(regulation) {
+  return [
+    ...getRegulationCardErrors("禁止カード", regulation?.bannedCardInput),
+    ...getRegulationCardErrors("制限カード", regulation?.limitedCardInput),
+  ];
 }
 
 function hasMoreRoundsToPlay(form, rounds, activeEntryCount) {
@@ -1148,19 +1194,27 @@ function InfoPanel({
   regulationViolations,
   setField,
   setOnline,
+  setRegulationCardInput,
   setRegulationField,
 }) {
   const selectedPreset = FORMAT_PRESETS.find((preset) =>
     regulationMatchesPreset(form.regulation, preset.regulation)
   );
   const selectedPresetName = selectedPreset?.name || OTHER_FORMAT_NAME;
+  const cardInputErrors = regulationCardInputErrors(form.regulation);
   const setFormatPreset = (name) => {
     const preset = FORMAT_PRESETS.find((item) => item.name === name);
     if (!preset) return;
     setField("regulation", {
       ...preset.regulation,
-      bannedCardsText: listToText(preset.regulation?.bannedCards),
-      limitedCardsText: listToText(preset.regulation?.limitedCards),
+      bannedCardInput: createRegulationCardState(preset.regulation?.bannedCards, {
+        trustExistingIds: true,
+        knownCards: form.regulation?.bannedCardInput?.selectedCards,
+      }),
+      limitedCardInput: createRegulationCardState(preset.regulation?.limitedCards, {
+        trustExistingIds: true,
+        knownCards: form.regulation?.limitedCardInput?.selectedCards,
+      }),
       allowedSetsText: listToText(preset.regulation?.allowedSets),
     });
   };
@@ -1341,19 +1395,37 @@ function InfoPanel({
               使用可能セット
               <textarea value={form.regulation.allowedSetsText ?? ""} onChange={(event) => setRegulationField("allowedSetsText", event.target.value)} />
             </label>
-            <label>
-              禁止カード
-              <textarea value={form.regulation.bannedCardsText ?? ""} onChange={(event) => setRegulationField("bannedCardsText", event.target.value)} />
-            </label>
-            <label>
-              制限カード
-              <textarea value={form.regulation.limitedCardsText ?? ""} onChange={(event) => setRegulationField("limitedCardsText", event.target.value)} />
-            </label>
+            <RegulationCardInput
+              idPrefix="banned-cards"
+              label="禁止カード"
+              value={form.regulation.bannedCardInput}
+              onChange={(updater) => setRegulationCardInput("bannedCardInput", updater)}
+            />
+            <RegulationCardInput
+              idPrefix="limited-cards"
+              label="制限カード"
+              value={form.regulation.limitedCardInput}
+              onChange={(updater) => setRegulationCardInput("limitedCardInput", updater)}
+            />
           </div>
         </details>
       </section>
+      {cardInputErrors.length ? (
+        <div id="regulation-card-save-errors" className="tournament-validation-alert" role="alert">
+          <strong>未解決の禁止・制限カードがあるため保存できません。</strong>
+          <ul>
+            {cardInputErrors.map((item, index) => (
+              <li key={`${item}-${index}`}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <div className="tournament-entry-actions tournament-manage-actions">
-        <button type="submit" disabled={isSubmitting}>
+        <button
+          type="submit"
+          disabled={isSubmitting || cardInputErrors.length > 0}
+          aria-describedby={cardInputErrors.length ? "regulation-card-save-errors" : undefined}
+        >
           {isNew ? "作成" : "保存"}
         </button>
       </div>
@@ -1436,7 +1508,7 @@ export default function TournamentManage({ compact = false }) {
         fetchRoundsForManage(id, { authMode }),
         fetchStandings(id, { authMode }),
       ]);
-      setForm(formFromTournament(tournament));
+      setForm((current) => formFromTournament(tournament, current.regulation));
       setEntries(entryPayload.items || []);
       const nextRounds = roundPayload.rounds || [];
       setRounds(nextRounds);
@@ -1485,6 +1557,22 @@ export default function TournamentManage({ compact = false }) {
     }));
   };
 
+  const setRegulationCardInput = useCallback((field, updater) => {
+    const referenceField = field === "bannedCardInput" ? "bannedCards" : "limitedCards";
+    setForm((current) => {
+      const currentInput = current.regulation?.[field] || createRegulationCardState([]);
+      const nextInput = typeof updater === "function" ? updater(currentInput) : updater;
+      return {
+        ...current,
+        regulation: {
+          ...current.regulation,
+          [field]: nextInput,
+          [referenceField]: getRegulationCardReferences(nextInput),
+        },
+      };
+    });
+  }, []);
+
   const runAction = async (action, successMessage = "") => {
     setIsSubmitting(true);
     setError("");
@@ -1502,6 +1590,12 @@ export default function TournamentManage({ compact = false }) {
 
   const saveTournament = async (event) => {
     event.preventDefault();
+    const cardInputErrors = regulationCardInputErrors(form.regulation);
+    if (cardInputErrors.length) {
+      setMessage("");
+      setError(`大会を保存できません。${cardInputErrors.join(" / ")}`);
+      return;
+    }
     if (!event.currentTarget.checkValidity()) return;
     await runAction(async () => {
       const payload = payloadFromForm(form);
@@ -1512,7 +1606,7 @@ export default function TournamentManage({ compact = false }) {
         return;
       }
       const updated = await updateTournament({ id, ...payload, authMode, user });
-      setForm(formFromTournament(updated));
+      setForm((current) => formFromTournament(updated, current.regulation));
       setRegulationViolations(
         (updated.violations || []).map((item) => ({
           ...item,
@@ -1808,6 +1902,7 @@ export default function TournamentManage({ compact = false }) {
           regulationViolations={regulationViolations}
           setField={setField}
           setOnline={setOnline}
+          setRegulationCardInput={setRegulationCardInput}
           setRegulationField={setRegulationField}
         />
       )}
