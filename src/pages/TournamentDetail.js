@@ -38,10 +38,15 @@ const BASE_TABS = [
 ];
 
 
-function formatDateTime(value) {
+function formatDateTime(value, { monthDayOnly = false } = {}) {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
+  if (monthDayOnly) {
+    return `${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, "0")}:${String(
+      date.getMinutes()
+    ).padStart(2, "0")}`;
+  }
   return date.toLocaleString("ja-JP", {
     year: "numeric",
     month: "2-digit",
@@ -446,6 +451,14 @@ export default function TournamentDetail({ compact = false }) {
           <div>
             <dt>受付締切</dt>
             <dd>{formatDateTime(tournament.registrationClosesAt)}</dd>
+          </div>
+          <div>
+            <dt>チェックイン開始</dt>
+            <dd>
+              {tournament.checkinOpensAt
+                ? formatDateTime(tournament.checkinOpensAt, { monthDayOnly: true })
+                : "開催日当日"}
+            </dd>
           </div>
           <div>
             <dt>定員</dt>

@@ -1,5 +1,9 @@
 import { render, screen } from "@testing-library/react";
-import TournamentMyStatus, { getMyStatusPhase, getRoundCountdown } from "./TournamentMyStatus";
+import TournamentMyStatus, {
+  getMyStatusPhase,
+  getRoundCountdown,
+  isSelfCheckinOpen,
+} from "./TournamentMyStatus";
 
 const entry = { id: "entry-1", status: "registered" };
 
@@ -26,6 +30,21 @@ describe("getMyStatusPhase", () => {
     expect(phase).toBe("checkin");
   });
 
+  it("returns checkin after a configured opening time even on the previous day", () => {
+    const phase = getMyStatusPhase(
+      {
+        status: "registration",
+        startsAt: new Date(2026, 6, 12, 10, 0).toISOString(),
+        checkinOpensAt: new Date(2026, 6, 11, 18, 0).toISOString(),
+      },
+      entry,
+      [],
+      new Date(2026, 6, 11, 18, 0)
+    );
+
+    expect(phase).toBe("checkin");
+  });
+
   it("returns round once at least one round exists", () => {
     const phase = getMyStatusPhase(
       { status: "in_progress", startsAt: new Date(2026, 6, 12, 10, 0).toISOString() },
@@ -46,6 +65,18 @@ describe("getMyStatusPhase", () => {
     );
 
     expect(phase).toBe("not_entered");
+  });
+});
+
+describe("isSelfCheckinOpen", () => {
+  it("uses the configured timestamp inclusively instead of the tournament date", () => {
+    const tournament = {
+      startsAt: new Date(2026, 6, 12, 10, 0).toISOString(),
+      checkinOpensAt: new Date(2026, 6, 11, 18, 0).toISOString(),
+    };
+
+    expect(isSelfCheckinOpen(tournament, new Date(2026, 6, 11, 17, 59))).toBe(false);
+    expect(isSelfCheckinOpen(tournament, new Date(2026, 6, 11, 18, 0))).toBe(true);
   });
 });
 
@@ -122,6 +153,51 @@ function statusProps(overrides = {}) {
     ...overrides,
   };
 }
+
+afterEach(() => {
+  jest.useRealTimers();
+});
+
+test("チェックイン開始前はボタンを無効化し、開始時刻を理由として表示する", () => {
+  jest.useFakeTimers("modern");
+  jest.setSystemTime(new Date(2026, 7, 26, 10, 0));
+  const tournament = {
+    ...statusProps().tournament,
+    startsAt: new Date(2026, 7, 27, 10, 0).toISOString(),
+    checkinOpensAt: new Date(2026, 7, 26, 11, 0).toISOString(),
+    selfCheckin: true,
+  };
+
+  render(<TournamentMyStatus {...statusProps({ tournament })} />);
+
+  const checkInButton = screen.getByRole("button", { name: "チェックインする" });
+  expect(checkInButton).toBeDisabled();
+  expect(checkInButton).toHaveAttribute(
+    "title",
+    "セルフチェックインは8月26日 11:00から利用できます。"
+  );
+  expect(
+    screen.getByText("セルフチェックインは8月26日 11:00から利用できます。")
+  ).toBeInTheDocument();
+});
+
+test("チェックイン開始時刻以降は前日でもボタンを有効化する", () => {
+  jest.useFakeTimers("modern");
+  jest.setSystemTime(new Date(2026, 7, 26, 11, 0));
+  const tournament = {
+    ...statusProps().tournament,
+    startsAt: new Date(2026, 7, 27, 10, 0).toISOString(),
+    checkinOpensAt: new Date(2026, 7, 26, 11, 0).toISOString(),
+    selfCheckin: true,
+  };
+
+  render(<TournamentMyStatus {...statusProps({ tournament })} />);
+
+  expect(screen.getByRole("button", { name: "チェックインする" })).toBeEnabled();
+  expect(
+    screen.queryByText("セルフチェックインは8月26日 11:00から利用できます。")
+  ).not.toBeInTheDocument();
+});
 
 test("デッキ枚数は提出デッキ行だけに表示し、開始前は対戦履歴を表示しない", () => {
   render(<TournamentMyStatus {...statusProps()} />);

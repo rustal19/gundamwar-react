@@ -126,6 +126,7 @@ function createInitialStore() {
         status: "in_progress",
         startsAt: daysFromNow(-1),
         registrationClosesAt: daysFromNow(-2),
+        checkinOpensAt: null,
         capacity: 32,
         venue: "東京・秋葉原カードショップ○○",
         isOnline: false,
@@ -151,6 +152,7 @@ function createInitialStore() {
         status: "registration",
         startsAt: daysFromNow(7),
         registrationClosesAt: daysFromNow(6),
+        checkinOpensAt: null,
         capacity: 16,
         venue: null,
         isOnline: true,
@@ -217,6 +219,7 @@ function normalizeTournament(tournament, entries = []) {
     swissRounds: tournament.swissRounds ?? null,
     topCutSize: tournament.topCutSize ?? null,
     status: tournament.status || "draft",
+    checkinOpensAt: tournament.checkinOpensAt || null,
     capacity: tournament.capacity ?? null,
     venue: tournament.venue ? String(tournament.venue) : null,
     isOnline: Boolean(tournament.isOnline),
@@ -400,6 +403,26 @@ function isSameLocalDate(dateString, now = new Date()) {
     date.getMonth() === now.getMonth() &&
     date.getDate() === now.getDate()
   );
+}
+
+function formatMonthDayTime(dateString) {
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return "設定された時刻";
+  return `${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, "0")}:${String(
+    date.getMinutes()
+  ).padStart(2, "0")}`;
+}
+
+function assertCheckinOpensAtIsValid(checkinOpensAt, startsAt) {
+  if (!checkinOpensAt) return;
+  const checkinTime = new Date(checkinOpensAt).getTime();
+  if (Number.isNaN(checkinTime)) {
+    throw new Error("チェックイン開始に正しい日時を設定してください。");
+  }
+  const startTime = new Date(startsAt).getTime();
+  if (!Number.isNaN(startTime) && checkinTime > startTime) {
+    throw new Error("チェックイン開始は大会の開始日時以前に設定してください。");
+  }
 }
 
 function assertCanEnter(tournament, entries, currentUser) {
@@ -921,6 +944,8 @@ export async function createTournament(data = {}) {
   if (authMode === "mock") {
     const currentUser = getCurrentUser(user);
     const store = readStore();
+    const checkinOpensAt = payload.checkinOpensAt || null;
+    assertCheckinOpensAtIsValid(checkinOpensAt, payload.startsAt);
     const now = nowIso();
     const id = `tournament-${Date.now()}`;
     const tournament = normalizeTournament(
@@ -934,6 +959,7 @@ export async function createTournament(data = {}) {
         status: payload.status || "draft",
         startsAt: payload.startsAt || "",
         registrationClosesAt: payload.registrationClosesAt || "",
+        checkinOpensAt,
         capacity: payload.capacity ?? null,
         venue: payload.venue ? String(payload.venue) : null,
         isOnline: Boolean(payload.isOnline),
@@ -969,6 +995,13 @@ export async function updateTournament({ id, authMode, user, ...data }) {
     getCurrentUser(user);
     const store = readStore();
     const existing = getTournamentOrThrow(store, id);
+    const nextStartsAt = Object.prototype.hasOwnProperty.call(data, "startsAt")
+      ? data.startsAt
+      : existing.startsAt;
+    const nextCheckinOpensAt = Object.prototype.hasOwnProperty.call(data, "checkinOpensAt")
+      ? data.checkinOpensAt
+      : existing.checkinOpensAt;
+    assertCheckinOpensAtIsValid(nextCheckinOpensAt, nextStartsAt);
     const statusOrder = ["draft", "registration", "in_progress", "completed"];
     if (data.status && data.status !== existing.status) {
       const from = statusOrder.indexOf(existing.status);
@@ -1057,7 +1090,17 @@ export async function checkInMyEntry({ tournamentId, authMode, user }) {
     if (!tournament.selfCheckin) {
       throw new Error("この大会はセルフチェックインを許可していません。");
     }
-    if (!isSameLocalDate(tournament.startsAt)) {
+    if (tournament.checkinOpensAt) {
+      const checkinOpensAt = new Date(tournament.checkinOpensAt).getTime();
+      if (Number.isNaN(checkinOpensAt)) {
+        throw new Error("チェックイン開始時刻が正しく設定されていません。主催者にお問い合わせください。");
+      }
+      if (Date.now() < checkinOpensAt) {
+        throw new Error(
+          `セルフチェックインは${formatMonthDayTime(tournament.checkinOpensAt)}から利用できます。`
+        );
+      }
+    } else if (!isSameLocalDate(tournament.startsAt)) {
       throw new Error("セルフチェックインは開催日当日のみ利用できます。");
     }
     if (getRounds(store, tournamentId).length > 0) {

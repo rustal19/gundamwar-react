@@ -64,6 +64,7 @@ function setRegistrationTournament(overrides = {}) {
           status: "registration",
           startsAt: future,
           registrationClosesAt: future,
+          checkinOpensAt: null,
           capacity: 8,
           venue: null,
           isOnline: false,
@@ -110,6 +111,7 @@ describe("tournaments service mock mode", () => {
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     global.fetch = originalFetch;
   });
 
@@ -378,7 +380,9 @@ describe("tournaments service mock mode", () => {
   });
 
   it("checks in my entry only on the tournament day before rounds are generated", async () => {
-    const today = new Date().toISOString();
+    jest.useFakeTimers("modern");
+    jest.setSystemTime(new Date(2026, 7, 26, 10, 0));
+    const today = new Date(2026, 7, 26, 18, 0).toISOString();
     setRegistrationTournament({ startsAt: today, selfCheckin: true });
     const store = readStore();
     store.entries.t1 = [
@@ -412,7 +416,9 @@ describe("tournaments service mock mode", () => {
   });
 
   it("transitions a decklist through submit, lock, organizer update, unlock, and automatic relock", async () => {
-    const today = new Date().toISOString();
+    jest.useFakeTimers("modern");
+    jest.setSystemTime(new Date(2026, 7, 26, 10, 0));
+    const today = new Date(2026, 7, 26, 18, 0).toISOString();
     setRegistrationTournament({ startsAt: today, selfCheckin: true });
 
     const none = await createEntry({ tournamentId: "t1", authMode: "mock", user });
@@ -488,8 +494,10 @@ describe("tournaments service mock mode", () => {
   });
 
   it("rejects self check-in when disabled, not on the day, or after rounds exist", async () => {
-    const today = new Date().toISOString();
-    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    jest.useFakeTimers("modern");
+    jest.setSystemTime(new Date(2026, 7, 26, 10, 0));
+    const today = new Date(2026, 7, 26, 18, 0).toISOString();
+    const tomorrow = new Date(2026, 7, 27, 18, 0).toISOString();
     const entry = {
       id: "my-entry",
       tournamentId: "t1",
@@ -520,6 +528,51 @@ describe("tournaments service mock mode", () => {
     store = readStore();
     store.entries.t1 = [entry];
     store.rounds.t1 = [{ id: "round-1", tournamentId: "t1", number: 1, stage: "swiss", matches: [] }];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    await expect(checkInMyEntry({ tournamentId: "t1", authMode: "mock", user })).rejects.toThrow(
+      "ラウンド生成後"
+    );
+  });
+
+  it("uses a configured check-in opening time without restricting self check-in to the tournament day", async () => {
+    jest.useFakeTimers("modern");
+    jest.setSystemTime(new Date(2026, 7, 26, 10, 0));
+    const checkinOpensAt = new Date(2026, 7, 26, 11, 0).toISOString();
+    const startsAt = new Date(2026, 7, 27, 10, 0).toISOString();
+    setRegistrationTournament({ startsAt, checkinOpensAt, selfCheckin: true });
+    const entry = {
+      id: "my-entry",
+      tournamentId: "t1",
+      user,
+      deckItems: null,
+      decklistSubmittedAt: null,
+      status: "registered",
+      createdAt: new Date().toISOString(),
+    };
+    let store = readStore();
+    store.entries.t1 = [entry];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    await expect(checkInMyEntry({ tournamentId: "t1", authMode: "mock", user })).rejects.toThrow(
+      "セルフチェックインは8月26日 11:00から利用できます。"
+    );
+    expect(readStore().entries.t1[0]).toMatchObject({ status: "registered" });
+    expect(readStore().entries.t1[0].deckLockedAt).toBeUndefined();
+
+    jest.setSystemTime(new Date(2026, 7, 26, 11, 0));
+    const checkedIn = await checkInMyEntry({ tournamentId: "t1", authMode: "mock", user });
+
+    expect(checkedIn.status).toBe("checked_in");
+    expect(checkedIn.deckLockedAt).toBe(new Date(2026, 7, 26, 11, 0).toISOString());
+    store = readStore();
+    expect(store.entries.t1[0].status).toBe("checked_in");
+
+    setRegistrationTournament({ startsAt, checkinOpensAt, selfCheckin: true });
+    store = readStore();
+    store.entries.t1 = [entry];
+    store.rounds.t1 = [
+      { id: "round-1", tournamentId: "t1", number: 1, stage: "swiss", matches: [] },
+    ];
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
     await expect(checkInMyEntry({ tournamentId: "t1", authMode: "mock", user })).rejects.toThrow(
       "ラウンド生成後"
@@ -755,6 +808,8 @@ describe("tournaments service mock mode", () => {
   });
 
   it("creates and updates organizer tournaments with forward status transitions", async () => {
+    const startsAt = "2030-01-02T10:00:00.000Z";
+    const checkinOpensAt = "2030-01-02T09:00:00.000Z";
     const created = await createTournament({
       title: "Organizer Cup",
       description: "test",
@@ -762,6 +817,8 @@ describe("tournaments service mock mode", () => {
       swissRounds: null,
       topCutSize: null,
       status: "draft",
+      startsAt,
+      checkinOpensAt,
       capacity: 16,
       venue: "オンライン Discord",
       isOnline: true,
@@ -777,6 +834,7 @@ describe("tournaments service mock mode", () => {
     expect(created.venue).toBe("オンライン Discord");
     expect(created.isOnline).toBe(true);
     expect(created.selfCheckin).toBe(true);
+    expect(created.checkinOpensAt).toBe(checkinOpensAt);
     expect(created.decklistsPublic).toBe(true);
     expect(created.regulation.name).toBe("Custom");
     expect(created.entryCount).toBe(0);
@@ -789,14 +847,68 @@ describe("tournaments service mock mode", () => {
     });
     expect(registration.status).toBe("registration");
     expect(registration.venue).toBe("オンライン Discord");
+    expect(registration.checkinOpensAt).toBe(checkinOpensAt);
 
     await expect(
       updateTournament({ id: created.id, status: "draft", authMode: "mock", user })
     ).rejects.toThrow("ステータス");
   });
 
+  it("rejects a check-in opening time later than the tournament start on create and update", async () => {
+    const startsAt = "2030-01-02T10:00:00.000Z";
+    const invalidCheckinOpensAt = "2030-01-02T10:01:00.000Z";
+
+    await expect(
+      createTournament({
+        title: "Invalid Check-in Cup",
+        startsAt,
+        checkinOpensAt: invalidCheckinOpensAt,
+        authMode: "mock",
+        user,
+      })
+    ).rejects.toThrow("チェックイン開始は大会の開始日時以前に設定してください。");
+
+    const sameTime = await createTournament({
+      title: "Same-time Check-in Cup",
+      startsAt,
+      checkinOpensAt: startsAt,
+      authMode: "mock",
+      user,
+    });
+    expect(sameTime.checkinOpensAt).toBe(startsAt);
+
+    const created = await createTournament({
+      title: "Valid Check-in Cup",
+      startsAt,
+      checkinOpensAt: "2030-01-02T09:00:00.000Z",
+      authMode: "mock",
+      user,
+    });
+    await expect(
+      updateTournament({
+        id: created.id,
+        checkinOpensAt: invalidCheckinOpensAt,
+        authMode: "mock",
+        user,
+      })
+    ).rejects.toThrow("チェックイン開始は大会の開始日時以前に設定してください。");
+    await expect(
+      updateTournament({
+        id: created.id,
+        startsAt: "2030-01-02T08:59:00.000Z",
+        authMode: "mock",
+        user,
+      })
+    ).rejects.toThrow("チェックイン開始は大会の開始日時以前に設定してください。");
+  });
+
   it("updates organizer entry status and exposes submitted decklists", async () => {
-    setRegistrationTournament();
+    jest.useFakeTimers("modern");
+    jest.setSystemTime(new Date(2026, 7, 26, 10, 0));
+    setRegistrationTournament({
+      startsAt: new Date(2026, 7, 26, 18, 0).toISOString(),
+      checkinOpensAt: new Date(2026, 7, 26, 12, 0).toISOString(),
+    });
     const deckItems = makeValidDeck();
     const entry = await createEntry({ tournamentId: "t1", deckItems, authMode: "mock", user });
 

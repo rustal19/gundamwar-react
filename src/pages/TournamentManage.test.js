@@ -33,6 +33,7 @@ function seedStore(overrides = {}) {
     status: "in_progress",
     startsAt: now,
     registrationClosesAt: now,
+    checkinOpensAt: null,
     capacity: 16,
     venue: "テスト会場",
     isOnline: false,
@@ -346,6 +347,46 @@ test("大会編集時は開始日時を空にして保存できない", async ()
   fireEvent.click(screen.getByRole("button", { name: "保存" }));
 
   expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0].startsAt).toBe(originalStartsAt);
+});
+
+test("大会編集でチェックイン開始を読み込み、開始日時以前の値を保存できる", async () => {
+  const startsAt = new Date(2030, 0, 2, 10, 0).toISOString();
+  const checkinOpensAt = new Date(2030, 0, 2, 9, 0).toISOString();
+  seedStore({ tournament: { startsAt, checkinOpensAt }, rounds: [] });
+  renderManage();
+
+  fireEvent.click(await screen.findByRole("button", { name: "大会情報" }));
+  const startsAtInput = screen.getByLabelText("開始日時");
+  const checkinOpensAtInput = screen.getByLabelText("チェックイン開始");
+  expect(checkinOpensAtInput).toHaveValue("2030-01-02T09:00");
+  expect(checkinOpensAtInput).toHaveAttribute("max", startsAtInput.value);
+
+  fireEvent.change(checkinOpensAtInput, { target: { value: "2030-01-02T08:30" } });
+  fireEvent.click(screen.getByRole("button", { name: "保存" }));
+
+  expect(await screen.findByText("大会情報を保存しました。")).toBeInTheDocument();
+  expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0].checkinOpensAt).toBe(
+    new Date(2030, 0, 2, 8, 30).toISOString()
+  );
+});
+
+test("チェックイン開始が開始日時より後なら大会情報を保存できない", async () => {
+  const startsAt = new Date(2030, 0, 2, 10, 0).toISOString();
+  const originalCheckinOpensAt = new Date(2030, 0, 2, 9, 0).toISOString();
+  seedStore({ tournament: { startsAt, checkinOpensAt: originalCheckinOpensAt }, rounds: [] });
+  renderManage();
+
+  fireEvent.click(await screen.findByRole("button", { name: "大会情報" }));
+  const checkinOpensAtInput = screen.getByLabelText("チェックイン開始");
+  fireEvent.change(checkinOpensAtInput, { target: { value: "2030-01-02T10:01" } });
+  fireEvent.click(screen.getByRole("button", { name: "保存" }));
+
+  await waitFor(() => {
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0].checkinOpensAt).toBe(
+      originalCheckinOpensAt
+    );
+  });
+  expect(checkinOpensAtInput.closest("form")).not.toBeValid();
 });
 
 test("参加者が0人なら空状態メッセージを表示する", async () => {
