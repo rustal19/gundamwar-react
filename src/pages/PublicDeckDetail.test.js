@@ -37,7 +37,8 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-test("詳細の枚数サマリはサイド0枚も明示する", async () => {
+test("メタ情報とプロフィール・大会へのリンクを表示し、枚数サマリを重複させない", async () => {
+  const publishedAt = "2026-08-01T12:34:00";
   fetchPublicDeck.mockResolvedValue({
     id: "deck-1",
     title: "メインのみデッキ",
@@ -51,16 +52,101 @@ test("詳細の枚数サマリはサイド0枚も明示する", async () => {
     ],
     owner: { id: "owner-1", name: "投稿者" },
     format: "スタンダード",
-    publishedAt: "2026-08-01T00:00:00.000Z",
+    publishedAt,
+    tournament: { id: "tournament-1", title: "夏季ガンダムウォー杯" },
   });
 
   const { container } = renderDetail();
 
   expect(await screen.findByRole("heading", { name: "メインのみデッキ" })).toBeInTheDocument();
-  expect(container.querySelector(".search-results-summary")).toHaveTextContent(
-    "メイン50 / サイド0"
-  );
+  const meta = container.querySelector(".public-deck-detail-meta");
+  expect(meta).toBeInTheDocument();
 
-  const previewHeader = screen.getByRole("heading", { name: "デッキ画像" }).parentElement;
-  expect(within(previewHeader).getByText("メイン50 / サイド0")).toBeInTheDocument();
+  expect(within(meta).getByText("投稿者", { selector: "dt" })).toBeInTheDocument();
+  expect(within(meta).getByRole("link", { name: "投稿者" })).toHaveAttribute(
+    "href",
+    "/users/owner-1"
+  );
+  expect(within(meta).getByText("フォーマット", { selector: "dt" })).toBeInTheDocument();
+  expect(within(meta).getByText("スタンダード")).toBeInTheDocument();
+  expect(within(meta).getByText("公開日", { selector: "dt" })).toBeInTheDocument();
+  expect(
+    within(meta).getByText(
+      new Date(publishedAt).toLocaleString("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    )
+  ).toBeInTheDocument();
+  expect(within(meta).getByText("大会名", { selector: "dt" })).toBeInTheDocument();
+  expect(within(meta).getByRole("link", { name: "夏季ガンダムウォー杯" })).toHaveAttribute(
+    "href",
+    "/tournaments/tournament-1"
+  );
+  expect(within(meta).getByText("枚数", { selector: "dt" })).toBeInTheDocument();
+  expect(within(meta).getByText("メイン50 / サイド0")).toBeInTheDocument();
+  expect(screen.getAllByText("メイン50 / サイド0")).toHaveLength(1);
+});
+
+test("欠損している投稿者・フォーマット・公開日・大会名は行ごと表示しない", async () => {
+  fetchPublicDeck.mockResolvedValue({
+    id: "deck-1",
+    title: "メタ情報なしデッキ",
+    items: [],
+    owner: { id: "", name: "名無し" },
+    format: null,
+    publishedAt: "",
+    updatedAt: "",
+    tournament: null,
+  });
+
+  const { container } = renderDetail();
+
+  expect(await screen.findByRole("heading", { name: "メタ情報なしデッキ" })).toBeInTheDocument();
+  const meta = container.querySelector(".public-deck-detail-meta");
+  expect(meta).toBeInTheDocument();
+
+  expect(within(meta).queryByText("投稿者", { selector: "dt" })).not.toBeInTheDocument();
+  expect(within(meta).queryByText("フォーマット", { selector: "dt" })).not.toBeInTheDocument();
+  expect(within(meta).queryByText("公開日", { selector: "dt" })).not.toBeInTheDocument();
+  expect(within(meta).queryByText("大会名", { selector: "dt" })).not.toBeInTheDocument();
+  expect(within(meta).getByText("枚数", { selector: "dt" })).toBeInTheDocument();
+  expect(within(meta).getByText("メイン0 / サイド0")).toBeInTheDocument();
+});
+
+test("公開日が無い場合は更新日を表示する", async () => {
+  const updatedAt = "2026-08-02T12:34:00";
+  fetchPublicDeck.mockResolvedValue({
+    id: "deck-1",
+    title: "更新日フォールバックデッキ",
+    items: [],
+    owner: { id: "", name: "名無し" },
+    format: null,
+    publishedAt: "",
+    updatedAt,
+    tournament: null,
+  });
+
+  const { container } = renderDetail();
+
+  expect(
+    await screen.findByRole("heading", { name: "更新日フォールバックデッキ" })
+  ).toBeInTheDocument();
+  const meta = container.querySelector(".public-deck-detail-meta");
+  expect(meta).toBeInTheDocument();
+  expect(within(meta).getByText("公開日", { selector: "dt" })).toBeInTheDocument();
+  expect(
+    within(meta).getByText(
+      new Date(updatedAt).toLocaleString("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    )
+  ).toBeInTheDocument();
 });

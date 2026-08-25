@@ -46,6 +46,31 @@ function normalizeOwner(owner, fallbackUser) {
   };
 }
 
+function getFirstNonEmptyText(...values) {
+  return values
+    .map((value) => (value == null ? "" : String(value).trim()))
+    .find(Boolean) || "";
+}
+
+function normalizeTournamentReference(rawDeck) {
+  const tournament = rawDeck?.tournament;
+  const id = getFirstNonEmptyText(
+    tournament?.id,
+    rawDeck?.tournamentId,
+    rawDeck?.tournament_id
+  );
+  const title = getFirstNonEmptyText(
+    tournament?.title,
+    tournament?.name,
+    rawDeck?.tournamentName,
+    rawDeck?.tournament_name,
+    rawDeck?.tournamentTitle,
+    rawDeck?.tournament_title
+  );
+
+  return id && title ? { id, title } : null;
+}
+
 function normalizePublicDeck(rawDeck, fallbackUser) {
   if (!rawDeck?.id) return null;
   return {
@@ -59,6 +84,7 @@ function normalizePublicDeck(rawDeck, fallbackUser) {
     createdAt: rawDeck.createdAt || rawDeck.created_at || "",
     updatedAt: rawDeck.updatedAt || rawDeck.updated_at || "",
     owner: normalizeOwner(rawDeck.owner, fallbackUser),
+    tournament: normalizeTournamentReference(rawDeck),
   };
 }
 

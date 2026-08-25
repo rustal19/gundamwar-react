@@ -32,9 +32,59 @@ function formatDate(value) {
   });
 }
 
-function OwnerLink({ owner }) {
-  const label = owner?.name || "-";
-  return owner?.id ? <Link to={`/users/${owner.id}`}>{label}</Link> : <span>{label}</span>;
+function normalizeMetaText(value) {
+  if (value == null) return "";
+  return String(value).trim();
+}
+
+function getOwnerReference(owner) {
+  const id = normalizeMetaText(owner?.id);
+  const name = normalizeMetaText(owner?.name);
+  return id && name ? { id, name } : null;
+}
+
+function DeckMeta({ deck, mainCount, sideCount }) {
+  const owner = getOwnerReference(deck.owner);
+  const format = normalizeMetaText(deck.format);
+  const publishedAt = formatDate(deck.publishedAt || deck.updatedAt);
+  const tournament = deck.tournament;
+
+  return (
+    <dl className="public-deck-detail-meta" aria-label="デッキ情報">
+      {owner ? (
+        <div>
+          <dt>投稿者</dt>
+          <dd>
+            <Link to={`/users/${owner.id}`}>{owner.name}</Link>
+          </dd>
+        </div>
+      ) : null}
+      {format ? (
+        <div>
+          <dt>フォーマット</dt>
+          <dd>{format}</dd>
+        </div>
+      ) : null}
+      {publishedAt ? (
+        <div>
+          <dt>公開日</dt>
+          <dd>{publishedAt}</dd>
+        </div>
+      ) : null}
+      {tournament ? (
+        <div>
+          <dt>大会名</dt>
+          <dd>
+            <Link to={`/tournaments/${tournament.id}`}>{tournament.title}</Link>
+          </dd>
+        </div>
+      ) : null}
+      <div>
+        <dt>枚数</dt>
+        <dd>{formatDeckCountSummary(mainCount, sideCount)}</dd>
+      </div>
+    </dl>
+  );
 }
 
 function isNotFoundError(error) {
@@ -93,7 +143,6 @@ function DeckPreviewSection({ deck, mainItems, sideItems, mainCount, sideCount }
     <section className="public-deck-section">
       <div className="public-deck-section-header">
         <h2>デッキ画像</h2>
-        <span>{formatDeckCountSummary(mainCount, sideCount)}</span>
       </div>
       {previewUrl ? (
         <a
@@ -212,19 +261,6 @@ export default function PublicDeckDetail({ compact = false }) {
       <div className="search-results-toolbar">
         <div>
           <h1>{deck?.title || "公開デッキ"}</h1>
-          {deck ? (
-            <div className="search-results-summary">
-              {[
-                deck.format,
-                formatDate(deck.publishedAt || deck.updatedAt),
-                formatDeckCountSummary(mainCount, sideCount),
-              ]
-                .filter(Boolean)
-                .join(" / ")}
-              {" / "}
-              <OwnerLink owner={deck.owner} />
-            </div>
-          ) : null}
         </div>
         <div className="public-deck-detail-actions">
           {deck ? (
@@ -254,7 +290,7 @@ export default function PublicDeckDetail({ compact = false }) {
         <div className="results-empty-state">{errorMessage}</div>
       ) : deck ? (
         <>
-          {deck.format ? <div className="public-deck-format-badge">{deck.format}</div> : null}
+          <DeckMeta deck={deck} mainCount={mainCount} sideCount={sideCount} />
           {deck.description ? <p className="public-deck-description">{deck.description}</p> : null}
           <DeckTypeGroups title="メインデッキ" items={mainItems} compact={compact} />
           <DeckTypeGroups title="サイドボード" items={sideItems} compact={compact} />

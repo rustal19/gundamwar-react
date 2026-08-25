@@ -236,6 +236,34 @@
   overflow-wrap: anywhere;
 }
 
+.public-deck-detail-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem 1.5rem;
+  border: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-field-bg);
+  margin: 0 0 1rem;
+  padding: 0.9rem 1rem;
+}
+
+.public-deck-detail-meta > div {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.public-deck-detail-meta dt {
+  color: var(--gw-text-muted);
+  font-weight: 700;
+}
+
+.public-deck-detail-meta dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .public-deck-meta {
   display: grid;
   align-content: start;
@@ -364,6 +392,10 @@
   }
 
   .public-deck-card {
+    grid-template-columns: 1fr;
+  }
+
+  .public-deck-detail-meta {
     grid-template-columns: 1fr;
   }
 
