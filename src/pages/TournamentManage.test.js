@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import TournamentManage from "./TournamentManage";
 import { updateMyEntry } from "../services/tournaments";
+import { FORMAT_PRESETS } from "../data/formats";
 
 const STORAGE_KEY = "gundamwar.tournaments.v1";
 
@@ -1064,6 +1065,120 @@ test("完了後は非公開でも解除・上書き・再ロック操作を表�
   expect(within(unlockedRow).getByText("ロック解除済み・未再提出")).toBeInTheDocument();
   expect(within(unlockedRow).queryByRole("button", { name: "デッキ登録" })).not.toBeInTheDocument();
   expect(within(unlockedRow).queryByRole("button", { name: "手動で再ロック" })).not.toBeInTheDocument();
+});
+
+test("使用可能セットを3モードで切り替え、弾選択は日本語名の配列で保存する", async () => {
+  seedStore({ rounds: [] });
+  renderManage();
+  await openRegulationEditor();
+
+  expect(screen.getByRole("radio", { name: "制限なし(全カード)" })).toBeChecked();
+
+  fireEvent.click(screen.getByRole("radio", { name: "弾を選ぶ" }));
+  expect(screen.getByRole("checkbox", { name: "GUNDAM WAR" })).not.toBeChecked();
+  fireEvent.click(screen.getByRole("checkbox", { name: "GUNDAM WAR" }));
+  fireEvent.click(screen.getByRole("checkbox", { name: "撃墜王出撃" }));
+  fireEvent.click(screen.getByRole("button", { name: "保存" }));
+
+  await waitFor(() => {
+    const savedRegulation = JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0]
+      .regulation;
+    expect(savedRegulation.allowedSets).toEqual(["GUNDAM WAR", "撃墜王出撃"]);
+  });
+
+  fireEvent.click(screen.getByRole("radio", { name: "この弾まで" }));
+  expect(screen.getByRole("combobox", { name: "カットオフの弾" })).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("radio", { name: "制限なし(全カード)" }));
+  expect(screen.queryByRole("combobox", { name: "カットオフの弾" })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "保存" }));
+
+  await waitFor(() => {
+    const savedRegulation = JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0]
+      .regulation;
+    expect(savedRegulation.allowedSets).toBeNull();
+  });
+});
+
+test("この弾までを選ぶとカテゴリをまたいだ発売順で弾名を展開して保存する", async () => {
+  seedStore({ rounds: [] });
+  renderManage();
+  await openRegulationEditor();
+
+  fireEvent.click(screen.getByRole("radio", { name: "この弾まで" }));
+  fireEvent.change(screen.getByRole("combobox", { name: "カットオフの弾" }), {
+    target: { value: "宇宙の記憶" },
+  });
+  expect(screen.getByText("宇宙の記憶までの5弾を使用可能として保存します。")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("radio", { name: "弾を選ぶ" }));
+  expect(screen.getByRole("checkbox", { name: "決戦！星一号作戦" })).toBeChecked();
+  expect(screen.getByRole("checkbox", { name: "宇宙の記憶" })).toBeChecked();
+  fireEvent.click(screen.getByRole("radio", { name: "この弾まで" }));
+  fireEvent.click(screen.getByRole("button", { name: "保存" }));
+
+  await waitFor(() => {
+    const savedRegulation = JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0]
+      .regulation;
+    expect(savedRegulation.allowedSets).toEqual([
+      "GUNDAM WAR",
+      "撃墜王出撃",
+      "決戦！星一号作戦",
+      "宇宙要塞ア・バオア・クー",
+      "宇宙の記憶",
+    ]);
+  });
+});
+
+test("既存の使用可能セットは既知の弾を選択し、不明な弾も未操作なら保持する", async () => {
+  const existingAllowedSets = ["GUNDAM WAR", "旧データの不明な弾"];
+  seedStore({
+    tournament: {
+      regulation: regulation({ allowedSets: existingAllowedSets }),
+    },
+    rounds: [],
+  });
+  renderManage();
+  await openRegulationEditor();
+
+  expect(screen.getByRole("radio", { name: "弾を選ぶ" })).toBeChecked();
+  expect(screen.getByRole("checkbox", { name: "GUNDAM WAR" })).toBeChecked();
+  expect(screen.getByText("不明な弾")).toBeInTheDocument();
+  expect(screen.getByText("旧データの不明な弾")).toBeInTheDocument();
+  expect(
+    JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0].regulation.allowedSets
+  ).toEqual(existingAllowedSets);
+
+  fireEvent.change(screen.getByLabelText("名称"), { target: { value: "既存値保持テスト" } });
+  fireEvent.click(screen.getByRole("button", { name: "保存" }));
+
+  await waitFor(() => {
+    const savedRegulation = JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0]
+      .regulation;
+    expect(savedRegulation.allowedSets).toEqual(existingAllowedSets);
+  });
+});
+
+test("フォーマットプリセットの使用可能セットを弾選択へ反映してそのまま保存する", async () => {
+  const preset = FORMAT_PRESETS.find((item) => item.name === "プリミティブ");
+  expect(preset).toBeDefined();
+  seedStore({ rounds: [] });
+  renderManage();
+  await openRegulationEditor();
+
+  fireEvent.change(screen.getByLabelText("フォーマットプリセット"), {
+    target: { value: preset.name },
+  });
+
+  expect(screen.getByRole("radio", { name: "弾を選ぶ" })).toBeChecked();
+  expect(screen.getByRole("checkbox", { name: "GUNDAM WAR" })).toBeChecked();
+  expect(screen.getByRole("checkbox", { name: "プロモカード" })).toBeChecked();
+  fireEvent.click(screen.getByRole("button", { name: "保存" }));
+
+  await waitFor(() => {
+    const savedRegulation = JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0]
+      .regulation;
+    expect(savedRegulation.allowedSets).toEqual(preset.regulation.allowedSets);
+  });
 });
 
 test("一括入力で一意に解決した禁止カードをチップ化し、カードIDだけを保存する", async () => {
