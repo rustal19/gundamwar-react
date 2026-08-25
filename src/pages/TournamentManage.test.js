@@ -4,17 +4,20 @@ import TournamentManage from "./TournamentManage";
 
 const STORAGE_KEY = "gundamwar.tournaments.v1";
 
+const mockOrganizerUser = {
+  id: "organizer-1",
+  name: "主催者",
+  email: "organizer@example.test",
+  role: "organizer",
+};
+let mockAuthState = {
+  authMode: "mock",
+  isOrganizer: true,
+  user: mockOrganizerUser,
+};
+
 jest.mock("../context/AuthContext", () => ({
-  useAuth: () => ({
-    authMode: "mock",
-    isOrganizer: true,
-    user: {
-      id: "organizer-1",
-      name: "主催者",
-      email: "organizer@example.test",
-      role: "organizer",
-    },
-  }),
+  useAuth: () => mockAuthState,
 }));
 
 function seedStore(overrides = {}) {
@@ -131,6 +134,11 @@ function renderNewTournament() {
 
 beforeEach(() => {
   window.localStorage.clear();
+  mockAuthState = {
+    authMode: "mock",
+    isOrganizer: true,
+    user: { ...mockOrganizerUser },
+  };
 });
 
 test("BO3入力からスコア表示、ラウンド完了、訂正まで操作できる", async () => {
@@ -155,6 +163,24 @@ test("BO3入力からスコア表示、ラウンド完了、訂正まで操作�
   fireEvent.click(screen.getByRole("button", { name: "訂正" }));
   fireEvent.click(screen.getByRole("button", { name: "2-0" }));
   expect(await screen.findByText((content, element) => element?.classList.contains("score-badge") && content === "2-0")).toBeInTheDocument();
+});
+
+test("別の主催者には権限エラーだけを表示して管理操作を隠す", async () => {
+  mockAuthState = {
+    authMode: "mock",
+    isOrganizer: true,
+    user: {
+      id: "other-organizer",
+      name: "別の主催者",
+      role: "organizer",
+    },
+  };
+  seedStore();
+  renderManage();
+
+  expect(await screen.findByText("この大会を管理する権限がありません。")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "受付開始" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "次ラウンド生成" })).not.toBeInTheDocument();
 });
 
 test("途中参加の申請を参加者タブで許可できる", async () => {

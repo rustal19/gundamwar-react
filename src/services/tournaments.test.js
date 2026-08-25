@@ -33,6 +33,11 @@ const user = {
   nickname: "テストニックネーム",
   displayNickname: "表示ニックネーム",
 };
+const organizer = {
+  id: "org",
+  name: "主催者",
+  role: "organizer",
+};
 const originalFetch = global.fetch;
 
 function setMockUser() {
@@ -419,6 +424,37 @@ describe("tournaments service mock mode", () => {
     });
   });
 
+  it("does not expose submitted decklists through standings", async () => {
+    setRegistrationTournament({ status: "in_progress" });
+    const store = readStore();
+    store.entries.t1 = [
+      {
+        id: "secret-entry",
+        tournamentId: "t1",
+        user: { id: "secret-player", name: "非公開プレイヤー" },
+        deckItems: [
+          {
+            cardId: "secret-card",
+            count: 1,
+            card: { cardId: "secret-card", name: "非公開カード" },
+            zone: "main",
+          },
+        ],
+        decklistSubmittedAt: new Date().toISOString(),
+        status: "checked_in",
+        createdAt: new Date().toISOString(),
+      },
+    ];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const standings = await fetchStandings("t1", { authMode: "mock" });
+
+    expect(standings.items[0].entry).toMatchObject({
+      id: "secret-entry",
+      deckItems: null,
+    });
+  });
+
   it("shows completed round results to third parties during an in-progress tournament", async () => {
     setRegistrationTournament({ status: "in_progress" });
     const store = readStore();
@@ -650,8 +686,59 @@ describe("tournaments service mock mode", () => {
     });
 
     expect(checkedIn.status).toBe("checked_in");
-    const entries = await fetchEntries("t1", { authMode: "mock" });
+    const entries = await fetchEntries("t1", { authMode: "mock", user: organizer });
     expect(entries.items[0].deckItems).toHaveLength(50);
+  });
+
+  it("allows only the tournament creator or an admin to fetch raw entries", async () => {
+    setRegistrationTournament();
+    const deckItems = [{ cardId: "secret", count: 1, zone: "main" }];
+    const store = readStore();
+    store.entries.t1 = [
+      {
+        id: "entry-secret",
+        tournamentId: "t1",
+        user: { id: "player-secret", name: "参加者" },
+        deckItems,
+        decklistSubmittedAt: new Date().toISOString(),
+        status: "registered",
+        createdAt: new Date().toISOString(),
+      },
+    ];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const creatorView = await fetchEntries("t1", { authMode: "mock", user: organizer });
+    const adminView = await fetchEntries("t1", {
+      authMode: "mock",
+      user: { id: "admin-user", name: "管理者", role: "admin" },
+    });
+    expect(creatorView.items[0].deckItems).toEqual(deckItems);
+    expect(adminView.items[0].deckItems).toEqual(deckItems);
+
+    await expect(
+      fetchEntries("t1", {
+        authMode: "mock",
+        user: { id: "other-organizer", name: "別の主催者", role: "organizer" },
+      })
+    ).rejects.toMatchObject({
+      message: "この大会を管理する権限がありません。",
+      status: 403,
+    });
+    await expect(
+      fetchEntries("t1", {
+        authMode: "mock",
+        user: { id: "org", name: "一般ユーザー", role: "user" },
+      })
+    ).rejects.toMatchObject({
+      message: "主催者または管理者のみ利用できます。",
+      status: 403,
+    });
+
+    window.localStorage.removeItem(MOCK_USER_KEY);
+    await expect(fetchEntries("t1", { authMode: "mock" })).rejects.toMatchObject({
+      message: "ログインしてから操作してください。",
+      status: 401,
+    });
   });
 
   it("generates swiss pairings, reports results, completes rounds, and updates standings", async () => {
