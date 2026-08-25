@@ -75,9 +75,53 @@ test("/search renders the search form and collapsed sidebar", () => {
   expect(container.querySelector('a[href="/search"]')).toHaveAttribute("title");
 });
 
+test("/deck collapses the sidebar after navigation without blocking a later manual expansion", () => {
+  const { container } = renderApp("/");
+  const initialSidebar = container.querySelector(".gw-sidebar");
+  const deckLink = container.querySelector('a[href="/deck"]');
+
+  fireEvent.pointerEnter(initialSidebar);
+  deckLink.focus();
+  expect(deckLink).toHaveFocus();
+  fireEvent.click(deckLink);
+
+  const sidebar = container.querySelector(".gw-sidebar");
+  const activeDeckLink = container.querySelector('a[href="/deck"]');
+  expect(container.querySelector(".app-shell")).toHaveClass("app-shell-sidebar-collapsed");
+  expect(sidebar).toHaveClass("gw-sidebar-collapsed");
+  expect(sidebar).not.toHaveClass("gw-sidebar-temporarily-expanded");
+  expect(activeDeckLink).not.toHaveFocus();
+
+  fireEvent.pointerLeave(sidebar);
+  fireEvent.pointerEnter(sidebar);
+  expect(sidebar).toHaveClass("gw-sidebar-temporarily-expanded");
+  fireEvent.pointerLeave(sidebar);
+  expect(sidebar).not.toHaveClass("gw-sidebar-temporarily-expanded");
+
+  fireEvent.focus(activeDeckLink);
+  expect(sidebar).toHaveClass("gw-sidebar-temporarily-expanded");
+  fireEvent.blur(activeDeckLink, { relatedTarget: document.body });
+  expect(sidebar).not.toHaveClass("gw-sidebar-temporarily-expanded");
+
+  fireEvent.click(container.querySelector('a[href="/"]'));
+  expect(container.querySelector(".app-shell")).not.toHaveClass(
+    "app-shell-sidebar-collapsed"
+  );
+  expect(container.querySelector(".gw-sidebar")).not.toHaveClass("gw-sidebar-collapsed");
+});
+
 test("only the deck builder route uses the viewport-locked app shell", () => {
   const deckBuilderView = renderApp("/deck");
   expect(deckBuilderView.container.querySelector(".app-shell")).toHaveClass("app-shell-deck");
+  expect(deckBuilderView.container.querySelector(".app-shell")).toHaveClass(
+    "app-shell-sidebar-collapsed"
+  );
+  expect(deckBuilderView.container.querySelector(".gw-sidebar")).toHaveClass(
+    "gw-sidebar-collapsed"
+  );
+  expect(deckBuilderView.container.querySelector(".gw-sidebar")).not.toHaveClass(
+    "gw-sidebar-temporarily-expanded"
+  );
   deckBuilderView.unmount();
 
   const publicDeckListView = renderApp("/decks");
