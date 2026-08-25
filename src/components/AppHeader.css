@@ -77,16 +77,14 @@
   width: 56px;
 }
 
-.gw-sidebar-collapsed:hover,
-.gw-sidebar-collapsed:focus-within {
+.gw-sidebar-collapsed.gw-sidebar-temporarily-expanded {
   box-shadow: 0 8px 24px var(--gw-shadow-popover-color);
   padding-left: 0.65rem;
   padding-right: 0.65rem;
   width: 200px;
 }
 
-.gw-sidebar-collapsed:hover .sr-only,
-.gw-sidebar-collapsed:focus-within .sr-only {
+.gw-sidebar-collapsed.gw-sidebar-temporarily-expanded .sr-only {
   animation: gw-sidebar-fade-in 0.14s ease 0.08s both;
   clip: auto;
   height: auto;
@@ -130,10 +128,8 @@
   display: none;
 }
 
-.gw-sidebar-collapsed:hover .gw-sidebar-brand-subtitle,
-.gw-sidebar-collapsed:hover .gw-sidebar-brand-title,
-.gw-sidebar-collapsed:focus-within .gw-sidebar-brand-subtitle,
-.gw-sidebar-collapsed:focus-within .gw-sidebar-brand-title {
+.gw-sidebar-collapsed.gw-sidebar-temporarily-expanded .gw-sidebar-brand-subtitle,
+.gw-sidebar-collapsed.gw-sidebar-temporarily-expanded .gw-sidebar-brand-title {
   animation: gw-sidebar-fade-in 0.14s ease 0.08s both;
   display: block;
 }
@@ -164,8 +160,7 @@
   display: none;
 }
 
-.gw-sidebar-collapsed:hover .gw-sidebar-section-title,
-.gw-sidebar-collapsed:focus-within .gw-sidebar-section-title {
+.gw-sidebar-collapsed.gw-sidebar-temporarily-expanded .gw-sidebar-section-title {
   animation: gw-sidebar-fade-in 0.14s ease 0.08s both;
   display: block;
 }
@@ -209,14 +204,12 @@
   padding-right: 0;
 }
 
-.gw-sidebar-collapsed:hover .gw-sidebar-link,
-.gw-sidebar-collapsed:focus-within .gw-sidebar-link {
+.gw-sidebar-collapsed.gw-sidebar-temporarily-expanded .gw-sidebar-link {
   padding-left: 0.55rem;
   padding-right: 0.55rem;
 }
 
-.gw-sidebar-collapsed:hover .gw-sidebar-link-label,
-.gw-sidebar-collapsed:focus-within .gw-sidebar-link-label {
+.gw-sidebar-collapsed.gw-sidebar-temporarily-expanded .gw-sidebar-link-label {
   animation: gw-sidebar-fade-in 0.14s ease 0.08s both;
 }
 
@@ -285,10 +278,8 @@
   width: 38px;
 }
 
-.gw-sidebar-collapsed:hover .gw-sidebar-user-button,
-.gw-sidebar-collapsed:hover .gw-sidebar-login-button,
-.gw-sidebar-collapsed:focus-within .gw-sidebar-user-button,
-.gw-sidebar-collapsed:focus-within .gw-sidebar-login-button {
+.gw-sidebar-collapsed.gw-sidebar-temporarily-expanded .gw-sidebar-user-button,
+.gw-sidebar-collapsed.gw-sidebar-temporarily-expanded .gw-sidebar-login-button {
   justify-content: flex-start;
   padding-left: 0.55rem;
   padding-right: 0.55rem;

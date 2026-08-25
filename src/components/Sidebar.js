@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { buildPathWithForcedMobileLayout } from "../utils/deviceLayout";
@@ -36,6 +36,7 @@ function getInitial(name) {
 
 export default function Sidebar({ collapsed = false, drawer = false, onNavigate }) {
   const location = useLocation();
+  const sidebarRef = useRef(null);
   const {
     displayNickname,
     isAdmin,
@@ -45,6 +46,8 @@ export default function Sidebar({ collapsed = false, drawer = false, onNavigate 
     user,
   } = useAuth();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [pointerExpansionActive, setPointerExpansionActive] = useState(false);
+  const [focusExpansionActive, setFocusExpansionActive] = useState(false);
 
   const paths = useMemo(
     () => ({
@@ -65,6 +68,9 @@ export default function Sidebar({ collapsed = false, drawer = false, onNavigate 
   const rootClassName = [
     "gw-sidebar",
     collapsed ? "gw-sidebar-collapsed" : "",
+    collapsed && (pointerExpansionActive || focusExpansionActive)
+      ? "gw-sidebar-temporarily-expanded"
+      : "",
     drawer ? "gw-sidebar-drawer" : "",
   ]
     .filter(Boolean)
@@ -81,6 +87,40 @@ export default function Sidebar({ collapsed = false, drawer = false, onNavigate 
     }
   }, [isAuthenticated]);
 
+  useLayoutEffect(() => {
+    setPointerExpansionActive(false);
+    setFocusExpansionActive(false);
+    if (!collapsed) return;
+
+    // 縮小対象ページへの遷移時は、遷移元リンクに残るフォーカスを解除する。
+    // ポインター展開も上で一度閉じるため、リンク上にカーソルが残っていても縮小される。
+    const focusedElement = document.activeElement;
+    if (
+      sidebarRef.current?.contains(focusedElement) &&
+      typeof focusedElement?.blur === "function"
+    ) {
+      focusedElement.blur();
+    }
+  }, [collapsed, location.pathname]);
+
+  const handlePointerEnter = () => {
+    if (collapsed) setPointerExpansionActive(true);
+  };
+
+  const handlePointerLeave = () => {
+    if (collapsed) setPointerExpansionActive(false);
+  };
+
+  const handleFocus = () => {
+    if (collapsed) setFocusExpansionActive(true);
+  };
+
+  const handleBlur = (event) => {
+    if (collapsed && !event.currentTarget.contains(event.relatedTarget)) {
+      setFocusExpansionActive(false);
+    }
+  };
+
   const handleSignOut = () => {
     setUserMenuOpen(false);
     signOut();
@@ -88,7 +128,15 @@ export default function Sidebar({ collapsed = false, drawer = false, onNavigate 
   };
 
   return (
-    <aside className={rootClassName} aria-label="サイトナビゲーション">
+    <aside
+      ref={sidebarRef}
+      className={rootClassName}
+      aria-label="サイトナビゲーション"
+      onPointerEnter={handlePointerEnter}
+      onPointerLeave={handlePointerLeave}
+      onFocusCapture={handleFocus}
+      onBlurCapture={handleBlur}
+    >
       <Link to={paths.home} className="gw-sidebar-brand" onClick={handleNavigate}>
         <span className="gw-sidebar-brand-title">Gundam War Portal</span>
         <span className="gw-sidebar-brand-subtitle">ガンダムウォー非公式ポータル</span>
