@@ -361,6 +361,39 @@ test("参加者が0人なら空状態メッセージを表示する", async () =
   expect(screen.queryByRole("columnheader", { name: "名前" })).not.toBeInTheDocument();
 });
 
+test("主催者のチェックイン操作は確認ダイアログなしで実行する", async () => {
+  seedStore({
+    entries: [
+      {
+        id: "entry-organizer-checkin",
+        tournamentId: "t-ui",
+        user: { id: "player-organizer-checkin", name: "受付対象選手" },
+        deckItems: null,
+        decklistSubmittedAt: null,
+        deckLockedAt: null,
+        status: "registered",
+        joinedAtRound: 1,
+        createdAt: new Date().toISOString(),
+      },
+    ],
+  });
+  renderManage();
+
+  fireEvent.click(await screen.findByRole("button", { name: "参加者" }));
+  const entryRow = screen.getByText("受付対象選手").closest("tr");
+  fireEvent.click(within(entryRow).getByRole("button", { name: "チェックイン" }));
+
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(await screen.findByText("参加者の状態を更新しました。")).toBeInTheDocument();
+  await waitFor(() => {
+    const storedEntry = JSON.parse(window.localStorage.getItem(STORAGE_KEY)).entries["t-ui"].find(
+      (entry) => entry.id === "entry-organizer-checkin"
+    );
+    expect(storedEntry.status).toBe("checked_in");
+    expect(storedEntry.deckLockedAt).toBeTruthy();
+  });
+});
+
 test("参加者ごとのデッキリスト状態と主催者の監査記録を表示する", async () => {
   seedStore({
     entries: [

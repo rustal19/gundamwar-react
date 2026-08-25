@@ -1,7 +1,12 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import TournamentDetail, { formatCardCountRange } from "./TournamentDetail";
-import { createEntry, fetchTournament, updateMyEntry } from "../services/tournaments";
+import {
+  checkInMyEntry,
+  createEntry,
+  fetchTournament,
+  updateMyEntry,
+} from "../services/tournaments";
 
 let mockAuthState = {
   authMode: "mock",
@@ -94,6 +99,16 @@ function setMyDecklistState(decklistState, overrides = {}) {
   });
 }
 
+function setSelfCheckInState(decklistState) {
+  setMyDecklistState(decklistState, {
+    tournament: {
+      selfCheckin: true,
+      startsAt: new Date().toISOString(),
+      registrationClosesAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    },
+  });
+}
+
 beforeEach(() => {
   mockAuthState = { authMode: "mock", isAuthenticated: false, user: null };
   mockDeckItems = [];
@@ -123,6 +138,7 @@ beforeEach(() => {
     )
   );
   createEntry.mockReset().mockResolvedValue({});
+  checkInMyEntry.mockReset().mockResolvedValue({});
   updateMyEntry.mockReset().mockResolvedValue({});
 });
 
@@ -281,4 +297,56 @@ test("未提出のままロックされた場合も提出UIを表示しない", 
   ).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "提出を更新" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "デッキを選ぶ" })).not.toBeInTheDocument();
+});
+
+test("セルフチェックイン前にロックの確認を表示しキャンセル時は実行しない", async () => {
+  setSelfCheckInState("submitted");
+  renderDetail();
+
+  fireEvent.click(await screen.findByRole("button", { name: "チェックインする" }));
+
+  const dialog = screen.getByRole("dialog", { name: "チェックインの確認" });
+  expect(
+    within(dialog).getByText(
+      "チェックインするとデッキリストがロックされ、以降は自分で変更できなくなります。修正が必要になった場合は主催者に連絡してください。チェックインしますか?"
+    )
+  ).toBeInTheDocument();
+  expect(checkInMyEntry).not.toHaveBeenCalled();
+
+  fireEvent.click(within(dialog).getByRole("button", { name: "キャンセル" }));
+
+  expect(screen.queryByRole("dialog", { name: "チェックインの確認" })).not.toBeInTheDocument();
+  expect(checkInMyEntry).not.toHaveBeenCalled();
+});
+
+test("セルフチェックイン確認後にチェックインを実行する", async () => {
+  setSelfCheckInState("submitted");
+  renderDetail();
+
+  fireEvent.click(await screen.findByRole("button", { name: "チェックインする" }));
+  const dialog = screen.getByRole("dialog", { name: "チェックインの確認" });
+  fireEvent.click(within(dialog).getByRole("button", { name: "チェックインする" }));
+
+  expect(checkInMyEntry).toHaveBeenCalledWith({
+    tournamentId: "t-detail",
+    authMode: "mock",
+    user: { id: "player-1", name: "テストユーザー" },
+  });
+  expect(await screen.findByText("チェックインしました。")).toBeInTheDocument();
+  expect(screen.queryByRole("dialog", { name: "チェックインの確認" })).not.toBeInTheDocument();
+});
+
+test("デッキリスト未提出のセルフチェックインでは追加警告を表示する", async () => {
+  setSelfCheckInState("none");
+  renderDetail();
+
+  fireEvent.click(await screen.findByRole("button", { name: "チェックインする" }));
+
+  const dialog = screen.getByRole("dialog", { name: "チェックインの確認" });
+  expect(
+    within(dialog).getByText(
+      "デッキリストが未提出です。このままチェックインすると自分では提出できなくなります。"
+    )
+  ).toBeInTheDocument();
+  expect(checkInMyEntry).not.toHaveBeenCalled();
 });

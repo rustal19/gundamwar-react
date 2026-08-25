@@ -613,6 +613,19 @@
   padding: 18px;
 }
 
+.tournament-confirm-dialog {
+  width: min(560px, 100%);
+}
+
+.tournament-confirm-dialog > p {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.tournament-confirm-actions {
+  justify-content: flex-end;
+}
+
 .tournament-dialog-header {
   display: flex;
   align-items: center;
