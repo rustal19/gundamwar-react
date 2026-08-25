@@ -24,6 +24,47 @@ function compareStartsAt(left, right) {
   return String(left.startsAt || "").localeCompare(String(right.startsAt || ""));
 }
 
+function parseTournamentDate(value) {
+  if (value == null || value === "") return null;
+
+  if (typeof value === "string") {
+    const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+    if (dateOnly) {
+      const year = Number(dateOnly[1]);
+      const month = Number(dateOnly[2]) - 1;
+      const day = Number(dateOnly[3]);
+      const date = new Date(year, month, day);
+      if (
+        date.getFullYear() !== year ||
+        date.getMonth() !== month ||
+        date.getDate() !== day
+      ) {
+        return null;
+      }
+      return date;
+    }
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function shouldShowTournamentOnHome(tournament, now = new Date(Date.now())) {
+  if (tournament?.status !== "completed") return true;
+
+  const referenceDate = [tournament.endedAt, tournament.startsAt]
+    .map(parseTournamentDate)
+    .find(Boolean);
+  if (!referenceDate) return true;
+
+  const hideAt = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    referenceDate.getDate() + 2
+  );
+  return now < hideAt;
+}
+
 function OwnerLink({ owner, buildPath }) {
   const label = owner?.name || "-";
   return owner?.id ? (
@@ -79,22 +120,29 @@ export default function PortalHome({ compact = false }) {
 
   useEffect(() => {
     let isActive = true;
+    const loadedAt = new Date(Date.now());
     setIsTournamentsLoaded(false);
     setTournamentsError("");
 
     Promise.all([
       Promise.resolve(fetchTournaments({ status: "registration", page: 1, authMode })),
       Promise.resolve(fetchTournaments({ status: "in_progress", page: 1, authMode })),
+      Promise.resolve(fetchTournaments({ status: "completed", page: 1, authMode })),
     ])
-      .then(([registration, inProgress]) => {
+      .then(([registration, inProgress, completed]) => {
         if (!isActive) return;
         const seen = new Set();
-        const nextItems = [...(registration?.items || []), ...(inProgress?.items || [])]
+        const nextItems = [
+          ...(registration?.items || []),
+          ...(inProgress?.items || []),
+          ...(completed?.items || []),
+        ]
           .filter((tournament) => {
             if (!tournament?.id || seen.has(tournament.id)) return false;
             seen.add(tournament.id);
             return true;
           })
+          .filter((tournament) => shouldShowTournamentOnHome(tournament, loadedAt))
           .sort(compareStartsAt);
         setTournaments(nextItems);
       })
