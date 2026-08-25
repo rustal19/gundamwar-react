@@ -6,6 +6,11 @@ import CardHoverPreview from "../components/CardHoverPreview";
 import { useDeckPreview } from "../hooks/useDeckPreview";
 import { getCardCode } from "../utils/cardImages";
 import {
+  countDeckItems,
+  formatDeckCountSummary,
+  getDeckItemZone,
+} from "../utils/deckCounts";
+import {
   DECK_EXPORT_SECTION_LABELS,
   DECK_TYPE_ORDER,
   groupDeckItemsByType,
@@ -13,10 +18,6 @@ import {
 import { fetchPublicDeck, setDeckPublication } from "../services/publicDecks";
 import NotFound from "./NotFound";
 import "./PublicDecks.css";
-
-function normalizeZone(item) {
-  return item?.zone === "side" ? "side" : "main";
-}
 
 function formatDate(value) {
   if (!value) return "";
@@ -29,13 +30,6 @@ function formatDate(value) {
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-function countItems(items) {
-  return (Array.isArray(items) ? items : []).reduce(
-    (sum, item) => sum + Number(item?.count || 0),
-    0
-  );
 }
 
 function OwnerLink({ owner }) {
@@ -54,7 +48,7 @@ function DeckTypeGroups({ title, items, compact }) {
     <section className="public-deck-section">
       <div className="public-deck-section-header">
         <h2>{title}</h2>
-        <span>{`${countItems(items)}枚`}</span>
+        <span>{`${countDeckItems(items)}枚`}</span>
       </div>
       {DECK_TYPE_ORDER.map((type) => {
         const groupItems = groups[type] || [];
@@ -67,7 +61,7 @@ function DeckTypeGroups({ title, items, compact }) {
                 const card = item.card || {};
                 const code = getCardCode(card);
                 return (
-                  <div key={`${item.cardId}-${normalizeZone(item)}`} className="public-deck-row">
+                  <div key={`${item.cardId}-${getDeckItemZone(item)}`} className="public-deck-row">
                     <span className="public-deck-count">{item.count}</span>
                     <span className="public-deck-code">{code || "-"}</span>
                     <span className="public-deck-name">
@@ -99,7 +93,7 @@ function DeckPreviewSection({ deck, mainItems, sideItems, mainCount, sideCount }
     <section className="public-deck-section">
       <div className="public-deck-section-header">
         <h2>デッキ画像</h2>
-        <span>{mainCount + sideCount}枚</span>
+        <span>{formatDeckCountSummary(mainCount, sideCount)}</span>
       </div>
       {previewUrl ? (
         <a
@@ -161,15 +155,15 @@ export default function PublicDeckDetail({ compact = false }) {
   }, [authMode, id]);
 
   const mainItems = useMemo(
-    () => (deck?.items || []).filter((item) => normalizeZone(item) === "main"),
+    () => (deck?.items || []).filter((item) => getDeckItemZone(item) === "main"),
     [deck]
   );
   const sideItems = useMemo(
-    () => (deck?.items || []).filter((item) => normalizeZone(item) === "side"),
+    () => (deck?.items || []).filter((item) => getDeckItemZone(item) === "side"),
     [deck]
   );
-  const mainCount = useMemo(() => countItems(mainItems), [mainItems]);
-  const sideCount = useMemo(() => countItems(sideItems), [sideItems]);
+  const mainCount = useMemo(() => countDeckItems(mainItems), [mainItems]);
+  const sideCount = useMemo(() => countDeckItems(sideItems), [sideItems]);
 
   const handleCopyDeck = () => {
     if (!deck) return;
@@ -223,7 +217,7 @@ export default function PublicDeckDetail({ compact = false }) {
               {[
                 deck.format,
                 formatDate(deck.publishedAt || deck.updatedAt),
-                sideCount ? `メイン${mainCount}・サイド${sideCount}` : `メイン${mainCount}`,
+                formatDeckCountSummary(mainCount, sideCount),
               ]
                 .filter(Boolean)
                 .join(" / ")}
