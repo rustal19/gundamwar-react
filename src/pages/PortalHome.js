@@ -24,6 +24,18 @@ function compareStartsAt(left, right) {
   return String(left.startsAt || "").localeCompare(String(right.startsAt || ""));
 }
 
+const HOME_TOURNAMENT_STATUS_PRIORITY = {
+  registration: 0,
+  in_progress: 0,
+  completed: 1,
+};
+
+function compareHomeTournaments(left, right) {
+  const leftPriority = HOME_TOURNAMENT_STATUS_PRIORITY[left.status] ?? 2;
+  const rightPriority = HOME_TOURNAMENT_STATUS_PRIORITY[right.status] ?? 2;
+  return leftPriority - rightPriority || compareStartsAt(left, right);
+}
+
 function parseTournamentDate(value) {
   if (value == null || value === "") return null;
 
@@ -143,7 +155,7 @@ export default function PortalHome({ compact = false }) {
             return true;
           })
           .filter((tournament) => shouldShowTournamentOnHome(tournament, loadedAt))
-          .sort(compareStartsAt);
+          .sort(compareHomeTournaments);
         setTournaments(nextItems);
       })
       .catch((error) => {

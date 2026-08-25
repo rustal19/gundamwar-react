@@ -204,6 +204,53 @@ test("ホームの大会は開催予定・受付中・進行中・完了直後�
   });
 });
 
+test("完了大会が5件以上あっても受付中・進行中の大会を優先表示する", async () => {
+  jest.spyOn(Date, "now").mockReturnValue(new Date(2026, 6, 20, 12, 0, 0).getTime());
+
+  fetchMyTournaments.mockResolvedValue({ items: [] });
+  fetchTournaments.mockImplementation(({ status }) => {
+    const itemsByStatus = {
+      registration: [
+        {
+          id: "priority-registration",
+          title: "優先表示される受付中大会",
+          status: "registration",
+          startsAt: "2026-07-21T10:00:00",
+        },
+      ],
+      in_progress: [
+        {
+          id: "priority-in-progress",
+          title: "優先表示される進行中大会",
+          status: "in_progress",
+          startsAt: "2026-07-20T10:00:00",
+        },
+      ],
+      completed: Array.from({ length: 5 }, (_, index) => ({
+        id: `priority-completed-${index}`,
+        title: `表示候補の完了大会${index + 1}`,
+        status: "completed",
+        startsAt: `2026-07-19T0${index + 1}:00:00`,
+      })),
+    };
+    return Promise.resolve({ items: itemsByStatus[status] || [] });
+  });
+
+  render(
+    <MemoryRouter>
+      <PortalHome />
+    </MemoryRouter>
+  );
+
+  await waitFor(() => {
+    expect(screen.getByText("優先表示される受付中大会")).toBeInTheDocument();
+    expect(screen.getByText("優先表示される進行中大会")).toBeInTheDocument();
+    expect(screen.getByText("表示候補の完了大会3")).toBeInTheDocument();
+  });
+  expect(screen.queryByText("表示候補の完了大会4")).not.toBeInTheDocument();
+  expect(screen.queryByText("表示候補の完了大会5")).not.toBeInTheDocument();
+});
+
 test("完了大会は日付だけでも翌日中は残り、翌々日境界で消え、日時未設定なら残る", async () => {
   jest.spyOn(Date, "now").mockReturnValue(new Date(2026, 6, 20, 0, 0, 0).getTime());
 
