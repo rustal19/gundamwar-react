@@ -27,6 +27,8 @@ import {
   fetchRoundsForManage,
   fetchStandings,
   fetchTournament,
+  fetchTournamentBans,
+  kickEntry,
   rejectEntry,
   reopenRound,
   reportMatchResult,
@@ -34,6 +36,7 @@ import {
   updateEntryStatus,
   updateRoundMatches,
   updateTournament,
+  unbanTournamentUser,
 } from "../services/tournaments";
 import { getCardCode } from "../utils/cardImages";
 import {
@@ -539,6 +542,63 @@ function RoundRollbackConfirmDialog({
   );
 }
 
+function KickEntryConfirmDialog({ entry, isSubmitting, onCancel, onConfirm }) {
+  const [ban, setBan] = useState(false);
+  const canBan = entry.user?.id != null;
+
+  return (
+    <div className="tournament-dialog-backdrop" role="presentation">
+      <div
+        className="tournament-deck-dialog tournament-confirm-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="kick-entry-dialog-title"
+        aria-describedby="kick-entry-dialog-description"
+      >
+        <div className="tournament-dialog-header">
+          <h3 id="kick-entry-dialog-title">参加者をキック</h3>
+        </div>
+        <p id="kick-entry-dialog-description">
+          {entry.user?.name || "この参加者"}を大会枠から外します。対戦表に登場済みの場合は、
+          過去の戦績を保持するためドロップ扱いになります。
+        </p>
+        {canBan ? (
+          <label className="tournament-checkbox tournament-kick-ban-option">
+            <input
+              type="checkbox"
+              checked={ban}
+              onChange={(event) => setBan(event.target.checked)}
+            />
+            再エントリーも禁止する
+          </label>
+        ) : (
+          <p className="tournament-muted">
+            ユーザーIDのないゲストは、再エントリー禁止の対象にはできません。
+          </p>
+        )}
+        <div className="tournament-entry-actions tournament-confirm-actions">
+          <button
+            type="button"
+            className="danger-button"
+            onClick={() => onConfirm(canBan && ban)}
+            disabled={isSubmitting}
+          >
+            {canBan && ban ? "キックして再エントリーも禁止" : "キックのみ実行"}
+          </button>
+          <button
+            type="button"
+            className="tournament-secondary-button"
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            キャンセル
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function RoundManagePanel({
   entries,
   form,
@@ -967,6 +1027,7 @@ function RoundManagePanel({
 }
 
 function ParticipantsPanel({
+  bans = [],
   compact,
   entries,
   form,
@@ -975,8 +1036,10 @@ function ParticipantsPanel({
   onCreateManual,
   onDeckLockChange,
   onDeckRegister,
+  onKick,
   onReject,
   onStatusChange,
+  onUnban,
   rounds,
 }) {
   const [missingOnly, setMissingOnly] = useState(false);
@@ -985,6 +1048,7 @@ function ParticipantsPanel({
   const [selectedEntryId, setSelectedEntryId] = useState("");
   const [exportMessage, setExportMessage] = useState("");
   const [exportError, setExportError] = useState("");
+  const [kickTarget, setKickTarget] = useState(null);
   const pendingEntries = entries.filter((entry) => entry.status === "pending");
   const visibleEntries = entries.filter(
     (entry) => !missingOnly || entry.decklistState === "none"
@@ -1074,6 +1138,34 @@ function ParticipantsPanel({
           ))}
         </div>
       ) : null}
+      <div className="pending-entry-section tournament-ban-section">
+        <h3>再エントリー禁止中</h3>
+        {bans.length ? (
+          bans.map((record) => (
+            <div key={record.user.id} className="pending-entry-row">
+              <div>
+                <strong>{record.user.name || "参加者"}</strong>
+                <p>
+                  ユーザーID: {record.user.id}
+                  {record.bannedAt ? ` / 禁止日時: ${formatAuditDateTime(record.bannedAt)}` : ""}
+                </p>
+              </div>
+              <div className="tournament-row-actions">
+                <button
+                  type="button"
+                  onClick={() => onUnban(record.user.id)}
+                  disabled={isSubmitting}
+                  aria-label={`${record.user.name || "参加者"} の再エントリー禁止を解除`}
+                >
+                  禁止を解除
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="tournament-muted">再エントリー禁止中のユーザーはいません。</p>
+        )}
+      </div>
       <div className="manual-entry-form">
         <h3>+ 参加者を追加</h3>
         <input
@@ -1123,6 +1215,10 @@ function ParticipantsPanel({
               const canUnlock = Boolean(entry.deckLockedAt && form.status !== "completed");
               const canRelock = Boolean(
                 !entry.deckLockedAt && entry.deckUnlockedAt && !decklistChangesBlocked
+              );
+              const isBanned = Boolean(
+                entry.user?.id != null &&
+                  bans.some((record) => record.user.id === String(entry.user.id))
               );
               return (
                 <tr key={entry.id}>
@@ -1201,11 +1297,28 @@ function ParticipantsPanel({
                         手動で再ロック
                       </button>
                     ) : null}
-                    <button type="button" onClick={() => onStatusChange(entry.id, "checked_in")} disabled={isSubmitting}>
+                    <button
+                      type="button"
+                      onClick={() => onStatusChange(entry.id, "checked_in")}
+                      disabled={isSubmitting || isBanned}
+                      title={isBanned ? "再エントリー禁止を解除してからチェックインしてください。" : undefined}
+                    >
                       チェックイン
                     </button>
-                    <button type="button" onClick={() => onStatusChange(entry.id, "dropped")} disabled={isSubmitting}>
+                    <button
+                      type="button"
+                      onClick={() => onStatusChange(entry.id, "dropped")}
+                      disabled={isSubmitting}
+                    >
                       ドロップ
+                    </button>
+                    <button
+                      type="button"
+                      className="danger-button"
+                      onClick={() => setKickTarget(entry)}
+                      disabled={isSubmitting}
+                    >
+                      キック
                     </button>
                   </td>
                 </tr>
@@ -1240,6 +1353,18 @@ function ParticipantsPanel({
             <div className="tournament-muted">デッキリストは提出されていません。</div>
           )}
         </div>
+      ) : null}
+      {kickTarget ? (
+        <KickEntryConfirmDialog
+          entry={kickTarget}
+          isSubmitting={isSubmitting}
+          onCancel={() => setKickTarget(null)}
+          onConfirm={(ban) => {
+            const entryId = kickTarget.id;
+            setKickTarget(null);
+            onKick(entryId, ban);
+          }}
+        />
       ) : null}
     </section>
   );
@@ -1581,6 +1706,7 @@ export default function TournamentManage({ compact = false }) {
   const { authMode, user, isOrganizer } = useAuth();
   const [form, setForm] = useState(DEFAULT_FORM);
   const [entries, setEntries] = useState([]);
+  const [bans, setBans] = useState([]);
   const [rounds, setRounds] = useState([]);
   const [standings, setStandings] = useState([]);
   const [activeTab, setActiveTab] = useState("rounds");
@@ -1601,17 +1727,21 @@ export default function TournamentManage({ compact = false }) {
   const loadAll = useCallback(async () => {
     if (isNew || !isOrganizer) return;
     setIsLoading(true);
+    setBans([]);
     setError("");
     setIsAccessDenied(false);
     try {
-      const [tournament, entryPayload, roundPayload, standingPayload] = await Promise.all([
-        fetchTournament(id, { authMode, user }),
-        fetchEntries(id, { authMode, user }),
-        fetchRoundsForManage(id, { authMode }),
-        fetchStandings(id, { authMode }),
-      ]);
+      const [tournament, entryPayload, banPayload, roundPayload, standingPayload] =
+        await Promise.all([
+          fetchTournament(id, { authMode, user }),
+          fetchEntries(id, { authMode, user }),
+          fetchTournamentBans(id, { authMode, user }),
+          fetchRoundsForManage(id, { authMode }),
+          fetchStandings(id, { authMode }),
+        ]);
       setForm((current) => formFromTournament(tournament, current.regulation));
       setEntries(entryPayload.items || []);
+      setBans(banPayload.items || []);
       const nextRounds = roundPayload.rounds || [];
       setRounds(nextRounds);
       setStandings(standingPayload.items || []);
@@ -1922,6 +2052,20 @@ export default function TournamentManage({ compact = false }) {
       "参加者の状態を更新しました。"
     );
 
+  const kickParticipant = (entryId, ban) =>
+    runAction(
+      async () => kickEntry({ tournamentId: id, entryId, ban, authMode, user }),
+      ban
+        ? "参加者をキックし、再エントリーを禁止しました。"
+        : "参加者をキックしました。"
+    );
+
+  const unbanParticipant = (userId) =>
+    runAction(
+      async () => unbanTournamentUser({ tournamentId: id, userId, authMode, user }),
+      "再エントリー禁止を解除しました。"
+    );
+
   const changeDecklistLock = (entryId, decklistLocked) =>
     runAction(
       async () =>
@@ -2084,6 +2228,7 @@ export default function TournamentManage({ compact = false }) {
 
       {!isNew && activeTab === "participants" ? (
         <ParticipantsPanel
+          bans={bans}
           compact={compact}
           entries={entries}
           form={form}
@@ -2092,8 +2237,10 @@ export default function TournamentManage({ compact = false }) {
           onCreateManual={createManual}
           onDeckLockChange={changeDecklistLock}
           onDeckRegister={deckRegister}
+          onKick={kickParticipant}
           onReject={rejectPendingEntry}
           onStatusChange={changeEntryStatus}
+          onUnban={unbanParticipant}
           rounds={rounds}
         />
       ) : null}
