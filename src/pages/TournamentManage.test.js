@@ -243,6 +243,11 @@ test("途中参加の申請を参加者タブで許可できる", async () => {
   fireEvent.click(await screen.findByRole("button", { name: "参加者" }));
   const pendingSection = (await screen.findAllByText("申請中"))[0];
   expect(pendingSection).toBeInTheDocument();
+  expect(
+    within(pendingSection.closest(".pending-entry-section")).getByText(
+      "許可後にチェックインすると、第2回戦からペアリング対象になります。それ以前は不戦敗として扱われます。"
+    )
+  ).toBeInTheDocument();
   fireEvent.click(within(pendingSection.closest(".pending-entry-section")).getByRole("button", { name: "許可" }));
 
   expect(await screen.findByText("申請を許可しました。")).toBeInTheDocument();
@@ -291,9 +296,10 @@ test("次ラウンド生成は進行中ラウンドの完了後に有効にな�
     expect(screen.getByRole("button", { name: "次ラウンド生成" })).toBeEnabled();
   });
   expect(screen.queryByText(/次ラウンドを生成できません/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/未チェックインが\d+人います/)).not.toBeInTheDocument();
 });
 
-test("アクティブな参加者がいないときは次ラウンド生成を無効にする", async () => {
+test("チェックイン済みの参加者がいないときは次ラウンド生成を無効にする", async () => {
   seedStore({ rounds: [] });
   const store = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
   store.entries["t-ui"] = [];
@@ -305,10 +311,80 @@ test("アクティブな参加者がいないときは次ラウンド生成を�
   expect(generateButton).toBeDisabled();
   expect(generateButton).toHaveAttribute(
     "title",
-    "次ラウンド生成にはアクティブな参加者が2人以上必要です。"
+    "次ラウンド生成にはチェックイン済みの参加者が2人以上必要です（現在0人）。"
   );
   expect(
-    screen.getByText("次ラウンドを生成できません: 次ラウンド生成にはアクティブな参加者が2人以上必要です。")
+    screen.getByText(
+      "次ラウンドを生成できません: 次ラウンド生成にはチェックイン済みの参加者が2人以上必要です（現在0人）。"
+    )
+  ).toBeInTheDocument();
+});
+
+test("未チェックイン人数と除外を案内し、checked_in の参加者だけで生成する", async () => {
+  seedStore({
+    rounds: [],
+    entries: [
+      {
+        id: "registered-1",
+        tournamentId: "t-ui",
+        user: { id: "registered-player", name: "未チェックイン参加者" },
+        deckItems: null,
+        decklistSubmittedAt: null,
+        status: "registered",
+        joinedAtRound: 1,
+        createdAt: new Date().toISOString(),
+      },
+    ],
+  });
+  renderManage();
+
+  await screen.findByText("UI大会");
+  const generateButton = screen.getByRole("button", { name: "次ラウンド生成" });
+  expect(generateButton).toBeEnabled();
+  expect(generateButton).toHaveAttribute(
+    "aria-describedby",
+    "round-generation-unchecked-notice"
+  );
+  expect(
+    screen.getByText(
+      "未チェックインが1人います。チェックインせずに次ラウンドを生成すると、その1人はペアリング対象から除外されます。"
+    )
+  ).toBeInTheDocument();
+
+  fireEvent.click(generateButton);
+  expect(await screen.findByText("次ラウンドを生成しました。")).toBeInTheDocument();
+  const storedRound = JSON.parse(window.localStorage.getItem(STORAGE_KEY)).rounds["t-ui"][0];
+  const pairedEntryIds = storedRound.matches
+    .flatMap((match) => [match.player1EntryId, match.player2EntryId])
+    .filter(Boolean);
+  expect(pairedEntryIds).toEqual(expect.arrayContaining(["entry-1", "entry-2"]));
+  expect(pairedEntryIds).not.toContain("registered-1");
+});
+
+test("チェックイン済みが1人だけなら人数を示して次ラウンド生成を無効にする", async () => {
+  seedStore({ rounds: [] });
+  const store = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
+  store.entries["t-ui"] = [
+    store.entries["t-ui"][0],
+    {
+      ...store.entries["t-ui"][1],
+      status: "registered",
+    },
+  ];
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  renderManage();
+
+  await screen.findByText("UI大会");
+  const generateButton = screen.getByRole("button", { name: "次ラウンド生成" });
+  expect(generateButton).toBeDisabled();
+  expect(generateButton).toHaveAttribute(
+    "title",
+    "次ラウンド生成にはチェックイン済みの参加者が2人以上必要です（現在1人）。"
+  );
+  expect(
+    screen.getByText(
+      "未チェックインが1人います。チェックインせずに次ラウンドを生成すると、その1人はペアリング対象から除外されます。"
+    )
   ).toBeInTheDocument();
 });
 

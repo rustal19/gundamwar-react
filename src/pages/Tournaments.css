@@ -796,6 +796,16 @@
   color: var(--gw-danger-text-alt);
 }
 
+.tournament-checkin-warning {
+  margin: 10px 0 0;
+  border: 1px solid var(--gw-warning-border);
+  border-radius: 6px;
+  background: var(--gw-warning-soft);
+  color: var(--gw-warning-text);
+  padding: 10px 12px;
+  font-weight: 700;
+}
+
 .tournament-validation-alert {
   border: 1px solid var(--gw-danger-border);
   border-radius: 6px;

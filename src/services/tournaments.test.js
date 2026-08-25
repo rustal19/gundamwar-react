@@ -1258,6 +1258,91 @@ describe("tournaments service mock mode", () => {
     expect(rounds.rounds).toHaveLength(2);
   });
 
+  it("generates pairings with only checked-in entries eligible for the next round", async () => {
+    setRegistrationTournament({ status: "in_progress", swissRounds: 3 });
+    const store = readStore();
+    const now = new Date().toISOString();
+    store.entries.t1 = [
+      { id: "checked-1", status: "checked_in", joinedAtRound: 1 },
+      { id: "checked-2", status: "checked_in", joinedAtRound: 1 },
+      { id: "checked-late", status: "checked_in", joinedAtRound: 2 },
+      { id: "registered", status: "registered", joinedAtRound: 1 },
+      { id: "registered-late", status: "registered", joinedAtRound: 2 },
+      { id: "pending", status: "pending", joinedAtRound: 2 },
+      { id: "dropped", status: "dropped", joinedAtRound: 1 },
+      { id: "checked-future", status: "checked_in", joinedAtRound: 3 },
+    ].map((entry) => ({
+      ...entry,
+      tournamentId: "t1",
+      user: { id: `user-${entry.id}`, name: entry.id },
+      deckItems: null,
+      decklistSubmittedAt: null,
+      createdAt: now,
+    }));
+    store.rounds.t1 = [
+      {
+        id: "round-1",
+        tournamentId: "t1",
+        number: 1,
+        stage: "swiss",
+        status: "completed",
+        matches: [
+          {
+            id: "match-1",
+            roundId: "round-1",
+            tableNo: 1,
+            player1EntryId: "checked-1",
+            player2EntryId: "checked-2",
+            player1Games: 2,
+            player2Games: 0,
+            result: "p1_win",
+          },
+        ],
+      },
+    ];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const round2 = await createNextRound("t1", { authMode: "mock" });
+    const pairedEntryIds = round2.matches
+      .flatMap((match) => [match.player1EntryId, match.player2EntryId])
+      .filter(Boolean)
+      .sort();
+
+    expect(pairedEntryIds).toEqual(["checked-1", "checked-2", "checked-late"]);
+  });
+
+  it.each([0, 1])(
+    "explains when only %i checked-in entries are available for pairing",
+    async (checkedInCount) => {
+      setRegistrationTournament({ status: "in_progress" });
+      const store = readStore();
+      const now = new Date().toISOString();
+      store.entries.t1 = [
+        ...Array.from({ length: checkedInCount }, (_, index) => ({
+          id: `checked-${index + 1}`,
+          tournamentId: "t1",
+          user: { id: `checked-user-${index + 1}`, name: `Checked ${index + 1}` },
+          status: "checked_in",
+          joinedAtRound: 1,
+          createdAt: now,
+        })),
+        {
+          id: "registered",
+          tournamentId: "t1",
+          user: { id: "registered-user", name: "Registered" },
+          status: "registered",
+          joinedAtRound: 1,
+          createdAt: now,
+        },
+      ];
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+      await expect(createNextRound("t1", { authMode: "mock" })).rejects.toThrow(
+        `次ラウンド生成にはチェックイン済みの参加者が2人以上必要です（現在${checkedInCount}人）。`
+      );
+    }
+  );
+
   it("finishes a single elimination tournament when the final round completes", async () => {
     setRegistrationTournament({ status: "registration", format: "single_elim" });
     const store = readStore();
@@ -1306,9 +1391,9 @@ describe("tournaments service mock mode", () => {
   });
 
   it("handles late entry pending approval, manual guest entry, and rejection", async () => {
-    setRegistrationTournament({ status: "in_progress", lateEntry: true });
+    setRegistrationTournament({ status: "in_progress", lateEntry: true, swissRounds: 3 });
     const store = readStore();
-    store.rounds.t1 = [{ id: "round-1", tournamentId: "t1", number: 1, stage: "swiss", status: "completed", matches: [] }];
+    store.rounds.t1 = [{ id: "round-1", tournamentId: "t1", number: 1, stage: "swiss", status: "in_progress", matches: [] }];
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
 
     const pending = await createEntry({ tournamentId: "t1", authMode: "mock", user });
@@ -1319,11 +1404,37 @@ describe("tournaments service mock mode", () => {
     expect(approved.status).toBe("registered");
     expect(approved.joinedAtRound).toBe(2);
 
+    const checkedIn = await updateEntryStatus({
+      tournamentId: "t1",
+      entryId: approved.id,
+      status: "checked_in",
+      authMode: "mock",
+      user: organizer,
+    });
+    expect(checkedIn.status).toBe("checked_in");
+    expect(checkedIn.joinedAtRound).toBe(2);
+    expect(checkedIn.deckLockedAt).toBeTruthy();
+
     const guest = await createManualEntry({ tournamentId: "t1", name: "ゲスト参加者", authMode: "mock" });
     expect(guest.user.id).toBeNull();
+    expect(guest.status).toBe("registered");
     expect(guest.joinedAtRound).toBe(2);
     expect(guest.deckLockedAt).toBeTruthy();
     expect(guest.decklistState).toBe("none");
+
+    await updateEntryStatus({
+      tournamentId: "t1",
+      entryId: guest.id,
+      status: "checked_in",
+      authMode: "mock",
+      user: organizer,
+    });
+    await completeRound("round-1", { authMode: "mock" });
+    const nextRound = await createNextRound("t1", { authMode: "mock" });
+    const nextRoundEntryIds = nextRound.matches
+      .flatMap((match) => [match.player1EntryId, match.player2EntryId])
+      .filter(Boolean);
+    expect(nextRoundEntryIds).toEqual(expect.arrayContaining([approved.id, guest.id]));
 
     const secondPending = {
       ...pending,

@@ -280,20 +280,31 @@ function hasMoreRoundsToPlay(form, rounds, activeEntryCount) {
   return Boolean(numberOrNull(form.topCutSize));
 }
 
+function pairingEntriesForRound(entries, roundNumber) {
+  return (entries || []).filter(
+    (entry) =>
+      entry.status === "checked_in" &&
+      Number(entry.joinedAtRound || 1) <= Number(roundNumber)
+  );
+}
+
+function uncheckedEntriesForRound(entries, roundNumber) {
+  return (entries || []).filter(
+    (entry) =>
+      entry.status === "registered" &&
+      Number(entry.joinedAtRound || 1) <= Number(roundNumber)
+  );
+}
+
 function roundGenerationDisabledReason(form, rounds, entries) {
   if ((rounds || []).some((round) => round.status !== "completed")) {
     return "現在のラウンドを完了してください。";
   }
 
   const nextRoundNumber = (rounds || []).length + 1;
-  const activeEntryCount = (entries || []).filter(
-    (entry) =>
-      entry.status !== "dropped" &&
-      entry.status !== "pending" &&
-      Number(entry.joinedAtRound || 1) <= nextRoundNumber
-  ).length;
+  const activeEntryCount = pairingEntriesForRound(entries, nextRoundNumber).length;
   if (activeEntryCount < 2) {
-    return "次ラウンド生成にはアクティブな参加者が2人以上必要です。";
+    return `次ラウンド生成にはチェックイン済みの参加者が2人以上必要です（現在${activeEntryCount}人）。`;
   }
 
   if ((rounds || []).length > 0 && !hasMoreRoundsToPlay(form, rounds, activeEntryCount)) {
@@ -434,14 +445,35 @@ function RoundManagePanel({
     () =>
       entries.filter(
         (entry) =>
-          entry.status !== "dropped" &&
-          entry.status !== "pending" &&
+          entry.status === "checked_in" &&
           Number(entry.joinedAtRound || 1) <= Number(selectedRound?.number || 1)
       ),
     [entries, selectedRound]
   );
+  const nextRoundNumber = rounds.length + 1;
+  const uncheckedEntryCount = uncheckedEntriesForRound(entries, nextRoundNumber).length;
   const generateRoundDisabledReason = roundGenerationDisabledReason(form, rounds, entries);
   const generateRoundDisabled = isSubmitting || Boolean(generateRoundDisabledReason);
+  const generateRoundDescriptionIds = [
+    generateRoundDisabledReason ? "round-generation-disabled-reason" : "",
+    uncheckedEntryCount > 0 ? "round-generation-unchecked-notice" : "",
+  ]
+    .filter(Boolean)
+    .join(" ") || undefined;
+  const roundGenerationMessages = (
+    <>
+      {generateRoundDisabledReason ? (
+        <p id="round-generation-disabled-reason" className="tournament-muted">
+          次ラウンドを生成できません: {generateRoundDisabledReason}
+        </p>
+      ) : null}
+      {uncheckedEntryCount > 0 ? (
+        <p id="round-generation-unchecked-notice" className="tournament-checkin-warning">
+          {`未チェックインが${uncheckedEntryCount}人います。チェックインせずに次ラウンドを生成すると、その${uncheckedEntryCount}人はペアリング対象から除外されます。`}
+        </p>
+      ) : null}
+    </>
+  );
 
   useEffect(() => {
     setAnnouncementText(form.announcement || "");
@@ -477,16 +509,12 @@ function RoundManagePanel({
             onClick={onGenerateRound}
             disabled={generateRoundDisabled}
             title={generateRoundDisabledReason || undefined}
-            aria-describedby={generateRoundDisabledReason ? "round-generation-disabled-reason" : undefined}
+            aria-describedby={generateRoundDescriptionIds}
           >
             次ラウンド生成
           </button>
         </div>
-        {generateRoundDisabledReason ? (
-          <p id="round-generation-disabled-reason" className="tournament-muted">
-            次ラウンドを生成できません: {generateRoundDisabledReason}
-          </p>
-        ) : null}
+        {roundGenerationMessages}
         {!form.roundTimeMinutes ? (
           <p className="tournament-muted">大会情報タブでラウンド制限時間を設定すると、残り時間タイマーを表示できます。</p>
         ) : null}
@@ -506,16 +534,12 @@ function RoundManagePanel({
           onClick={onGenerateRound}
           disabled={generateRoundDisabled}
           title={generateRoundDisabledReason || undefined}
-          aria-describedby={generateRoundDisabledReason ? "round-generation-disabled-reason" : undefined}
+          aria-describedby={generateRoundDescriptionIds}
         >
           次ラウンド生成
         </button>
       </div>
-      {generateRoundDisabledReason ? (
-        <p id="round-generation-disabled-reason" className="tournament-muted">
-          次ラウンドを生成できません: {generateRoundDisabledReason}
-        </p>
-      ) : null}
+      {roundGenerationMessages}
       {!form.roundTimeMinutes ? (
         <p className="tournament-muted">大会情報タブでラウンド制限時間を設定すると、残り時間タイマーを表示できます。</p>
       ) : null}
@@ -835,7 +859,9 @@ function ParticipantsPanel({
             <div key={entry.id} className="pending-entry-row">
               <div>
                 <strong>{entry.user?.name || entry.id}</strong>
-                <p>許可すると第{entry.joinedAtRound || nextRound}回戦まで不戦敗として追加されます。</p>
+                <p>
+                  {`許可後にチェックインすると、第${entry.joinedAtRound || nextRound}回戦からペアリング対象になります。それ以前は不戦敗として扱われます。`}
+                </p>
               </div>
               <div className="tournament-row-actions">
                 <button type="button" onClick={() => onApprove(entry.id)} disabled={isSubmitting}>
@@ -1565,7 +1591,11 @@ export default function TournamentManage({ compact = false }) {
         <>
           <div className="next-action-band">
             <strong>次にやること:</strong>{" "}
-            {nextActionText(form, rounds, entries.filter((entry) => entry.status !== "dropped" && entry.status !== "pending").length)}
+            {nextActionText(
+              form,
+              rounds,
+              pairingEntriesForRound(entries, rounds.length + 1).length
+            )}
           </div>
           <div className="status-action-row">
             <button type="button" disabled={isSubmitting || form.status !== "draft"} onClick={() => changeStatus("registration")}>
