@@ -15,6 +15,7 @@ import {
   fetchStandings,
   fetchTournament,
   fetchTournaments,
+  reopenRound,
   reportMatchResult,
   rejectEntry,
   startRoundTimer,
@@ -102,6 +103,47 @@ function buildValidDeck(prefix = "card") {
     card: { cardId: `${prefix}-${index + 1}`, name: `${prefix} ${index + 1}`, sets: ["S1"] },
     zone: "main",
   }));
+}
+
+function makeResultRound(number, status, result = "p1_win") {
+  const roundId = `round-${number}`;
+  return {
+    id: roundId,
+    tournamentId: "t1",
+    number,
+    stage: "swiss",
+    status,
+    timerStartedAt: null,
+    matches: [
+      {
+        id: `match-${number}`,
+        roundId,
+        tableNo: 1,
+        player1EntryId: "entry-1",
+        player2EntryId: "entry-2",
+        player1Games: result === "p1_win" ? 2 : 0,
+        player2Games: result === "p2_win" ? 2 : 0,
+        result,
+      },
+    ],
+  };
+}
+
+function setRoundRollbackTournament(rounds, status = "in_progress") {
+  setRegistrationTournament({ status, swissRounds: 4 });
+  const store = readStore();
+  store.entries.t1 = ["1", "2"].map((suffix) => ({
+    id: `entry-${suffix}`,
+    tournamentId: "t1",
+    user: { id: `player-${suffix}`, name: `Player ${suffix}` },
+    deckItems: null,
+    decklistSubmittedAt: null,
+    status: "checked_in",
+    joinedAtRound: 1,
+    createdAt: new Date().toISOString(),
+  }));
+  store.rounds.t1 = rounds;
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
 }
 
 describe("tournaments service mock mode", () => {
@@ -1590,7 +1632,128 @@ describe("tournaments service mock mode", () => {
     ).rejects.toThrow("ラウンド生成後");
   });
 
-  it("blocks single elimination result corrections that conflict with later rounds", async () => {
+  it("reopens the latest completed round and allows its result to be corrected", async () => {
+    setRoundRollbackTournament([makeResultRound(1, "completed")]);
+
+    await expect(
+      reportMatchResult({
+        matchId: "match-1",
+        player1Games: 0,
+        player2Games: 2,
+        authMode: "mock",
+      })
+    ).rejects.toThrow("先にラウンドを完了前へ戻してください");
+
+    const reopened = await reopenRound("round-1", { authMode: "mock" });
+    expect(reopened).toMatchObject({
+      id: "round-1",
+      status: "in_progress",
+      matches: [expect.objectContaining({ id: "match-1", result: "p1_win" })],
+    });
+
+    const corrected = await reportMatchResult({
+      matchId: "match-1",
+      player1Games: 0,
+      player2Games: 2,
+      authMode: "mock",
+    });
+    expect(corrected).toMatchObject({ result: "p2_win", player1Games: 0, player2Games: 2 });
+    await expect(completeRound("round-1", { authMode: "mock" })).resolves.toMatchObject({
+      status: "completed",
+    });
+  });
+
+  it("rejects rewinding a completed round older than the latest completed round", async () => {
+    setRoundRollbackTournament([
+      makeResultRound(1, "completed"),
+      makeResultRound(2, "completed", "p2_win"),
+    ], "completed");
+    const before = window.localStorage.getItem(STORAGE_KEY);
+
+    await expect(reopenRound("round-1", { authMode: "mock" })).rejects.toThrow(
+      "修正できるのは直前に完了した第2回戦のみです"
+    );
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe(before);
+  });
+
+  it("requires confirmation before discarding later rounds and removes their results from standings", async () => {
+    setRoundRollbackTournament([
+      makeResultRound(1, "completed"),
+      makeResultRound(2, "in_progress", "p2_win"),
+    ]);
+    const beforeStandings = await fetchStandings("t1", { authMode: "mock" });
+    expect(beforeStandings.items.find((standing) => standing.entryId === "entry-2")).toMatchObject({
+      wins: 1,
+      losses: 1,
+      points: 3,
+    });
+
+    await expect(reopenRound("round-1", { authMode: "mock" })).rejects.toMatchObject({
+      code: "later_rounds_exist",
+      firstDiscardedRoundNumber: 2,
+      discardedRoundCount: 1,
+    });
+    expect(readStore().rounds.t1).toHaveLength(2);
+
+    await reopenRound("round-1", { authMode: "mock", discardLaterRounds: true });
+    const storedRounds = readStore().rounds.t1;
+    expect(storedRounds).toHaveLength(1);
+    expect(storedRounds[0]).toMatchObject({ id: "round-1", status: "in_progress" });
+    expect(storedRounds.flatMap((round) => round.matches).map((match) => match.id)).not.toContain(
+      "match-2"
+    );
+
+    const afterStandings = await fetchStandings("t1", { authMode: "mock" });
+    expect(afterStandings.items.find((standing) => standing.entryId === "entry-1")).toMatchObject({
+      wins: 1,
+      losses: 0,
+      points: 3,
+    });
+    expect(afterStandings.items.find((standing) => standing.entryId === "entry-2")).toMatchObject({
+      wins: 0,
+      losses: 1,
+      points: 0,
+    });
+  });
+
+  it("reopens the final round of a completed tournament and completes the tournament again", async () => {
+    setRegistrationTournament({ status: "registration", swissRounds: 1 });
+    const store = readStore();
+    store.entries.t1 = ["1", "2"].map((suffix) => ({
+      id: `entry-${suffix}`,
+      tournamentId: "t1",
+      user: { id: `player-${suffix}`, name: `Player ${suffix}` },
+      status: "checked_in",
+      joinedAtRound: 1,
+      createdAt: new Date().toISOString(),
+    }));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const finalRound = await createNextRound("t1", { authMode: "mock" });
+    await reportMatchResult({
+      matchId: finalRound.matches[0].id,
+      player1Games: 2,
+      player2Games: 0,
+      authMode: "mock",
+    });
+    await completeRound(finalRound.id, { authMode: "mock" });
+    expect((await fetchTournament("t1", { authMode: "mock", user })).status).toBe("completed");
+
+    const reopened = await reopenRound(finalRound.id, { authMode: "mock" });
+    expect(reopened.status).toBe("in_progress");
+    expect((await fetchTournament("t1", { authMode: "mock", user })).status).toBe("in_progress");
+
+    await reportMatchResult({
+      matchId: finalRound.matches[0].id,
+      player1Games: 0,
+      player2Games: 2,
+      authMode: "mock",
+    });
+    await completeRound(finalRound.id, { authMode: "mock" });
+    expect((await fetchTournament("t1", { authMode: "mock", user })).status).toBe("completed");
+  });
+
+  it("rewinds single elimination results only after discarding the later bracket", async () => {
     setRegistrationTournament({ status: "registration", format: "single_elim" });
     const store = readStore();
     store.entries.t1 = ["1", "2", "3", "4"].map((suffix) => ({
@@ -1612,6 +1775,13 @@ describe("tournaments service mock mode", () => {
 
     await expect(
       reportMatchResult({ matchId: round1.matches[0].id, player1Games: 0, player2Games: 2, authMode: "mock" })
-    ).rejects.toThrow("後続ラウンドを破棄してください");
+    ).rejects.toThrow("先にラウンドを完了前へ戻してください");
+    await expect(reopenRound(round1.id, { authMode: "mock" })).rejects.toMatchObject({
+      code: "later_rounds_exist",
+    });
+    await reopenRound(round1.id, { authMode: "mock", discardLaterRounds: true });
+    await expect(
+      reportMatchResult({ matchId: round1.matches[0].id, player1Games: 0, player2Games: 2, authMode: "mock" })
+    ).resolves.toMatchObject({ result: "p2_win" });
   });
 });
