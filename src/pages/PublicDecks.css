@@ -176,6 +176,16 @@
   color: var(--gw-text);
 }
 
+.public-decks-format-detail option {
+  background-color: var(--gw-surface);
+  color: var(--gw-text);
+}
+
+.public-decks-format-detail option:checked {
+  background-color: var(--gw-primary);
+  color: var(--gw-on-primary);
+}
+
 .public-deck-card {
   border: 1px solid var(--gw-border);
   border-radius: var(--gw-radius);

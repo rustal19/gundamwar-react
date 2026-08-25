@@ -208,6 +208,16 @@
   font: inherit;
 }
 
+.deck-publication-format option {
+  background-color: var(--gw-surface);
+  color: var(--gw-text);
+}
+
+.deck-publication-format option:checked {
+  background-color: var(--gw-primary);
+  color: var(--gw-on-primary);
+}
+
 .deck-publication-actions {
   display: flex;
   justify-content: flex-end;

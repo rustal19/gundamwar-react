@@ -184,6 +184,18 @@
 
 .deck-range-detail-select {
   min-width: 11rem;
+  background-color: var(--gw-surface);
+  color: var(--gw-text);
+}
+
+.deck-range-detail-select option {
+  background-color: var(--gw-surface);
+  color: var(--gw-text);
+}
+
+.deck-range-detail-select option:checked {
+  background-color: var(--gw-primary);
+  color: var(--gw-on-primary);
 }
 
 .deck-range-format-note {
