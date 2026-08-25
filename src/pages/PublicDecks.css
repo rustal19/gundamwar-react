@@ -81,7 +81,7 @@
 
 .public-decks-search {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(12rem, auto) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.65rem;
   border: 1px solid var(--gw-border);
   border-radius: var(--gw-radius);
@@ -91,12 +91,89 @@
 }
 
 .public-decks-search input,
-.public-decks-search select {
+.public-decks-format-detail select {
   min-width: 0;
   border: 1px solid var(--gw-secondary-border);
   padding: 0.6rem 0.75rem;
   font: inherit;
   box-sizing: border-box;
+}
+
+.public-decks-format-filter {
+  border: 1px solid var(--gw-border);
+  border-radius: var(--gw-radius);
+  background: var(--gw-surface);
+  margin-bottom: 0.65rem;
+  padding: 12px 16px;
+}
+
+.public-decks-format-tabs {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-bottom: 0.2rem;
+  scrollbar-color: var(--gw-scrollbar-thumb) var(--gw-scrollbar-track);
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.public-decks-format-tab {
+  flex: 0 0 auto;
+  min-height: 36px;
+  border: 1px solid var(--gw-primary);
+  border-radius: var(--gw-radius-sm);
+  background: var(--gw-surface);
+  color: var(--gw-primary);
+  padding: 8px 12px;
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.public-decks-format-tab:hover {
+  background: var(--gw-primary-soft);
+}
+
+.public-decks-format-tab.active {
+  border-color: var(--gw-primary);
+  background: var(--gw-primary);
+  color: var(--gw-on-primary);
+}
+
+.public-decks-format-tabs::-webkit-scrollbar {
+  height: 0.65rem;
+}
+
+.public-decks-format-tabs::-webkit-scrollbar-track {
+  background: var(--gw-scrollbar-track);
+}
+
+.public-decks-format-tabs::-webkit-scrollbar-thumb {
+  border: 2px solid var(--gw-scrollbar-track);
+  background: var(--gw-scrollbar-thumb);
+}
+
+.public-decks-format-tabs::-webkit-scrollbar-thumb:hover {
+  background: var(--gw-scrollbar-thumb-hover);
+}
+
+.public-decks-format-detail {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  border-top: 1px solid var(--gw-secondary-border-soft);
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  color: var(--gw-text-muted);
+  font-weight: 700;
+}
+
+.public-decks-format-detail select {
+  width: min(100%, 22rem);
+  background: var(--gw-field-bg);
+  color: var(--gw-text);
 }
 
 .public-deck-card {
@@ -270,6 +347,20 @@
 @media (max-width: 700px) {
   .public-decks-search {
     grid-template-columns: 1fr;
+  }
+
+  .public-decks-format-filter {
+    padding-inline: 12px;
+  }
+
+  .public-decks-format-detail {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .public-decks-format-detail select {
+    width: 100%;
   }
 
   .public-deck-card {
