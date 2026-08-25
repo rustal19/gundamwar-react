@@ -43,6 +43,7 @@ import {
 } from "../data/statusLabels";
 import { buildDeckExport, groupDeckItemsByType } from "../utils/deckExport";
 import { FORMAT_PRESETS, OTHER_FORMAT_NAME } from "../data/formats";
+import { createTournamentParticipantNameFormatter } from "../utils/tournament/participantDisplayName";
 import { getRoundLabel, getRoundLabelForNumber } from "../utils/tournament/roundLabel";
 import { computeStandings } from "../utils/tournament/standings";
 import "./Tournaments.css";
@@ -239,17 +240,19 @@ function splitDeckItems(items) {
   };
 }
 
-function buildEntryDeckExport(entry) {
+function buildEntryDeckExport(entry, formatParticipantName) {
   const { mainItems, sideItems } = splitDeckItems(entry.deckItems);
-  const name = entry.user?.name || entry.id || "-";
+  const name = formatParticipantName(entry, entry.id || "-");
   const deckText = mainItems.length || sideItems.length
     ? buildDeckExport(groupDeckItemsByType(mainItems), sideItems)
     : "未提出";
   return [`# ${name}`, deckText].join("\n");
 }
 
-function buildAllDeckExport(entries) {
-  return (entries || []).map((entry) => buildEntryDeckExport(entry)).join("\n\n---\n\n");
+function buildAllDeckExport(entries, formatParticipantName) {
+  return (entries || [])
+    .map((entry) => buildEntryDeckExport(entry, formatParticipantName))
+    .join("\n\n---\n\n");
 }
 
 function downloadBlob(blob, filename) {
@@ -274,8 +277,8 @@ function findEntry(entries, entryId) {
   return entries.find((entry) => entry.id === entryId) || null;
 }
 
-function entryName(entries, entryId) {
-  return findEntry(entries, entryId)?.user?.name || entryId || "Bye";
+function entryName(entries, entryId, formatParticipantName) {
+  return formatParticipantName(findEntry(entries, entryId), entryId || "Bye");
 }
 
 function scoreLabel(match) {
@@ -541,6 +544,7 @@ function RoundRollbackConfirmDialog({
 
 function RoundManagePanel({
   entries,
+  formatParticipantName,
   form,
   isSubmitting,
   onFinishRound,
@@ -727,8 +731,12 @@ function RoundManagePanel({
                   return (
                     <tr key={match.id} className={!isReported ? "unreported-match" : ""}>
                       <td className="num">{match.tableNo}</td>
-                      <td>{entryName(entries, match.player1EntryId)}</td>
-                      <td>{isBye ? "Bye" : entryName(entries, match.player2EntryId)}</td>
+                      <td>{entryName(entries, match.player1EntryId, formatParticipantName)}</td>
+                      <td>
+                        {isBye
+                          ? "Bye"
+                          : entryName(entries, match.player2EntryId, formatParticipantName)}
+                      </td>
                       <td>
                         {isReported ? (
                           <span className={`score-badge ${match.result === "p2_win" ? "loss" : ""}`}>
@@ -879,7 +887,7 @@ function RoundManagePanel({
                     >
                       {activeEntries.map((entry) => (
                         <option key={entry.id} value={entry.id}>
-                          {entry.user?.name || entry.id}
+                          {formatParticipantName(entry, entry.id)}
                         </option>
                       ))}
                     </select>
@@ -900,7 +908,7 @@ function RoundManagePanel({
                       <option value="">Bye</option>
                       {activeEntries.map((entry) => (
                         <option key={entry.id} value={entry.id}>
-                          {entry.user?.name || entry.id}
+                          {formatParticipantName(entry, entry.id)}
                         </option>
                       ))}
                     </select>
@@ -969,6 +977,7 @@ function RoundManagePanel({
 function ParticipantsPanel({
   compact,
   entries,
+  formatParticipantName,
   form,
   isSubmitting,
   onApprove,
@@ -1007,7 +1016,7 @@ function ParticipantsPanel({
     setExportMessage("");
     setExportError("");
     try {
-      await navigator.clipboard.writeText(buildAllDeckExport(entries));
+      await navigator.clipboard.writeText(buildAllDeckExport(entries, formatParticipantName));
       setExportMessage("デッキリストを一括コピーしました。");
     } catch (copyError) {
       setExportError("クリップボードへコピーできませんでした。");
@@ -1017,14 +1026,19 @@ function ParticipantsPanel({
   const downloadAllDecks = () => {
     setExportMessage("");
     setExportError("");
-    const blob = new Blob([buildAllDeckExport(entries)], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([buildAllDeckExport(entries, formatParticipantName)], {
+      type: "text/plain;charset=utf-8",
+    });
     downloadBlob(blob, `${safeFilename(form.title, "tournament")}-decklists.txt`);
     setExportMessage("デッキリストの .txt を作成しました。");
   };
 
   const downloadDeckImage = () => {
     if (!previewBlob || !selectedEntry) return;
-    const fileBase = `${form.title || "tournament"}-${selectedEntry.user?.name || selectedEntry.id}`;
+    const fileBase = `${form.title || "tournament"}-${formatParticipantName(
+      selectedEntry,
+      selectedEntry.id
+    )}`;
     downloadBlob(previewBlob, `${safeFilename(fileBase, "deck")}.png`);
   };
 
@@ -1053,7 +1067,7 @@ function ParticipantsPanel({
           {pendingEntries.map((entry) => (
             <div key={entry.id} className="pending-entry-row">
               <div>
-                <strong>{entry.user?.name || entry.id}</strong>
+                <strong>{formatParticipantName(entry, entry.id)}</strong>
                 <p>
                   {`許可後にチェックインすると、${getRoundLabelForNumber(
                     entry.joinedAtRound || nextRound,
@@ -1127,7 +1141,7 @@ function ParticipantsPanel({
               return (
                 <tr key={entry.id}>
                   <td className="num">{index + 1}</td>
-                  <td>{entry.user?.name || "-"}</td>
+                  <td>{formatParticipantName(entry, "-")}</td>
                   <td>{ENTRY_STATUS_LABELS[entry.status] || entry.status}</td>
                   <td>
                     <div className="tournament-deck-state-cell">
@@ -1218,7 +1232,7 @@ function ParticipantsPanel({
       {selectedEntry ? (
         <div className="tournament-deck-viewer">
           <div className="tournament-round-header">
-            <h3>{selectedEntry.user?.name || "-"} のデッキリスト</h3>
+            <h3>{formatParticipantName(selectedEntry, "-")} のデッキリスト</h3>
             <button type="button" onClick={() => setSelectedEntryId("")}>
               閉じる
             </button>
@@ -1246,7 +1260,9 @@ function ParticipantsPanel({
 }
 
 function InfoPanel({
+  entries,
   form,
+  formatParticipantName,
   hasRounds,
   isNew,
   isSubmitting,
@@ -1288,7 +1304,10 @@ function InfoPanel({
           <ul>
             {regulationViolations.map((item) => (
               <li key={item.entryId}>
-                {item.entryName || item.entryId}: {item.violations.map((violation) => violation.message).join(" / ")}
+                {formatParticipantName(
+                  findEntry(entries, item.entryId),
+                  item.entryName || item.entryId
+                )}: {item.violations.map((violation) => violation.message).join(" / ")}
               </li>
             ))}
           </ul>
@@ -1494,7 +1513,14 @@ function InfoPanel({
   );
 }
 
-function StandingsPanel({ entries, rounds, selectedRoundNumber, setSelectedRoundNumber, standings }) {
+function StandingsPanel({
+  entries,
+  formatParticipantName,
+  rounds,
+  selectedRoundNumber,
+  setSelectedRoundNumber,
+  standings,
+}) {
   const swissRounds = useMemo(
     () => (rounds || []).filter((round) => round.stage !== "top_cut"),
     [rounds]
@@ -1554,7 +1580,7 @@ function StandingsPanel({ entries, rounds, selectedRoundNumber, setSelectedRound
                   return (
                     <tr key={standing.entryId}>
                       <td className="num">{standing.rank}</td>
-                      <td>{entry?.user?.name || standing.entryId}</td>
+                      <td>{formatParticipantName(entry, standing.entryId)}</td>
                       <td className="num">{standing.wins}</td>
                       <td className="num">{standing.losses}</td>
                       <td className="num">{standing.draws}</td>
@@ -1593,6 +1619,10 @@ export default function TournamentManage({ compact = false }) {
   const [isAccessDenied, setIsAccessDenied] = useState(false);
   const [regulationViolations, setRegulationViolations] = useState([]);
   const [roundRollbackConfirmation, setRoundRollbackConfirmation] = useState(null);
+  const formatParticipantName = useMemo(
+    () => createTournamentParticipantNameFormatter(entries),
+    [entries]
+  );
 
   const latestRoundNumber = rounds.length ? rounds[rounds.length - 1].number : null;
   const detailUrl = isNew ? "" : `${window.location.origin}/tournaments/${id}`;
@@ -1735,7 +1765,7 @@ export default function TournamentManage({ compact = false }) {
       setRegulationViolations(
         (updated.violations || []).map((item) => ({
           ...item,
-          entryName: findEntry(entries, item.entryId)?.user?.name,
+          entryName: formatParticipantName(findEntry(entries, item.entryId), item.entryId),
         }))
       );
       setMessage("大会情報を保存しました。");
@@ -2049,7 +2079,9 @@ export default function TournamentManage({ compact = false }) {
 
       {(isNew || activeTab === "info") && (
         <InfoPanel
+          entries={entries}
           form={form}
+          formatParticipantName={formatParticipantName}
           hasRounds={hasRounds}
           isNew={isNew}
           isSubmitting={isSubmitting}
@@ -2066,6 +2098,7 @@ export default function TournamentManage({ compact = false }) {
       {!isNew && activeTab === "rounds" ? (
         <RoundManagePanel
           entries={entries}
+          formatParticipantName={formatParticipantName}
           form={form}
           isSubmitting={isSubmitting}
           onFinishRound={finishRound}
@@ -2086,6 +2119,7 @@ export default function TournamentManage({ compact = false }) {
         <ParticipantsPanel
           compact={compact}
           entries={entries}
+          formatParticipantName={formatParticipantName}
           form={form}
           isSubmitting={isSubmitting}
           onApprove={approvePendingEntry}
@@ -2101,6 +2135,7 @@ export default function TournamentManage({ compact = false }) {
       {!isNew && activeTab === "standings" ? (
         <StandingsPanel
           entries={entries}
+          formatParticipantName={formatParticipantName}
           rounds={rounds}
           selectedRoundNumber={selectedStandingRoundNumber}
           setSelectedRoundNumber={setSelectedStandingRoundNumber}
