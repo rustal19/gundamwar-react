@@ -4,6 +4,7 @@ import {
   getSwissEndCondition,
   getSwissEndConditionLabel,
   getSwissRoundSummary,
+  normalizeSwissEndCondition,
 } from "./swiss";
 
 describe("Swiss tournament settings", () => {
@@ -23,6 +24,33 @@ describe("Swiss tournament settings", () => {
       "全勝者が1人以下になったら終了"
     );
     expect(getSwissRoundSummary(tournament)).toBe("全4回戦");
+  });
+
+  it("accepts only the two canonical ending-condition values", () => {
+    expect(normalizeSwissEndCondition(SWISS_END_CONDITION_FIXED_ROUNDS)).toBe(
+      SWISS_END_CONDITION_FIXED_ROUNDS
+    );
+    expect(normalizeSwissEndCondition(SWISS_END_CONDITION_UNDEFEATED)).toBe(
+      SWISS_END_CONDITION_UNDEFEATED
+    );
+    [undefined, null, "UNDEFEATED", "undefeated_players", "全勝者", "all_win"].forEach(
+      (value) => {
+        expect(normalizeSwissEndCondition(value)).toBe(
+          SWISS_END_CONDITION_FIXED_ROUNDS
+        );
+      }
+    );
+  });
+
+  it("reads only the canonical swissEndCondition field", () => {
+    expect(getSwissEndCondition({ endCondition: SWISS_END_CONDITION_UNDEFEATED })).toBe(
+      SWISS_END_CONDITION_FIXED_ROUNDS
+    );
+    expect(
+      getSwissEndCondition({
+        swissEndConditionMode: SWISS_END_CONDITION_UNDEFEATED,
+      })
+    ).toBe(SWISS_END_CONDITION_FIXED_ROUNDS);
   });
 
   it("does not present an unfixed automatic count as final", () => {

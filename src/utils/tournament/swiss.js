@@ -2,25 +2,13 @@ export const SWISS_END_CONDITION_FIXED_ROUNDS = "fixed_rounds";
 export const SWISS_END_CONDITION_UNDEFEATED = "undefeated";
 
 export function normalizeSwissEndCondition(value) {
-  const normalized = String(value || "").trim().toLowerCase();
-  if (
-    normalized === SWISS_END_CONDITION_UNDEFEATED ||
-    normalized.includes("undefeat") ||
-    normalized.includes("all_win") ||
-    normalized.includes("全勝")
-  ) {
-    return SWISS_END_CONDITION_UNDEFEATED;
-  }
-  return SWISS_END_CONDITION_FIXED_ROUNDS;
+  return value === SWISS_END_CONDITION_UNDEFEATED
+    ? SWISS_END_CONDITION_UNDEFEATED
+    : SWISS_END_CONDITION_FIXED_ROUNDS;
 }
 
 export function getSwissEndCondition(tournament) {
-  return normalizeSwissEndCondition(
-    tournament?.swissEndCondition ??
-      tournament?.swissEndConditionMode ??
-      tournament?.endConditionMode ??
-      tournament?.endCondition
-  );
+  return normalizeSwissEndCondition(tournament?.swissEndCondition);
 }
 
 export function getSwissEndConditionLabel(tournament) {
