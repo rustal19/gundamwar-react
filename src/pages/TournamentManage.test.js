@@ -16,6 +16,7 @@ let mockAuthState = {
   isOrganizer: true,
   user: mockOrganizerUser,
 };
+let originalFetch;
 
 jest.mock("../context/AuthContext", () => ({
   useAuth: () => mockAuthState,
@@ -143,7 +144,48 @@ function validDeck(prefix = "card") {
   }));
 }
 
+function regulation(overrides = {}) {
+  return {
+    name: "スタンダード",
+    mainMin: 50,
+    mainMax: 50,
+    sideSize: 10,
+    maxCopies: 3,
+    bannedCards: [],
+    limitedCards: [],
+    allowedSets: null,
+    ...overrides,
+  };
+}
+
+function mockCardSearch(searchResults) {
+  global.fetch = jest.fn(async (_url, options) => {
+    const request = JSON.parse(options.body);
+    const cards =
+      typeof searchResults === "function"
+        ? searchResults(request.name, request)
+        : searchResults[request.name] || [];
+    return {
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({
+        data: cards,
+        total: cards.length,
+        page: 1,
+        pageSize: 200,
+      }),
+    };
+  });
+}
+
+async function openRegulationEditor() {
+  fireEvent.click(await screen.findByRole("button", { name: "大会情報" }));
+  fireEvent.click(screen.getByText("詳細を編集"));
+}
+
 beforeEach(() => {
+  originalFetch = global.fetch;
   window.localStorage.clear();
   mockAuthState = {
     authMode: "mock",
@@ -153,6 +195,11 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  if (originalFetch === undefined) {
+    delete global.fetch;
+  } else {
+    global.fetch = originalFetch;
+  }
   jest.restoreAllMocks();
 });
 
@@ -776,4 +823,194 @@ test("完了後は非公開でも解除・上書き・再ロック操作を表�
   expect(within(unlockedRow).getByText("ロック解除済み・未再提出")).toBeInTheDocument();
   expect(within(unlockedRow).queryByRole("button", { name: "デッキ登録" })).not.toBeInTheDocument();
   expect(within(unlockedRow).queryByRole("button", { name: "手動で再ロック" })).not.toBeInTheDocument();
+});
+
+test("一括入力で一意に解決した禁止カードをチップ化し、カードIDだけを保存する", async () => {
+  seedStore({ rounds: [] });
+  mockCardSearch({
+    一意カード: [{ cardId: 100000001, name: "一意カード" }],
+  });
+  renderManage();
+  await openRegulationEditor();
+
+  fireEvent.change(screen.getByLabelText("禁止カード一括入力"), {
+    target: { value: "一意カード" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "禁止カードを一括解決" }));
+
+  expect(await screen.findByText("一意カード (100000001)")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "保存" }));
+  expect(await screen.findByText("大会情報を保存しました。")).toBeInTheDocument();
+
+  const savedRegulation = JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0]
+    .regulation;
+  expect(savedRegulation.bannedCards).toEqual(["100000001"]);
+  expect(savedRegulation.bannedCards).not.toContain("一意カード");
+});
+
+test("一括入力が複数の同名カードに一致した場合は候補選択まで保存できない", async () => {
+  seedStore({ rounds: [] });
+  mockCardSearch({
+    同名カード: [
+      { cardId: "100000002", name: "同名カード" },
+      { cardId: "100000003", name: "同名カード" },
+    ],
+  });
+  renderManage();
+  await openRegulationEditor();
+
+  fireEvent.change(screen.getByLabelText("禁止カード一括入力"), {
+    target: { value: "同名カード" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "禁止カードを一括解決" }));
+
+  expect(
+    await screen.findByRole("button", { name: "同名カード (100000003)" })
+  ).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "保存" })).toBeDisabled();
+
+  fireEvent.click(screen.getByRole("button", { name: "同名カード (100000003)" }));
+  expect(await screen.findByText("同名カード (100000003)")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "保存" })).toBeEnabled();
+  fireEvent.click(screen.getByRole("button", { name: "保存" }));
+  await screen.findByText("大会情報を保存しました。");
+
+  expect(
+    JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0].regulation.bannedCards
+  ).toEqual(["100000003"]);
+});
+
+test("未解決行が残る場合は行を明示して大会保存を拒否する", async () => {
+  seedStore({ rounds: [] });
+  mockCardSearch({ 見つからないカード: [] });
+  renderManage();
+  await openRegulationEditor();
+
+  fireEvent.change(screen.getByLabelText("禁止カード一括入力"), {
+    target: { value: "見つからないカード" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "禁止カードを一括解決" }));
+
+  await waitFor(() => {
+    expect(
+      screen.getAllByText(/禁止カード 1行目「見つからないカード」: 未解決: 一致するカードが見つかりません/)
+        .length
+    ).toBeGreaterThan(0);
+  });
+  expect(screen.getByRole("button", { name: "保存" })).toBeDisabled();
+
+  fireEvent.submit(screen.getByLabelText("タイトル").closest("form"));
+  expect(await screen.findByText(/^大会を保存できません。/)).toHaveTextContent(
+    "禁止カード 1行目「見つからないカード」"
+  );
+  expect(
+    JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0].regulation.bannedCards
+  ).toEqual([]);
+});
+
+test("既存のカード名は読み込み時に解決するが、保存操作までは元データを書き換えない", async () => {
+  seedStore({
+    tournament: {
+      regulation: regulation({ bannedCards: ["既存カード名"] }),
+    },
+    rounds: [],
+  });
+  mockCardSearch({
+    既存カード名: [{ cardId: "100000004", name: "既存カード名" }],
+  });
+  renderManage();
+  await openRegulationEditor();
+
+  expect(await screen.findByText("既存カード名 (100000004)")).toBeInTheDocument();
+  expect(
+    JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0].regulation.bannedCards
+  ).toEqual(["既存カード名"]);
+
+  fireEvent.click(screen.getByRole("button", { name: "保存" }));
+  await screen.findByText("大会情報を保存しました。");
+  expect(
+    JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0].regulation.bannedCards
+  ).toEqual(["100000004"]);
+});
+
+test("通常検索でカードを追加し、追加済みチップから個別削除できる", async () => {
+  seedStore({ rounds: [] });
+  mockCardSearch({
+    検索カード: [{ cardId: "100000005", name: "検索カード" }],
+  });
+  renderManage();
+  await openRegulationEditor();
+
+  fireEvent.change(screen.getByLabelText("禁止カードを検索"), {
+    target: { value: "検索カード" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "禁止カードの候補を検索" }));
+  fireEvent.click(await screen.findByRole("button", { name: "検索カード (100000005)" }));
+
+  expect(screen.getByText("検索カード (100000005)")).toBeInTheDocument();
+  fireEvent.click(
+    screen.getByRole("button", { name: "検索カード (100000005) を削除" })
+  );
+  expect(screen.queryByText("検索カード (100000005)")).not.toBeInTheDocument();
+});
+
+test("解決できない既存カード名は元データを消さず未解決として残す", async () => {
+  seedStore({
+    tournament: {
+      regulation: regulation({ bannedCards: ["解決不能な既存名"] }),
+    },
+    rounds: [],
+  });
+  mockCardSearch({ 解決不能な既存名: [] });
+  renderManage();
+  await openRegulationEditor();
+
+  expect(await screen.findByLabelText("禁止カード 1行目を修正")).toHaveValue(
+    "解決不能な既存名"
+  );
+  expect(screen.getByRole("button", { name: "保存" })).toBeDisabled();
+  expect(
+    JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0].regulation.bannedCards
+  ).toEqual(["解決不能な既存名"]);
+});
+
+test("既存の9桁カードIDは検索APIの制約下でも削除せず保持する", async () => {
+  seedStore({
+    tournament: {
+      regulation: regulation({ bannedCards: ["100000006"] }),
+    },
+    rounds: [],
+  });
+  global.fetch = jest.fn();
+  renderManage();
+  await openRegulationEditor();
+
+  expect(screen.getByText("カード名未取得 (100000006)")).toBeInTheDocument();
+  expect(global.fetch).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "保存" }));
+  await screen.findByText("大会情報を保存しました。");
+  expect(
+    JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0].regulation.bannedCards
+  ).toEqual(["100000006"]);
+});
+
+test("制限カードも検索解決したカードIDだけを保存する", async () => {
+  seedStore({ rounds: [] });
+  mockCardSearch({
+    制限対象カード: [{ cardId: "100000007", name: "制限対象カード" }],
+  });
+  renderManage();
+  await openRegulationEditor();
+
+  fireEvent.change(screen.getByLabelText("制限カード一括入力"), {
+    target: { value: "制限対象カード" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "制限カードを一括解決" }));
+  expect(await screen.findByText("制限対象カード (100000007)")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "保存" }));
+  await screen.findByText("大会情報を保存しました。");
+  expect(
+    JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0].regulation.limitedCards
+  ).toEqual(["100000007"]);
 });
