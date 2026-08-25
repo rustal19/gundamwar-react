@@ -9,7 +9,7 @@
 | 論点 | 決定 |
 |---|---|
 | ロックのタイミング | **チェックイン時**(エントリー単位)。主催者チェックイン・セルフチェックインのどちらでも同じ |
-| ロック後の修正 | **主催者のみ可**。誰がいつ上書きしたかを記録する |
+| ロック後の修正 | **主催者のみ可**。誰がいつ上書きしたかを記録する。加えて**主催者はロックを解除して「再提出可能」に戻せる**(本人に出し直させる経路) |
 | 途中参加のロック | **参加(追加)時点で即ロック** |
 | 終了後の公開 | 大会の「終了後にデッキリストを公開」チェックボックスに従う(参加者ごとの追加の同意は取らない) |
 | 大会が複数ある場合の並び | 新しい順 |
@@ -63,8 +63,13 @@ registration_closes_at があり かつ 現在 < 締切    → 提出可
 - **ロックの契機はチェックイン**。`status` が `checked_in` になった瞬間に `deck_locked_at` を打つ。
 - 未提出のままチェックインした場合も `deck_locked_at` を打ち、`none` のまま扱う
   (= 主催者が代理提出しない限り提出不能)。デッキ必須の大会でこれを許すかは運用判断に委ねる。
-- **一度ロックしたら、主催者がチェックインを取り消しても解除しない**(ロック解除を経路にしないため)。
-  差し替えが必要なら §3 の主催者上書きを使う。
+- **チェックインの取り消しではロックを解除しない**。解除は主催者の明示操作(§4.3)だけで起きる。
+- ロック後に直す手段は2つ。主催者が状況で選ぶ:
+  1. **代理で上書き**(その場で主催者が直す。会場で口頭確認しながら直すケース)
+  2. **ロックを解除して再提出可能に戻す**(本人に出し直させるケース)。解除すると状態は
+     `submitted`(提出済みなら)または `none` に戻り、本人が差し替えられる。
+     **本人が出し直した時点で自動的に再ロック**する(解除は一度きりの許可として扱う)。
+     主催者は手動での再ロックもできる。
 
 ## 3. スキーマ変更(加算のみ・既存列は変更しない)
 
@@ -74,6 +79,8 @@ ALTER TABLE tournament_entries
   ADD COLUMN deck_locked_at DATETIME NULL,         -- チェックイン時に打つ(§2)
   ADD COLUMN deck_updated_by BIGINT UNSIGNED NULL, -- ロック後に上書きした主催者
   ADD COLUMN deck_updated_at DATETIME NULL,        -- その上書き時刻
+  ADD COLUMN deck_unlocked_by BIGINT UNSIGNED NULL,-- ロックを解除した主催者
+  ADD COLUMN deck_unlocked_at DATETIME NULL,       -- その解除時刻
   ADD COLUMN final_rank INT NULL;                  -- 確定順位(大会完了時に書き込む。#25用)
 ```
 
@@ -96,10 +103,20 @@ ALTER TABLE tournament_entries
 `can_submit_decklist` に `AND e.deck_locked_at IS NULL` を加える。
 これで「締切未到来でもチェックイン後は提出不可」になり、#28 の穴が閉じる。
 
-### 4.3 主催者による上書き
-`PUT /api/tournaments/:id/entries/:entryId` の `deckItems` 更新時、`deck_locked_at` が
+### 4.3 主催者による上書き / ロック解除
+
+**上書き**: `PUT /api/tournaments/:id/entries/:entryId` の `deckItems` 更新時、`deck_locked_at` が
 入っていれば `deck_updated_by = 操作者` / `deck_updated_at = 現在` を記録する。
 記録は主催者コンソールのエントリー一覧に「主催者が修正(日時)」として出す。
+
+**ロック解除**: 同エンドポイントに `decklistLocked: false` を受け付ける(専用EPは作らない)。
+
+- `deck_locked_at = NULL` にし、`deck_unlocked_by` / `deck_unlocked_at` を記録する
+  (解除も監査対象。誰が再提出を許可したかを残す)
+- 解除中は本人の提出ゲート(§4.2)が通るため、本人が差し替えられる
+- **本人が提出した時点で `deck_locked_at` を再度打つ**(解除は一度きりの許可)
+- `decklistLocked: true` で主催者が手動再ロックもできる
+- 解除できるのは大会が `completed` になる前まで
 
 ### 4.4 レスポンス契約(PORTAL_SPEC §エントリーに追記)
 ```
