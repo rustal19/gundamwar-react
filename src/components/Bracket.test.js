@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import Bracket from "./Bracket";
 
 const entries = [
@@ -73,4 +73,20 @@ test("showResults指定時は進行中ラウンドの未報告状態も表示す
   render(<Bracket rounds={rounds} entries={entries} showResults />);
 
   expect(screen.getByText("未報告")).toBeInTheDocument();
+});
+
+test("ブラケットでは同名参加者だけを短い識別子で区別する", () => {
+  const duplicateEntries = [
+    { id: "entry-1", user: { id: "user-1", name: "同名選手" } },
+    { id: "entry-2", user: { id: "user-2", name: "同名選手" } },
+    ...entries.slice(2),
+  ];
+
+  render(<Bracket rounds={rounds} entries={duplicateEntries} />);
+
+  const firstRound = screen.getByLabelText("SE1回戦");
+  const duplicateLabels = within(firstRound).getAllByText(/^同名選手 #[0-9a-z]{4,}$/);
+  expect(duplicateLabels).toHaveLength(2);
+  expect(duplicateLabels[0].textContent).not.toBe(duplicateLabels[1].textContent);
+  expect(within(firstRound).getByText("プレイヤー3")).toBeInTheDocument();
 });

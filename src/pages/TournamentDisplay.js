@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import Bracket from "../components/Bracket";
 import { useAuth } from "../context/AuthContext";
 import { fetchRounds, fetchTournament } from "../services/tournaments";
+import { createTournamentParticipantNameFormatter } from "../utils/tournament/participantDisplayName";
 import { getRoundLabel } from "../utils/tournament/roundLabel";
 import { computeStandings } from "../utils/tournament/standings";
 import "./Tournaments.css";
@@ -75,6 +76,10 @@ export default function TournamentDisplay() {
   }, []);
 
   const entries = useMemo(() => tournament?.entries || [], [tournament?.entries]);
+  const formatParticipantName = useMemo(
+    () => createTournamentParticipantNameFormatter(entries),
+    [entries]
+  );
   const currentRound = useMemo(
     () => rounds.find((round) => round.status !== "completed") || rounds[rounds.length - 1] || null,
     [rounds]
@@ -157,8 +162,8 @@ export default function TournamentDisplay() {
                       return (
                         <tr key={match.id}>
                           <td className="tournament-display-table-no num">{match.tableNo || "-"}</td>
-                          <td>{player1?.user?.name || "-"}</td>
-                          <td>{player2?.user?.name || "Bye"}</td>
+                          <td>{formatParticipantName(player1, "-")}</td>
+                          <td>{formatParticipantName(player2, "Bye")}</td>
                           <td>{resultLabel(match)}</td>
                         </tr>
                       );
@@ -193,7 +198,7 @@ export default function TournamentDisplay() {
                   {standings.map((standing) => (
                     <tr key={standing.entryId}>
                       <td className="tournament-display-table-no num">{standing.rank}</td>
-                      <td>{standing.entry?.user?.name || standing.entryId}</td>
+                      <td>{formatParticipantName(standing.entry, standing.entryId)}</td>
                       <td className="num">{standing.wins}</td>
                       <td className="num">{standing.losses}</td>
                       <td className="num">{standing.draws}</td>

@@ -189,6 +189,36 @@ test("参加者ステータスを日本語ラベルで表示する", async () =>
   expect(screen.queryByText("pending")).not.toBeInTheDocument();
 });
 
+test("同名参加者は識別表示し、登録ユーザーのプロフィールリンクとゲスト表示を維持する", async () => {
+  mockTournament = registrationTournament({
+    entries: [
+      {
+        id: "entry-user",
+        user: { id: "player-1", name: "同名選手" },
+        status: "checked_in",
+      },
+      {
+        id: "entry-guest",
+        user: { id: null, name: "同名選手" },
+        status: "checked_in",
+      },
+    ],
+  });
+
+  renderDetail();
+  fireEvent.click(await screen.findByRole("button", { name: "参加者" }));
+
+  const participantTable = screen.getByRole("table");
+  const labels = within(participantTable).getAllByText(/^同名選手 #[0-9a-z]{4,}$/);
+  expect(labels).toHaveLength(2);
+  expect(labels[0].textContent).not.toBe(labels[1].textContent);
+  expect(within(participantTable).getByRole("link", { name: /^同名選手 #/ })).toHaveAttribute(
+    "href",
+    "/users/player-1"
+  );
+  expect(within(participantTable).getAllByRole("link")).toHaveLength(1);
+});
+
 test("SEはブラケットとSE内連番で表示し、順位表はスイス結果だけを集計する", async () => {
   const entries = [
     { id: "entry-1", user: { id: "player-1", name: "選手1" }, status: "checked_in" },
