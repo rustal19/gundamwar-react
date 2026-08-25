@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDeckPreview } from "../hooks/useDeckPreview";
-import { FORMAT_PRESETS, OTHER_FORMAT_NAME } from "../data/formats";
+import DeckPublicationPanel from "./DeckPublicationPanel";
 import "./DeckLoadDialog.css";
 
 function normalizeZone(item) {
@@ -48,6 +48,8 @@ export default function DeckLoadDialog({
   onLoad,
   onDelete,
   onPublicationChange,
+  onPublicationError,
+  onPublicationFeedbackClear,
   isLoading,
   isDeleting,
   isPublishing,
@@ -56,11 +58,6 @@ export default function DeckLoadDialog({
   errorMessage,
 }) {
   const [activeDeckId, setActiveDeckId] = useState("");
-  const [publicationDescription, setPublicationDescription] = useState("");
-  const [publicationFormat, setPublicationFormat] = useState("");
-  const [publicationMessage, setPublicationMessage] = useState("");
-  const [publicationViolations, setPublicationViolations] = useState([]);
-  const [publicationHasError, setPublicationHasError] = useState(false);
   const [handledPublicationErrorMessage, setHandledPublicationErrorMessage] = useState("");
 
   useEffect(() => {
@@ -94,40 +91,10 @@ export default function DeckLoadDialog({
   );
 
   useEffect(() => {
-    setPublicationDescription(activeDeck?.description || "");
-    setPublicationFormat(activeDeck?.format || "");
-  }, [activeDeck?.id, activeDeck?.description, activeDeck?.format]);
-
-  useEffect(() => {
-    if (!open) return;
-    setPublicationMessage("");
-    setPublicationViolations([]);
-    setPublicationHasError(false);
-  }, [activeDeck?.id, open]);
-
-  useEffect(() => {
     if (!errorMessage) {
       setHandledPublicationErrorMessage("");
     }
   }, [errorMessage]);
-
-  const formatOptions = useMemo(() => {
-    const names = FORMAT_PRESETS.map((preset) => preset.name).filter(Boolean);
-    const options = [...new Set([...names, OTHER_FORMAT_NAME])];
-    if (publicationFormat && !options.includes(publicationFormat)) {
-      options.unshift(publicationFormat);
-    }
-    return options;
-  }, [publicationFormat]);
-  const normalizedPublicationFormat = String(publicationFormat || "").trim();
-  const publicationFormatPreset = useMemo(
-    () =>
-      FORMAT_PRESETS.find(({ name }) => name === normalizedPublicationFormat) || null,
-    [normalizedPublicationFormat]
-  );
-  const isPublicationValidationSkipped = Boolean(
-    normalizedPublicationFormat && !publicationFormatPreset
-  );
 
   const activePreview = useMemo(
     () => splitDeckItems(activeDeck?.items || []),
@@ -147,44 +114,11 @@ export default function DeckLoadDialog({
   const dialogErrorMessage =
     (isHandledPublicationError ? "" : errorMessage) || previewErrorMessage;
 
-  const clearPublicationFeedback = () => {
-    setPublicationMessage("");
-    setPublicationViolations([]);
-    setPublicationHasError(false);
-  };
-
   const handleDelete = async () => {
     if (!activeDeck) return;
     const shouldDelete = window.confirm(`「${activeDeck.title}」を削除しますか？`);
     if (!shouldDelete) return;
-    clearPublicationFeedback();
     await onDelete(activeDeck.id);
-  };
-
-  const handlePublicationSubmit = async (nextIsPublic) => {
-    if (!activeDeck || !onPublicationChange) return;
-    clearPublicationFeedback();
-    try {
-      await onPublicationChange({
-        deckId: activeDeck.id,
-        isPublic: nextIsPublic,
-        description: publicationDescription,
-        format: publicationFormat,
-      });
-      setPublicationMessage(nextIsPublic ? "公開設定を更新しました。" : "非公開にしました。");
-    } catch (error) {
-      const violations = Array.isArray(error?.violations)
-        ? error.violations.filter((violation) => violation?.message)
-        : [];
-      setPublicationMessage(
-        violations.length > 0
-          ? error.summary || "選択したフォーマットの条件を満たしていません。"
-          : error?.message || "公開設定を更新できませんでした。"
-      );
-      setPublicationViolations(violations);
-      setPublicationHasError(true);
-      setHandledPublicationErrorMessage(error?.message || "");
-    }
   };
 
   if (!open) return null;
@@ -266,91 +200,18 @@ export default function DeckLoadDialog({
                   )}
                 </div>
 
-                <div className="deck-publication-panel">
-                  <div className="deck-publication-header">
-                    <strong>{activeDeck.isPublic ? "公開中" : "非公開"}</strong>
-                    <span>公開デッキ一覧に表示する説明文を設定できます。</span>
-                  </div>
-                  <textarea
-                    className="deck-publication-textarea"
-                    value={publicationDescription}
-                    onChange={(event) => {
-                      setPublicationDescription(event.target.value);
-                      clearPublicationFeedback();
-                    }}
-                    placeholder="デッキの説明"
-                    rows={3}
-                  />
-                  <label className="deck-publication-format">
-                    フォーマット
-                    <select
-                      value={publicationFormat}
-                      onChange={(event) => {
-                        setPublicationFormat(event.target.value);
-                        clearPublicationFeedback();
-                      }}
-                    >
-                      <option value="">選択してください</option>
-                      {formatOptions.map((formatName) => (
-                        <option key={formatName} value={formatName}>
-                          {formatName}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  {isPublicationValidationSkipped ? (
-                    <p className="deck-publication-validation-note">
-                      登録済みのレギュレーションがないため、公開時のフォーマット適合チェックは行われません。
-                    </p>
-                  ) : null}
-                  <div className="deck-publication-actions">
-                    <button
-                      type="button"
-                      className="deck-secondary-button"
-                      onClick={() => handlePublicationSubmit(false)}
-                      disabled={isPublishing || isLoading || !activeDeck.isPublic}
-                    >
-                      {publishingDeckId === activeDeck.id ? "更新中..." : "非公開にする"}
-                    </button>
-                    <button
-                      type="button"
-                      className="deck-primary-button"
-                      onClick={() => handlePublicationSubmit(true)}
-                      disabled={isPublishing || isLoading || !publicationFormat}
-                    >
-                      {publishingDeckId === activeDeck.id
-                        ? "更新中..."
-                        : activeDeck.isPublic
-                        ? "公開内容を更新"
-                        : "公開する"}
-                    </button>
-                  </div>
-                  {publicationMessage ? (
-                    <div
-                      className={
-                        publicationHasError
-                          ? "deck-publication-message has-error"
-                          : "deck-publication-message"
-                      }
-                      role={publicationHasError ? "alert" : "status"}
-                    >
-                      <p>{publicationMessage}</p>
-                      {publicationViolations.length > 0 ? (
-                        <ul>
-                          {publicationViolations.map((violation, index) => (
-                            <li
-                              key={`${violation.code || "violation"}-${
-                                violation.cardName || index
-                              }-${index}`}
-                            >
-                              {violation.message}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
+                <DeckPublicationPanel
+                  deck={activeDeck}
+                  onPublicationChange={onPublicationChange}
+                  onPublicationError={(publicationError) => {
+                    setHandledPublicationErrorMessage(publicationError?.message || "");
+                    onPublicationError?.(publicationError);
+                  }}
+                  onPublicationFeedbackClear={onPublicationFeedbackClear}
+                  isLoading={isLoading}
+                  isPublishing={isPublishing}
+                  publishingDeckId={publishingDeckId}
+                />
 
                 <div className="deck-load-dialog-actions">
                   <button
