@@ -82,6 +82,21 @@
   min-height: var(--compact-control-height);
 }
 
+.compact-search-field-range select {
+  color: var(--gw-text);
+}
+
+.compact-search-field-range option,
+.compact-search-field-range optgroup {
+  background-color: var(--gw-surface);
+  color: var(--gw-text);
+}
+
+.compact-search-field-range option:checked {
+  background-color: var(--gw-primary);
+  color: var(--gw-on-primary);
+}
+
 .compact-search-check {
   display: inline-flex;
   align-items: center;
