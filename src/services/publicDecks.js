@@ -1,3 +1,5 @@
+import { ensureMockTournamentStore } from "./tournaments";
+
 const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
 const PUBLIC_STORAGE_KEY = "gundamwar.publicDecks.v1";
 const TOURNAMENT_STORAGE_KEY = "gundamwar.tournaments.v1";
@@ -268,6 +270,7 @@ function writeMockPublicDecks(decks) {
 }
 
 function readMockTournamentDecks() {
+  ensureMockTournamentStore();
   const store = readJsonStorage(TOURNAMENT_STORAGE_KEY, {
     tournaments: [],
     entries: {},

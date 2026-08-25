@@ -23,6 +23,7 @@ import {
   updateMyEntry,
   updateTournament,
 } from "./tournaments";
+import { fetchPublicDeck, fetchPublicDecks } from "./publicDecks";
 
 const STORAGE_KEY = "gundamwar.tournaments.v1";
 const MOCK_USER_KEY = "gundamwar.auth.mockUser.v1";
@@ -130,6 +131,8 @@ describe("tournaments service mock mode", () => {
       isOnline: false,
       selfCheckin: false,
       decklistsPublic: false,
+      lateEntry: true,
+      entryCount: 4,
     });
     expect(payload.items.find((tournament) => tournament.id === "mock-tournament-2")).toMatchObject({
       venue: null,
@@ -137,6 +140,187 @@ describe("tournaments service mock mode", () => {
       selfCheckin: true,
       decklistsPublic: false,
     });
+    expect(payload.items.find((tournament) => tournament.id === "mock-tournament-3")).toMatchObject({
+      title: "完了済みスタンダード杯",
+      status: "completed",
+      decklistsPublic: true,
+      entryCount: 4,
+    });
+  });
+
+  it("seeds none, submitted, locked, and organizer-unlocked decklist examples", async () => {
+    const payload = await fetchEntries("mock-tournament-1", {
+      authMode: "mock",
+      user: { id: "organizer-1", role: "organizer" },
+    });
+    const entries = payload.items;
+
+    expect(entries.map((entry) => entry.decklistState)).toEqual(
+      expect.arrayContaining(["none", "submitted", "locked"])
+    );
+    expect(entries.find((entry) => entry.decklistState === "none")).toMatchObject({
+      id: "entry-1",
+      deckItems: null,
+      decklistSubmittedAt: null,
+    });
+    expect(entries.find((entry) => entry.decklistState === "locked")).toMatchObject({
+      id: "entry-3",
+      deckFormat: "スタンダード",
+    });
+    expect(entries.find((entry) => entry.id === "entry-4")).toMatchObject({
+      decklistState: "submitted",
+      deckFormat: "スタンダード",
+      deckLockedAt: null,
+      deckUnlockedAt: null,
+      status: "registered",
+      joinedAtRound: 2,
+    });
+
+    const unlocked = entries.find((entry) => entry.deckUnlockedAt);
+    expect(unlocked).toMatchObject({
+      id: "entry-2",
+      decklistState: "submitted",
+      deckFormat: "スタンダード",
+      deckLockedAt: null,
+      deckUnlockedBy: { id: "organizer-1", name: "ローカル主催者" },
+      status: "checked_in",
+    });
+    expect(unlocked.deckItems).toHaveLength(17);
+  });
+
+  it("migrates legacy seed data in place while preserving user-created tournaments", async () => {
+    await fetchTournaments({ authMode: "mock" });
+    const legacyStore = readStore();
+    delete legacyStore.seedVersion;
+    legacyStore.tournaments = legacyStore.tournaments
+      .filter((tournament) => tournament.id !== "mock-tournament-3")
+      .map((tournament) =>
+        tournament.id === "mock-tournament-1"
+          ? { ...tournament, lateEntry: false, entryCount: 3 }
+          : tournament
+      );
+    legacyStore.tournaments.push({
+      ...legacyStore.tournaments.find((tournament) => tournament.id === "mock-tournament-2"),
+      id: "user-created-tournament",
+      title: "利用者作成大会",
+    });
+    legacyStore.entries["mock-tournament-1"] = legacyStore.entries["mock-tournament-1"]
+      .filter((entry) => entry.id !== "entry-4")
+      .map((entry) => ({
+        ...entry,
+        deckItems: null,
+        decklistSubmittedAt: null,
+        deckFormat: null,
+        deckUnlockedBy: null,
+        deckUnlockedAt: null,
+      }));
+    delete legacyStore.entries["mock-tournament-3"];
+    delete legacyStore.rounds["mock-tournament-3"];
+    legacyStore.entries["user-created-tournament"] = [];
+    legacyStore.rounds["user-created-tournament"] = [];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(legacyStore));
+
+    await fetchTournaments({ authMode: "mock" });
+    const migratedStore = readStore();
+    const serializedAfterMigration = window.localStorage.getItem(STORAGE_KEY);
+
+    expect(migratedStore.seedVersion).toBe(2);
+    expect(migratedStore.tournaments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "mock-tournament-3", status: "completed" }),
+        expect.objectContaining({ id: "user-created-tournament", title: "利用者作成大会" }),
+      ])
+    );
+    expect(migratedStore.entries["mock-tournament-1"].map((entry) => entry.id)).toEqual(
+      expect.arrayContaining(["entry-1", "entry-2", "entry-3", "entry-4"])
+    );
+    expect(migratedStore.rounds["mock-tournament-1"]).toEqual(legacyStore.rounds["mock-tournament-1"]);
+
+    await fetchTournaments({ authMode: "mock" });
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe(serializedAfterMigration);
+  });
+
+  it("seeds a coherent completed tournament with ranked locked decklists and results", async () => {
+    const tournament = await fetchTournament("mock-tournament-3", { authMode: "mock" });
+    const rounds = await fetchRounds("mock-tournament-3", { authMode: "mock" });
+    const standings = await fetchStandings("mock-tournament-3", { authMode: "mock" });
+    const entryIds = new Set(tournament.entries.map((entry) => entry.id));
+
+    expect(tournament).toMatchObject({
+      status: "completed",
+      decklistsPublic: true,
+      entryCount: 4,
+    });
+    expect(new Date(tournament.startsAt).getTime()).toBeLessThanOrEqual(
+      Date.now() - 2 * 24 * 60 * 60 * 1000
+    );
+    expect(tournament.entries.map((entry) => entry.finalRank)).toEqual([1, 2, 3, 4]);
+    tournament.entries.forEach((entry) => {
+      expect(entry).toMatchObject({
+        decklistState: "revealed",
+        deckFormat: "スタンダード",
+        status: "checked_in",
+      });
+      expect(entry.decklistSubmittedAt).toBeTruthy();
+      expect(entry.deckLockedAt).toBeTruthy();
+      expect(entry.deckItems).toHaveLength(17);
+      expect(entry.deckItems.reduce((sum, item) => sum + item.count, 0)).toBe(50);
+      expect(entry.deckItems.every((item) => /^\d{9}$/.test(item.cardId))).toBe(true);
+      expect(entry.deckItems.every((item) => item.card?.card_type_name)).toBe(true);
+    });
+
+    expect(rounds.rounds).toHaveLength(3);
+    rounds.rounds.forEach((round) => {
+      expect(round.status).toBe("completed");
+      expect(round.matches).toHaveLength(2);
+      round.matches.forEach((match) => {
+        expect(entryIds.has(match.player1EntryId)).toBe(true);
+        expect(entryIds.has(match.player2EntryId)).toBe(true);
+        expect(match.result).toBe("p1_win");
+      });
+    });
+    expect(standings.items.map((standing) => standing.entryId)).toEqual([
+      "completed-entry-1",
+      "completed-entry-2",
+      "completed-entry-3",
+      "completed-entry-4",
+    ]);
+    expect(standings.items.map((standing) => standing.points)).toEqual([9, 6, 3, 0]);
+  });
+
+  it("initializes and publishes seeded tournament decks with tournament metadata", async () => {
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
+    const payload = await fetchPublicDecks({ authMode: "mock" });
+    const tournamentDecks = payload.items.filter(
+      (deck) => deck.tournament?.id === "mock-tournament-3"
+    );
+    const winner = tournamentDecks.find((deck) => deck.sourceId === "completed-entry-1");
+
+    expect(tournamentDecks).toHaveLength(4);
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBeTruthy();
+    expect(winner).toMatchObject({
+      id: "entry:completed-entry-1",
+      sourceType: "tournament",
+      title: "決勝参加者1の大会デッキ",
+      format: "スタンダード",
+      finalRank: 1,
+      participantCount: 4,
+      tournament: {
+        id: "mock-tournament-3",
+        title: "完了済みスタンダード杯",
+        finalRank: 1,
+        participantCount: 4,
+      },
+    });
+
+    const detail = await fetchPublicDeck(winner.id, { authMode: "mock" });
+    expect(detail).toMatchObject({
+      id: "entry:completed-entry-1",
+      finalRank: 1,
+      participantCount: 4,
+      tournament: { title: "完了済みスタンダード杯" },
+    });
+    expect(detail.items.reduce((sum, item) => sum + item.count, 0)).toBe(50);
   });
 
   it("shows a draft only to its creator while keeping public tournaments visible", async () => {
