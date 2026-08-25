@@ -67,5 +67,5 @@ test("デッキ構築の枚数サマリにメインとサイドを表示する",
     </MemoryRouter>
   );
 
-  expect(screen.getByText("メイン50 / サイド10")).toBeInTheDocument();
+  expect(screen.getByText("メイン 50/50 ・ サイド 10/10")).toBeInTheDocument();
 });

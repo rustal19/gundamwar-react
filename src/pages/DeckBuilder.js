@@ -13,7 +13,6 @@ import { useSavedDecks } from "../hooks/useSavedDecks";
 import { getCardCode, getCardTypeLabel } from "../utils/cardImages";
 import { createBasicGCard } from "../utils/basicG";
 import { trackEvent } from "../utils/analytics";
-import { formatDeckCountSummary } from "../utils/deckCounts";
 import {
   buildDeckCostLabel,
   buildDeckExport,
@@ -26,6 +25,11 @@ import {
   groupDeckItemsByType,
 } from "../utils/deckExport";
 import "./DeckBuilder.css";
+
+const DECK_ZONE_LIMITS = {
+  main: 50,
+  side: 10,
+};
 
 const DeckBuilder = ({ compact = false }) => {
   const deckPageRef = useRef(null);
@@ -554,18 +558,30 @@ const DeckBuilder = ({ compact = false }) => {
                 {typeSummaryText ? <p className="deck-panel-note deck-type-summary">{typeSummaryText}</p> : null}
                 <strong
                   className={
-                    mainCount > 50 || sideCount > 10
+                    mainCount > DECK_ZONE_LIMITS.main || sideCount > DECK_ZONE_LIMITS.side
                       ? "deck-zone-count over-limit"
                       : "deck-zone-count"
                   }
                 >
-                  {formatDeckCountSummary(mainCount, sideCount)}
+                  {`メイン ${mainCount}/${DECK_ZONE_LIMITS.main} ・ サイド ${sideCount}/${DECK_ZONE_LIMITS.side}`}
                 </strong>
               </div>
 
               <div className="deck-cards-panel">
-                {renderDeckZone("main", "メインデッキ", mainCount, 50, orderedMainExportItems)}
-                {renderDeckZone("side", "サイドボード", sideCount, 10, orderedSideExportItems)}
+                {renderDeckZone(
+                  "main",
+                  "メインデッキ",
+                  mainCount,
+                  DECK_ZONE_LIMITS.main,
+                  orderedMainExportItems
+                )}
+                {renderDeckZone(
+                  "side",
+                  "サイドボード",
+                  sideCount,
+                  DECK_ZONE_LIMITS.side,
+                  orderedSideExportItems
+                )}
               </div>
             </section>
           </aside>
