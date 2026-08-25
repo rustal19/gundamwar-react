@@ -343,6 +343,43 @@ test("任意大会ではデッキなしでエントリーし未提出として�
   expect(screen.queryByText("デッキリストを提出しました。")).not.toBeInTheDocument();
 });
 
+test("ドロップ済みの本人は大会枠に数えず、キックのみ後の再エントリー導線を表示する", async () => {
+  mockAuthState = {
+    authMode: "mock",
+    isAuthenticated: true,
+    user: { id: "player-1", name: "テストユーザー" },
+  };
+  mockTournament = registrationTournament({
+    capacity: 1,
+    myEntry: null,
+    entries: [
+      {
+        id: "entry-dropped",
+        user: { id: "player-1", name: "テストユーザー" },
+        status: "dropped",
+        decklistState: "none",
+        deckItems: null,
+        decklistSubmittedAt: null,
+        deckLockedAt: null,
+      },
+    ],
+  });
+  renderDetail();
+
+  expect(await screen.findByText("0 / 1")).toBeInTheDocument();
+  const entryButton = screen.getByRole("button", { name: "エントリー" });
+  expect(entryButton).toBeEnabled();
+  fireEvent.click(entryButton);
+
+  expect(createEntry).toHaveBeenCalledWith({
+    tournamentId: "t-detail",
+    deckItems: null,
+    authMode: "mock",
+    user: mockAuthState.user,
+  });
+  expect(await screen.findByText("エントリーしました。")).toBeInTheDocument();
+});
+
 test("必須大会では空デッキでエントリーできない", async () => {
   mockAuthState = {
     authMode: "mock",

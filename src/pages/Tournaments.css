@@ -622,6 +622,11 @@
   line-height: 1.7;
 }
 
+.tournament-kick-ban-option {
+  display: grid;
+  gap: 8px;
+}
+
 .tournament-confirm-actions {
   justify-content: flex-end;
 }

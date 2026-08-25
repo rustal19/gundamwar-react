@@ -14,7 +14,9 @@ import {
   fetchRoundsForManage,
   fetchStandings,
   fetchTournament,
+  fetchTournamentBans,
   fetchTournaments,
+  kickEntry,
   reopenRound,
   reportMatchResult,
   rejectEntry,
@@ -23,6 +25,7 @@ import {
   updateRoundMatches,
   updateMyEntry,
   updateTournament,
+  unbanTournamentUser,
 } from "./tournaments";
 import { fetchPublicDeck, fetchPublicDecks } from "./publicDecks";
 
@@ -2148,4 +2151,277 @@ describe("tournaments service mock mode", () => {
       reportMatchResult({ matchId: round1.matches[0].id, player1Games: 0, player2Games: 2, authMode: "mock" })
     ).resolves.toMatchObject({ result: "p2_win" });
   });
+
+  it("physically kicks an unpaired participant, frees the slot, and keeps legacy stores compatible", async () => {
+    setRegistrationTournament({ capacity: 1 });
+
+    await expect(
+      fetchTournamentBans("t1", { authMode: "mock", user: organizer })
+    ).resolves.toEqual({ items: [] });
+    const entered = await createEntry({ tournamentId: "t1", authMode: "mock", user });
+    const kicked = await kickEntry({
+      tournamentId: "t1",
+      entryId: entered.id,
+      authMode: "mock",
+      user: organizer,
+    });
+
+    expect(kicked).toEqual({ disposition: "removed", entry: null, ban: null });
+    expect(readStore().entries.t1).toEqual([]);
+    const afterKick = await fetchTournament("t1", { authMode: "mock", user });
+    expect(afterKick.entryCount).toBe(0);
+    expect(afterKick.myEntry).toBeNull();
+
+    const reentered = await createEntry({ tournamentId: "t1", authMode: "mock", user });
+    expect(reentered.status).toBe("registered");
+    expect((await fetchTournament("t1", { authMode: "mock", user })).entryCount).toBe(1);
+  });
+
+  it("adds a tournament ban, rejects re-entry in Japanese, hides it publicly, and allows unban", async () => {
+    setRegistrationTournament();
+    const entered = await createEntry({ tournamentId: "t1", authMode: "mock", user });
+
+    const kicked = await kickEntry({
+      tournamentId: "t1",
+      entryId: entered.id,
+      ban: true,
+      authMode: "mock",
+      user: organizer,
+    });
+    expect(kicked).toMatchObject({
+      disposition: "removed",
+      entry: null,
+      ban: {
+        user: { id: user.id, name: user.displayNickname },
+        bannedAt: expect.any(String),
+      },
+    });
+    await expect(
+      fetchTournamentBans("t1", { authMode: "mock", user: organizer })
+    ).resolves.toEqual({ items: [kicked.ban] });
+    await expect(
+      fetchTournamentBans("t1", { authMode: "mock", user })
+    ).rejects.toMatchObject({ status: 403 });
+
+    const publicView = await fetchTournament("t1", { authMode: "mock", user });
+    expect(publicView).not.toHaveProperty("bans");
+    await expect(
+      createEntry({ tournamentId: "t1", authMode: "mock", user })
+    ).rejects.toMatchObject({
+      message: "この大会への再エントリーは禁止されています。主催者にお問い合わせください。",
+      status: 403,
+    });
+    expect(readStore().entries.t1).toEqual([]);
+
+    await unbanTournamentUser({
+      tournamentId: "t1",
+      userId: user.id,
+      authMode: "mock",
+      user: organizer,
+    });
+    await expect(
+      fetchTournamentBans("t1", { authMode: "mock", user: organizer })
+    ).resolves.toEqual({ items: [] });
+    await expect(
+      createEntry({ tournamentId: "t1", authMode: "mock", user })
+    ).resolves.toMatchObject({ user: { id: user.id } });
+  });
+
+  it("drops a paired participant while preserving match references and the opponent's standings", async () => {
+    setRegistrationTournament({ status: "in_progress", swissRounds: 3, capacity: 4 });
+    const store = readStore();
+    const now = new Date().toISOString();
+    store.entries.t1 = ["1", "2", "3", "4"].map((suffix) => ({
+      id: `entry-${suffix}`,
+      tournamentId: "t1",
+      user: { id: `player-${suffix}`, name: `Player ${suffix}` },
+      deckItems: null,
+      decklistSubmittedAt: null,
+      deckLockedAt: `locked-${suffix}`,
+      status: "checked_in",
+      joinedAtRound: 1,
+      createdAt: now,
+    }));
+    store.rounds.t1 = [
+      {
+        id: "round-1",
+        tournamentId: "t1",
+        number: 1,
+        stage: "swiss",
+        status: "completed",
+        matches: [
+          {
+            id: "match-1",
+            roundId: "round-1",
+            tableNo: 1,
+            player1EntryId: "entry-1",
+            player2EntryId: "entry-2",
+            player1Games: 2,
+            player2Games: 0,
+            result: "p1_win",
+          },
+          {
+            id: "match-2",
+            roundId: "round-1",
+            tableNo: 2,
+            player1EntryId: "entry-3",
+            player2EntryId: "entry-4",
+            player1Games: 2,
+            player2Games: 0,
+            result: "p1_win",
+          },
+        ],
+      },
+    ];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    const before = (await fetchStandings("t1", { authMode: "mock" })).items.find(
+      (standing) => standing.entryId === "entry-1"
+    );
+
+    const kicked = await kickEntry({
+      tournamentId: "t1",
+      entryId: "entry-2",
+      authMode: "mock",
+      user: organizer,
+    });
+    expect(kicked).toMatchObject({ disposition: "dropped", entry: { status: "dropped" } });
+    const persisted = readStore();
+    expect(persisted.rounds.t1[0].matches[0]).toMatchObject({
+      player1EntryId: "entry-1",
+      player2EntryId: "entry-2",
+      result: "p1_win",
+    });
+    expect(persisted.entries.t1.find((entry) => entry.id === "entry-2")).toMatchObject({
+      status: "dropped",
+      deckLockedAt: "locked-2",
+    });
+    expect(persisted.entries.t1.find((entry) => entry.id === "entry-1")).toMatchObject({
+      status: "checked_in",
+      deckLockedAt: "locked-1",
+    });
+
+    const afterItems = (await fetchStandings("t1", { authMode: "mock" })).items;
+    const after = afterItems.find((standing) => standing.entryId === "entry-1");
+    expect(after).toMatchObject({
+      wins: before.wins,
+      losses: before.losses,
+      points: before.points,
+    });
+    expect(after.omwPercent).toBeCloseTo(before.omwPercent);
+    expect(afterItems.map((standing) => standing.entryId)).not.toContain("entry-2");
+    expect((await fetchTournament("t1", { authMode: "mock", user })).entryCount).toBe(3);
+
+    const posthocBan = await kickEntry({
+      tournamentId: "t1",
+      entryId: "entry-2",
+      ban: true,
+      authMode: "mock",
+      user: organizer,
+    });
+    expect(posthocBan).toMatchObject({
+      disposition: "dropped",
+      entry: { status: "dropped" },
+      ban: { user: { id: "player-2" } },
+    });
+    await expect(
+      updateEntryStatus({
+        tournamentId: "t1",
+        entryId: "entry-2",
+        status: "checked_in",
+        authMode: "mock",
+        user: organizer,
+      })
+    ).rejects.toMatchObject({
+      message: "この大会への再エントリーは禁止されています。主催者にお問い合わせください。",
+      status: 403,
+    });
+    expect(readStore().entries.t1.find((entry) => entry.id === "entry-2").status).toBe(
+      "dropped"
+    );
+
+    const nextRound = await createNextRound("t1", { authMode: "mock" });
+    const pairedIds = nextRound.matches
+      .flatMap((match) => [match.player1EntryId, match.player2EntryId])
+      .filter(Boolean);
+    expect(pairedIds).not.toContain("entry-2");
+    expect(pairedIds).toEqual(expect.arrayContaining(["entry-1", "entry-3", "entry-4"]));
+  });
+
+  it("keeps an entry as dropped when an unfinished match already references it", async () => {
+    setRegistrationTournament({ status: "in_progress" });
+    const store = readStore();
+    store.entries.t1 = ["1", "2"].map((suffix) => ({
+      id: `entry-${suffix}`,
+      tournamentId: "t1",
+      user: { id: `player-${suffix}`, name: `Player ${suffix}` },
+      status: "checked_in",
+      joinedAtRound: 1,
+      createdAt: new Date().toISOString(),
+    }));
+    store.rounds.t1 = [
+      {
+        id: "round-in-progress",
+        tournamentId: "t1",
+        number: 1,
+        stage: "swiss",
+        status: "in_progress",
+        matches: [
+          {
+            id: "match-in-progress",
+            roundId: "round-in-progress",
+            tableNo: 1,
+            player1EntryId: "entry-1",
+            player2EntryId: "entry-2",
+            player1Games: 0,
+            player2Games: 0,
+            result: "pending",
+          },
+        ],
+      },
+    ];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    await expect(
+      kickEntry({
+        tournamentId: "t1",
+        entryId: "entry-2",
+        authMode: "mock",
+        user: organizer,
+      })
+    ).resolves.toMatchObject({ disposition: "dropped", entry: { status: "dropped" } });
+    expect(readStore().rounds.t1[0].matches[0]).toMatchObject({
+      player1EntryId: "entry-1",
+      player2EntryId: "entry-2",
+      result: "pending",
+    });
+  });
+
+  it.each(["draft", "registration", "in_progress", "completed", "cancelled"])(
+    "allows an organizer to kick during the %s phase",
+    async (status) => {
+      setRegistrationTournament({ status });
+      const store = readStore();
+      store.entries.t1 = [
+        {
+          id: `phase-entry-${status}`,
+          tournamentId: "t1",
+          user: { id: `phase-user-${status}`, name: "Phase Player" },
+          deckItems: null,
+          decklistSubmittedAt: null,
+          status: "registered",
+          createdAt: new Date().toISOString(),
+        },
+      ];
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+      await expect(
+        kickEntry({
+          tournamentId: "t1",
+          entryId: `phase-entry-${status}`,
+          authMode: "mock",
+          user: organizer,
+        })
+      ).resolves.toMatchObject({ disposition: "removed" });
+    }
+  );
 });

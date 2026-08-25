@@ -39,6 +39,24 @@ describe("pairSwissRound", () => {
     ]);
   });
 
+  it("uses results against dropped opponents when choosing the next bye", () => {
+    const activeEntries = entries(["A", "C", "D"]);
+    const standingsEntries = [
+      ...activeEntries,
+      { id: "B", status: "dropped" },
+    ];
+    const pairs = pairSwissRound(
+      activeEntries,
+      [{ player1EntryId: "A", player2EntryId: "B", result: "p1_win" }],
+      standingsEntries
+    );
+
+    expect(pairs[0]).toEqual({ player1EntryId: "C", player2EntryId: null });
+    expect(pairs.flatMap((pair) => [pair.player1EntryId, pair.player2EntryId])).not.toContain(
+      "B"
+    );
+  });
+
   it("is deterministic for the same input", () => {
     const tournamentEntries = entries(["4", "2", "1", "3", "5"]);
     const previousMatches = [

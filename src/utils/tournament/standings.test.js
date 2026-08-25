@@ -78,4 +78,18 @@ describe("computeStandings", () => {
     expect(late.points).toBe(3);
     expect(late.omwPercent).toBeCloseTo(1 / 3);
   });
+
+  it("keeps a dropped opponent's completed result while omitting them from the table", () => {
+    const standings = computeStandings(
+      [
+        { id: "A", status: "checked_in" },
+        { id: "B", status: "dropped" },
+      ],
+      [{ player1EntryId: "A", player2EntryId: "B", result: "p1_win" }]
+    );
+
+    expect(standings).toHaveLength(1);
+    expect(standings[0]).toMatchObject({ entryId: "A", wins: 1, losses: 0, points: 3 });
+    expect(standings[0].omwPercent).toBeCloseTo(1 / 3);
+  });
 });

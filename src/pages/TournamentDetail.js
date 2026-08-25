@@ -250,6 +250,10 @@ export default function TournamentDetail({ compact = false }) {
   }, [authMode, isAuthenticated, user]);
 
   const entries = useMemo(() => tournament?.entries || [], [tournament?.entries]);
+  const activeEntryCount = useMemo(
+    () => entries.filter((entry) => entry.status !== "dropped").length,
+    [entries]
+  );
   const formatParticipantName = useMemo(
     () => createTournamentParticipantNameFormatter(entries),
     [entries]
@@ -265,9 +269,16 @@ export default function TournamentDetail({ compact = false }) {
   }, [activeTab, tournament?.status]);
 
   const myEntry = useMemo(() => {
-    if (tournament?.myEntry) return tournament.myEntry;
+    if (tournament?.myEntry && tournament.myEntry.status !== "dropped") {
+      return tournament.myEntry;
+    }
     if (!user?.id) return null;
-    return entries.find((entry) => entry.user?.id === String(user.id)) || null;
+    return (
+      entries.find(
+        (entry) =>
+          entry.user?.id === String(user.id) && entry.status !== "dropped"
+      ) || null
+    );
   }, [entries, tournament, user]);
 
   const selectedSavedDeck = useMemo(
@@ -298,7 +309,7 @@ export default function TournamentDetail({ compact = false }) {
     tournament &&
       tournament.status === "registration" &&
       isBefore(tournament.registrationClosesAt) &&
-      (tournament.capacity == null || entries.length < tournament.capacity)
+      (tournament.capacity == null || activeEntryCount < tournament.capacity)
   );
   const canUpdateDeck = Boolean(
     tournament &&
@@ -496,7 +507,11 @@ export default function TournamentDetail({ compact = false }) {
           </div>
           <div>
             <dt>定員</dt>
-            <dd>{tournament.capacity == null ? "なし" : `${entries.length} / ${tournament.capacity}`}</dd>
+            <dd>
+              {tournament.capacity == null
+                ? "なし"
+                : `${activeEntryCount} / ${tournament.capacity}`}
+            </dd>
           </div>
           <div>
             <dt>デッキリスト</dt>
