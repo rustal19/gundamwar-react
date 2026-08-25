@@ -77,7 +77,7 @@ export async function fetchUsers({ query = "", authMode = "mock" } = {}) {
     const users = readMockUsers();
     const items = normalizedQuery
       ? users.filter((user) =>
-          [user.name, user.email, user.id, user.role]
+          [user.name, user.nickname, user.email, user.id, user.role]
             .join(" ")
             .toLowerCase()
             .includes(normalizedQuery)

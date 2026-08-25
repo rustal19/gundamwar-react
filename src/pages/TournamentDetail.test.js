@@ -7,6 +7,7 @@ import {
   fetchRounds,
   fetchStandings,
   fetchTournament,
+  getTournamentPermissions,
   updateMyEntry,
 } from "../services/tournaments";
 
@@ -34,6 +35,7 @@ jest.mock("../services/tournaments", () => ({
   fetchTournament: jest.fn(),
   fetchRounds: jest.fn(),
   fetchStandings: jest.fn(),
+  getTournamentPermissions: jest.fn(),
 }));
 
 function renderDetail() {
@@ -145,6 +147,18 @@ beforeEach(() => {
   updateMyEntry.mockReset().mockResolvedValue({});
   fetchRounds.mockReset().mockResolvedValue({ rounds: [] });
   fetchStandings.mockReset().mockResolvedValue({ items: [] });
+  getTournamentPermissions.mockReset().mockImplementation((tournament, viewer) => {
+    const viewerId = viewer?.id == null ? "" : String(viewer.id);
+    const canManage = Boolean(
+      viewerId &&
+        (viewer?.role === "admin" ||
+          String(tournament?.createdBy?.id) === viewerId ||
+          (tournament?.coOrganizers || []).some(
+            (operator) => String(operator.id) === viewerId
+          ))
+    );
+    return { canManage };
+  });
 });
 
 test("レギュレーション枚数は同値を単一表記、異なる値を範囲表記にする", () => {
@@ -175,6 +189,50 @@ test("大会情報にチェックイン開始時刻を月日と時刻で表示�
 
   expect(await screen.findByText("チェックイン開始")).toBeInTheDocument();
   expect(screen.getByText("1月2日 09:00")).toBeInTheDocument();
+});
+
+test("大会詳細に主催者と共同運営者をプロフィールリンク付きで表示する", async () => {
+  mockTournament = registrationTournament({
+    createdBy: { id: "creator-user", name: "大会主催者" },
+    coOrganizers: [
+      { id: "co-user-1", name: "共同運営者1" },
+      { id: "co-user-2", name: "共同運営者2" },
+    ],
+  });
+
+  renderDetail();
+
+  expect(await screen.findByRole("link", { name: "大会主催者" })).toHaveAttribute(
+    "href",
+    "/users/creator-user"
+  );
+  expect(screen.getByRole("link", { name: "共同運営者1" })).toHaveAttribute(
+    "href",
+    "/users/co-user-1"
+  );
+  expect(screen.getByRole("link", { name: "共同運営者2" })).toHaveAttribute(
+    "href",
+    "/users/co-user-2"
+  );
+});
+
+test("共同運営者には大会詳細から管理画面への導線を表示する", async () => {
+  mockAuthState = {
+    authMode: "mock",
+    isAuthenticated: true,
+    user: { id: "co-user", name: "共同運営者", role: "user" },
+  };
+  mockTournament = registrationTournament({
+    createdBy: { id: "creator-user", name: "大会主催者" },
+    coOrganizers: [{ id: "co-user", name: "共同運営者" }],
+  });
+
+  renderDetail();
+
+  expect(await screen.findByRole("link", { name: "大会管理" })).toHaveAttribute(
+    "href",
+    "/tournaments/t-detail/manage"
+  );
 });
 
 test("参加者向け大会情報にスイス総回戦数と終了条件を表示する", async () => {
