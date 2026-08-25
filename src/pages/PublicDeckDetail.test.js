@@ -85,15 +85,14 @@ test("大会デッキに提出者・開催日・大会名・順位・参加人�
   expect(within(meta).getByText("開催日", { selector: "dt" })).toBeInTheDocument();
   expect(
     within(meta).getByText(
-      new Date(startsAt).toLocaleString("ja-JP", {
+      new Date(startsAt).toLocaleDateString("ja-JP", {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
       })
     )
   ).toBeInTheDocument();
+  expect(meta).not.toHaveTextContent("12:34");
   expect(within(meta).getByText("大会名", { selector: "dt" })).toBeInTheDocument();
   expect(within(meta).getByRole("link", { name: "夏季ガンダムウォー杯" })).toHaveAttribute(
     "href",
@@ -147,7 +146,7 @@ test("保存デッキには旧データの大会参照が残っていても大�
   expect(within(meta).getByText("メイン0 / サイド0")).toBeInTheDocument();
 });
 
-test("公開日が無い場合は更新日を表示する", async () => {
+test("公開日が無い場合は更新日の日付だけを表示する", async () => {
   const updatedAt = "2026-08-02T12:34:00";
   fetchPublicDeck.mockResolvedValue({
     id: "saved:42",
@@ -173,15 +172,14 @@ test("公開日が無い場合は更新日を表示する", async () => {
   expect(within(meta).getByText("公開日", { selector: "dt" })).toBeInTheDocument();
   expect(
     within(meta).getByText(
-      new Date(updatedAt).toLocaleString("ja-JP", {
+      new Date(updatedAt).toLocaleDateString("ja-JP", {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
       })
     )
   ).toBeInTheDocument();
+  expect(meta).not.toHaveTextContent("12:34");
 });
 
 test("IDのない手動エントリーも提出者名を表示し、大会デッキには管理UIを出さない", async () => {

@@ -59,6 +59,9 @@ export default function DeckLoadDialog({
   const [publicationDescription, setPublicationDescription] = useState("");
   const [publicationFormat, setPublicationFormat] = useState("");
   const [publicationMessage, setPublicationMessage] = useState("");
+  const [publicationViolations, setPublicationViolations] = useState([]);
+  const [publicationHasError, setPublicationHasError] = useState(false);
+  const [handledPublicationErrorMessage, setHandledPublicationErrorMessage] = useState("");
 
   useEffect(() => {
     if (!open) return undefined;
@@ -93,8 +96,20 @@ export default function DeckLoadDialog({
   useEffect(() => {
     setPublicationDescription(activeDeck?.description || "");
     setPublicationFormat(activeDeck?.format || "");
-    setPublicationMessage("");
   }, [activeDeck?.id, activeDeck?.description, activeDeck?.format]);
+
+  useEffect(() => {
+    if (!open) return;
+    setPublicationMessage("");
+    setPublicationViolations([]);
+    setPublicationHasError(false);
+  }, [activeDeck?.id, open]);
+
+  useEffect(() => {
+    if (!errorMessage) {
+      setHandledPublicationErrorMessage("");
+    }
+  }, [errorMessage]);
 
   const formatOptions = useMemo(() => {
     const names = FORMAT_PRESETS.map((preset) => preset.name).filter(Boolean);
@@ -104,6 +119,15 @@ export default function DeckLoadDialog({
     }
     return options;
   }, [publicationFormat]);
+  const normalizedPublicationFormat = String(publicationFormat || "").trim();
+  const publicationFormatPreset = useMemo(
+    () =>
+      FORMAT_PRESETS.find(({ name }) => name === normalizedPublicationFormat) || null,
+    [normalizedPublicationFormat]
+  );
+  const isPublicationValidationSkipped = Boolean(
+    normalizedPublicationFormat && !publicationFormatPreset
+  );
 
   const activePreview = useMemo(
     () => splitDeckItems(activeDeck?.items || []),
@@ -116,17 +140,30 @@ export default function DeckLoadDialog({
     mainCount: activePreview.mainCount,
     sideCount: activePreview.sideCount,
   });
+  const isHandledPublicationError = Boolean(
+    handledPublicationErrorMessage &&
+      errorMessage === handledPublicationErrorMessage
+  );
+  const dialogErrorMessage =
+    (isHandledPublicationError ? "" : errorMessage) || previewErrorMessage;
+
+  const clearPublicationFeedback = () => {
+    setPublicationMessage("");
+    setPublicationViolations([]);
+    setPublicationHasError(false);
+  };
 
   const handleDelete = async () => {
     if (!activeDeck) return;
     const shouldDelete = window.confirm(`「${activeDeck.title}」を削除しますか？`);
     if (!shouldDelete) return;
+    clearPublicationFeedback();
     await onDelete(activeDeck.id);
   };
 
   const handlePublicationSubmit = async (nextIsPublic) => {
     if (!activeDeck || !onPublicationChange) return;
-    setPublicationMessage("");
+    clearPublicationFeedback();
     try {
       await onPublicationChange({
         deckId: activeDeck.id,
@@ -136,7 +173,17 @@ export default function DeckLoadDialog({
       });
       setPublicationMessage(nextIsPublic ? "公開設定を更新しました。" : "非公開にしました。");
     } catch (error) {
-      setPublicationMessage(error.message);
+      const violations = Array.isArray(error?.violations)
+        ? error.violations.filter((violation) => violation?.message)
+        : [];
+      setPublicationMessage(
+        violations.length > 0
+          ? error.summary || "選択したフォーマットの条件を満たしていません。"
+          : error?.message || "公開設定を更新できませんでした。"
+      );
+      setPublicationViolations(violations);
+      setPublicationHasError(true);
+      setHandledPublicationErrorMessage(error?.message || "");
     }
   };
 
@@ -227,7 +274,10 @@ export default function DeckLoadDialog({
                   <textarea
                     className="deck-publication-textarea"
                     value={publicationDescription}
-                    onChange={(event) => setPublicationDescription(event.target.value)}
+                    onChange={(event) => {
+                      setPublicationDescription(event.target.value);
+                      clearPublicationFeedback();
+                    }}
                     placeholder="デッキの説明"
                     rows={3}
                   />
@@ -235,7 +285,10 @@ export default function DeckLoadDialog({
                     フォーマット
                     <select
                       value={publicationFormat}
-                      onChange={(event) => setPublicationFormat(event.target.value)}
+                      onChange={(event) => {
+                        setPublicationFormat(event.target.value);
+                        clearPublicationFeedback();
+                      }}
                     >
                       <option value="">選択してください</option>
                       {formatOptions.map((formatName) => (
@@ -245,6 +298,11 @@ export default function DeckLoadDialog({
                       ))}
                     </select>
                   </label>
+                  {isPublicationValidationSkipped ? (
+                    <p className="deck-publication-validation-note">
+                      登録済みのレギュレーションがないため、公開時のフォーマット適合チェックは行われません。
+                    </p>
+                  ) : null}
                   <div className="deck-publication-actions">
                     <button
                       type="button"
@@ -268,7 +326,29 @@ export default function DeckLoadDialog({
                     </button>
                   </div>
                   {publicationMessage ? (
-                    <p className="deck-publication-message">{publicationMessage}</p>
+                    <div
+                      className={
+                        publicationHasError
+                          ? "deck-publication-message has-error"
+                          : "deck-publication-message"
+                      }
+                      role={publicationHasError ? "alert" : "status"}
+                    >
+                      <p>{publicationMessage}</p>
+                      {publicationViolations.length > 0 ? (
+                        <ul>
+                          {publicationViolations.map((violation, index) => (
+                            <li
+                              key={`${violation.code || "violation"}-${
+                                violation.cardName || index
+                              }-${index}`}
+                            >
+                              {violation.message}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
                   ) : null}
                 </div>
 
@@ -311,8 +391,8 @@ export default function DeckLoadDialog({
           </div>
         </div>
 
-        {errorMessage || previewErrorMessage ? (
-          <p className="deck-load-dialog-error">{errorMessage || previewErrorMessage}</p>
+        {dialogErrorMessage ? (
+          <p className="deck-load-dialog-error">{dialogErrorMessage}</p>
         ) : null}
       </div>
     </div>

@@ -1,4 +1,6 @@
 import { ensureMockTournamentStore } from "./tournaments";
+import { FORMAT_PRESETS } from "../data/formats";
+import { validateDeck } from "../utils/deckValidation";
 
 const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
 const PUBLIC_STORAGE_KEY = "gundamwar.publicDecks.v1";
@@ -393,6 +395,17 @@ function getStoredSavedDeckId(deck) {
   return parsePublicDeckId(deck?.id).sourceId;
 }
 
+function createFormatValidationError(formatName, violations) {
+  const summary = `「${formatName}」のレギュレーションに適合していないため公開できません。`;
+  const messages = violations.map((violation) => violation?.message).filter(Boolean);
+  const error = new Error([summary, ...messages].join("\n"));
+  error.code = "deck_format_violations";
+  error.summary = summary;
+  error.format = formatName;
+  error.violations = violations;
+  return error;
+}
+
 export async function fetchPublicDecks({ page = 1, query = "", format = "", authMode } = {}) {
   const params = new URLSearchParams();
   params.set("page", String(getPage(page)));
@@ -536,6 +549,18 @@ export async function setDeckPublication({
     const savedDeck = savedDecks.find((deck) => String(deck.id) === deckKey);
     if (!savedDeck) {
       throw new Error("保存デッキが見つかりません。");
+    }
+
+    const isNewPublication =
+      nextIsPublic && !Boolean(savedDeck.isPublic || publicDeck?.isPublic);
+    if (isNewPublication) {
+      const formatPreset = FORMAT_PRESETS.find(({ name }) => name === nextFormat);
+      if (formatPreset) {
+        const violations = validateDeck(savedDeck.items, formatPreset.regulation);
+        if (violations.length > 0) {
+          throw createFormatValidationError(nextFormat, violations);
+        }
+      }
     }
 
     const publishedAt = nextIsPublic ? savedDeck.publishedAt || now : "";

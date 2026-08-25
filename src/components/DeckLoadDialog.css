@@ -176,7 +176,8 @@
 }
 
 .deck-publication-header span,
-.deck-publication-message {
+.deck-publication-message,
+.deck-publication-validation-note {
   color: var(--gw-text-muted);
   font-size: 0.84rem;
 }
@@ -225,8 +226,19 @@
   flex-wrap: wrap;
 }
 
-.deck-publication-message {
+.deck-publication-message,
+.deck-publication-message p,
+.deck-publication-validation-note {
   margin: 0;
+}
+
+.deck-publication-message.has-error {
+  color: var(--gw-danger-strong);
+}
+
+.deck-publication-message ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1.35rem;
 }
 
 .deck-load-dialog-error {

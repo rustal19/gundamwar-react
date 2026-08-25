@@ -14,6 +14,15 @@ function writeSavedDecks(decks) {
   window.localStorage.setItem(savedKey, JSON.stringify(decks));
 }
 
+function validDeckItems() {
+  return Array.from({ length: 17 }, (_, index) => ({
+    cardId: `card-${index + 1}`,
+    count: index === 16 ? 2 : 3,
+    zone: "main",
+    card: { cardId: `card-${index + 1}`, name: `Card ${index + 1}` },
+  }));
+}
+
 function writeTournamentStore({ tournaments, entries }) {
   window.localStorage.setItem(
     TOURNAMENT_STORAGE_KEY,
@@ -58,7 +67,7 @@ describe("publicDecks mock service", () => {
       {
         id: "deck-1",
         title: "Blue Control",
-        items: [{ cardId: "card-1", count: 3, card: { name: "Card 1" } }],
+        items: validDeckItems(),
         createdAt: "2026-01-01T00:00:00.000Z",
         updatedAt: "2026-01-01T00:00:00.000Z",
       },
@@ -186,6 +195,113 @@ describe("publicDecks mock service", () => {
     ).rejects.toThrow("フォーマットを選択してください。");
 
     expect(window.localStorage.getItem(PUBLIC_STORAGE_KEY)).toBeNull();
+  });
+
+  test("rejects a first publication with every preset violation and leaves storage unchanged", async () => {
+    const savedDeck = {
+      id: "deck-1",
+      title: "Invalid Deck",
+      items: [
+        {
+          cardId: "101020126",
+          count: 3,
+          zone: "main",
+          card: { cardId: "101020126", name: "禁止テストカード" },
+        },
+      ],
+    };
+    writeSavedDecks([savedDeck]);
+
+    const error = await setDeckPublication({
+      authMode: "mock",
+      user,
+      deckId: "deck-1",
+      isPublic: true,
+      format: "関西クラシック",
+    }).catch((publicationError) => publicationError);
+
+    expect(error).toMatchObject({
+      code: "deck_format_violations",
+      format: "関西クラシック",
+      violations: expect.arrayContaining([
+        expect.objectContaining({ code: "main_count" }),
+        expect.objectContaining({
+          code: "banned",
+          cardName: "禁止テストカード",
+        }),
+      ]),
+    });
+    expect(error.message).toContain("現在は3枚です。");
+    expect(error.message).toContain("禁止テストカードは禁止カードです。");
+    expect(JSON.parse(window.localStorage.getItem(savedKey))).toEqual([savedDeck]);
+    expect(window.localStorage.getItem(PUBLIC_STORAGE_KEY)).toBeNull();
+  });
+
+  test("skips validation for an unregistered free-text format", async () => {
+    writeSavedDecks([
+      {
+        id: "deck-1",
+        title: "Free Format Deck",
+        items: [],
+      },
+    ]);
+
+    const deck = await setDeckPublication({
+      authMode: "mock",
+      user,
+      deckId: "deck-1",
+      isPublic: true,
+      format: "独自フォーマット",
+    });
+
+    expect(deck).toMatchObject({
+      id: "deck-1",
+      isPublic: true,
+      format: "独自フォーマット",
+    });
+    expect(JSON.parse(window.localStorage.getItem(PUBLIC_STORAGE_KEY))).toHaveLength(1);
+  });
+
+  test("does not retroactively validate an already-public deck when updating publication details", async () => {
+    const existingDeck = {
+      id: "deck-1",
+      title: "Legacy Public Deck",
+      items: [],
+      isPublic: true,
+      format: "スタンダード",
+      publishedAt: "2026-02-01T00:00:00.000Z",
+    };
+    writeSavedDecks([existingDeck]);
+    window.localStorage.setItem(
+      PUBLIC_STORAGE_KEY,
+      JSON.stringify([{ ...existingDeck, owner: user }])
+    );
+
+    const deck = await setDeckPublication({
+      authMode: "mock",
+      user,
+      deckId: "deck-1",
+      isPublic: true,
+      description: "説明だけ更新",
+      format: "スタンダード",
+    });
+
+    expect(deck).toMatchObject({
+      id: "deck-1",
+      isPublic: true,
+      description: "説明だけ更新",
+      publishedAt: existingDeck.publishedAt,
+    });
+    expect(JSON.parse(window.localStorage.getItem(savedKey))[0]).toMatchObject({
+      isPublic: true,
+      description: "説明だけ更新",
+      publishedAt: existingDeck.publishedAt,
+    });
+    expect(JSON.parse(window.localStorage.getItem(PUBLIC_STORAGE_KEY))[0]).toMatchObject({
+      isPublic: true,
+      description: "説明だけ更新",
+      publishedAt: existingDeck.publishedAt,
+    });
   });
 
   test("filters public decks by format", async () => {
@@ -472,6 +588,7 @@ describe("publicDecks mock service", () => {
         isPublic: true,
         description: "A test deck",
         publishedAt: "2026-02-01T00:00:00.000Z",
+        format: "関西クラシック",
         items: [],
       },
     ]);
@@ -495,6 +612,7 @@ describe("publicDecks mock service", () => {
       deckId: "deck-1",
       isPublic: false,
       description: "",
+      format: "関西クラシック",
     });
 
     expect(deck.isPublic).toBe(false);
