@@ -1,8 +1,23 @@
-# 大会デッキリストの状態設計(#28)+ 大会紐付け(#24/#25 の土台)
+# 大会デッキリストの状態設計(#28)+ 大会デッキの公開(#24/#25 の土台)
 
-起案: 2026-08-26(司令塔)。**レビュー待ち。★印はユーザーの判断が要る箇所。**
-関連: [FEEDBACK_BACKLOG.md](FEEDBACK_BACKLOG.md) #28 / #24 / #25 / #31、
+起案: 2026-08-26(司令塔) / ユーザー回答を反映: 2026-08-26。
+関連: [FEEDBACK_BACKLOG.md](FEEDBACK_BACKLOG.md) #28 / #24 / #25 / #31 / #16、
 [AUDIT_DECK_VISIBILITY.md](AUDIT_DECK_VISIBILITY.md)、[PORTAL_SPEC.md](PORTAL_SPEC.md) §エントリー。
+
+## 0. 決定事項(ユーザー回答済み)
+
+| 論点 | 決定 |
+|---|---|
+| ロックのタイミング | **チェックイン時**(エントリー単位)。主催者チェックイン・セルフチェックインのどちらでも同じ |
+| ロック後の修正 | **主催者のみ可**。誰がいつ上書きしたかを記録する |
+| 途中参加のロック | **参加(追加)時点で即ロック** |
+| 終了後の公開 | 大会の「終了後にデッキリストを公開」チェックボックスに従う(参加者ごとの追加の同意は取らない) |
+| 大会が複数ある場合の並び | 新しい順 |
+| **保存デッキと大会提出デッキの関係** | **別の実体**。保存デッキは後から編集できるため、提出デッキと同一視・逆引きしない |
+
+最後の1点が本設計の背骨。**「保存デッキ(saved_decks)」と「大会提出デッキ(提出時スナップショット)」は
+別物**として扱い、保存デッキの詳細ページに大会名や順位を出すことはしない。
+大会名・順位・参加人数が付くのは、**大会提出デッキそのものを表示するとき**だけ。
 
 ## 1. 現状(調査結果)
 
@@ -11,8 +26,9 @@
 - 保存デッキ: `saved_decks(id, user_id, title, items_json, is_public, description, format, published_at)`
 - 大会エントリー: `tournament_entries(id, tournament_id, user_id, guest_name, deck_items JSON,
   decklist_submitted_at, status, joined_at_round, ...)`
-- **提出デッキは `deck_items` に JSON スナップショットとして入るだけ**で、
-  元の `saved_decks` への参照(deck_id)も、提出時のフォーマットも、順位も持たない。
+- 提出デッキは `deck_items` に JSON スナップショットとして入る。**この形自体は正しい**
+  (§0 の決定どおり、保存デッキとは独立した実体になっている)。
+  足りないのは「いつロックされたか」「どのフォーマットで出したか」「最終順位」の3つ。
 
 ### 1.2 提出可否の判定(`routes/entries.js` の `can_submit_decklist`)
 
@@ -24,128 +40,127 @@ registration_closes_at があり かつ 現在 < 締切    → 提出可
 ```
 
 **ここに #28 が指す穴がある**: `registration_closes_at` を設定した大会では、
-**status が `in_progress`(=大会開始後・初戦生成後)でも締切前なら提出・差し替えができる**。
-締切を未設定にした大会だけ、たまたま開始と同時に締まる。つまり
-「大会開始でロック」は現状**保証されていない**。
+**status が `in_progress`(=初戦生成後)でも締切前ならデッキを差し替えられる**。
+チェックインとも無関係に判定しているため、「チェックインしたらロック」は現状まったく効いていない。
 
 ### 1.3 参照制御(#29 で監査済み・維持する前提)
 
 提出デッキが第三者に見えるのは「`status === 'completed'` かつ `decklistsPublic`」のときだけ。
 本設計はこの条件を土台にする(緩めない)。
 
-## 2. 決めたい論点(★ユーザー判断)
+## 2. 提案する状態機械
 
-| # | 論点 | 選択肢 | 起案者の推奨 |
-|---|---|---|---|
-| ★A | ロックのタイミング | (1) status が `in_progress` になった時 / (2) 初戦(第1ラウンド)生成時 / (3) 受付締切時刻 | **(2) 初戦生成時**。#6 で「スイス回数は初戦生成時に確定」と決めており、基準を揃えられる。開始前の準備中に status だけ進めても事故らない |
-| ★B | ロック後の修正 | (1) 誰も不可 / (2) 主催者のみ修正可(記録を残す) / (3) 本人も締切前なら可 | **(2) 主催者のみ**。デッキ登録ミスの救済は運営判断で行われる実務がある。監査のため `deck_locked_at` と別に「主催者が上書きした」記録を残す |
-| ★C | 途中参加(late entry)のロック | (1) 参加時点で即ロック / (2) その回戦のペアリング生成時 | **(1) 即ロック**。途中参加は提出とほぼ同時なので単純な方が安全 |
-| ★D | 終了後の公開導線 | (1) 自動公開しない(本人が明示的に公開) / (2) `decklistsPublic` の大会は自動で公開デッキ化 | **(1) 自動公開しない**。`decklistsPublic` は「大会ページで閲覧できる」という意味に留め、公開デッキ一覧への掲載は本人の意思で行う(#31 のフォーマット必須チェックも通す) |
-| ★E | 1つの保存デッキを複数大会に出した場合、デッキ詳細に出す大会 | (1) 全部(新しい順) / (2) 直近1件のみ | **(1) 全部**。戦績の履歴として意味がある。ただし §4 の可視条件を必ず通す |
-
-## 3. 提案する状態機械
-
-エントリー1件につき、デッキリストの状態は次の4つ。**状態は保存せず、既存列+新列から導出する**
+エントリー1件につき、デッキリストの状態は次の4つ。**状態列は持たず、既存列+新列から導出する**
 (状態列を持つと更新漏れで実態とズレるため)。
 
-| 状態 | 導出条件 | 本人の操作 | 主催者の操作 |
+| 状態 | 導出条件 | 本人 | 主催者 |
 |---|---|---|---|
 | `none`(未提出) | `decklist_submitted_at IS NULL` かつ `deck_locked_at IS NULL` | 提出できる | 代理提出できる |
 | `submitted`(提出済み・差し替え可) | `decklist_submitted_at` あり かつ `deck_locked_at IS NULL` | 差し替えできる | 差し替えできる |
-| `locked`(ロック済み) | `deck_locked_at` あり かつ 大会が `completed` でない | **不可** | ★B次第(推奨: 可・記録あり) |
-| `revealed`(公開可) | 大会が `completed` かつ `decklists_public` | 不可 | 不可 |
+| `locked`(ロック済み) | `deck_locked_at` あり かつ 大会が `completed` でない | **不可** | 可(記録が残る) |
+| `revealed`(公開中) | 大会が `completed` かつ `decklists_public` | 不可 | 不可 |
 
-未提出のままロック時刻を迎えた場合は `deck_locked_at` を入れたうえで `none` のまま扱い、
-「未提出でロックされた」= 主催者が代理提出しない限り提出不能、とする。
+- **ロックの契機はチェックイン**。`status` が `checked_in` になった瞬間に `deck_locked_at` を打つ。
+- 未提出のままチェックインした場合も `deck_locked_at` を打ち、`none` のまま扱う
+  (= 主催者が代理提出しない限り提出不能)。デッキ必須の大会でこれを許すかは運用判断に委ねる。
+- **一度ロックしたら、主催者がチェックインを取り消しても解除しない**(ロック解除を経路にしないため)。
+  差し替えが必要なら §3 の主催者上書きを使う。
 
-## 4. スキーマ変更(加算のみ・既存列は変更しない)
+## 3. スキーマ変更(加算のみ・既存列は変更しない)
 
 ```sql
 ALTER TABLE tournament_entries
-  ADD COLUMN deck_id BIGINT UNSIGNED NULL,        -- 提出元 saved_decks.id(削除されても snapshot は残る)
-  ADD COLUMN deck_format VARCHAR(50) NULL,        -- 提出時のフォーマット名(検証の記録)
-  ADD COLUMN deck_locked_at DATETIME NULL,        -- ロック時刻(§3)
-  ADD COLUMN deck_updated_by BIGINT UNSIGNED NULL,-- ロック後に上書きした主催者(★B=(2)のとき)
-  ADD COLUMN final_rank INT NULL,                 -- 確定順位(大会完了時に書き込む。#25用)
-  ADD KEY idx_entry_deck (deck_id);
+  ADD COLUMN deck_format VARCHAR(50) NULL,         -- 提出時のフォーマット名(検証の記録)
+  ADD COLUMN deck_locked_at DATETIME NULL,         -- チェックイン時に打つ(§2)
+  ADD COLUMN deck_updated_by BIGINT UNSIGNED NULL, -- ロック後に上書きした主催者
+  ADD COLUMN deck_updated_at DATETIME NULL,        -- その上書き時刻
+  ADD COLUMN final_rank INT NULL;                  -- 確定順位(大会完了時に書き込む。#25用)
 ```
 
-- `deck_items`(スナップショット)は**引き続き正**。`deck_id` は「どの保存デッキから出したか」の
-  参照でしかなく、保存デッキを後から編集しても提出内容は変わらない(現在の挙動を明文化)。
-- `final_rank` は大会を `completed` にする処理で順位表から書き込む。
-  順位表から都度導出してもよいが、SE(トップカット)導入後は再計算コストと定義揺れが出るため確定値を持つ。
-- 参加人数(#25)は `tournaments` に列を足さず `COUNT(tournament_entries)` で出す
-  (途中参加・ドロップで変動するため、確定値を持つ意味が薄い)。
+- **`deck_id`(保存デッキへの参照)は持たない**。§0 の決定どおり両者は別実体であり、
+  参照を持つと「編集済みの保存デッキ」と「提出時の中身」が混同される。
+- `deck_items` スナップショットが唯一の正。提出後に保存デッキを編集しても提出内容は変わらない。
+- `final_rank` は大会を `completed` にする処理で順位表から書き込む(SE 導入後の再計算・定義揺れを避ける)。
+- 参加人数(#25)は列を足さず `COUNT(tournament_entries)` で出す(途中参加・ドロップで変動するため)。
 
-## 5. API の変更
+## 4. API の変更
 
-### 5.1 ロックの実行
-- 初戦生成(`POST /api/tournaments/:id/rounds` 相当)の中で、対象大会の全エントリーに
-  `deck_locked_at = CURRENT_TIMESTAMP`(NULL のものだけ)を一括セット。★A=(2) の場合。
-- 途中参加の追加時は、その大会が `in_progress` なら作成と同時に `deck_locked_at` をセット(★C)。
+### 4.1 ロックの実行
+- `POST /api/tournaments/:id/entries/me/checkin`(セルフ)と主催者側のチェックイン操作の**両方**で、
+  `status` を `checked_in` にする UPDATE と同じトランザクションで
+  `deck_locked_at = COALESCE(deck_locked_at, CURRENT_TIMESTAMP)` をセットする。
+- 途中参加の手動追加(`POST /api/tournaments/:id/entries/manual`)では、大会が `in_progress` なら
+  作成時に `deck_locked_at` をセットする。
 
-### 5.2 提出ゲートの修正
+### 4.2 提出ゲートの修正
 `can_submit_decklist` に `AND e.deck_locked_at IS NULL` を加える。
-これにより「締切未到来でも開始後は提出不可」になり、#28 の穴が閉じる。
+これで「締切未到来でもチェックイン後は提出不可」になり、#28 の穴が閉じる。
 
-### 5.3 レスポンス契約(PORTAL_SPEC §エントリーに追記)
+### 4.3 主催者による上書き
+`PUT /api/tournaments/:id/entries/:entryId` の `deckItems` 更新時、`deck_locked_at` が
+入っていれば `deck_updated_by = 操作者` / `deck_updated_at = 現在` を記録する。
+記録は主催者コンソールのエントリー一覧に「主催者が修正(日時)」として出す。
+
+### 4.4 レスポンス契約(PORTAL_SPEC §エントリーに追記)
 ```
 entry: {
   ...既存,
-  deckId: string|null,          // 参照のみ。deckItems が正
   deckFormat: string|null,
-  decklistState: 'none'|'submitted'|'locked'|'revealed',   // §3 の導出結果
+  decklistState: 'none'|'submitted'|'locked'|'revealed',   // §2 の導出結果
   deckLockedAt: string|null,
+  deckUpdatedBy: { id, name }|null,
+  deckUpdatedAt: string|null,
   finalRank: number|null,
 }
 ```
 `decklistState` はサーバーで導出して返す(フロントに条件を再実装させない)。
 
-### 5.4 大会紐付けの逆引き(#24/#25)
-公開デッキ詳細 `GET /api/public-decks/:id` に `tournaments[]` を追加する。
+### 4.5 大会デッキの公開(#24 / #25)
 
-```sql
-SELECT t.id, t.title, e.final_rank,
-       (SELECT COUNT(*) FROM tournament_entries x WHERE x.tournament_id = t.id) AS entry_count
-FROM tournament_entries e
-INNER JOIN tournaments t ON t.id = e.tournament_id
-WHERE e.deck_id = ?
-  AND t.status = 'completed'        -- ★進行中の大会参加を漏らさないための必須条件
-ORDER BY t.starts_at DESC
-```
+大会デッキは**保存デッキとは別系統の公開デッキ**として扱う。
+公開条件は §1.3 のまま「`status = 'completed'` かつ `decklists_public`」。
 
-**`t.status = 'completed'` は #29 の要請そのもの**なので外さないこと。
-進行中の大会に出しているという事実自体がメタゲーム情報になるため、
-「デッキは公開だが大会は進行中」のケースでは大会名を出さない。
+- 新規: `GET /api/tournament-decks/:entryId` — 大会提出デッキ1件。
+  返す情報は デッキ中身 + 大会名 + 開催日 + **順位(final_rank)** + **参加人数** + 提出者名 + フォーマット。
+- 公開デッキ一覧 `GET /api/public-decks` は、保存デッキ由来と大会デッキ由来の**2系統を混ぜて返す**。
+  ID が衝突するので、一覧・詳細URLでは接頭辞付き ID(`saved:123` / `entry:456`)を使う。
+  ※ 既存 URL `/decks/:id` の互換のため、数値のみの ID は従来どおり保存デッキとして解決する。
+- ★この「一覧に混ぜる」方針は #16(公開デッキ検索を晴れる屋手本に)を見据えたもの。
+  混ぜずに「大会デッキ」を別タブにする案もある(§7 の未決)。
 
-> なお `decklists_public` はここでは条件に**入れない**。公開デッキ一覧に出ているデッキは
-> 本人が公開を選んだものであり、「そのデッキがどの完了大会で使われたか」は
-> 本人の公開範囲に含まれると解釈する。★この解釈でよいか要確認。
-
-## 6. モック側(gundamwar-react/src/services)
+## 5. モック側(gundamwar-react/src/services)
 
 モックは API と同じ状態機械・同じ可視条件を実装する(#29 の教訓)。
-- `tournaments.js`: エントリーに `deckId` / `deckFormat` / `deckLockedAt` / `finalRank` を持たせ、
-  `decklistState` を導出して返す。初戦生成時に一括ロック。
-- `publicDecks.js`: `fetchPublicDeck` の戻りに `tournaments[]` を足す(条件は §5.4 と同一)。
-- #24 で入れた `normalizeTournamentReference` は、この `tournaments[]` を読む形に置き換える。
 
-## 7. 実装タスク分割(案)
+- `tournaments.js`: エントリーに `deckFormat` / `deckLockedAt` / `deckUpdatedBy` / `finalRank` を持たせ、
+  `decklistState` を導出して返す。チェックイン処理でロックを打つ。提出ゲートにロック判定を足す。
+- `publicDecks.js`: 大会デッキ系統を追加(完了 かつ decklistsPublic の大会のエントリーから生成)。
+- #24 で入れた `normalizeTournamentReference`(保存デッキに大会を紐付ける前提の実装)は
+  **§0 の決定に反するので削除**し、大会デッキ側のメタとして作り直す。
+
+## 6. 実装タスク分割(案)
 
 | 順 | 内容 | 担当 | 依存 |
 |---|---|---|---|
-| 1 | モック側に状態機械+ロックを実装(UI表示含む) | W | ★A〜C 確定後 |
-| 2 | 大会詳細/マイページに `decklistState` に応じた表示(提出済み・ロック済み・締切後) | W | 1 |
-| 3 | 公開デッキ詳細の `tournaments[]` 表示(#24 の大会名・#25 の順位/参加人数) | W | 1 |
-| 4 | マイグレーション 002 と API 実装(§4/§5) | 司 | ★A〜E 確定後 |
+| 1 | モックに状態機械+チェックイン時ロック+提出ゲート修正 | W | — |
+| 2 | 参加者側・主催者側の表示(提出済み/ロック済み/主催者修正の表示) | W | 1 |
+| 3 | モックに大会デッキ系統(#24 の大会名・#25 の順位/参加人数)と保存デッキ側の紐付け撤去 | W | 1 |
+| 4 | マイグレーション 002 と API 実装(§3/§4) | 司 | §7 の未決解消後 |
 | 5 | 本番適用(バックアップ→適用→再起動→検証) | ユーザー実行・司が手順提示 | 4 |
 
-モックを先に完成させてから API を実装する(既存の進め方と同じ。ローカルで挙動を固めてから本番へ)。
+モックを先に完成させてから API を実装する(ローカルで挙動を固めてから本番へ、という既存方針どおり)。
+
+## 7. 未決(実装前に決める)
+
+- **★ 大会デッキを公開デッキ一覧に混ぜるか、別タブにするか**(§4.5)。
+  混ぜると #16 の「大会で検索」に素直に繋がるが、一覧の性格が変わる。
+- デッキ必須の大会で、未提出のままチェックインを許すか(現状は許す前提で設計)。
+- #39(共同運営)が入ったら、§4.3 の「主催者による上書き」の認可も共同運営者に広げる必要がある。
 
 ## 8. この設計で解決すること / しないこと
 
-**解決する**: #28(開始時ロックの保証・状態の明確化)、#24 の大会名、#25 の順位・参加人数、
-「提出後に元デッキを編集すると提出内容が変わるのか」という曖昧さの明文化。
+**解決する**: #28(チェックイン時ロックの保証・状態の明確化・主催者上書きの記録)、
+#24 の大会名、#25 の順位・参加人数、「提出後に保存デッキを編集したら提出内容はどうなるか」の明文化。
 
-**解決しない(別項目)**: #31(公開時のフォーマット必須+適合チェック。既に一部実装あり)、
-#18(禁止/制限の構造化入力)、#39(共同運営に伴う認可拡張。§5.1 のロック操作も対象になる)。
+**解決しない(別項目)**: #31(公開時のフォーマット必須+適合チェック)、#18(禁止/制限の構造化入力)、
+#16(公開デッキ検索の拡張)、#39(共同運営に伴う認可拡張)。
