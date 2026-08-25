@@ -71,11 +71,14 @@ function searchPairings(players, previousOpponents, allowRematches) {
   return null;
 }
 
-export function pairSwissRound(entries, previousMatches) {
+export function pairSwissRound(entries, previousMatches, standingsEntries = entries) {
   const activeEntries = entries.filter((entry) => entry.status !== "dropped");
   if (activeEntries.length === 0) return [];
 
-  const standings = computeStandings(activeEntries, previousMatches);
+  const activeEntryIds = new Set(activeEntries.map((entry) => entry.id));
+  const standings = computeStandings(standingsEntries, previousMatches).filter((standing) =>
+    activeEntryIds.has(standing.entryId)
+  );
   const standingsByEntryId = new Map(standings.map((standing) => [standing.entryId, standing]));
   const previousOpponents = buildPreviousOpponentSet(previousMatches);
   const pairs = [];

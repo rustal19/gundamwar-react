@@ -87,9 +87,11 @@ function headToHeadWins(recordA, recordB, matches) {
 }
 
 export function computeStandings(entries, matches) {
+  const droppedEntryIds = new Set(
+    entries.filter((entry) => entry.status === "dropped").map((entry) => entry.id)
+  );
   const records = new Map(
     entries
-      .filter((entry) => entry.status !== "dropped")
       .sort((a, b) => compareEntryIds(a.id, b.id))
       .map((entry) => [entry.id, createRecord(entry.id)])
   );
@@ -115,16 +117,18 @@ export function computeStandings(entries, matches) {
     record.omwPercent = total / record.opponents.length;
   });
 
-  const sorted = Array.from(records.values()).sort((a, b) => {
-    if (b.points !== a.points) return b.points - a.points;
-    if (b.omwPercent !== a.omwPercent) return b.omwPercent - a.omwPercent;
+  const sorted = Array.from(records.values())
+    .filter((record) => !droppedEntryIds.has(record.entryId))
+    .sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.omwPercent !== a.omwPercent) return b.omwPercent - a.omwPercent;
 
-    const aWins = headToHeadWins(a, b, matches);
-    const bWins = headToHeadWins(b, a, matches);
-    if (bWins !== aWins) return bWins - aWins;
+      const aWins = headToHeadWins(a, b, matches);
+      const bWins = headToHeadWins(b, a, matches);
+      if (bWins !== aWins) return bWins - aWins;
 
-    return compareEntryIds(a.entryId, b.entryId);
-  });
+      return compareEntryIds(a.entryId, b.entryId);
+    });
 
   return sorted.map((record, index) => ({
     entryId: record.entryId,

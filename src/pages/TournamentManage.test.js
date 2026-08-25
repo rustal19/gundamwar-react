@@ -1370,3 +1370,137 @@ test("制限カードも検索解決したカードIDだけを保存する", asy
     JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0].regulation.limitedCards
   ).toEqual(["100000007"]);
 });
+
+test("未対戦の参加者をキックのみで大会枠から削除できる", async () => {
+  seedStore({
+    entries: [
+      {
+        id: "entry-kick-only",
+        tournamentId: "t-ui",
+        user: { id: "player-kick-only", name: "キックのみ対象" },
+        deckItems: null,
+        decklistSubmittedAt: null,
+        status: "registered",
+        joinedAtRound: 1,
+        createdAt: new Date().toISOString(),
+      },
+    ],
+  });
+  renderManage();
+
+  fireEvent.click(await screen.findByRole("button", { name: "参加者" }));
+  const targetRow = screen.getByText("キックのみ対象").closest("tr");
+  fireEvent.click(within(targetRow).getByRole("button", { name: "キック" }));
+
+  const dialog = screen.getByRole("dialog", { name: "参加者をキック" });
+  expect(
+    within(dialog).getByRole("checkbox", { name: "再エントリーも禁止する" })
+  ).not.toBeChecked();
+  fireEvent.click(within(dialog).getByRole("button", { name: "キックのみ実行" }));
+
+  expect(await screen.findByText("参加者をキックしました。")).toBeInTheDocument();
+  await waitFor(() => {
+    expect(screen.queryByText("キックのみ対象")).not.toBeInTheDocument();
+    expect(
+      JSON.parse(window.localStorage.getItem(STORAGE_KEY)).entries["t-ui"].some(
+        (entry) => entry.id === "entry-kick-only"
+      )
+    ).toBe(false);
+  });
+});
+
+test("キック時に再エントリーを禁止し、ban一覧から解除できる", async () => {
+  seedStore({
+    entries: [
+      {
+        id: "entry-kick-ban",
+        tournamentId: "t-ui",
+        user: { id: "player-kick-ban", name: "BAN対象選手" },
+        deckItems: null,
+        decklistSubmittedAt: null,
+        status: "registered",
+        joinedAtRound: 1,
+        createdAt: new Date().toISOString(),
+      },
+    ],
+  });
+  renderManage();
+
+  fireEvent.click(await screen.findByRole("button", { name: "参加者" }));
+  const targetRow = screen.getByText("BAN対象選手").closest("tr");
+  fireEvent.click(within(targetRow).getByRole("button", { name: "キック" }));
+  const dialog = screen.getByRole("dialog", { name: "参加者をキック" });
+  fireEvent.click(
+    within(dialog).getByRole("checkbox", { name: "再エントリーも禁止する" })
+  );
+  fireEvent.click(
+    within(dialog).getByRole("button", { name: "キックして再エントリーも禁止" })
+  );
+
+  expect(
+    await screen.findByText("参加者をキックし、再エントリーを禁止しました。")
+  ).toBeInTheDocument();
+  const banSection = screen.getByText("再エントリー禁止中").closest(".tournament-ban-section");
+  expect(await within(banSection).findByText("BAN対象選手")).toBeInTheDocument();
+  expect(within(banSection).getByText(/ユーザーID: player-kick-ban/)).toBeInTheDocument();
+  expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)).bans["t-ui"]).toHaveLength(1);
+
+  fireEvent.click(
+    within(banSection).getByRole("button", { name: "BAN対象選手 の再エントリー禁止を解除" })
+  );
+  expect(await screen.findByText("再エントリー禁止を解除しました。")).toBeInTheDocument();
+  expect(
+    await screen.findByText("再エントリー禁止中のユーザーはいません。")
+  ).toBeInTheDocument();
+  expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)).bans["t-ui"]).toEqual([]);
+});
+
+test("対戦表に登場済みの参加者はキック後も記録用のドロップ行として残る", async () => {
+  seedStore();
+  renderManage();
+
+  fireEvent.click(await screen.findByRole("button", { name: "参加者" }));
+  let targetRow = screen.getByText("プレイヤー1").closest("tr");
+  fireEvent.click(within(targetRow).getByRole("button", { name: "キック" }));
+  fireEvent.click(
+    within(screen.getByRole("dialog", { name: "参加者をキック" })).getByRole("button", {
+      name: "キックのみ実行",
+    })
+  );
+
+  expect(await screen.findByText("参加者をキックしました。")).toBeInTheDocument();
+  await waitFor(() => {
+    targetRow = screen.getByText("プレイヤー1").closest("tr");
+    expect(within(targetRow).getAllByRole("cell")[2]).toHaveTextContent("ドロップ");
+  });
+  expect(within(targetRow).getByRole("button", { name: "キック" })).toBeInTheDocument();
+  let store = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
+  expect(store.entries["t-ui"].find((entry) => entry.id === "entry-1").status).toBe("dropped");
+  expect(store.rounds["t-ui"][0].matches[0]).toMatchObject({
+    player1EntryId: "entry-1",
+    player2EntryId: "entry-2",
+  });
+
+  fireEvent.click(within(targetRow).getByRole("button", { name: "キック" }));
+  const posthocDialog = screen.getByRole("dialog", { name: "参加者をキック" });
+  fireEvent.click(
+    within(posthocDialog).getByRole("checkbox", { name: "再エントリーも禁止する" })
+  );
+  fireEvent.click(
+    within(posthocDialog).getByRole("button", { name: "キックして再エントリーも禁止" })
+  );
+
+  expect(
+    await screen.findByText("参加者をキックし、再エントリーを禁止しました。")
+  ).toBeInTheDocument();
+  const banSection = screen.getByText("再エントリー禁止中").closest(".tournament-ban-section");
+  expect(await within(banSection).findByText("プレイヤー1")).toBeInTheDocument();
+  await waitFor(() => {
+    targetRow = screen.getAllByText("プレイヤー1").find((node) => node.closest("tr"))?.closest("tr");
+    expect(within(targetRow).getByRole("button", { name: "チェックイン" })).toBeDisabled();
+  });
+  store = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
+  expect(store.bans["t-ui"]).toEqual([
+    expect.objectContaining({ user: expect.objectContaining({ id: "player-1" }) }),
+  ]);
+});
