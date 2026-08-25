@@ -16,6 +16,7 @@ import RoundTabs from "../components/RoundTabs";
 import { useAuth } from "../context/AuthContext";
 import { useDeckPreview } from "../hooks/useDeckPreview";
 import {
+  addTournamentCoOrganizer,
   approveEntry,
   completeRound,
   createManualEntry,
@@ -28,9 +29,11 @@ import {
   fetchStandings,
   fetchTournament,
   fetchTournamentBans,
+  getTournamentPermissions,
   kickEntry,
   rejectEntry,
   reopenRound,
+  removeTournamentCoOrganizer,
   reportMatchResult,
   startRoundTimer,
   updateEntryStatus,
@@ -38,6 +41,7 @@ import {
   updateTournament,
   unbanTournamentUser,
 } from "../services/tournaments";
+import { fetchUsers } from "../services/users";
 import { getCardCode } from "../utils/cardImages";
 import {
   DECKLIST_STATE_LABELS,
@@ -1384,6 +1388,144 @@ function ParticipantsPanel({
   );
 }
 
+function CoOrganizersPanel({
+  authMode,
+  canManageCoOrganizers,
+  isSubmitting,
+  onAdd,
+  onRemove,
+  tournament,
+}) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [searchError, setSearchError] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const coOrganizers = Array.isArray(tournament?.coOrganizers)
+    ? tournament.coOrganizers
+    : [];
+  const operatorIds = new Set(
+    [tournament?.createdBy, ...coOrganizers]
+      .map((operator) => operator?.id == null ? "" : String(operator.id))
+      .filter(Boolean)
+  );
+  const addableResults = results.filter(
+    (candidate) => !operatorIds.has(String(candidate.id))
+  );
+
+  const searchUsers = async (event) => {
+    event.preventDefault();
+    const normalizedQuery = query.trim();
+    if (!normalizedQuery) return;
+    setIsSearching(true);
+    setHasSearched(false);
+    setSearchError("");
+    try {
+      const payload = await fetchUsers({ query: normalizedQuery, authMode });
+      setResults(
+        (payload.items || []).filter((candidate) => !operatorIds.has(String(candidate.id)))
+      );
+      setHasSearched(true);
+    } catch (error) {
+      setResults([]);
+      setSearchError(error.message || "ユーザーを検索できませんでした。");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  return (
+    <section className="tournament-tab-panel tournament-co-organizers" aria-labelledby="co-organizers-title">
+      <h2 id="co-organizers-title">大会運営者</h2>
+      <div className="pending-entry-section">
+        <h3>主催者</h3>
+        <p>
+          {tournament?.createdBy?.id ? (
+            <Link to={`/users/${tournament.createdBy.id}`}>
+              {tournament.createdBy.name || tournament.createdBy.id}
+            </Link>
+          ) : (
+            tournament?.createdBy?.name || "未設定"
+          )}
+        </p>
+      </div>
+      <div className="pending-entry-section">
+        <h3>共同運営者</h3>
+        {coOrganizers.length ? (
+          coOrganizers.map((operator) => (
+            <div key={operator.id} className="pending-entry-row">
+              <div>
+                <strong>
+                  <Link to={`/users/${operator.id}`}>{operator.name || operator.id}</Link>
+                </strong>
+                <p>ユーザーID: {operator.id}</p>
+              </div>
+              {canManageCoOrganizers ? (
+                <button
+                  type="button"
+                  className="danger-button"
+                  disabled={isSubmitting}
+                  aria-label={`${operator.name || operator.id} を共同運営者から削除`}
+                  onClick={() => onRemove(operator.id)}
+                >
+                  削除
+                </button>
+              ) : null}
+            </div>
+          ))
+        ) : (
+          <p className="tournament-muted">共同運営者はいません。</p>
+        )}
+      </div>
+      {canManageCoOrganizers ? (
+        <div className="pending-entry-section">
+          <h3>共同運営者を追加</h3>
+          <form className="manual-entry-form" onSubmit={searchUsers}>
+            <input
+              aria-label="共同運営者を検索"
+              placeholder="ニックネーム・ユーザーIDで検索"
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setResults([]);
+                setHasSearched(false);
+              }}
+            />
+            <button type="submit" disabled={isSearching || !query.trim()}>
+              {isSearching ? "検索中..." : "検索"}
+            </button>
+          </form>
+          {searchError ? <div className="tournament-alert">{searchError}</div> : null}
+          {addableResults.map((candidate) => {
+            const label = candidate.nickname || candidate.id;
+            return (
+              <div key={candidate.id} className="pending-entry-row">
+                <div>
+                  <strong>{label}</strong>
+                  <p>ユーザーID: {candidate.id}</p>
+                </div>
+                <button
+                  type="button"
+                  disabled={isSubmitting}
+                  aria-label={`${label} を共同運営者に追加`}
+                  onClick={() => onAdd(candidate.id)}
+                >
+                  追加
+                </button>
+              </div>
+            );
+          })}
+          {!isSearching && hasSearched && addableResults.length === 0 && !searchError ? (
+            <p className="tournament-muted">追加できるユーザーが見つかりません。</p>
+          ) : null}
+        </div>
+      ) : (
+        <p className="tournament-muted">共同運営者の追加・削除は主催者または管理者のみ行えます。</p>
+      )}
+    </section>
+  );
+}
+
 function InfoPanel({
   entries,
   form,
@@ -1729,7 +1871,8 @@ export default function TournamentManage({ compact = false }) {
   const { id } = useParams();
   const isNew = !id;
   const navigate = useNavigate();
-  const { authMode, user, isOrganizer } = useAuth();
+  const { authMode, user } = useAuth();
+  const [tournament, setTournament] = useState(null);
   const [form, setForm] = useState(DEFAULT_FORM);
   const [entries, setEntries] = useState([]);
   const [bans, setBans] = useState([]);
@@ -1738,7 +1881,7 @@ export default function TournamentManage({ compact = false }) {
   const [activeTab, setActiveTab] = useState("rounds");
   const [selectedRoundNumber, setSelectedRoundNumber] = useState(null);
   const [selectedStandingRoundNumber, setSelectedStandingRoundNumber] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(!isNew);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -1749,27 +1892,32 @@ export default function TournamentManage({ compact = false }) {
     () => createTournamentParticipantNameFormatter(entries),
     [entries]
   );
+  const permissions = useMemo(
+    () => getTournamentPermissions(tournament, user),
+    [tournament, user]
+  );
 
   const latestRoundNumber = rounds.length ? rounds[rounds.length - 1].number : null;
   const detailUrl = isNew ? "" : `${window.location.origin}/tournaments/${id}`;
   const displayUrl = isNew ? "" : `/tournaments/${id}/display`;
 
   const loadAll = useCallback(async () => {
-    if (isNew || !isOrganizer) return;
+    if (isNew) return;
     setIsLoading(true);
     setBans([]);
     setError("");
     setIsAccessDenied(false);
     try {
-      const [tournament, entryPayload, banPayload, roundPayload, standingPayload] =
+      const [nextTournament, entryPayload, banPayload, roundPayload, standingPayload] =
         await Promise.all([
           fetchTournament(id, { authMode, user }),
           fetchEntries(id, { authMode, user }),
           fetchTournamentBans(id, { authMode, user }),
-          fetchRoundsForManage(id, { authMode }),
+          fetchRoundsForManage(id, { authMode, user }),
           fetchStandings(id, { authMode }),
         ]);
-      setForm((current) => formFromTournament(tournament, current.regulation));
+      setTournament(nextTournament);
+      setForm((current) => formFromTournament(nextTournament, current.regulation));
       setEntries(entryPayload.items || []);
       setBans(banPayload.items || []);
       const nextRounds = roundPayload.rounds || [];
@@ -1789,12 +1937,12 @@ export default function TournamentManage({ compact = false }) {
           : nextSwissRounds[nextSwissRounds.length - 1]?.number ?? null
       );
     } catch (loadError) {
-      if (loadError.status === 403) setIsAccessDenied(true);
+      if (loadError.status === 401 || loadError.status === 403) setIsAccessDenied(true);
       setError(loadError.message);
     } finally {
       setIsLoading(false);
     }
-  }, [authMode, id, isNew, isOrganizer, user]);
+  }, [authMode, id, isNew, user]);
 
   useEffect(() => {
     loadAll();
@@ -1928,7 +2076,11 @@ export default function TournamentManage({ compact = false }) {
     }
   };
 
-  const generateRound = () => runAction(async () => createNextRound(id, { authMode }), "次ラウンドを生成しました。");
+  const generateRound = () =>
+    runAction(
+      async () => createNextRound(id, { authMode, user }),
+      "次ラウンドを生成しました。"
+    );
 
   const reportScore = (matchId, player1Games, player2Games) => {
     const round = rounds.find((item) =>
@@ -1942,12 +2094,17 @@ export default function TournamentManage({ compact = false }) {
           player2Games,
           stage: round?.stage,
           authMode,
+          user,
         }),
       "結果を保存しました。"
     );
   };
 
-  const finishRound = (roundId) => runAction(async () => completeRound(roundId, { authMode }), "ラウンドを完了しました。");
+  const finishRound = (roundId) =>
+    runAction(
+      async () => completeRound(roundId, { authMode, user }),
+      "ラウンドを完了しました。"
+    );
 
   const reopenCompletedRound = async (
     roundId,
@@ -1996,7 +2153,7 @@ export default function TournamentManage({ compact = false }) {
     setError("");
     setMessage("");
     try {
-      const reopened = await reopenRound(roundId, { authMode, discardLaterRounds });
+      const reopened = await reopenRound(roundId, { authMode, discardLaterRounds, user });
       setRoundRollbackConfirmation(null);
       setMessage(
         `${getRoundLabel(reopened, rounds)}を完了前に戻しました。結果を修正してください。`
@@ -2046,6 +2203,7 @@ export default function TournamentManage({ compact = false }) {
             player2EntryId: match.player2EntryId || null,
           })),
           authMode,
+          user,
         }),
       "ペアリングを保存しました。"
     );
@@ -2053,8 +2211,8 @@ export default function TournamentManage({ compact = false }) {
   const repairRound = (roundId) => {
     if (!window.confirm("このラウンドを破棄して組み直します。よろしいですか？")) return;
     runAction(async () => {
-      await deleteRound(roundId, { authMode });
-      await createNextRound(id, { authMode });
+      await deleteRound(roundId, { authMode, user });
+      await createNextRound(id, { authMode, user });
     }, "ラウンドを組み直しました。");
   };
 
@@ -2065,14 +2223,27 @@ export default function TournamentManage({ compact = false }) {
     );
 
   const approvePendingEntry = (entryId) =>
-    runAction(async () => approveEntry({ tournamentId: id, entryId, authMode }), "申請を許可しました。");
+    runAction(
+      async () => approveEntry({ tournamentId: id, entryId, authMode, user }),
+      "申請を許可しました。"
+    );
 
   const rejectPendingEntry = (entryId) =>
-    runAction(async () => rejectEntry({ tournamentId: id, entryId, authMode }), "申請を却下しました。");
+    runAction(
+      async () => rejectEntry({ tournamentId: id, entryId, authMode, user }),
+      "申請を却下しました。"
+    );
 
   const createManual = (name, deckText) =>
     runAction(
-      async () => createManualEntry({ tournamentId: id, name, deckItems: parseDeckText(deckText), authMode }),
+      async () =>
+        createManualEntry({
+          tournamentId: id,
+          name,
+          deckItems: parseDeckText(deckText),
+          authMode,
+          user,
+        }),
       "参加者を追加しました。"
     );
 
@@ -2127,16 +2298,59 @@ export default function TournamentManage({ compact = false }) {
     );
   };
 
-  const startTimer = (roundId) => runAction(async () => startRoundTimer(roundId, { authMode }), "タイマーを開始しました。");
+  const startTimer = (roundId) =>
+    runAction(
+      async () => startRoundTimer(roundId, { authMode, user }),
+      "タイマーを開始しました。"
+    );
 
-  if (!isOrganizer || isAccessDenied) {
+  const addCoOrganizer = (userId) =>
+    runAction(async () => {
+      const updated = await addTournamentCoOrganizer({
+        tournamentId: id,
+        userId,
+        authMode,
+        user,
+      });
+      setTournament(updated);
+    }, "共同運営者を追加しました。");
+
+  const removeCoOrganizer = (userId) =>
+    runAction(async () => {
+      const updated = await removeTournamentCoOrganizer({
+        tournamentId: id,
+        userId,
+        authMode,
+        user,
+      });
+      setTournament(updated);
+    }, "共同運営者を削除しました。");
+
+  const canAccess = isNew ? permissions.canCreate : permissions.canManage;
+
+  if (!isNew && !tournament && !isAccessDenied && (isLoading || !error)) {
+    return <main className={compact ? "tournament-page compact" : "tournament-page"}>読み込み中...</main>;
+  }
+
+  if (!isNew && !tournament && error && !isAccessDenied) {
+    return (
+      <main className={compact ? "tournament-page compact" : "tournament-page"}>
+        <Link to="/tournaments" className="tournament-back-link">
+          大会一覧へ
+        </Link>
+        <div className="tournament-alert">{error}</div>
+      </main>
+    );
+  }
+
+  if (!canAccess || isAccessDenied) {
     return (
       <main className={compact ? "tournament-page compact" : "tournament-page"}>
         <Link to="/tournaments" className="tournament-back-link">
           大会一覧へ
         </Link>
         <div className="tournament-alert">
-          {isAccessDenied
+          {!isNew || isAccessDenied
             ? "この大会を管理する権限がありません。"
             : "主催者または管理者のみ利用できます。"}
         </div>
@@ -2205,7 +2419,7 @@ export default function TournamentManage({ compact = false }) {
             >
               中止
             </button>
-            {form.status === "draft" ? (
+            {form.status === "draft" && permissions.canDelete ? (
               <button type="button" className="danger-button" disabled={isSubmitting} onClick={removeDraft}>
                 下書きを削除
               </button>
@@ -2222,21 +2436,33 @@ export default function TournamentManage({ compact = false }) {
       ) : null}
 
       {(isNew || activeTab === "info") && (
-        <InfoPanel
-          entries={entries}
-          form={form}
-          formatParticipantName={formatParticipantName}
-          hasRounds={hasRounds}
-          isNew={isNew}
-          isSubmitting={isSubmitting}
-          onSave={saveTournament}
-          regulationViolations={regulationViolations}
-          setField={setField}
-          setOnline={setOnline}
-          setRegulationCardInput={setRegulationCardInput}
-          setRegulationField={setRegulationField}
-          setRegulationSetInput={setRegulationSetInput}
-        />
+        <>
+          <InfoPanel
+            entries={entries}
+            form={form}
+            formatParticipantName={formatParticipantName}
+            hasRounds={hasRounds}
+            isNew={isNew}
+            isSubmitting={isSubmitting}
+            onSave={saveTournament}
+            regulationViolations={regulationViolations}
+            setField={setField}
+            setOnline={setOnline}
+            setRegulationCardInput={setRegulationCardInput}
+            setRegulationField={setRegulationField}
+            setRegulationSetInput={setRegulationSetInput}
+          />
+          {!isNew && tournament ? (
+            <CoOrganizersPanel
+              authMode={authMode}
+              canManageCoOrganizers={permissions.canManageCoOrganizers}
+              isSubmitting={isSubmitting}
+              onAdd={addCoOrganizer}
+              onRemove={removeCoOrganizer}
+              tournament={tournament}
+            />
+          ) : null}
+        </>
       )}
 
       {!isNew && activeTab === "rounds" ? (
