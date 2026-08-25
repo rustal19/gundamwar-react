@@ -259,6 +259,32 @@
   margin-bottom: calc(0.7rem * var(--deck-ui-scale));
 }
 
+.deck-format-validation {
+  display: grid;
+  gap: calc(0.24rem * var(--deck-ui-scale));
+  margin-bottom: calc(0.55rem * var(--deck-ui-scale));
+  border: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-surface);
+  padding: calc(0.45rem * var(--deck-ui-scale));
+  color: var(--gw-success);
+  font-size: calc(0.78rem * var(--deck-ui-scale));
+}
+
+.deck-format-validation strong {
+  color: var(--gw-primary);
+}
+
+.deck-format-validation.has-violations {
+  border-color: var(--gw-danger-border-soft);
+  background: var(--gw-danger-soft-pale);
+  color: var(--gw-danger-strong);
+}
+
+.deck-format-validation ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
 .deck-panel-header > div {
   min-width: 0;
 }

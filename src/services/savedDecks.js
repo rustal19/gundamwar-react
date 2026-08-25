@@ -16,10 +16,19 @@ function buildStorageKey(user) {
 }
 
 function buildPayload(deck) {
-  return {
+  const payload = {
     title: String(deck.title || "").trim(),
     items: Array.isArray(deck.items) ? deck.items : [],
   };
+
+  // Keep format optional for callers that predate deck-format persistence.
+  // An explicit null/empty string clears the saved format on overwrite.
+  if (deck.format !== undefined) {
+    payload.format =
+      typeof deck.format === "string" && deck.format.trim() ? deck.format.trim() : null;
+  }
+
+  return payload;
 }
 
 function normalizeSavedDeck(rawDeck) {
@@ -89,9 +98,9 @@ export async function fetchSavedDecks({ authMode, user }) {
   return (payload.decks || []).map(normalizeSavedDeck).filter(Boolean);
 }
 
-export async function saveSavedDeck({ authMode, user, deckId, title, items }) {
+export async function saveSavedDeck({ authMode, user, deckId, title, items, format }) {
   ensureUser(user);
-  const payload = buildPayload({ title, items });
+  const payload = buildPayload({ title, items, format });
 
   if (!payload.title) {
     throw new Error("デッキ名を入力してください。");
@@ -101,12 +110,14 @@ export async function saveSavedDeck({ authMode, user, deckId, title, items }) {
     const now = new Date().toISOString();
     const decks = readMockDecks(user);
     if (deckId) {
+      const hasFormat = Object.prototype.hasOwnProperty.call(payload, "format");
       const nextDecks = decks.map((deck) =>
         deck.id === String(deckId)
           ? {
               ...deck,
               title: payload.title,
               items: payload.items,
+              ...(hasFormat ? { format: payload.format } : {}),
               updatedAt: now,
             }
           : deck
@@ -117,8 +128,7 @@ export async function saveSavedDeck({ authMode, user, deckId, title, items }) {
 
     const nextDeck = normalizeSavedDeck({
       id: `${Date.now()}`,
-      title: payload.title,
-      items: payload.items,
+      ...payload,
       createdAt: now,
       updatedAt: now,
     });

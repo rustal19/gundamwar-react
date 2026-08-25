@@ -40,7 +40,7 @@ export function useSavedDecks() {
   }, [refresh]);
 
   const saveDeck = useCallback(
-    async ({ deckId, title, items }) => {
+    async ({ deckId, title, items, format }) => {
       if (!user) {
         throw new Error("ログインしてから保存してください。");
       }
@@ -54,6 +54,7 @@ export function useSavedDecks() {
           deckId,
           title,
           items,
+          format,
         });
 
         setSavedDecks((current) => {

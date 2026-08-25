@@ -1,7 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import SearchResultCard from "./SearchResultCard";
-import { API_SEARCH_URL, parseSearchParams } from "../utils/searchResults";
+import { FORMAT_PRESETS } from "../data/formats";
+import {
+  API_SEARCH_URL,
+  getCardFormatStatus,
+  getFormatSetCodes,
+  parseSearchParams,
+} from "../utils/searchResults";
 import "../pages/SearchResults.css";
 
 const DEFAULT_SAMPLE_PAGE_SIZE = 20;
@@ -15,7 +21,7 @@ function hasMeaningfulFilters(searchParams) {
   });
 }
 
-const DeckSearchResults = ({ compact = false }) => {
+const DeckSearchResults = ({ compact = false, formatName }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const resultsViewportRef = useRef(null);
@@ -26,12 +32,45 @@ const DeckSearchResults = ({ compact = false }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [viewMode, setViewMode] = useState("detail");
+  const isFormatControlled = formatName !== undefined;
+  const selectedFormat = useMemo(() => {
+    const locationFormatName = new URLSearchParams(location.search).get("formatName") || "";
+    const activeFormatName = isFormatControlled ? formatName : locationFormatName;
+    return FORMAT_PRESETS.find(({ name }) => name === activeFormatName) || null;
+  }, [formatName, isFormatControlled, location.search]);
 
   useEffect(() => {
     const parsedSearchParams = parseSearchParams(location.search);
+    const apiSearchParams = { ...parsedSearchParams };
+    const criteriaSearchParams = { ...parsedSearchParams };
+    delete apiSearchParams.formatName;
+    delete criteriaSearchParams.formatName;
+
+    if (isFormatControlled) {
+      // DeckBuilder's explicit selection is authoritative. In particular, an empty
+      // selection means unrestricted even if an old bookmarked URL has legacy range fields.
+      delete apiSearchParams.deckRangeType;
+      delete apiSearchParams.deckRangeDetail;
+      delete criteriaSearchParams.deckRangeType;
+      delete criteriaSearchParams.deckRangeDetail;
+    }
+
+    if (selectedFormat) {
+      criteriaSearchParams.formatName = selectedFormat.name;
+      apiSearchParams.deckRangeType = "none";
+      delete apiSearchParams.deckRangeDetail;
+      const setCodes = getFormatSetCodes(selectedFormat.regulation);
+      if (setCodes) {
+        apiSearchParams.setIncluded = setCodes;
+      }
+    }
+
     const requestedPage = Number(parsedSearchParams.page) || 1;
     const requestedPageSize = Number(parsedSearchParams.pageSize) || DEFAULT_SAMPLE_PAGE_SIZE;
-    const useSampleOnly = !hasMeaningfulFilters(parsedSearchParams);
+    if (selectedFormat && apiSearchParams.pageSize === undefined) {
+      apiSearchParams.pageSize = requestedPageSize;
+    }
+    const useSampleOnly = !hasMeaningfulFilters(criteriaSearchParams);
 
     if (useSampleOnly) {
       setResults([]);
@@ -57,7 +96,7 @@ const DeckSearchResults = ({ compact = false }) => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(parsedSearchParams),
+          body: JSON.stringify(apiSearchParams),
           mode: "cors",
           signal: abortController.signal,
         });
@@ -85,7 +124,7 @@ const DeckSearchResults = ({ compact = false }) => {
 
     loadResults();
     return () => abortController.abort();
-  }, [location.search]);
+  }, [isFormatControlled, location.search, selectedFormat]);
 
   useEffect(() => {
     resultsViewportRef.current?.scrollTo({ top: 0, behavior: "auto" });
@@ -236,9 +275,20 @@ const DeckSearchResults = ({ compact = false }) => {
           <div className="results-empty-state">検索結果がありません。</div>
         ) : (
           <div className={viewMode === "image" ? "results-list results-image-grid" : "results-list"}>
-            {results.map((card) => (
-              <SearchResultCard key={card.cardId} card={card} viewMode={viewMode} showDeckActions />
-            ))}
+            {results.map((card) => {
+              const formatStatus = selectedFormat
+                ? getCardFormatStatus(card, selectedFormat.regulation)
+                : undefined;
+              return (
+                <SearchResultCard
+                  key={card.cardId}
+                  card={card}
+                  viewMode={viewMode}
+                  showDeckActions
+                  formatStatus={formatStatus}
+                />
+              );
+            })}
           </div>
         )}
       </div>
