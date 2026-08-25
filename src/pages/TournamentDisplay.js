@@ -4,7 +4,8 @@ import Bracket from "../components/Bracket";
 import { useAuth } from "../context/AuthContext";
 import { fetchRounds, fetchTournament } from "../services/tournaments";
 import { createTournamentParticipantNameFormatter } from "../utils/tournament/participantDisplayName";
-import { getRoundLabel } from "../utils/tournament/roundLabel";
+import { getRoundProgressLabel } from "../utils/tournament/roundLabel";
+import { getSwissRoundCount, getSwissRoundSummary } from "../utils/tournament/swiss";
 import { computeStandings } from "../utils/tournament/standings";
 import "./Tournaments.css";
 
@@ -104,7 +105,16 @@ export default function TournamentDisplay() {
       <header className="tournament-display-header">
         <div>
           <h1>{tournament?.title || "大会掲示"}</h1>
-          <p>{currentRound ? `現在ラウンド: ${getRoundLabel(currentRound, rounds)}` : "ラウンド未作成"}</p>
+          <p>
+            {currentRound
+              ? `現在ラウンド: ${getRoundProgressLabel(currentRound, rounds, tournament)}`
+              : tournament && tournament.format !== "single_elim"
+                ? `スイス: ${getSwissRoundSummary(tournament)} / ラウンド未作成`
+                : "ラウンド未作成"}
+          </p>
+          {currentRound?.stage === "top_cut" && getSwissRoundCount(tournament) ? (
+            <p>スイス: {getSwissRoundSummary(tournament)}</p>
+          ) : null}
         </div>
         {timerText ? (
           <div className="tournament-display-timer" aria-label="残り時間">
