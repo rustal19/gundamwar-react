@@ -487,26 +487,46 @@ describe("tournaments service mock mode", () => {
     expect(guestPayload.items.map((tournament) => tournament.id)).toEqual(["public-1"]);
   });
 
-  it("treats a missing isListed flag as listed and excludes explicit false from the public list", async () => {
+  it("filters unlisted tournaments before paging and treats a missing isListed flag as listed", async () => {
     setRegistrationTournament();
     const store = readStore();
     const legacyTournament = store.tournaments[0];
-    const unlistedTournament = {
+    const listedTournaments = [
+      legacyTournament,
+      ...Array.from({ length: 11 }, (_, index) => ({
+        ...legacyTournament,
+        id: `listed-${index + 1}`,
+        title: `掲載大会${index + 1}`,
+        isListed: true,
+        startsAt: `2030-01-${String(index + 1).padStart(2, "0")}T10:00:00.000Z`,
+      })),
+    ];
+    const unlistedTournaments = Array.from({ length: 3 }, (_, index) => ({
       ...legacyTournament,
-      id: "unlisted-1",
-      title: "URL限定大会",
+      id: `unlisted-${index + 1}`,
+      title: `URL限定大会${index + 1}`,
       isListed: false,
-    };
-    store.tournaments = [unlistedTournament, legacyTournament];
-    store.entries[unlistedTournament.id] = [];
-    store.rounds[unlistedTournament.id] = [];
+      startsAt: `2031-01-${String(index + 1).padStart(2, "0")}T10:00:00.000Z`,
+    }));
+    store.tournaments = [...unlistedTournaments, ...listedTournaments];
+    [...unlistedTournaments, ...listedTournaments].forEach((tournament) => {
+      store.entries[tournament.id] = [];
+      store.rounds[tournament.id] = [];
+    });
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
 
-    const payload = await fetchTournaments({ authMode: "mock", page: 1 });
+    const firstPage = await fetchTournaments({ authMode: "mock", page: 1 });
+    const secondPage = await fetchTournaments({ authMode: "mock", page: 2 });
+    const visibleItems = [...firstPage.items, ...secondPage.items];
 
-    expect(payload.items.map((tournament) => tournament.id)).toEqual(["t1"]);
-    expect(payload.items[0].isListed).toBe(true);
-    expect(payload.total).toBe(1);
+    expect(firstPage.items).toHaveLength(10);
+    expect(secondPage.items).toHaveLength(2);
+    expect(firstPage.total).toBe(12);
+    expect(secondPage.total).toBe(12);
+    expect(new Set(visibleItems.map((tournament) => tournament.id)).size).toBe(12);
+    expect(visibleItems.every((tournament) => tournament.isListed)).toBe(true);
+    expect(visibleItems.find((tournament) => tournament.id === "t1")?.isListed).toBe(true);
+    expect(visibleItems.some((tournament) => tournament.id.startsWith("unlisted-"))).toBe(false);
   });
 
   it("allows direct access and entry for an unlisted tournament and exposes it only in related users' own list", async () => {

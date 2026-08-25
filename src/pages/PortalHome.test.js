@@ -117,7 +117,7 @@ test("PortalHome は道具箱トップ構成で大会と公開デッキを最大
   expect(screen.getAllByLabelText("デッキ色: 青")).toHaveLength(3);
 });
 
-test("ホーム新着では非掲載大会を除外し、あなたの大会には参加中の非掲載大会を表示する", async () => {
+test("取得済みの掲載大会をホームに表示し、あなたの大会には参加中の非掲載大会を表示する", async () => {
   const unlistedTournament = {
     ...registrationTournaments[0],
     id: "home-unlisted",
@@ -141,7 +141,7 @@ test("ホーム新着では非掲載大会を除外し、あなたの大会に�
   });
   fetchTournaments.mockImplementation(({ status }) =>
     Promise.resolve({
-      items: status === "registration" ? [unlistedTournament, listedTournament] : [],
+      items: status === "registration" ? [listedTournament] : [],
     })
   );
 

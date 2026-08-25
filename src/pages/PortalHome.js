@@ -149,7 +149,6 @@ export default function PortalHome({ compact = false }) {
           ...(inProgress?.items || []),
           ...(completed?.items || []),
         ]
-          .filter((tournament) => tournament?.isListed !== false)
           .filter((tournament) => {
             if (!tournament?.id || seen.has(tournament.id)) return false;
             seen.add(tournament.id);

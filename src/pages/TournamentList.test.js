@@ -99,27 +99,6 @@ test("作成者の情報で一覧を取得し、下書き大会を管理ペー�
   );
 });
 
-test("全大会では非掲載大会を除外し、掲載設定のない既存大会は表示する", async () => {
-  fetchTournaments.mockResolvedValue({
-    items: [
-      tournament({ id: "legacy-listed", title: "既存の掲載大会" }),
-      tournament({
-        id: "unlisted-1",
-        title: "URL限定の非掲載大会",
-        isListed: false,
-      }),
-    ],
-    total: 2,
-    page: 1,
-    pageSize: 10,
-  });
-
-  renderList();
-
-  expect(await screen.findByText("既存の掲載大会")).toBeInTheDocument();
-  expect(screen.queryByText("URL限定の非掲載大会")).not.toBeInTheDocument();
-});
-
 test("自分の大会へ切り替えると参加中と参加済みの大会を表示してURLへ反映する", async () => {
   fetchMyTournaments.mockResolvedValue({
     items: [
