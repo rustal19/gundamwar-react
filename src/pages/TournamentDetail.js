@@ -293,7 +293,9 @@ export default function TournamentDetail({ compact = false }) {
     tournament &&
       ["registration", "in_progress"].includes(tournament.status) &&
       isBefore(tournament.registrationClosesAt) &&
-      myEntry
+      myEntry &&
+      ["none", "submitted"].includes(myEntry.decklistState) &&
+      !myEntry.deckLockedAt
   );
   const canLateEntry = Boolean(
     tournament &&
@@ -336,6 +338,7 @@ export default function TournamentDetail({ compact = false }) {
 
   const submitEntry = async () => {
     if (deckViolations.length > 0 && !canEnterWithoutDeck) return;
+    if (myEntry && !canUpdateDeck) return;
     setIsSubmitting(true);
     setError("");
     setMessage("");

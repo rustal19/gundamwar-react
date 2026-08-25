@@ -1,7 +1,12 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import TournamentDetail, { formatCardCountRange } from "./TournamentDetail";
-import { createEntry, fetchTournament, updateMyEntry } from "../services/tournaments";
+import {
+  checkInMyEntry,
+  createEntry,
+  fetchTournament,
+  updateMyEntry,
+} from "../services/tournaments";
 
 let mockAuthState = {
   authMode: "mock",
@@ -69,6 +74,42 @@ function validDeck() {
   }));
 }
 
+function setMyDecklistState(decklistState, overrides = {}) {
+  mockAuthState = {
+    authMode: "mock",
+    isAuthenticated: true,
+    user: { id: "player-1", name: "テストユーザー" },
+  };
+  const submitted = decklistState !== "none";
+  const entry = {
+    id: "entry-mine",
+    user: { id: "player-1", name: "テストユーザー" },
+    status: "registered",
+    decklistState,
+    deckItems: submitted ? validDeck() : null,
+    decklistSubmittedAt: submitted ? "2026-08-25T10:00:00.000Z" : null,
+    deckLockedAt: ["locked", "revealed"].includes(decklistState)
+      ? "2026-08-26T10:00:00.000Z"
+      : null,
+    ...overrides.entry,
+  };
+  mockTournament = registrationTournament({
+    entries: [entry],
+    myEntry: entry,
+    ...(overrides.tournament || {}),
+  });
+}
+
+function setSelfCheckInState(decklistState) {
+  setMyDecklistState(decklistState, {
+    tournament: {
+      selfCheckin: true,
+      startsAt: new Date().toISOString(),
+      registrationClosesAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    },
+  });
+}
+
 beforeEach(() => {
   mockAuthState = { authMode: "mock", isAuthenticated: false, user: null };
   mockDeckItems = [];
@@ -98,6 +139,7 @@ beforeEach(() => {
     )
   );
   createEntry.mockReset().mockResolvedValue({});
+  checkInMyEntry.mockReset().mockResolvedValue({});
   updateMyEntry.mockReset().mockResolvedValue({});
 });
 
@@ -194,4 +236,129 @@ test("完成デッキを添えてエントリーすると提出成功を表示�
   expect(
     await screen.findByText("エントリーし、デッキリストを提出しました。")
   ).toBeInTheDocument();
+});
+
+test("未提出は提出を促し提出UIを表示する", async () => {
+  mockDeckItems = validDeck();
+  setMyDecklistState("none");
+
+  renderDetail();
+
+  expect(
+    await screen.findByText("デッキリストが未提出です。デッキを選んで提出してください。")
+  ).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "提出を更新" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "デッキを選ぶ" })).toBeInTheDocument();
+});
+
+test("提出済みは差し替え可能と案内し提出UIを表示する", async () => {
+  mockDeckItems = validDeck();
+  setMyDecklistState("submitted");
+
+  renderDetail();
+
+  expect(
+    await screen.findByText("デッキリストは提出済みです。差し替えできます。")
+  ).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "提出を更新" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "デッキを選ぶ" })).toBeInTheDocument();
+});
+
+test("ロック中は主催者への連絡を案内し提出UIを表示しない", async () => {
+  setMyDecklistState("locked");
+
+  renderDetail();
+
+  expect(
+    await screen.findByText(
+      "チェックイン済みのためデッキリストは変更できません(修正が必要な場合は主催者へ)"
+    )
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "提出を更新" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "デッキを選ぶ" })).not.toBeInTheDocument();
+});
+
+test("公開中は差し替え不可を案内し提出UIを表示しない", async () => {
+  setMyDecklistState("revealed", {
+    tournament: { status: "completed", decklistsPublic: true },
+  });
+
+  renderDetail();
+
+  expect(
+    await screen.findByText("デッキリストは公開中のため差し替えできません。")
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "提出を更新" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "デッキを選ぶ" })).not.toBeInTheDocument();
+});
+
+test("未提出のままロックされた場合も提出UIを表示しない", async () => {
+  setMyDecklistState("none", {
+    entry: {
+      status: "checked_in",
+      deckLockedAt: "2026-08-26T10:00:00.000Z",
+    },
+  });
+
+  renderDetail();
+
+  expect(
+    await screen.findByText(
+      "チェックイン済みのためデッキリストは変更できません(修正が必要な場合は主催者へ)"
+    )
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "提出を更新" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "デッキを選ぶ" })).not.toBeInTheDocument();
+});
+
+test("セルフチェックイン前にロックの確認を表示しキャンセル時は実行しない", async () => {
+  setSelfCheckInState("submitted");
+  renderDetail();
+
+  fireEvent.click(await screen.findByRole("button", { name: "チェックインする" }));
+
+  const dialog = screen.getByRole("dialog", { name: "チェックインの確認" });
+  expect(
+    within(dialog).getByText(
+      "チェックインするとデッキリストがロックされ、以降は自分で変更できなくなります。修正が必要になった場合は主催者に連絡してください。チェックインしますか?"
+    )
+  ).toBeInTheDocument();
+  expect(checkInMyEntry).not.toHaveBeenCalled();
+
+  fireEvent.click(within(dialog).getByRole("button", { name: "キャンセル" }));
+
+  expect(screen.queryByRole("dialog", { name: "チェックインの確認" })).not.toBeInTheDocument();
+  expect(checkInMyEntry).not.toHaveBeenCalled();
+});
+
+test("セルフチェックイン確認後にチェックインを実行する", async () => {
+  setSelfCheckInState("submitted");
+  renderDetail();
+
+  fireEvent.click(await screen.findByRole("button", { name: "チェックインする" }));
+  const dialog = screen.getByRole("dialog", { name: "チェックインの確認" });
+  fireEvent.click(within(dialog).getByRole("button", { name: "チェックインする" }));
+
+  expect(checkInMyEntry).toHaveBeenCalledWith({
+    tournamentId: "t-detail",
+    authMode: "mock",
+    user: { id: "player-1", name: "テストユーザー" },
+  });
+  expect(await screen.findByText("チェックインしました。")).toBeInTheDocument();
+  expect(screen.queryByRole("dialog", { name: "チェックインの確認" })).not.toBeInTheDocument();
+});
+
+test("デッキリスト未提出のセルフチェックインでは追加警告を表示する", async () => {
+  setSelfCheckInState("none");
+  renderDetail();
+
+  fireEvent.click(await screen.findByRole("button", { name: "チェックインする" }));
+
+  const dialog = screen.getByRole("dialog", { name: "チェックインの確認" });
+  expect(
+    within(dialog).getByText(
+      "デッキリストが未提出です。このままチェックインすると自分では提出できなくなります。"
+    )
+  ).toBeInTheDocument();
+  expect(checkInMyEntry).not.toHaveBeenCalled();
 });

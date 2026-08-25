@@ -24,7 +24,11 @@ import {
   updateTournament,
 } from "../services/tournaments";
 import { getCardCode } from "../utils/cardImages";
-import { ENTRY_STATUS_LABELS, TOURNAMENT_STATUS_LABELS } from "../data/statusLabels";
+import {
+  DECKLIST_STATE_LABELS,
+  ENTRY_STATUS_LABELS,
+  TOURNAMENT_STATUS_LABELS,
+} from "../data/statusLabels";
 import { buildDeckExport, groupDeckItemsByType } from "../utils/deckExport";
 import { FORMAT_PRESETS, OTHER_FORMAT_NAME } from "../data/formats";
 import "./Tournaments.css";
@@ -330,6 +334,16 @@ function formatDateTime(value) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function formatAuditDateTime(value) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  const pad = (number) => String(number).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(
+    date.getHours()
+  )}:${pad(date.getMinutes())}`;
 }
 
 function parseDeckText(value) {
@@ -740,6 +754,7 @@ function ParticipantsPanel({
   isSubmitting,
   onApprove,
   onCreateManual,
+  onDeckLockChange,
   onDeckRegister,
   onReject,
   onStatusChange,
@@ -752,7 +767,9 @@ function ParticipantsPanel({
   const [exportMessage, setExportMessage] = useState("");
   const [exportError, setExportError] = useState("");
   const pendingEntries = entries.filter((entry) => entry.status === "pending");
-  const visibleEntries = entries.filter((entry) => !missingOnly || !entry.decklistSubmittedAt);
+  const visibleEntries = entries.filter(
+    (entry) => !missingOnly || entry.decklistState === "none"
+  );
   const selectedEntry = entries.find((entry) => entry.id === selectedEntryId) || null;
   const selectedDeck = useMemo(() => splitDeckItems(selectedEntry?.deckItems), [selectedEntry?.deckItems]);
   const selectedMainCount = countCards(selectedDeck.mainItems);
@@ -765,6 +782,7 @@ function ParticipantsPanel({
     sideCount: selectedSideCount,
   });
   const nextRound = Math.max(1, (rounds || []).length + 1);
+  const decklistChangesBlocked = form.status === "completed";
 
   const copyAllDecks = async () => {
     setExportMessage("");
@@ -862,52 +880,110 @@ function ParticipantsPanel({
         <div className="tournament-empty">参加登録されていません</div>
       ) : (
         <div className="tournament-table-wrap">
-          <table className="tournament-table">
+          <table className="tournament-table tournament-participants-table">
           <thead>
             <tr>
               <th className="num">#</th>
               <th>名前</th>
-              <th>状態</th>
-              <th>提出状況</th>
+              <th>参加状態</th>
+              <th>デッキリスト</th>
+              <th>記録</th>
               <th>バッジ</th>
               <th>操作</th>
             </tr>
           </thead>
           <tbody>
-            {visibleEntries.map((entry, index) => (
-              <tr key={entry.id}>
-                <td className="num">{index + 1}</td>
-                <td>{entry.user?.name || "-"}</td>
-                <td>{ENTRY_STATUS_LABELS[entry.status] || entry.status}</td>
-                <td>
-                  {entry.decklistSubmittedAt ? (
-                    formatDateTime(entry.decklistSubmittedAt)
-                  ) : (
-                    <span className="missing-badge">未提出</span>
-                  )}
-                </td>
-                <td>
-                  {entry.user?.id == null ? <span className="mini-badge">ゲスト</span> : null}
-                  {Number(entry.joinedAtRound || 1) > 1 ? (
-                    <span className="mini-badge">第{entry.joinedAtRound}回戦から</span>
-                  ) : null}
-                </td>
-                <td className="tournament-row-actions">
-                  <button type="button" onClick={() => setSelectedEntryId(entry.id)} disabled={isSubmitting}>
-                    閲覧
-                  </button>
-                  <button type="button" onClick={() => onDeckRegister(entry.id)} disabled={isSubmitting}>
-                    デッキ登録
-                  </button>
-                  <button type="button" onClick={() => onStatusChange(entry.id, "checked_in")} disabled={isSubmitting}>
-                    チェックイン
-                  </button>
-                  <button type="button" onClick={() => onStatusChange(entry.id, "dropped")} disabled={isSubmitting}>
-                    ドロップ
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {visibleEntries.map((entry, index) => {
+              const awaitingResubmission = Boolean(entry.deckUnlockedAt && !entry.deckLockedAt);
+              const canUnlock = Boolean(entry.deckLockedAt && form.status !== "completed");
+              const canRelock = Boolean(
+                !entry.deckLockedAt && entry.deckUnlockedAt && !decklistChangesBlocked
+              );
+              return (
+                <tr key={entry.id}>
+                  <td className="num">{index + 1}</td>
+                  <td>{entry.user?.name || "-"}</td>
+                  <td>{ENTRY_STATUS_LABELS[entry.status] || entry.status}</td>
+                  <td>
+                    <div className="tournament-deck-state-cell">
+                      <span className={`decklist-state-badge ${entry.decklistState || "unknown"}`}>
+                        {DECKLIST_STATE_LABELS[entry.decklistState] || "状態不明"}
+                      </span>
+                      {entry.decklistSubmittedAt ? (
+                        <span className="tournament-deck-state-time">
+                          提出 {formatDateTime(entry.decklistSubmittedAt)}
+                        </span>
+                      ) : null}
+                      {entry.decklistState === "none" && entry.deckLockedAt ? (
+                        <span className="mini-badge deck-lock-note">未提出のままロック中</span>
+                      ) : null}
+                      {awaitingResubmission ? (
+                        <span className="mini-badge deck-unlocked-note">
+                          {form.status === "completed"
+                            ? "ロック解除済み・未再提出"
+                            : "ロック解除済み・再提出待ち"}
+                        </span>
+                      ) : null}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="tournament-deck-audit">
+                      {entry.deckUpdatedAt ? (
+                        <span>
+                          {entry.deckUpdatedBy?.name || "主催者"}が修正 {formatAuditDateTime(entry.deckUpdatedAt)}
+                        </span>
+                      ) : null}
+                      {entry.deckUnlockedAt ? (
+                        <span>
+                          {entry.deckUnlockedBy?.name || "主催者"}がロック解除 {formatAuditDateTime(entry.deckUnlockedAt)}
+                        </span>
+                      ) : null}
+                      {!entry.deckUpdatedAt && !entry.deckUnlockedAt ? <span>-</span> : null}
+                    </div>
+                  </td>
+                  <td>
+                    {entry.user?.id == null ? <span className="mini-badge">ゲスト</span> : null}
+                    {Number(entry.joinedAtRound || 1) > 1 ? (
+                      <span className="mini-badge">第{entry.joinedAtRound}回戦から</span>
+                    ) : null}
+                  </td>
+                  <td className="tournament-row-actions">
+                    <button type="button" onClick={() => setSelectedEntryId(entry.id)} disabled={isSubmitting}>
+                      閲覧
+                    </button>
+                    {!decklistChangesBlocked ? (
+                      <button type="button" onClick={() => onDeckRegister(entry.id)} disabled={isSubmitting}>
+                        デッキ登録
+                      </button>
+                    ) : null}
+                    {canUnlock ? (
+                      <button
+                        type="button"
+                        onClick={() => onDeckLockChange(entry.id, false)}
+                        disabled={isSubmitting}
+                      >
+                        ロックを解除して再提出可能にする
+                      </button>
+                    ) : null}
+                    {canRelock ? (
+                      <button
+                        type="button"
+                        onClick={() => onDeckLockChange(entry.id, true)}
+                        disabled={isSubmitting}
+                      >
+                        手動で再ロック
+                      </button>
+                    ) : null}
+                    <button type="button" onClick={() => onStatusChange(entry.id, "checked_in")} disabled={isSubmitting}>
+                      チェックイン
+                    </button>
+                    <button type="button" onClick={() => onStatusChange(entry.id, "dropped")} disabled={isSubmitting}>
+                      ドロップ
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
           </table>
         </div>
@@ -1404,15 +1480,37 @@ export default function TournamentManage({ compact = false }) {
 
   const changeEntryStatus = (entryId, status) =>
     runAction(
-      async () => updateEntryStatus({ tournamentId: id, entryId, status, authMode }),
+      async () => updateEntryStatus({ tournamentId: id, entryId, status, authMode, user }),
       "参加者の状態を更新しました。"
+    );
+
+  const changeDecklistLock = (entryId, decklistLocked) =>
+    runAction(
+      async () =>
+        updateEntryStatus({
+          tournamentId: id,
+          entryId,
+          decklistLocked,
+          authMode,
+          user,
+        }),
+      decklistLocked
+        ? "デッキリストを再ロックしました。"
+        : "デッキリストのロックを解除しました。本人が再提出できます。"
     );
 
   const deckRegister = (entryId) => {
     const name = window.prompt("カード名を1行ずつ入力してください。空で未提出に戻します。", "");
     if (name == null) return;
     runAction(
-      async () => updateEntryStatus({ tournamentId: id, entryId, deckItems: parseDeckText(name), authMode }),
+      async () =>
+        updateEntryStatus({
+          tournamentId: id,
+          entryId,
+          deckItems: parseDeckText(name),
+          authMode,
+          user,
+        }),
       "デッキを登録しました。"
     );
   };
@@ -1547,6 +1645,7 @@ export default function TournamentManage({ compact = false }) {
           isSubmitting={isSubmitting}
           onApprove={approvePendingEntry}
           onCreateManual={createManual}
+          onDeckLockChange={changeDecklistLock}
           onDeckRegister={deckRegister}
           onReject={rejectPendingEntry}
           onStatusChange={changeEntryStatus}

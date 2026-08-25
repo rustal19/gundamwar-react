@@ -4,7 +4,7 @@ import GoogleSignInPanel from "../components/GoogleSignInPanel";
 import { useAuth, validateNickname } from "../context/AuthContext";
 import { fetchPublicDecks } from "../services/publicDecks";
 import { fetchMyTournaments, fetchRounds, fetchStandings } from "../services/tournaments";
-import { ENTRY_STATUS_LABELS } from "../data/statusLabels";
+import { DECKLIST_STATE_LABELS, ENTRY_STATUS_LABELS } from "../data/statusLabels";
 import { computeUserResults, formatRecord } from "../utils/userResults";
 import "./Profile.css";
 
@@ -45,14 +45,23 @@ function groupMyTournaments(items) {
   };
 }
 
+const PROFILE_DECKLIST_STATE_LABELS = {
+  ...DECKLIST_STATE_LABELS,
+  none: "未提出・提出してください",
+  submitted: "提出済み・差し替え可",
+  locked: "ロック中・修正は主催者へ",
+  revealed: "公開中・差し替え不可",
+};
+
 function TournamentGroup({ title, items, emptyText }) {
   return (
     <section className="profile-list-section">
       <h3>{title}</h3>
       {items.length === 0 ? <p className="profile-empty">{emptyText}</p> : null}
       <div className="profile-tournament-list">
-        {items.map(({ tournament, entry, needsDecklist, rounds }) => {
+        {items.map(({ tournament, entry, rounds }) => {
           const tableNo = tournament.status === "in_progress" ? findCurrentTable(rounds, entry.id) : null;
+          const decklistState = entry.decklistState;
           return (
             <Link key={tournament.id} to={`/tournaments/${tournament.id}`} className="profile-tournament-row">
               <div>
@@ -60,7 +69,16 @@ function TournamentGroup({ title, items, emptyText }) {
                 <span>{formatDate(tournament.startsAt)} / {ENTRY_STATUS_LABELS[entry.status] || entry.status}</span>
               </div>
               <div className="profile-row-meta">
-                {needsDecklist ? <span className="profile-badge accent">未提出</span> : null}
+                {decklistState ? (
+                  <span className={`profile-badge deck-${decklistState}`}>
+                    {decklistState === "none" && entry.deckLockedAt
+                      ? DECKLIST_STATE_LABELS.none
+                      : PROFILE_DECKLIST_STATE_LABELS[decklistState] || decklistState}
+                  </span>
+                ) : null}
+                {decklistState === "none" && entry.deckLockedAt ? (
+                  <span className="profile-badge deck-locked">ロック中・修正は主催者へ</span>
+                ) : null}
                 {tableNo ? <span className="profile-badge soft">卓 {tableNo}</span> : null}
               </div>
             </Link>

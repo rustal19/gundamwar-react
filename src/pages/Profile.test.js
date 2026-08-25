@@ -54,7 +54,14 @@ beforeEach(() => {
           startsAt: "2026-08-01T10:00:00.000Z",
           decklistRequired: true,
         },
-        entry: { id: "e1", user: { id: "u1" }, status: "registered", decklistSubmittedAt: null },
+        entry: {
+          id: "e1",
+          user: { id: "u1" },
+          status: "registered",
+          decklistState: "none",
+          decklistSubmittedAt: null,
+          deckLockedAt: null,
+        },
         needsDecklist: true,
       },
       {
@@ -64,7 +71,14 @@ beforeEach(() => {
           status: "completed",
           startsAt: "2026-07-01T10:00:00.000Z",
         },
-        entry: { id: "e2", user: { id: "u1" }, status: "registered", decklistSubmittedAt: "2026-06-30" },
+        entry: {
+          id: "e2",
+          user: { id: "u1" },
+          status: "registered",
+          decklistState: "revealed",
+          decklistSubmittedAt: "2026-06-30",
+          deckLockedAt: "2026-06-30",
+        },
         needsDecklist: false,
       },
     ],
@@ -83,11 +97,46 @@ test("renders my page profile, metrics, tournaments, and results", async () => {
   expect(screen.getByRole("link", { name: "公開ページを見る" })).toHaveAttribute("href", "/users/u1");
 
   await waitFor(() => expect(screen.getByText("受付中大会")).toBeInTheDocument());
-  expect(screen.getByText("未提出")).toBeInTheDocument();
+  expect(screen.getByText("未提出・提出してください")).toBeInTheDocument();
   expect(screen.getAllByText("完了大会")).toHaveLength(2);
   expect(screen.getByText("優勝")).toBeInTheDocument();
   expect(screen.getAllByText("4-0-0")).toHaveLength(2);
   expect(screen.getByText("公開デッキ数").nextSibling).toHaveTextContent("1");
+});
+
+test("大会ごとにデッキリストの4状態を表示する", async () => {
+  fetchMyTournaments.mockResolvedValue({
+    items: [
+      ["none", "未提出大会", "registration"],
+      ["submitted", "提出済み大会", "registration"],
+      ["locked", "ロック大会", "in_progress"],
+      ["revealed", "公開大会", "completed"],
+    ].map(([decklistState, title, status], index) => ({
+      tournament: {
+        id: `state-${decklistState}`,
+        title,
+        status,
+        startsAt: `2026-08-${String(index + 1).padStart(2, "0")}T10:00:00.000Z`,
+      },
+      entry: {
+        id: `entry-${decklistState}`,
+        user: { id: "u1" },
+        status: "registered",
+        decklistState,
+        deckLockedAt: ["locked", "revealed"].includes(decklistState)
+          ? "2026-08-01T09:00:00.000Z"
+          : null,
+      },
+    })),
+  });
+
+  renderProfile();
+
+  await waitFor(() => expect(screen.getByText("未提出大会")).toBeInTheDocument());
+  expect(screen.getByText("未提出・提出してください")).toBeInTheDocument();
+  expect(screen.getByText("提出済み・差し替え可")).toBeInTheDocument();
+  expect(screen.getByText("ロック中・修正は主催者へ")).toBeInTheDocument();
+  expect(screen.getByText("公開中・差し替え不可")).toBeInTheDocument();
 });
 
 test("saves nickname from the my page form", async () => {

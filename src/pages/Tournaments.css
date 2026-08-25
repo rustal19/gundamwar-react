@@ -412,6 +412,7 @@
 
 .tournament-my-status-band {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
@@ -444,6 +445,7 @@
 }
 
 .tournament-my-status-band > .tournament-entry-controls {
+  flex: 1 1 420px;
   min-width: min(420px, 100%);
 }
 
@@ -489,6 +491,49 @@
 .tournament-my-warning {
   color: var(--gw-accent);
   font-weight: 800;
+}
+
+.tournament-decklist-status {
+  display: grid;
+  justify-items: start;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.tournament-decklist-status p {
+  margin: 0;
+}
+
+.decklist-state-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 26px;
+  border-radius: var(--gw-radius-sm);
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.decklist-state-badge.none,
+.decklist-state-badge.locked {
+  background: var(--gw-accent-soft);
+  color: var(--gw-accent);
+}
+
+.decklist-state-badge.submitted {
+  background: var(--gw-success-soft);
+  color: var(--gw-primary-strong);
+}
+
+.decklist-state-badge.revealed {
+  background: var(--gw-primary-soft);
+  color: var(--gw-primary-strong);
+}
+
+.decklist-state-badge.unknown {
+  background: var(--gw-field-bg);
+  color: var(--gw-text-muted);
 }
 
 .tournament-entry-controls {
@@ -566,6 +611,19 @@
   background: var(--gw-surface);
   box-shadow: var(--gw-shadow-card);
   padding: 18px;
+}
+
+.tournament-confirm-dialog {
+  width: min(560px, 100%);
+}
+
+.tournament-confirm-dialog > p {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.tournament-confirm-actions {
+  justify-content: flex-end;
 }
 
 .tournament-dialog-header {
@@ -797,6 +855,10 @@
   min-width: 620px;
 }
 
+.tournament-participants-table {
+  min-width: 1120px;
+}
+
 .tournament-table th,
 .tournament-table td {
   border-bottom: 1px solid var(--gw-divider);
@@ -988,6 +1050,31 @@
   background: var(--gw-primary-soft);
   color: var(--gw-primary-strong);
   font-size: 12px;
+}
+
+.tournament-deck-state-cell,
+.tournament-deck-audit {
+  display: grid;
+  justify-items: start;
+  gap: 5px;
+}
+
+.tournament-deck-state-time,
+.tournament-deck-audit {
+  color: var(--gw-text-muted);
+  font-size: 12px;
+}
+
+.mini-badge.deck-lock-note {
+  margin-right: 0;
+  background: var(--gw-accent-soft);
+  color: var(--gw-accent);
+}
+
+.mini-badge.deck-unlocked-note {
+  margin-right: 0;
+  background: var(--gw-success-soft);
+  color: var(--gw-primary-strong);
 }
 
 .tournament-score-actions {
