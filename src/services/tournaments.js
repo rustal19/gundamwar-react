@@ -7,6 +7,51 @@ const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "
 const STORAGE_KEY = "gundamwar.tournaments.v1";
 const MOCK_USER_KEY = "gundamwar.auth.mockUser.v1";
 const PAGE_SIZE = 10;
+const MOCK_SEED_VERSION = 2;
+
+// These IDs are also used by the format restriction data in src/data, so the
+// seed decks resolve to real card images instead of test-only placeholder IDs.
+const MOCK_DECK_CARD_IDS = [
+  "101020126",
+  "101050019",
+  "102020114",
+  "102030045",
+  "102050016",
+  "103021034",
+  "103050016",
+  "104020075",
+  "104050016",
+  "105023027",
+  "105050011",
+  "106020065",
+  "106050009",
+  "107010012",
+  "107050008",
+  "101010083",
+  "101040070",
+  "102020163",
+  "102020180",
+  "102030008",
+  "102030118",
+  "102040080",
+  "102040082",
+  "103030056",
+  "103031014",
+  "103011055",
+  "104030005",
+  "105010077",
+  "105043035",
+  "105043038",
+  "107030001",
+];
+
+const MOCK_CARD_TYPE_NAMES = {
+  "01": "UNIT",
+  "02": "CHARACTER",
+  "03": "COMMAND",
+  "04": "OPERATION",
+  "05": "GENERATION",
+};
 
 const DEFAULT_REGULATION = {
   name: "スタンダード",
@@ -70,17 +115,25 @@ function daysFromNow(days) {
   return date.toISOString();
 }
 
+function buildMockDeck(offset = 0) {
+  return Array.from({ length: 17 }, (_, index) => {
+    const cardId = MOCK_DECK_CARD_IDS[(offset + index) % MOCK_DECK_CARD_IDS.length];
+    return {
+      cardId,
+      count: index === 16 ? 2 : 3,
+      card: {
+        cardId,
+        card_type_name: MOCK_CARD_TYPE_NAMES[cardId.slice(3, 5)] || "UNIT",
+      },
+      zone: "main",
+    };
+  });
+}
+
 function createInitialStore() {
   const tournamentId = "mock-tournament-1";
-  const checkedInDeckMetadata = {
-    deckFormat: null,
-    deckLockedAt: daysFromNow(-1),
-    deckUpdatedBy: null,
-    deckUpdatedAt: null,
-    deckUnlockedBy: null,
-    deckUnlockedAt: null,
-    finalRank: null,
-  };
+  const completedTournamentId = "mock-tournament-3";
+  const organizer = { id: "organizer-1", name: "ローカル主催者" };
   const entries = [
     {
       id: "entry-1",
@@ -88,7 +141,13 @@ function createInitialStore() {
       user: { id: "mock-player-1", name: "プレイヤー1" },
       deckItems: null,
       decklistSubmittedAt: null,
-      ...checkedInDeckMetadata,
+      deckFormat: null,
+      deckLockedAt: daysFromNow(-1),
+      deckUpdatedBy: null,
+      deckUpdatedAt: null,
+      deckUnlockedBy: null,
+      deckUnlockedAt: null,
+      finalRank: null,
       status: "checked_in",
       createdAt: daysFromNow(-5),
     },
@@ -96,9 +155,15 @@ function createInitialStore() {
       id: "entry-2",
       tournamentId,
       user: { id: "mock-player-2", name: "プレイヤー2" },
-      deckItems: null,
-      decklistSubmittedAt: null,
-      ...checkedInDeckMetadata,
+      deckItems: buildMockDeck(0),
+      decklistSubmittedAt: daysFromNow(-3),
+      deckFormat: DEFAULT_REGULATION.name,
+      deckLockedAt: null,
+      deckUpdatedBy: null,
+      deckUpdatedAt: null,
+      deckUnlockedBy: organizer,
+      deckUnlockedAt: daysFromNow(-1),
+      finalRank: null,
       status: "checked_in",
       createdAt: daysFromNow(-5),
     },
@@ -106,15 +171,78 @@ function createInitialStore() {
       id: "entry-3",
       tournamentId,
       user: { id: "mock-player-3", name: "プレイヤー3" },
-      deckItems: null,
-      decklistSubmittedAt: null,
-      ...checkedInDeckMetadata,
+      deckItems: buildMockDeck(4),
+      decklistSubmittedAt: daysFromNow(-3),
+      deckFormat: DEFAULT_REGULATION.name,
+      deckLockedAt: daysFromNow(-1),
+      deckUpdatedBy: null,
+      deckUpdatedAt: null,
+      deckUnlockedBy: null,
+      deckUnlockedAt: null,
+      finalRank: null,
       status: "checked_in",
       createdAt: daysFromNow(-5),
     },
+    {
+      id: "entry-4",
+      tournamentId,
+      user: { id: "mock-player-4", name: "プレイヤー4" },
+      deckItems: buildMockDeck(8),
+      decklistSubmittedAt: daysFromNow(-1),
+      deckFormat: DEFAULT_REGULATION.name,
+      deckLockedAt: null,
+      deckUpdatedBy: null,
+      deckUpdatedAt: null,
+      deckUnlockedBy: null,
+      deckUnlockedAt: null,
+      finalRank: null,
+      status: "registered",
+      joinedAtRound: 2,
+      createdAt: daysFromNow(-1),
+    },
   ];
+  const completedEntries = [
+    {
+      id: "completed-entry-1",
+      user: { id: "mock-finalist-1", name: "決勝参加者1" },
+      finalRank: 1,
+      deckOffset: 0,
+    },
+    {
+      id: "completed-entry-2",
+      user: { id: "mock-finalist-2", name: "決勝参加者2" },
+      finalRank: 2,
+      deckOffset: 4,
+    },
+    {
+      id: "completed-entry-3",
+      user: { id: "mock-finalist-3", name: "決勝参加者3" },
+      finalRank: 3,
+      deckOffset: 8,
+    },
+    {
+      id: "completed-entry-4",
+      user: { id: "mock-finalist-4", name: "決勝参加者4" },
+      finalRank: 4,
+      deckOffset: 12,
+    },
+  ].map(({ deckOffset, ...entry }) => ({
+    ...entry,
+    tournamentId: completedTournamentId,
+    deckItems: buildMockDeck(deckOffset),
+    decklistSubmittedAt: daysFromNow(-10),
+    deckFormat: DEFAULT_REGULATION.name,
+    deckLockedAt: daysFromNow(-7),
+    deckUpdatedBy: null,
+    deckUpdatedAt: null,
+    deckUnlockedBy: null,
+    deckUnlockedAt: null,
+    status: "checked_in",
+    createdAt: daysFromNow(-14),
+  }));
 
   return {
+    seedVersion: MOCK_SEED_VERSION,
     tournaments: [
       {
         id: tournamentId,
@@ -135,9 +263,9 @@ function createInitialStore() {
         decklistRequired: true,
         announcement: null,
         roundTimeMinutes: null,
-        lateEntry: false,
+        lateEntry: true,
         regulation: DEFAULT_REGULATION,
-        createdBy: { id: "organizer-1", name: "ローカル主催者" },
+        createdBy: organizer,
         entryCount: entries.length,
         createdAt: daysFromNow(-10),
         updatedAt: daysFromNow(-1),
@@ -163,15 +291,43 @@ function createInitialStore() {
         roundTimeMinutes: null,
         lateEntry: false,
         regulation: DEFAULT_REGULATION,
-        createdBy: { id: "organizer-1", name: "ローカル主催者" },
+        createdBy: organizer,
         entryCount: 0,
         createdAt: daysFromNow(-2),
         updatedAt: daysFromNow(-2),
+      },
+      {
+        id: completedTournamentId,
+        title: "完了済みスタンダード杯",
+        description: "公開大会デッキと最終順位を確認できる完了済みのモック大会です。",
+        format: "swiss",
+        swissRounds: 3,
+        topCutSize: null,
+        status: "completed",
+        startsAt: daysFromNow(-7),
+        endedAt: daysFromNow(-7),
+        registrationClosesAt: daysFromNow(-8),
+        checkinOpensAt: daysFromNow(-8),
+        capacity: 16,
+        venue: "東京・秋葉原カードショップ○○",
+        isOnline: false,
+        selfCheckin: true,
+        decklistsPublic: true,
+        decklistRequired: true,
+        announcement: "全3回戦が終了しました。",
+        roundTimeMinutes: 50,
+        lateEntry: false,
+        regulation: DEFAULT_REGULATION,
+        createdBy: organizer,
+        entryCount: completedEntries.length,
+        createdAt: daysFromNow(-21),
+        updatedAt: daysFromNow(-7),
       },
     ],
     entries: {
       [tournamentId]: entries,
       "mock-tournament-2": [],
+      [completedTournamentId]: completedEntries,
     },
     rounds: {
       [tournamentId]: [
@@ -206,6 +362,161 @@ function createInitialStore() {
         },
       ],
       "mock-tournament-2": [],
+      [completedTournamentId]: [
+        {
+          id: "completed-round-1",
+          tournamentId: completedTournamentId,
+          number: 1,
+          stage: "swiss",
+          status: "completed",
+          matches: [
+            {
+              id: "completed-match-1",
+              roundId: "completed-round-1",
+              tableNo: 1,
+              player1EntryId: "completed-entry-1",
+              player2EntryId: "completed-entry-4",
+              player1Games: 2,
+              player2Games: 0,
+              result: "p1_win",
+            },
+            {
+              id: "completed-match-2",
+              roundId: "completed-round-1",
+              tableNo: 2,
+              player1EntryId: "completed-entry-2",
+              player2EntryId: "completed-entry-3",
+              player1Games: 2,
+              player2Games: 0,
+              result: "p1_win",
+            },
+          ],
+        },
+        {
+          id: "completed-round-2",
+          tournamentId: completedTournamentId,
+          number: 2,
+          stage: "swiss",
+          status: "completed",
+          matches: [
+            {
+              id: "completed-match-3",
+              roundId: "completed-round-2",
+              tableNo: 1,
+              player1EntryId: "completed-entry-1",
+              player2EntryId: "completed-entry-2",
+              player1Games: 2,
+              player2Games: 0,
+              result: "p1_win",
+            },
+            {
+              id: "completed-match-4",
+              roundId: "completed-round-2",
+              tableNo: 2,
+              player1EntryId: "completed-entry-3",
+              player2EntryId: "completed-entry-4",
+              player1Games: 2,
+              player2Games: 0,
+              result: "p1_win",
+            },
+          ],
+        },
+        {
+          id: "completed-round-3",
+          tournamentId: completedTournamentId,
+          number: 3,
+          stage: "swiss",
+          status: "completed",
+          matches: [
+            {
+              id: "completed-match-5",
+              roundId: "completed-round-3",
+              tableNo: 1,
+              player1EntryId: "completed-entry-1",
+              player2EntryId: "completed-entry-3",
+              player1Games: 2,
+              player2Games: 0,
+              result: "p1_win",
+            },
+            {
+              id: "completed-match-6",
+              roundId: "completed-round-3",
+              tableNo: 2,
+              player1EntryId: "completed-entry-2",
+              player2EntryId: "completed-entry-4",
+              player1Games: 2,
+              player2Games: 0,
+              result: "p1_win",
+            },
+          ],
+        },
+      ],
+    },
+  };
+}
+
+function mergeSeedEntries(currentEntries, seedEntries) {
+  const seedEntryIds = new Set(seedEntries.map((entry) => String(entry.id)));
+  const customEntries = (Array.isArray(currentEntries) ? currentEntries : []).filter(
+    (entry) => !seedEntryIds.has(String(entry?.id))
+  );
+  return [...seedEntries, ...customEntries];
+}
+
+function migrateMockSeedStore(store) {
+  const seedVersion = Number(store.seedVersion || 0);
+  const hasKnownSeed = store.tournaments.some(
+    (tournament) => String(tournament?.id) === "mock-tournament-1"
+  );
+  if (!hasKnownSeed || seedVersion >= MOCK_SEED_VERSION) {
+    return { store, migrated: false };
+  }
+
+  const latestSeed = createInitialStore();
+  const inProgressId = "mock-tournament-1";
+  const completedId = "mock-tournament-3";
+  const latestInProgress = latestSeed.tournaments.find(
+    (tournament) => tournament.id === inProgressId
+  );
+  const latestCompleted = latestSeed.tournaments.find(
+    (tournament) => tournament.id === completedId
+  );
+  const inProgressEntries = mergeSeedEntries(
+    store.entries[inProgressId],
+    latestSeed.entries[inProgressId]
+  );
+
+  return {
+    migrated: true,
+    store: {
+      ...store,
+      seedVersion: MOCK_SEED_VERSION,
+      tournaments: [
+        ...store.tournaments
+          .filter((tournament) => String(tournament?.id) !== completedId)
+          .map((tournament) =>
+            String(tournament?.id) === inProgressId
+              ? {
+                  ...tournament,
+                  lateEntry: latestInProgress.lateEntry,
+                  entryCount: inProgressEntries.length,
+                }
+              : tournament
+          ),
+        latestCompleted,
+      ],
+      entries: {
+        ...store.entries,
+        [inProgressId]: inProgressEntries,
+        [completedId]: mergeSeedEntries(
+          store.entries[completedId],
+          latestSeed.entries[completedId]
+        ),
+      },
+      rounds: {
+        ...store.rounds,
+        [completedId]: latestSeed.rounds[completedId],
+      },
     },
   };
 }
@@ -306,11 +617,17 @@ function readStore() {
       return initialStore;
     }
     const parsed = JSON.parse(raw);
-    return {
+    const store = {
       tournaments: Array.isArray(parsed.tournaments) ? parsed.tournaments : [],
       entries: parsed.entries && typeof parsed.entries === "object" ? parsed.entries : {},
       rounds: parsed.rounds && typeof parsed.rounds === "object" ? parsed.rounds : {},
     };
+    if (parsed.seedVersion != null) {
+      store.seedVersion = Number(parsed.seedVersion) || 0;
+    }
+    const migration = migrateMockSeedStore(store);
+    if (migration.migrated) writeStore(migration.store);
+    return migration.store;
   } catch (error) {
     console.warn("Failed to read tournaments from localStorage.", error);
     return createInitialStore();
@@ -320,6 +637,10 @@ function readStore() {
 function writeStore(store) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+}
+
+export function ensureMockTournamentStore() {
+  return readStore();
 }
 
 function getTournamentOrThrow(store, tournamentId) {

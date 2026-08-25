@@ -50,6 +50,7 @@ function tournamentEntry(overrides = {}) {
 describe("publicDecks mock service", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    writeTournamentStore({ tournaments: [], entries: {} });
   });
 
   test("publishes a saved deck into the public deck store", async () => {
