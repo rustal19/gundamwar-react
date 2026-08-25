@@ -272,6 +272,7 @@ export default function PortalHome({ compact = false }) {
                   {deck.title}
                 </Link>
                 <OwnerLink owner={deck.owner} buildPath={buildPath} />
+                <span className="portal-deck-format">{deck.format || ""}</span>
                 <span className="portal-deck-date">{formatDate(deck.publishedAt || deck.updatedAt)}</span>
               </article>
             ))}

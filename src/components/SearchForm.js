@@ -3,7 +3,7 @@ import Select from 'react-select';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../App.css';
 import { trackEvent } from "../utils/analytics";
-import { MULTI_SELECT_KEYS } from "../utils/searchResults";
+import { MULTI_SELECT_KEYS, hasSearchCriteria } from "../utils/searchResults";
 import {
   buildPathWithForcedMobileLayout,
   preserveForcedMobileLayoutInParams,
@@ -887,6 +887,9 @@ const SearchForm = ({ onSearch, compact = false }) => {
               <span className="owl-sprite-16-black icon-delete"></span>リセット
             </button>
           </div>
+          {!hasSearchCriteria(formValues) ? (
+            <p className="search-hint">検索するには、いずれかの検索条件を入力してください。</p>
+          ) : null}
         </div>
       </div>
     </form>

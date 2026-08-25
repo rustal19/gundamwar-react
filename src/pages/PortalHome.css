@@ -253,7 +253,7 @@
 
 .portal-deck-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) minmax(110px, auto) auto;
+  grid-template-columns: auto minmax(0, 1fr) minmax(110px, auto) auto auto;
   align-items: center;
   gap: 10px;
   min-height: 42px;
@@ -290,6 +290,19 @@
 }
 
 .portal-deck-owner,
+.portal-deck-format {
+  color: var(--gw-text-muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+  padding: 1px 8px;
+  border: 1px solid var(--gw-divider);
+  border-radius: 999px;
+}
+.portal-deck-format:empty {
+  border: none;
+  padding: 0;
+}
+
 .portal-deck-date {
   color: var(--gw-text-muted);
   font-size: 0.88rem;
