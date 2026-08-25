@@ -235,6 +235,20 @@ test("共同運営者には大会詳細から管理画面への導線を表示�
   );
 });
 
+test("参加者向け大会情報にスイス総回戦数と終了条件を表示する", async () => {
+  mockTournament = registrationTournament({
+    swissRounds: 4,
+    swissEndCondition: "undefeated",
+  });
+
+  renderDetail();
+
+  expect(await screen.findByText("スイス回戦数")).toBeInTheDocument();
+  expect(screen.getByText("全4回戦")).toBeInTheDocument();
+  expect(screen.getByText("終了条件")).toBeInTheDocument();
+  expect(screen.getByText("全勝者が1人以下になったら終了")).toBeInTheDocument();
+});
+
 test("参加者ステータスを日本語ラベルで表示する", async () => {
   renderDetail();
 

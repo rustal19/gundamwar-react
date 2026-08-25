@@ -27,7 +27,11 @@ import {
 import { FORMAT_PRESETS } from "../data/formats";
 import { defaultRegulation, validateDeck } from "../utils/deckValidation";
 import { createTournamentParticipantNameFormatter } from "../utils/tournament/participantDisplayName";
-import { getRoundLabel } from "../utils/tournament/roundLabel";
+import { getRoundProgressLabel } from "../utils/tournament/roundLabel";
+import {
+  getSwissEndConditionLabel,
+  getSwissRoundSummary,
+} from "../utils/tournament/swiss";
 import { computeStandings } from "../utils/tournament/standings";
 import NotFound from "./NotFound";
 import "./Tournaments.css";
@@ -503,6 +507,18 @@ export default function TournamentDetail({ compact = false }) {
             <dt>形式</dt>
             <dd>{tournament.format === "single_elim" ? "シングルエリミネーション" : "スイス"}</dd>
           </div>
+          {tournament.format !== "single_elim" ? (
+            <>
+              <div>
+                <dt>スイス回戦数</dt>
+                <dd>{getSwissRoundSummary(tournament)}</dd>
+              </div>
+              <div>
+                <dt>終了条件</dt>
+                <dd>{getSwissEndConditionLabel(tournament)}</dd>
+              </div>
+            </>
+          ) : null}
           <div>
             <dt>開催地</dt>
             <dd>{formatVenue(tournament)}</dd>
@@ -629,7 +645,7 @@ export default function TournamentDetail({ compact = false }) {
         <section className="tournament-round">
           <div className="tournament-round-header">
             <h2>
-              {getRoundLabel(selectedPairingRound, rounds)} / {selectedPairingRound.stage === "top_cut" ? "トップカット" : "スイス"}
+              {getRoundProgressLabel(selectedPairingRound, rounds, tournament)} / {selectedPairingRound.stage === "top_cut" ? "トップカット" : "スイス"}
             </h2>
             <span>{ROUND_STATUS_LABELS[selectedPairingRound.status] || selectedPairingRound.status}</span>
           </div>
@@ -688,7 +704,7 @@ export default function TournamentDetail({ compact = false }) {
         <section className="tournament-round">
           <div className="tournament-round-header">
             <h2>
-              {getRoundLabel(selectedResultRound, rounds)} / {selectedResultRound.stage === "top_cut" ? "トップカット" : "スイス"}
+              {getRoundProgressLabel(selectedResultRound, rounds, tournament)} / {selectedResultRound.stage === "top_cut" ? "トップカット" : "スイス"}
             </h2>
           </div>
           <div className="tournament-table-wrap">

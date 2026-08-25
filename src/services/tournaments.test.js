@@ -11,7 +11,6 @@ import {
   deleteRound,
   deleteMyEntry,
   fetchEntries,
-  fetchMyTournaments,
   fetchRounds,
   fetchRoundsForManage,
   fetchStandings,
@@ -259,6 +258,85 @@ function setManagementAuthorizationTournament() {
     t1: [{ user: { id: "banned-user", name: "禁止対象" }, bannedAt: now }],
   };
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+}
+
+function makeCheckedInEntries(count, { startAt = 1, joinedAtRound = 1 } = {}) {
+  const now = new Date().toISOString();
+  return Array.from({ length: count }, (_, index) => {
+    const number = startAt + index;
+    return {
+      id: `entry-${number}`,
+      tournamentId: "t1",
+      user: { id: `player-${number}`, name: `Player ${number}` },
+      deckItems: null,
+      decklistSubmittedAt: null,
+      status: "checked_in",
+      joinedAtRound,
+      createdAt: now,
+    };
+  });
+}
+
+function seedCheckedInSwissTournament(entryCount, overrides = {}) {
+  setRegistrationTournament({ status: "registration", swissRounds: 3, ...overrides });
+  const store = readStore();
+  store.entries.t1 = makeCheckedInEntries(entryCount);
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+}
+
+async function reportOpenRoundMatches(round, resultForMatch = () => "p1_win") {
+  for (const match of round.matches || []) {
+    if (match.result) continue;
+    await reportMatchResult({
+      matchId: match.id,
+      result: resultForMatch(match),
+      authMode: "mock",
+    });
+  }
+}
+
+async function undefeatedEntryIds() {
+  const standings = await fetchStandings("t1", { authMode: "mock" });
+  return standings.items
+    .filter((standing) => standing.losses === 0 && standing.draws === 0)
+    .map((standing) => standing.entryId);
+}
+
+async function prepareTwoSwissRoundsWithOneUndefeated(overrides = {}) {
+  seedCheckedInSwissTournament(8, overrides);
+
+  const round1 = await createNextRound("t1", { authMode: "mock" });
+  await reportOpenRoundMatches(round1);
+  await completeRound(round1.id, { authMode: "mock" });
+  const statusAfterRound1 = (await fetchTournament("t1", { authMode: "mock", user })).status;
+  const firstRoundWinners = new Set(
+    round1.matches.map((match) => match.player1EntryId)
+  );
+  const survivorEntryId = firstRoundWinners.values().next().value;
+
+  const round2 = await createNextRound("t1", { authMode: "mock" });
+  let recovery = null;
+  await reportOpenRoundMatches(round2, (match) => {
+    if (match.player1EntryId === survivorEntryId) return "p1_win";
+    if (match.player2EntryId === survivorEntryId) return "p2_win";
+
+    const formerUndefeatedEntryId = [match.player1EntryId, match.player2EntryId].find(
+      (entryId) => firstRoundWinners.has(entryId)
+    );
+    if (formerUndefeatedEntryId) {
+      if (!recovery) {
+        recovery = {
+          matchId: match.id,
+          result:
+            match.player1EntryId === formerUndefeatedEntryId ? "p1_win" : "p2_win",
+        };
+      }
+      return "draw";
+    }
+    return "p1_win";
+  });
+
+  return { recovery, round1, round2, statusAfterRound1, survivorEntryId };
 }
 
 describe("tournaments service mock mode", () => {
@@ -1211,6 +1289,7 @@ describe("tournaments service mock mode", () => {
       description: "test",
       format: "swiss",
       swissRounds: null,
+      swissEndCondition: "undefeated",
       topCutSize: null,
       status: "draft",
       startsAt,
@@ -1231,6 +1310,7 @@ describe("tournaments service mock mode", () => {
     expect(created.isOnline).toBe(true);
     expect(created.selfCheckin).toBe(true);
     expect(created.checkinOpensAt).toBe(checkinOpensAt);
+    expect(created.swissEndCondition).toBe("undefeated");
     expect(created.decklistsPublic).toBe(true);
     expect(created.regulation.name).toBe("Custom");
     expect(created.entryCount).toBe(0);
@@ -1244,6 +1324,7 @@ describe("tournaments service mock mode", () => {
     expect(registration.status).toBe("registration");
     expect(registration.venue).toBe("オンライン Discord");
     expect(registration.checkinOpensAt).toBe(checkinOpensAt);
+    expect(registration.swissEndCondition).toBe("undefeated");
 
     await expect(
       updateTournament({ id: created.id, status: "draft", authMode: "mock", user })
@@ -1465,6 +1546,104 @@ describe("tournaments service mock mode", () => {
 
     const rounds = await fetchRounds("t1", { authMode: "mock" });
     expect(rounds.rounds).toHaveLength(2);
+  });
+
+  it("locks automatic swiss rounds on the first generation even when a late entrant increases attendance", async () => {
+    seedCheckedInSwissTournament(4, { swissRounds: null });
+
+    const round1 = await createNextRound("t1", { authMode: "mock" });
+    expect(readStore().tournaments[0].swissRounds).toBe(2);
+    expect(await fetchTournament("t1", { authMode: "mock", user })).toMatchObject({
+      swissRounds: 2,
+      swissEndCondition: "fixed_rounds",
+    });
+
+    const storeWithLateEntry = readStore();
+    storeWithLateEntry.entries.t1.push(
+      ...makeCheckedInEntries(1, { startAt: 5, joinedAtRound: 2 })
+    );
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(storeWithLateEntry));
+
+    await reportOpenRoundMatches(round1);
+    await completeRound(round1.id, { authMode: "mock" });
+    const round2 = await createNextRound("t1", { authMode: "mock" });
+    expect(round2.stage).toBe("swiss");
+    expect(
+      round2.matches.flatMap((match) => [match.player1EntryId, match.player2EntryId])
+    ).toContain("entry-5");
+
+    await reportOpenRoundMatches(round2);
+    await completeRound(round2.id, { authMode: "mock" });
+
+    const completedStore = readStore();
+    expect(completedStore.tournaments[0]).toMatchObject({
+      swissRounds: 2,
+      status: "completed",
+    });
+    expect(completedStore.rounds.t1).toHaveLength(2);
+  });
+
+  it("ends swiss early when one or fewer undefeated players remain", async () => {
+    const { round2, statusAfterRound1, survivorEntryId } =
+      await prepareTwoSwissRoundsWithOneUndefeated({
+        swissEndCondition: "undefeated",
+      });
+
+    expect(statusAfterRound1).toBe("in_progress");
+    expect(await undefeatedEntryIds()).toEqual([survivorEntryId]);
+
+    await completeRound(round2.id, { authMode: "mock" });
+
+    expect(await fetchTournament("t1", { authMode: "mock", user })).toMatchObject({
+      status: "completed",
+      swissRounds: 3,
+      swissEndCondition: "undefeated",
+    });
+    expect((await fetchRounds("t1", { authMode: "mock" })).rounds).toHaveLength(2);
+  });
+
+  it("moves an early-ended swiss stage into top cut and completes the bracket", async () => {
+    const { round2 } = await prepareTwoSwissRoundsWithOneUndefeated({
+      swissEndCondition: "undefeated",
+      topCutSize: 4,
+    });
+
+    await completeRound(round2.id, { authMode: "mock" });
+    expect((await fetchTournament("t1", { authMode: "mock", user })).status).toBe(
+      "in_progress"
+    );
+
+    const semifinal = await createNextRound("t1", { authMode: "mock" });
+    expect(semifinal).toMatchObject({ stage: "top_cut" });
+    expect(semifinal.matches).toHaveLength(2);
+    await reportOpenRoundMatches(semifinal);
+    await completeRound(semifinal.id, { authMode: "mock" });
+
+    const final = await createNextRound("t1", { authMode: "mock" });
+    expect(final).toMatchObject({ stage: "top_cut" });
+    expect(final.matches).toHaveLength(1);
+    await reportOpenRoundMatches(final);
+    await completeRound(final.id, { authMode: "mock" });
+
+    expect((await fetchTournament("t1", { authMode: "mock", user })).status).toBe(
+      "completed"
+    );
+  });
+
+  it("treats legacy tournaments without an ending condition as fixed rounds", async () => {
+    const { round2 } = await prepareTwoSwissRoundsWithOneUndefeated();
+    expect((await fetchTournament("t1", { authMode: "mock", user })).swissEndCondition).toBe(
+      "fixed_rounds"
+    );
+    expect(await undefeatedEntryIds()).toHaveLength(1);
+
+    await completeRound(round2.id, { authMode: "mock" });
+    expect((await fetchTournament("t1", { authMode: "mock", user })).status).toBe(
+      "in_progress"
+    );
+
+    const round3 = await createNextRound("t1", { authMode: "mock" });
+    expect(round3).toMatchObject({ number: 3, stage: "swiss" });
   });
 
   it("generates pairings with only checked-in entries eligible for the next round", async () => {
@@ -1890,6 +2069,42 @@ describe("tournaments service mock mode", () => {
     await expect(
       updateTournament({ id: "t1", swissRounds: 4, authMode: "mock", user: organizer })
     ).rejects.toThrow("ラウンド生成後");
+    await expect(
+      updateTournament({
+        id: "t1",
+        swissEndCondition: "undefeated",
+        authMode: "mock",
+        user: organizer,
+      })
+    ).rejects.toThrow("ラウンド生成後");
+  });
+
+  it("re-evaluates the undefeated ending condition after reopening an early-ending round", async () => {
+    const { recovery, round2 } = await prepareTwoSwissRoundsWithOneUndefeated({
+      swissEndCondition: "undefeated",
+    });
+    expect(recovery).toBeTruthy();
+
+    await completeRound(round2.id, { authMode: "mock" });
+    expect((await fetchTournament("t1", { authMode: "mock", user })).status).toBe(
+      "completed"
+    );
+
+    const reopened = await reopenRound(round2.id, { authMode: "mock" });
+    expect(reopened.status).toBe("in_progress");
+    expect((await fetchTournament("t1", { authMode: "mock", user })).status).toBe(
+      "in_progress"
+    );
+
+    await reportMatchResult({ ...recovery, authMode: "mock" });
+    expect(await undefeatedEntryIds()).toHaveLength(2);
+    await completeRound(round2.id, { authMode: "mock" });
+
+    expect((await fetchTournament("t1", { authMode: "mock", user })).status).toBe(
+      "in_progress"
+    );
+    const round3 = await createNextRound("t1", { authMode: "mock" });
+    expect(round3).toMatchObject({ number: 3, stage: "swiss" });
   });
 
   it("reopens the latest completed round and allows its result to be corrected", async () => {
@@ -2498,7 +2713,7 @@ describe("tournaments service mock mode", () => {
   it("allows a co-organizer to generate and edit pairings, enter results, complete, and reopen rounds", async () => {
     setRegistrationTournament({
       status: "registration",
-      swissRounds: 3,
+      swissRounds: null,
       roundTimeMinutes: 30,
       coOrganizers: [{ id: coOrganizer.id, name: coOrganizer.name }],
     });
@@ -2517,6 +2732,12 @@ describe("tournaments service mock mode", () => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
 
     const round = await createNextRound("t1", { authMode: "mock", user: coOrganizer });
+    await expect(
+      fetchTournament("t1", { authMode: "mock", user: coOrganizer })
+    ).resolves.toMatchObject({
+      swissRounds: 2,
+      swissEndCondition: "fixed_rounds",
+    });
     const editedRound = await updateRoundMatches({
       roundId: round.id,
       matches: round.matches,

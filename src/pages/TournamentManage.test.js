@@ -234,6 +234,7 @@ test("BO3入力後にラウンドを完了前へ戻して結果を訂正でき�
 
   expect(await screen.findByText("UI大会")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "第1回戦" })).toBeInTheDocument();
+  expect(screen.getByText("第1回戦 / 全3回戦")).toBeInTheDocument();
   expect(screen.queryByLabelText("トーナメント表")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "1-1" })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "2-1" }));
@@ -813,6 +814,32 @@ test("大会編集でチェックイン開始を読み込み、開始日時以�
   expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0].checkinOpensAt).toBe(
     new Date(2030, 0, 2, 8, 30).toISOString()
   );
+});
+
+test("大会編集でスイス終了条件を選択して保存する", async () => {
+  seedStore({ rounds: [] });
+  renderManage();
+
+  fireEvent.click(await screen.findByRole("button", { name: "大会情報" }));
+  const endCondition = screen.getByLabelText("終了条件");
+  expect(endCondition).toHaveValue("fixed_rounds");
+
+  fireEvent.change(endCondition, { target: { value: "undefeated" } });
+  fireEvent.click(screen.getByRole("button", { name: "保存" }));
+
+  expect(await screen.findByText("大会情報を保存しました。")).toBeInTheDocument();
+  expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0]).toMatchObject({
+    swissEndCondition: "undefeated",
+  });
+});
+
+test("ラウンド生成後はスイス終了条件を変更できない", async () => {
+  seedStore();
+  renderManage();
+
+  fireEvent.click(await screen.findByRole("button", { name: "大会情報" }));
+
+  expect(screen.getByLabelText("終了条件")).toBeDisabled();
 });
 
 test("チェックイン開始が開始日時より後なら大会情報を保存できない", async () => {

@@ -1,6 +1,10 @@
 import { computeStandings } from "../utils/tournament/standings";
 import { getRoundLabel } from "../utils/tournament/roundLabel";
 import { buildBracket, nextRoundPairs } from "../utils/tournament/singleElimination";
+import {
+  getSwissEndCondition,
+  SWISS_END_CONDITION_UNDEFEATED,
+} from "../utils/tournament/swiss";
 import { pairSwissRound } from "../utils/tournament/swissPairing";
 import { validateDeck } from "../utils/deckValidation";
 import { fetchUsers } from "./users";
@@ -561,6 +565,7 @@ function normalizeTournament(tournament, entries = []) {
     id: String(tournament.id),
     format: tournament.format || "swiss",
     swissRounds: tournament.swissRounds ?? null,
+    swissEndCondition: getSwissEndCondition(tournament),
     topCutSize: tournament.topCutSize ?? null,
     status: tournament.status || "draft",
     checkinOpensAt: tournament.checkinOpensAt || null,
@@ -1045,16 +1050,34 @@ function completedRounds(rounds, stage = null) {
   return rounds.filter((round) => round.status === "completed" && (!stage || round.stage === stage));
 }
 
+function swissStageIsDone(tournament, rounds, entries) {
+  const completedSwissRounds = completedRounds(rounds, "swiss");
+  if (completedSwissRounds.length >= swissRoundLimit(tournament, entries.length)) {
+    return true;
+  }
+  if (
+    completedSwissRounds.length === 0 ||
+    getSwissEndCondition(tournament) !== SWISS_END_CONDITION_UNDEFEATED
+  ) {
+    return false;
+  }
+
+  const standings = computeStandings(entries, flattenMatches(completedSwissRounds));
+  const undefeatedCount = standings.filter(
+    (standing) => standing.losses === 0 && standing.draws === 0
+  ).length;
+  return undefeatedCount <= 1;
+}
+
 function assertNoOpenRound(rounds) {
   if (rounds.some((round) => round.status !== "completed")) {
     throw new Error("進行中のラウンドがあります。");
   }
 }
 
-function updateTournamentStatusIfDone(tournament, rounds, activeCount) {
+function updateTournamentStatusIfDone(tournament, rounds, entries) {
   const completed = completedRounds(rounds);
   const topCutRounds = completedRounds(rounds, "top_cut");
-  const swissRounds = completedRounds(rounds, "swiss");
 
   if (tournament.format === "single_elim") {
     const lastRound = completed[completed.length - 1];
@@ -1068,8 +1091,9 @@ function updateTournamentStatusIfDone(tournament, rounds, activeCount) {
     return tournament.status;
   }
 
-  const swissLimit = swissRoundLimit(tournament, activeCount);
-  if (!tournament.topCutSize && swissRounds.length >= swissLimit) return "completed";
+  if (!tournament.topCutSize && swissStageIsDone(tournament, rounds, entries)) {
+    return "completed";
+  }
   return tournament.status;
 }
 
@@ -1117,9 +1141,7 @@ function buildNextRound(store, tournamentId) {
         )
       : buildBracket(entries.map((entry) => entry.id));
   } else {
-    const swissCompleted = completedRounds(rounds, "swiss");
     const topCutCompleted = completedRounds(rounds, "top_cut");
-    const swissLimit = swissRoundLimit(tournament, entries.length);
 
     if (topCutCompleted.length > 0) {
       stage = "top_cut";
@@ -1127,7 +1149,7 @@ function buildNextRound(store, tournamentId) {
         nextRoundPairs(topCutCompleted[topCutCompleted.length - 1].matches || []),
         activeEntryIds
       );
-    } else if (swissCompleted.length >= swissLimit) {
+    } else if (swissStageIsDone(tournament, rounds, entries)) {
       if (!tournament.topCutSize) {
         throw new Error("全ラウンドが終了しています。");
       }
@@ -1429,6 +1451,7 @@ export async function deleteMyEntry(tournamentId, { authMode, user } = {}) {
 
 export async function createTournament(data = {}) {
   const { authMode, user, ...payload } = data;
+  const swissEndCondition = getSwissEndCondition(payload);
   if (authMode === "mock") {
     const currentUser = getCurrentUser(user);
     const store = readStore();
@@ -1443,6 +1466,7 @@ export async function createTournament(data = {}) {
         description: payload.description || "",
         format: payload.format || "swiss",
         swissRounds: payload.swissRounds ?? null,
+        swissEndCondition,
         topCutSize: payload.topCutSize ?? null,
         status: payload.status || "draft",
         startsAt: payload.startsAt || "",
@@ -1477,7 +1501,7 @@ export async function createTournament(data = {}) {
 
   return requestJson("/api/tournaments", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, swissEndCondition }),
   });
 }
 
@@ -1509,9 +1533,20 @@ export async function updateTournament({ id, authMode, user, ...data }) {
     const entries = getEntries(store, id);
     const rounds = getRounds(store, id);
     if (rounds.length > 0) {
-      ["format", "swissRounds", "topCutSize"].forEach((field) => {
-        if (Object.prototype.hasOwnProperty.call(data, field) && data[field] !== existing[field]) {
-          throw new Error("ラウンド生成後は大会形式・回戦数・トップカット人数を変更できません。");
+      ["format", "swissRounds", "swissEndCondition", "topCutSize"].forEach((field) => {
+        const nextValue =
+          field === "swissEndCondition"
+            ? getSwissEndCondition({ swissEndCondition: data[field] })
+            : data[field];
+        const existingValue =
+          field === "swissEndCondition" ? getSwissEndCondition(existing) : existing[field];
+        if (
+          Object.prototype.hasOwnProperty.call(data, field) &&
+          nextValue !== existingValue
+        ) {
+          throw new Error(
+            "ラウンド生成後は大会形式・回戦数・終了条件・トップカット人数を変更できません。"
+          );
         }
       });
     }
@@ -1548,7 +1583,11 @@ export async function updateTournament({ id, authMode, user, ...data }) {
 
   return requestJson(`/api/tournaments/${id}`, {
     method: "PUT",
-    body: JSON.stringify(data),
+    body: JSON.stringify(
+      Object.prototype.hasOwnProperty.call(data, "swissEndCondition")
+        ? { ...data, swissEndCondition: getSwissEndCondition(data) }
+        : data
+    ),
   });
 }
 
@@ -2055,12 +2094,28 @@ export async function createNextRound(tournamentId, { authMode, user } = {}) {
     const store = readStore();
     const tournament = getTournamentOrThrow(store, tournamentId);
     assertCanManageTournament(tournament, getCurrentViewer(user));
+    const shouldLockSwissRounds =
+      tournament.format !== "single_elim" &&
+      getRounds(store, tournamentId).length === 0 &&
+      !(tournament.swissRounds != null && Number(tournament.swissRounds) > 0);
+    const lockedSwissRounds = shouldLockSwissRounds
+      ? swissRoundLimit(
+          tournament,
+          activeEntriesForRound(getEntries(store, tournamentId), 1).length
+        )
+      : null;
     const round = buildNextRound(store, tournamentId);
     store.rounds[String(tournamentId)] = [...getRounds(store, tournamentId), round];
     const now = nowIso();
     store.tournaments = store.tournaments.map((item) =>
       String(item.id) === String(tournamentId)
-        ? { ...item, status: item.status === "registration" ? "in_progress" : item.status, updatedAt: now }
+        ? {
+            ...item,
+            swissRounds: shouldLockSwissRounds ? lockedSwissRounds : item.swissRounds,
+            swissEndCondition: getSwissEndCondition(item),
+            status: item.status === "registration" ? "in_progress" : item.status,
+            updatedAt: now,
+          }
         : item
     );
     writeStore(store);
@@ -2336,7 +2391,7 @@ export async function completeRound(roundId, { authMode, user } = {}) {
     const status = updateTournamentStatusIfDone(
       tournament,
       getRounds(store, tournamentIdForRound),
-      entries.length
+      entries
     );
     store.tournaments = store.tournaments.map((item) =>
       String(item.id) === String(tournamentIdForRound)
