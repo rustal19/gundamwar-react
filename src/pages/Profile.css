@@ -213,6 +213,25 @@
   color: var(--gw-accent-strong);
 }
 
+.profile-badge.deck-none,
+.profile-badge.deck-locked {
+  border-color: var(--gw-accent);
+  background: var(--gw-accent-soft);
+  color: var(--gw-accent);
+}
+
+.profile-badge.deck-submitted {
+  border-color: var(--gw-success-border);
+  background: var(--gw-success-soft);
+  color: var(--gw-primary-strong);
+}
+
+.profile-badge.deck-revealed {
+  border-color: var(--gw-primary);
+  background: var(--gw-primary-soft);
+  color: var(--gw-primary-strong);
+}
+
 .profile-badge.soft {
   background: var(--gw-primary-soft);
   color: var(--gw-primary-strong);

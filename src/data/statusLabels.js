@@ -25,3 +25,10 @@ export const ENTRY_STATUS_LABELS = {
   checked_in: "チェックイン済み",
   dropped: "ドロップ",
 };
+
+export const DECKLIST_STATE_LABELS = {
+  none: "未提出",
+  submitted: "提出済み",
+  locked: "ロック中",
+  revealed: "公開中",
+};
