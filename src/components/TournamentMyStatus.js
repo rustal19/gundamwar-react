@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { DECKLIST_STATE_LABELS } from "../data/statusLabels";
 import { createTournamentParticipantNameFormatter } from "../utils/tournament/participantDisplayName";
-import { getRoundLabel, getRoundLabelForNumber } from "../utils/tournament/roundLabel";
+import {
+  getRoundLabel,
+  getRoundLabelForNumber,
+  getRoundProgressLabel,
+} from "../utils/tournament/roundLabel";
 
 function toLocalDateKey(value) {
   if (!value) return "";
@@ -678,7 +682,7 @@ export default function TournamentMyStatus({
           ) : (
             <>
               <div className="tournament-my-table">{myMatch?.tableNo ? `卓 ${myMatch.tableNo}` : "卓未定"}</div>
-              <h2>{getRoundLabel(currentRound, rounds)}</h2>
+              <h2>{getRoundProgressLabel(currentRound, rounds, tournament)}</h2>
               <p>
                 対戦相手: {opponentName(myMatch, entries, myEntry.id, formatParticipantName)}
               </p>

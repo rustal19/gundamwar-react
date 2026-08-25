@@ -35,6 +35,7 @@ beforeEach(() => {
     id: "t-display",
     title: "掲示テスト大会",
     status: "in_progress",
+    swissRounds: 4,
     roundTimeMinutes: 30,
     entries,
   });
@@ -64,7 +65,7 @@ test("TournamentDisplay はシンプルな掲示用ペアリングを表示す�
   renderDisplay();
 
   expect(await screen.findByText("掲示テスト大会")).toBeInTheDocument();
-  expect(screen.getByText("現在ラウンド: 第1回戦")).toBeInTheDocument();
+  expect(screen.getByText("現在ラウンド: 第1回戦 / 全4回戦")).toBeInTheDocument();
   await waitFor(() => {
     expect(screen.getAllByText("プレイヤー1").length).toBeGreaterThan(0);
   });
@@ -96,6 +97,7 @@ test("トップカット進行中はSE内連番とブラケットを表示する
   renderDisplay();
 
   expect(await screen.findByText("現在ラウンド: SE1回戦")).toBeInTheDocument();
+  expect(screen.getByText("スイス: 全4回戦")).toBeInTheDocument();
   const bracket = screen.getByLabelText("トーナメント表");
   expect(within(bracket).getByRole("heading", { name: "SE1回戦" })).toBeInTheDocument();
   expect(within(bracket).getByText("プレイヤー1")).toBeInTheDocument();

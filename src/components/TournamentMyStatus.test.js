@@ -218,6 +218,34 @@ test("ラウンド生成後は対戦履歴を表示する", () => {
   expect(screen.getByRole("button", { name: "対戦履歴" })).toBeInTheDocument();
 });
 
+test("参加者の現在ラウンドにスイス総回戦数を表示する", () => {
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        tournament: {
+          ...statusProps().tournament,
+          status: "in_progress",
+          swissRounds: 4,
+        },
+        myEntry: { ...entry, status: "checked_in" },
+        rounds: [
+          {
+            id: "round-2",
+            number: 2,
+            stage: "swiss",
+            status: "in_progress",
+            matches: [],
+          },
+        ],
+      })}
+    />
+  );
+
+  expect(
+    screen.getByRole("heading", { name: "第2回戦 / 全4回戦" })
+  ).toBeInTheDocument();
+});
+
 test("ラウンド中でもロック解除後は再提出UIを表示する", () => {
   render(
     <TournamentMyStatus

@@ -44,7 +44,18 @@ import {
 import { buildDeckExport, groupDeckItemsByType } from "../utils/deckExport";
 import { FORMAT_PRESETS, OTHER_FORMAT_NAME } from "../data/formats";
 import { createTournamentParticipantNameFormatter } from "../utils/tournament/participantDisplayName";
-import { getRoundLabel, getRoundLabelForNumber } from "../utils/tournament/roundLabel";
+import {
+  getRoundLabel,
+  getRoundLabelForNumber,
+  getRoundProgressLabel,
+} from "../utils/tournament/roundLabel";
+import {
+  getSwissEndCondition,
+  getSwissRoundCount,
+  normalizeSwissEndCondition,
+  SWISS_END_CONDITION_FIXED_ROUNDS,
+  SWISS_END_CONDITION_UNDEFEATED,
+} from "../utils/tournament/swiss";
 import { computeStandings } from "../utils/tournament/standings";
 import "./Tournaments.css";
 
@@ -53,6 +64,7 @@ const DEFAULT_FORM = {
   description: "",
   format: "swiss",
   swissRounds: "",
+  swissEndCondition: SWISS_END_CONDITION_FIXED_ROUNDS,
   topCutSize: "",
   status: "draft",
   startsAt: "",
@@ -145,6 +157,7 @@ function formFromTournament(tournament, knownRegulation = null) {
     ...DEFAULT_FORM,
     ...tournament,
     swissRounds: tournament.swissRounds ?? "",
+    swissEndCondition: getSwissEndCondition(tournament),
     topCutSize: tournament.topCutSize ?? "",
     startsAt: toDateTimeLocal(tournament.startsAt),
     registrationClosesAt: toDateTimeLocal(tournament.registrationClosesAt),
@@ -195,6 +208,7 @@ function payloadFromForm(form) {
     description: form.description,
     format: form.format,
     swissRounds: numberOrNull(form.swissRounds),
+    swissEndCondition: normalizeSwissEndCondition(form.swissEndCondition),
     topCutSize: numberOrNull(form.topCutSize),
     status: form.status,
     startsAt: fromDateTimeLocal(form.startsAt),
@@ -342,9 +356,8 @@ function hasMoreRoundsToPlay(form, rounds, activeEntryCount) {
 
   const swissCompleted = completed.filter((round) => round.stage !== "top_cut").length;
   const swissLimit =
-    Number(form.swissRounds) > 0
-      ? Number(form.swissRounds)
-      : Math.max(1, Math.ceil(Math.log2(Math.max(2, activeEntryCount))));
+    getSwissRoundCount(form) ??
+    Math.max(1, Math.ceil(Math.log2(Math.max(2, activeEntryCount))));
   if (swissCompleted < swissLimit) return true;
   return Boolean(numberOrNull(form.topCutSize));
 }
@@ -366,6 +379,10 @@ function uncheckedEntriesForRound(entries, roundNumber) {
 }
 
 function roundGenerationDisabledReason(form, rounds, entries) {
+  if (form.status === "completed") {
+    return "大会は完了しています。";
+  }
+
   if ((rounds || []).some((round) => round.status !== "completed")) {
     return "現在のラウンドを完了してください。";
   }
@@ -697,7 +714,7 @@ function RoundManagePanel({
       {selectedRound ? (
         <>
           <div className="tournament-manage-strip">
-            <span>{getRoundLabel(selectedRound, rounds)}</span>
+            <span>{getRoundProgressLabel(selectedRound, rounds, form)}</span>
             <span>{selectedRound.status === "completed" ? "完了" : "進行中"}</span>
             {form.roundTimeMinutes ? <span>残り {remainingTime(selectedRound, form.roundTimeMinutes, now)}</span> : null}
             {form.roundTimeMinutes ? (
@@ -1384,15 +1401,29 @@ function InfoPanel({
             </select>
           </label>
           <label title={hasRounds ? "ラウンド生成後は変更できません" : ""}>
-            スイス回数 {hasRounds ? "🔒" : ""}
+            スイス回戦数 {hasRounds ? "🔒" : ""}
             <input
               type="number"
               min="1"
+              aria-label="スイス回戦数"
               value={form.swissRounds}
               placeholder="自動"
               disabled={hasRounds}
               onChange={(event) => setField("swissRounds", event.target.value)}
             />
+            <span className="tournament-muted">未入力の場合、参加人数から初戦生成時に確定します。</span>
+          </label>
+          <label title={hasRounds ? "ラウンド生成後は変更できません" : ""}>
+            終了条件 {hasRounds ? "🔒" : ""}
+            <select
+              aria-label="終了条件"
+              value={form.swissEndCondition}
+              disabled={hasRounds}
+              onChange={(event) => setField("swissEndCondition", event.target.value)}
+            >
+              <option value={SWISS_END_CONDITION_FIXED_ROUNDS}>規定回戦数で終了</option>
+              <option value={SWISS_END_CONDITION_UNDEFEATED}>全勝者が1人以下になったら終了</option>
+            </select>
           </label>
           <label title={hasRounds ? "ラウンド生成後は変更できません" : ""}>
             トップカット {hasRounds ? "🔒" : ""}

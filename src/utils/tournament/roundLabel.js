@@ -1,3 +1,5 @@
+import { getSwissRoundCount } from "./swiss";
+
 function roundNumber(round) {
   const number = Number(round?.number);
   return Number.isFinite(number) ? number : null;
@@ -24,6 +26,14 @@ export function getRoundLabel(round, rounds = []) {
 
   const stageNumber = topCutRoundNumber(round, rounds);
   return stageNumber == null ? "SE回戦" : `SE${stageNumber}回戦`;
+}
+
+export function getRoundProgressLabel(round, rounds = [], tournament = {}) {
+  const label = getRoundLabel(round, rounds);
+  if (!round || round.number == null || round.stage === "top_cut") return label;
+
+  const swissRoundCount = getSwissRoundCount(tournament);
+  return swissRoundCount ? `${label} / 全${swissRoundCount}回戦` : label;
 }
 
 export function getRoundLabelForNumber(number, rounds = [], tournament = {}) {

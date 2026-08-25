@@ -1,4 +1,4 @@
-import { getRoundLabel, getRoundLabelForNumber } from "./roundLabel";
+import { getRoundLabel, getRoundLabelForNumber, getRoundProgressLabel } from "./roundLabel";
 
 describe("getRoundLabel", () => {
   const rounds = [
@@ -27,6 +27,25 @@ describe("getRoundLabel", () => {
 
   it("treats a legacy round without a stage as Swiss", () => {
     expect(getRoundLabel({ number: 3 }, rounds)).toBe("第3回戦");
+  });
+
+  it("adds the fixed Swiss total only to Swiss progress labels", () => {
+    const tournament = { swissRounds: 4 };
+
+    expect(
+      getRoundProgressLabel(
+        rounds.find((round) => round.id === "swiss-2"),
+        rounds,
+        tournament
+      )
+    ).toBe("第2回戦 / 全4回戦");
+    expect(
+      getRoundProgressLabel(
+        rounds.find((round) => round.id === "top-cut-1"),
+        rounds,
+        tournament
+      )
+    ).toBe("SE1回戦");
   });
 
   it("projects the next top-cut label from tournament settings", () => {
