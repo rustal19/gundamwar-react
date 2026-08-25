@@ -10,9 +10,11 @@ import DeckSaveDialog from "../components/DeckSaveDialog";
 import { useAuth } from "../context/AuthContext";
 import { useDeck } from "../context/DeckContext";
 import { useSavedDecks } from "../hooks/useSavedDecks";
+import { FORMAT_PRESETS } from "../data/formats";
 import { getCardCode, getCardTypeLabel } from "../utils/cardImages";
 import { createBasicGCard } from "../utils/basicG";
 import { trackEvent } from "../utils/analytics";
+import { validateDeck } from "../utils/deckValidation";
 import {
   buildDeckCostLabel,
   buildDeckExport,
@@ -30,6 +32,10 @@ const DECK_ZONE_LIMITS = {
   main: 50,
   side: 10,
 };
+
+function getFormatNameFromSearch(search) {
+  return String(new URLSearchParams(search).get("formatName") || "").trim();
+}
 
 const DeckBuilder = ({ compact = false }) => {
   const deckPageRef = useRef(null);
@@ -62,6 +68,9 @@ const DeckBuilder = ({ compact = false }) => {
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false);
+  const [selectedFormatName, setSelectedFormatName] = useState(() =>
+    getFormatNameFromSearch(location.search)
+  );
   const [mobileActivePane, setMobileActivePane] = useState(() =>
     location.search ? "search" : "deck"
   );
@@ -89,6 +98,17 @@ const DeckBuilder = ({ compact = false }) => {
     () => savedDecks.find((deck) => deck.id === selectedDeckId) || null,
     [savedDecks, selectedDeckId]
   );
+  const selectedFormat = useMemo(
+    () => FORMAT_PRESETS.find(({ name }) => name === selectedFormatName) || null,
+    [selectedFormatName]
+  );
+  const deckViolations = useMemo(
+    () =>
+      selectedFormat && items.length > 0
+        ? validateDeck(items, selectedFormat.regulation)
+        : [],
+    [items, selectedFormat]
+  );
 
   // モバイルでは「デッキ」「検索」ペインをタブで切り替える
   const deckLayoutClassName = compact
@@ -104,6 +124,14 @@ const DeckBuilder = ({ compact = false }) => {
       });
     },
     [location.pathname, navigate]
+  );
+
+  const handleFormatChange = useCallback(
+    (nextFormatName) => {
+      const normalizedFormatName = String(nextFormatName || "").trim();
+      setSelectedFormatName(normalizedFormatName);
+    },
+    []
   );
 
   useEffect(() => {
@@ -199,6 +227,7 @@ const DeckBuilder = ({ compact = false }) => {
         deckId: "",
         title: nextTitle,
         items,
+        format: selectedFormatName || null,
       });
       trackEvent("deck_save", {
         save_mode: "new",
@@ -217,12 +246,19 @@ const DeckBuilder = ({ compact = false }) => {
 
   const handleOverwriteDeck = async () => {
     if (!selectedDeck) return;
+    if (selectedDeck.isPublic && !selectedFormatName) {
+      setSaveMessage("公開中のデッキを上書きするにはフォーマットを選択してください。");
+      setIsSaveDialogOpen(false);
+      clearSaveMessageSoon();
+      return;
+    }
 
     try {
       const savedDeck = await saveDeck({
         deckId: selectedDeck.id,
         title: selectedDeck.title,
         items,
+        format: selectedFormatName || null,
       });
       trackEvent("deck_save", {
         save_mode: "overwrite",
@@ -251,6 +287,7 @@ const DeckBuilder = ({ compact = false }) => {
     replaceDeck(deck.items);
     setSelectedDeckId(deck.id);
     setDeckTitle(deck.title);
+    handleFormatChange(deck.format || "");
     setSaveMessage(`「${deck.title}」を読み込みました。`);
     setIsLoadDialogOpen(false);
     clearSaveMessageSoon();
@@ -275,10 +312,13 @@ const DeckBuilder = ({ compact = false }) => {
     }
   };
 
-  const handlePublicationChange = async ({ deckId, isPublic, description }) => {
+  const handlePublicationChange = async ({ deckId, isPublic, description, format }) => {
     try {
       setPublishingDeckId(String(deckId));
-      await setPublication({ deckId, isPublic, description });
+      const updatedDeck = await setPublication({ deckId, isPublic, description, format });
+      if (String(deckId) === selectedDeckId) {
+        handleFormatChange(updatedDeck.format || "");
+      }
       setSaveMessage(isPublic ? "デッキを公開しました。" : "デッキを非公開にしました。");
     } catch (publicationError) {
       setSaveMessage(publicationError.message);
@@ -567,6 +607,30 @@ const DeckBuilder = ({ compact = false }) => {
                 </strong>
               </div>
 
+              {selectedFormat && items.length > 0 ? (
+                <div
+                  className={
+                    deckViolations.length > 0
+                      ? "deck-format-validation has-violations"
+                      : "deck-format-validation"
+                  }
+                  aria-live="polite"
+                >
+                  <strong>{selectedFormat.name}</strong>
+                  {deckViolations.length === 0 ? (
+                    <span>フォーマット条件を満たしています。</span>
+                  ) : (
+                    <ul>
+                      {deckViolations.map((violation, index) => (
+                        <li key={`${violation.code}-${violation.cardName || index}`}>
+                          {violation.message}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ) : null}
+
               <div className="deck-cards-panel">
                 {renderDeckZone(
                   "main",
@@ -591,10 +655,14 @@ const DeckBuilder = ({ compact = false }) => {
               <div className="deck-panel-header">
                 <h2>カード検索</h2>
               </div>
-              <CompactDeckSearchForm onSearch={compact ? handleDeckSearch : undefined} />
+              <CompactDeckSearchForm
+                onSearch={compact ? handleDeckSearch : undefined}
+                formatName={selectedFormatName}
+                onFormatChange={handleFormatChange}
+              />
             </section>
 
-            <DeckSearchResults compact={compact} />
+            <DeckSearchResults compact={compact} formatName={selectedFormatName} />
           </section>
         </div>
       </div>

@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { trackEvent } from "../utils/analytics";
 import { preserveForcedMobileLayoutInParams } from "../utils/deviceLayout";
 import { parseSearchParams } from "../utils/searchResults";
-import { DECK_RANGE_PRESET_CUTOFFS, TENSAKU_OPTIONS } from "../data/searchOptions";
+import { FORMAT_PRESETS } from "../data/formats";
+import { FORMAT_GROUPS } from "../data/formatGroups";
 import "./CompactDeckSearchForm.css";
 
 const CARD_TYPE_OPTIONS = [
@@ -25,12 +26,14 @@ const COLOR_OPTIONS = [
   { label: "紫", value: "7", className: "purple" },
 ];
 
-const DECK_RANGE_OPTIONS = [
-  { label: "指定なし", value: "none" },
-  { label: "添削杯", value: "tensaku" },
-  { label: "クラシック", value: "classic" },
-  { label: "ライジング", value: "rising" },
-];
+const FORMAT_PRESET_NAMES = new Set(
+  FORMAT_PRESETS.map(({ name }) => String(name || "").trim()).filter(Boolean)
+);
+
+const FORMAT_SELECT_GROUPS = FORMAT_GROUPS.map((group) => ({
+  ...group,
+  formatNames: group.formatNames.filter((name) => FORMAT_PRESET_NAMES.has(name)),
+})).filter(({ formatNames }) => formatNames.length > 0);
 
 function createInitialState() {
   return {
@@ -39,8 +42,7 @@ function createInitialState() {
     text: "",
     cardType: [],
     colorInclude: [],
-    deckRangeType: "none",
-    deckRangeDetail: "",
+    formatName: "",
     pageSize: "20",
   };
 }
@@ -76,6 +78,10 @@ function normalizeStringArray(value) {
   }
   if (value === undefined || value === null || value === "") return [];
   return [String(value)];
+}
+
+function normalizeFormatName(value) {
+  return String(value || "").trim();
 }
 
 function getSelectedLabel(options, values, fallback = "指定なし") {
@@ -114,28 +120,77 @@ function MultiSelectDropdown({ label, options, values, onToggle, renderOption })
   );
 }
 
-const CompactDeckSearchForm = ({ onSearch }) => {
+const CompactDeckSearchForm = ({ onSearch, formatName, onFormatChange }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const initialState = useMemo(() => createInitialState(), []);
   const [formValues, setFormValues] = useState(initialState);
+  const pendingFormatSearchRef = useRef(null);
+  const isFormatControlled = formatName !== undefined;
+  const selectedFormatName = isFormatControlled
+    ? normalizeFormatName(formatName)
+    : formValues.formatName;
+  const isUnknownFormat = Boolean(
+    selectedFormatName && !FORMAT_PRESET_NAMES.has(selectedFormatName)
+  );
 
   useEffect(() => {
     const parsed = parseSearchParams(location.search);
-    const deckRangeType = parsed.deckRangeType || "none";
+    if (pendingFormatSearchRef.current === location.search) {
+      pendingFormatSearchRef.current = null;
+      setFormValues((current) => ({
+        ...current,
+        formatName: normalizeFormatName(parsed.formatName),
+      }));
+      return;
+    }
+
+    pendingFormatSearchRef.current = null;
     setFormValues({
       name: parsed.name || "",
       name_forward: Boolean(parsed.name_forward),
       text: parsed.text || "",
       cardType: normalizeStringArray(parsed.cardType),
       colorInclude: normalizeStringArray(parsed.colorInclude),
-      deckRangeType,
-      deckRangeDetail:
-        parsed.deckRangeDetail ||
-        (DECK_RANGE_PRESET_CUTOFFS[deckRangeType] ? DECK_RANGE_PRESET_CUTOFFS[deckRangeType] : ""),
+      formatName: normalizeFormatName(parsed.formatName),
       pageSize: String(parsed.pageSize || 20),
     });
   }, [initialState, location.search]);
+
+  useEffect(() => {
+    if (!isFormatControlled) return;
+
+    const query = new URLSearchParams(location.search);
+    const urlFormatName = normalizeFormatName(query.get("formatName"));
+    const hasLegacyRange = query.has("deckRangeType") || query.has("deckRangeDetail");
+    if (urlFormatName === selectedFormatName && !hasLegacyRange) return;
+
+    query.delete("page");
+    query.delete("deckRangeType");
+    query.delete("deckRangeDetail");
+    if (selectedFormatName) {
+      query.set("formatName", selectedFormatName);
+    } else {
+      query.delete("formatName");
+    }
+
+    const queryString = query.toString();
+    const nextSearch = queryString ? `?${queryString}` : "";
+    pendingFormatSearchRef.current = nextSearch;
+    navigate(
+      {
+        pathname: location.pathname,
+        search: nextSearch,
+      },
+      { replace: true }
+    );
+  }, [
+    isFormatControlled,
+    location.pathname,
+    location.search,
+    navigate,
+    selectedFormatName,
+  ]);
 
   const toggleArrayValue = (key, value) => {
     setFormValues((current) => {
@@ -147,17 +202,12 @@ const CompactDeckSearchForm = ({ onSearch }) => {
     });
   };
 
-  const handleDeckRangeChange = (nextType) => {
+  const handleFormatChange = (nextFormatName) => {
     setFormValues((current) => ({
       ...current,
-      deckRangeType: nextType,
-      deckRangeDetail:
-        DECK_RANGE_PRESET_CUTOFFS[nextType]
-          ? DECK_RANGE_PRESET_CUTOFFS[nextType]
-          : nextType === "tensaku" && current.deckRangeType === "tensaku"
-            ? current.deckRangeDetail
-            : "",
+      formatName: nextFormatName,
     }));
+    onFormatChange?.(nextFormatName);
   };
 
   const dispatchSearch = (payload) => {
@@ -176,12 +226,9 @@ const CompactDeckSearchForm = ({ onSearch }) => {
     event.preventDefault();
     const params = {
       ...formValues,
+      formatName: selectedFormatName,
       page: 1,
     };
-
-    if (params.deckRangeType !== "tensaku") {
-      delete params.deckRangeDetail;
-    }
 
     trackEvent("search_submit", {
       search_context: "deck",
@@ -189,7 +236,8 @@ const CompactDeckSearchForm = ({ onSearch }) => {
       has_text: Boolean(params.text),
       card_type_count: Array.isArray(params.cardType) ? params.cardType.length : 0,
       include_color_count: Array.isArray(params.colorInclude) ? params.colorInclude.length : 0,
-      deck_range_type: params.deckRangeType || "none",
+      deck_range_type: "none",
+      format_name: params.formatName || "",
       page_size: Number(params.pageSize || 0),
     });
 
@@ -201,6 +249,7 @@ const CompactDeckSearchForm = ({ onSearch }) => {
 
   const handleReset = () => {
     setFormValues(initialState);
+    onFormatChange?.("");
     const query = new URLSearchParams();
     preserveForcedMobileLayoutInParams(query, location.search);
     dispatchSearch({ params: initialState, queryString: query.toString() });
@@ -242,40 +291,29 @@ const CompactDeckSearchForm = ({ onSearch }) => {
         />
 
         <label className="compact-inline-field compact-search-field-range">
-          <span className="compact-inline-label">構築範囲</span>
+          <span className="compact-inline-label">フォーマット</span>
           <select
-            value={formValues.deckRangeType}
-            onChange={(event) => handleDeckRangeChange(event.target.value)}
+            aria-label="フォーマット"
+            value={selectedFormatName}
+            onChange={(event) => handleFormatChange(event.target.value)}
           >
-            {DECK_RANGE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
+            <option value="">指定なし</option>
+            {isUnknownFormat ? (
+              <optgroup label="保存済みフォーマット">
+                <option value={selectedFormatName}>{selectedFormatName}</option>
+              </optgroup>
+            ) : null}
+            {FORMAT_SELECT_GROUPS.map(({ key, label, formatNames }) => (
+              <optgroup key={key} label={label}>
+                {formatNames.map((presetName) => (
+                  <option key={presetName} value={presetName}>
+                    {presetName}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </label>
-
-        {formValues.deckRangeType === "tensaku" ? (
-          <label className="compact-inline-field compact-search-field-tensaku">
-            <span className="compact-inline-label">回次</span>
-            <select
-              value={formValues.deckRangeDetail}
-              onChange={(event) =>
-                setFormValues((current) => ({
-                  ...current,
-                  deckRangeDetail: event.target.value,
-                }))
-              }
-            >
-              <option value="">選択してください</option>
-              {TENSAKU_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
 
         <MultiSelectDropdown
           label="色"

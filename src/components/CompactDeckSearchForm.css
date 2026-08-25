@@ -70,10 +70,6 @@
   width: var(--deck-search-range-width, 172px);
 }
 
-.compact-search-field-tensaku {
-  width: var(--deck-search-tensaku-width, 184px);
-}
-
 .compact-inline-field input,
 .compact-inline-field select {
   width: 100%;
@@ -285,14 +281,12 @@
 .app-shell-mobile .compact-search-field-small,
 .app-shell-mobile .compact-search-field-dropdown,
 .app-shell-mobile .compact-search-field-range,
-.app-shell-mobile .compact-search-field-tensaku,
 .app-shell-mobile .compact-search-actions {
   width: 100%;
   min-width: 0;
   transform: none;
 }
 
-.app-shell-mobile .compact-search-field-tensaku,
 .app-shell-mobile .compact-search-row-bottom .compact-search-actions {
   grid-column: 1 / -1;
 }
@@ -350,7 +344,6 @@
   .compact-search-field-small,
   .compact-search-field-dropdown,
   .compact-search-field-range,
-  .compact-search-field-tensaku,
   .compact-search-actions {
     transform: none;
     width: 100%;
