@@ -324,6 +324,29 @@ describe("tournaments service mock mode", () => {
     expect(visible.entries[0].decklistState).toBe("revealed");
   });
 
+  it("keeps a completed non-public decklist locked", async () => {
+    setRegistrationTournament({ status: "completed", decklistsPublic: false });
+    const lockedAt = new Date().toISOString();
+    const store = readStore();
+    store.entries.t1 = [
+      {
+        id: "locked-entry",
+        tournamentId: "t1",
+        user: { id: "other-user", name: "別プレイヤー" },
+        deckItems: buildValidDeck("locked"),
+        decklistSubmittedAt: lockedAt,
+        deckLockedAt: lockedAt,
+        status: "checked_in",
+        createdAt: lockedAt,
+      },
+    ];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const tournament = await fetchTournament("t1", { authMode: "mock", user });
+    expect(tournament.entries[0].deckItems).toBeNull();
+    expect(tournament.entries[0].decklistState).toBe("locked");
+  });
+
   it("allows owner and organizer to see submitted decklists even when not public", async () => {
     setRegistrationTournament({ status: "completed", decklistsPublic: false });
     const submittedAt = new Date().toISOString();

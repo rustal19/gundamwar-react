@@ -248,7 +248,7 @@ function deriveDecklistState(entry, tournament) {
   // deckLockedAt still blocks submission independently.
   if (!entry.decklistSubmittedAt) return "none";
   if (tournament?.status === "completed" && tournament.decklistsPublic) return "revealed";
-  if (entry.deckLockedAt && tournament?.status !== "completed") return "locked";
+  if (entry.deckLockedAt) return "locked";
   return "submitted";
 }
 
