@@ -22,7 +22,9 @@ function createDecks(start, count) {
   return Array.from({ length: count }, (_, index) => {
     const number = start + index;
     return {
-      id: `deck-${number}`,
+      id: `saved:deck-${number}`,
+      sourceType: "saved",
+      sourceId: `deck-${number}`,
       title: `公開デッキ${number}`,
       description: `説明${number}`,
       format: "スタンダード",
@@ -82,9 +84,50 @@ test("20件以下の公開デッキをすべて表示し、不要なページャ
   const firstDeck = screen.getAllByRole("article")[0];
   expect(within(firstDeck).getByRole("link", { name: "公開デッキ1" })).toHaveAttribute(
     "href",
-    "/decks/deck-1"
+    "/decks/saved:deck-1"
   );
+  expect(within(firstDeck).getByText("保存デッキ")).toBeInTheDocument();
   expect(within(firstDeck).getByText("スタンダード")).toBeInTheDocument();
+});
+
+test("保存デッキと大会デッキをバッジで区別し、大会メタと接頭辞付きリンクを表示する", async () => {
+  const savedDeck = createDecks(1, 1)[0];
+  const tournamentDeck = {
+    ...createDecks(2, 1)[0],
+    id: "entry:entry-2",
+    sourceType: "tournament",
+    sourceId: "entry-2",
+    title: "大会プレイヤーの大会デッキ",
+    finalRank: 2,
+    participantCount: 32,
+    tournament: {
+      id: "tournament-2",
+      title: "夏季ガンダムウォー杯",
+      startsAt: "2026-08-02T00:00:00.000Z",
+    },
+  };
+  fetchPublicDecks.mockResolvedValue({
+    items: [savedDeck, tournamentDeck],
+    total: 2,
+    page: 1,
+    pageSize: 20,
+  });
+
+  renderPublicDecks("/decks");
+
+  const deckCards = await screen.findAllByRole("article");
+  expect(within(deckCards[0]).getByText("保存デッキ")).toBeInTheDocument();
+  expect(within(deckCards[1]).getByText("大会デッキ")).toBeInTheDocument();
+  expect(
+    within(deckCards[1]).getByRole("link", { name: "大会プレイヤーの大会デッキ" })
+  ).toHaveAttribute("href", "/decks/entry:entry-2");
+  expect(
+    within(deckCards[1]).getByRole("link", { name: "夏季ガンダムウォー杯" })
+  ).toHaveAttribute("href", "/tournaments/tournament-2");
+  expect(within(deckCards[1]).getByText("2位")).toBeInTheDocument();
+  expect(within(deckCards[1]).getByText("参加32人")).toBeInTheDocument();
+  expect(screen.getByPlaceholderText("デッキ名・大会名・説明・ユーザー名で検索"))
+    .toBeInTheDocument();
 });
 
 test("各公開デッキのメインとサイドの枚数を分けて表示する", async () => {
@@ -151,7 +194,7 @@ test("20件を超える公開デッキは条件を維持したまま次ページ
   expect(screen.getAllByText("2 / 2")).toHaveLength(2);
   expect(screen.getByRole("link", { name: "公開デッキ25" })).toHaveAttribute(
     "href",
-    "/decks/deck-25"
+    "/decks/saved:deck-25"
   );
   expect(window.scrollTo).toHaveBeenCalledWith(0, 0);
 });

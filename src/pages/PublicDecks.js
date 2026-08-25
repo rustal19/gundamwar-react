@@ -29,6 +29,18 @@ function formatDeckItemsCount(items) {
   return formatDeckCountSummary(mainCount, sideCount);
 }
 
+function isTournamentDeck(deck) {
+  return deck?.sourceType === "tournament" || String(deck?.id || "").startsWith("entry:");
+}
+
+function getTournamentRank(deck) {
+  return deck?.finalRank ?? deck?.tournament?.finalRank ?? null;
+}
+
+function getTournamentParticipantCount(deck) {
+  return deck?.participantCount ?? deck?.tournament?.participantCount ?? null;
+}
+
 function OwnerLink({ owner }) {
   const label = owner?.name || "-";
   return owner?.id ? <Link to={`/users/${owner.id}`}>{label}</Link> : <span>{label}</span>;
@@ -255,7 +267,7 @@ export default function PublicDecks({ compact = false }) {
           type="search"
           value={searchText}
           onChange={(event) => setSearchText(event.target.value)}
-          placeholder="デッキ名・説明・ユーザー名で検索"
+          placeholder="デッキ名・大会名・説明・ユーザー名で検索"
         />
         <button type="submit" className="deck-action-button primary">
           検索
@@ -283,11 +295,33 @@ export default function PublicDecks({ compact = false }) {
                   <h2>
                     <DeckColorDots items={deck.items} />
                     <Link to={`/decks/${deck.id}`}>{deck.title}</Link>
+                    <span
+                      className={
+                        isTournamentDeck(deck)
+                          ? "public-deck-source-badge tournament"
+                          : "public-deck-source-badge saved"
+                      }
+                    >
+                      {isTournamentDeck(deck) ? "大会デッキ" : "保存デッキ"}
+                    </span>
                     {deck.format ? (
                       <span className="public-deck-format-badge">{deck.format}</span>
                     ) : null}
                   </h2>
                   <p>{deck.description || "説明はありません。"}</p>
+                  {isTournamentDeck(deck) && deck.tournament ? (
+                    <div className="public-deck-tournament-summary">
+                      <Link to={`/tournaments/${deck.tournament.id}`}>
+                        {deck.tournament.title}
+                      </Link>
+                      {getTournamentRank(deck) != null ? (
+                        <span>{`${getTournamentRank(deck)}位`}</span>
+                      ) : null}
+                      {getTournamentParticipantCount(deck) != null ? (
+                        <span>{`参加${getTournamentParticipantCount(deck)}人`}</span>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
                 <div className="public-deck-meta">
                   <OwnerLink owner={deck.owner} />
