@@ -60,11 +60,14 @@ beforeEach(() => {
       },
     ],
   });
-  fetchTournaments.mockImplementation(({ status }) =>
-    Promise.resolve({
-      items: status === "registration" ? registrationTournaments : inProgressTournaments,
-    })
-  );
+  fetchTournaments.mockImplementation(({ status }) => {
+    const itemsByStatus = {
+      registration: registrationTournaments,
+      in_progress: inProgressTournaments,
+      completed: [],
+    };
+    return Promise.resolve({ items: itemsByStatus[status] || [] });
+  });
   fetchPublicDecks.mockResolvedValue({
     items: Array.from({ length: 6 }, (_, index) => ({
       id: `deck-${index}`,
@@ -82,6 +85,11 @@ beforeEach(() => {
       publishedAt: `2026-07-0${index + 1}T10:00:00.000Z`,
     })),
   });
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+  jest.useRealTimers();
 });
 
 test("PortalHome は道具箱トップ構成で大会と公開デッキを最大5件表示する", async () => {
@@ -128,4 +136,170 @@ test("カード名検索は SearchForm と同じ name パラメータで遷移�
     expect(window.location.search).toContain("name=%E3%82%AC%E3%83%B3%E3%83%80%E3%83%A0");
     expect(window.location.search).toContain("mobileLayout=ios");
   });
+});
+
+test("ホームの大会は開催予定・受付中・進行中・完了直後を残し、完了2日後は除外する", async () => {
+  jest.spyOn(Date, "now").mockReturnValue(new Date(2026, 6, 20, 12, 0, 0).getTime());
+
+  fetchMyTournaments.mockResolvedValue({ items: [] });
+  fetchTournaments.mockImplementation(({ status }) => {
+    const itemsByStatus = {
+      registration: [
+        {
+          id: "upcoming",
+          title: "開催予定大会",
+          status: "registration",
+          startsAt: "2026-07-21T10:00:00",
+        },
+        {
+          id: "open-registration",
+          title: "受付中大会",
+          status: "registration",
+          startsAt: "2026-07-20T18:00:00",
+        },
+      ],
+      in_progress: [
+        {
+          id: "active",
+          title: "進行中大会",
+          status: "in_progress",
+          startsAt: "2026-07-01T10:00:00",
+        },
+      ],
+      completed: [
+        {
+          id: "just-completed",
+          title: "完了直後大会",
+          status: "completed",
+          startsAt: "2026-07-20T08:00:00",
+        },
+        {
+          id: "completed-two-days-ago",
+          title: "完了2日後大会",
+          status: "completed",
+          startsAt: "2026-07-18T23:00:00",
+        },
+      ],
+    };
+    return Promise.resolve({ items: itemsByStatus[status] || [] });
+  });
+
+  render(
+    <MemoryRouter>
+      <PortalHome />
+    </MemoryRouter>
+  );
+
+  await waitFor(() => {
+    expect(screen.getByText("開催予定大会")).toBeInTheDocument();
+    expect(screen.getByText("受付中大会")).toBeInTheDocument();
+    expect(screen.getByText("進行中大会")).toBeInTheDocument();
+    expect(screen.getByText("完了直後大会")).toBeInTheDocument();
+  });
+  expect(screen.queryByText("完了2日後大会")).not.toBeInTheDocument();
+  expect(fetchTournaments).toHaveBeenCalledWith({
+    status: "completed",
+    page: 1,
+    authMode: "mock",
+  });
+});
+
+test("完了大会が5件以上あっても受付中・進行中の大会を優先表示する", async () => {
+  jest.spyOn(Date, "now").mockReturnValue(new Date(2026, 6, 20, 12, 0, 0).getTime());
+
+  fetchMyTournaments.mockResolvedValue({ items: [] });
+  fetchTournaments.mockImplementation(({ status }) => {
+    const itemsByStatus = {
+      registration: [
+        {
+          id: "priority-registration",
+          title: "優先表示される受付中大会",
+          status: "registration",
+          startsAt: "2026-07-21T10:00:00",
+        },
+      ],
+      in_progress: [
+        {
+          id: "priority-in-progress",
+          title: "優先表示される進行中大会",
+          status: "in_progress",
+          startsAt: "2026-07-20T10:00:00",
+        },
+      ],
+      completed: Array.from({ length: 5 }, (_, index) => ({
+        id: `priority-completed-${index}`,
+        title: `表示候補の完了大会${index + 1}`,
+        status: "completed",
+        startsAt: `2026-07-19T0${index + 1}:00:00`,
+      })),
+    };
+    return Promise.resolve({ items: itemsByStatus[status] || [] });
+  });
+
+  render(
+    <MemoryRouter>
+      <PortalHome />
+    </MemoryRouter>
+  );
+
+  await waitFor(() => {
+    expect(screen.getByText("優先表示される受付中大会")).toBeInTheDocument();
+    expect(screen.getByText("優先表示される進行中大会")).toBeInTheDocument();
+    expect(screen.getByText("表示候補の完了大会3")).toBeInTheDocument();
+  });
+  expect(screen.queryByText("表示候補の完了大会4")).not.toBeInTheDocument();
+  expect(screen.queryByText("表示候補の完了大会5")).not.toBeInTheDocument();
+});
+
+test("完了大会は日付だけでも翌日中は残り、翌々日境界で消え、日時未設定なら残る", async () => {
+  jest.spyOn(Date, "now").mockReturnValue(new Date(2026, 6, 20, 0, 0, 0).getTime());
+
+  fetchMyTournaments.mockResolvedValue({ items: [] });
+  fetchTournaments.mockImplementation(({ status }) =>
+    Promise.resolve({
+      items:
+        status === "completed"
+          ? [
+              {
+                id: "completed-yesterday",
+                title: "日付のみ翌日大会",
+                status: "completed",
+                startsAt: "2026-07-19",
+              },
+              {
+                id: "completed-boundary",
+                title: "日付のみ翌々日大会",
+                status: "completed",
+                startsAt: "2026-07-18",
+              },
+              {
+                id: "completed-without-date",
+                title: "日時未設定完了大会",
+                status: "completed",
+                startsAt: "",
+              },
+              {
+                id: "completed-with-ended-at",
+                title: "完了日優先大会",
+                status: "completed",
+                startsAt: "2026-07-01",
+                endedAt: "2026-07-19",
+              },
+            ]
+          : [],
+    })
+  );
+
+  render(
+    <MemoryRouter>
+      <PortalHome />
+    </MemoryRouter>
+  );
+
+  await waitFor(() => {
+    expect(screen.getByText("日付のみ翌日大会")).toBeInTheDocument();
+    expect(screen.getByText("日時未設定完了大会")).toBeInTheDocument();
+    expect(screen.getByText("完了日優先大会")).toBeInTheDocument();
+  });
+  expect(screen.queryByText("日付のみ翌々日大会")).not.toBeInTheDocument();
 });
