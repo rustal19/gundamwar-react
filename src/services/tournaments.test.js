@@ -1667,7 +1667,7 @@ describe("tournaments service mock mode", () => {
     setRoundRollbackTournament([
       makeResultRound(1, "completed"),
       makeResultRound(2, "completed", "p2_win"),
-    ]);
+    ], "completed");
     const before = window.localStorage.getItem(STORAGE_KEY);
 
     await expect(reopenRound("round-1", { authMode: "mock" })).rejects.toThrow(
@@ -1716,14 +1716,41 @@ describe("tournaments service mock mode", () => {
     });
   });
 
-  it("does not reopen rounds after the tournament is completed", async () => {
-    setRoundRollbackTournament([makeResultRound(1, "completed")], "completed");
-    const before = window.localStorage.getItem(STORAGE_KEY);
+  it("reopens the final round of a completed tournament and completes the tournament again", async () => {
+    setRegistrationTournament({ status: "registration", swissRounds: 1 });
+    const store = readStore();
+    store.entries.t1 = ["1", "2"].map((suffix) => ({
+      id: `entry-${suffix}`,
+      tournamentId: "t1",
+      user: { id: `player-${suffix}`, name: `Player ${suffix}` },
+      status: "checked_in",
+      joinedAtRound: 1,
+      createdAt: new Date().toISOString(),
+    }));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
 
-    await expect(reopenRound("round-1", { authMode: "mock" })).rejects.toThrow(
-      "完了した大会のラウンドは巻き戻せません"
-    );
-    expect(window.localStorage.getItem(STORAGE_KEY)).toBe(before);
+    const finalRound = await createNextRound("t1", { authMode: "mock" });
+    await reportMatchResult({
+      matchId: finalRound.matches[0].id,
+      player1Games: 2,
+      player2Games: 0,
+      authMode: "mock",
+    });
+    await completeRound(finalRound.id, { authMode: "mock" });
+    expect((await fetchTournament("t1", { authMode: "mock", user })).status).toBe("completed");
+
+    const reopened = await reopenRound(finalRound.id, { authMode: "mock" });
+    expect(reopened.status).toBe("in_progress");
+    expect((await fetchTournament("t1", { authMode: "mock", user })).status).toBe("in_progress");
+
+    await reportMatchResult({
+      matchId: finalRound.matches[0].id,
+      player1Games: 0,
+      player2Games: 2,
+      authMode: "mock",
+    });
+    await completeRound(finalRound.id, { authMode: "mock" });
+    expect((await fetchTournament("t1", { authMode: "mock", user })).status).toBe("completed");
   });
 
   it("rewinds single elimination results only after discarding the later bracket", async () => {

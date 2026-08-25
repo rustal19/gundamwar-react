@@ -331,7 +331,7 @@ function nextActionText(form, rounds, activeEntryCount) {
     if (unreportedCount > 0) return `未報告卓が${unreportedCount}卓あります。結果を入力してください。`;
     return "全卓報告済みです。「ラウンド完了」を押して次のラウンドへ進んでください。";
   }
-  if (status === "completed") return "大会は完了しています。完了後はラウンド結果を修正できません。";
+  if (status === "completed") return "大会は完了しています。直前に完了したラウンドの結果を修正できます。";
   if (status === "cancelled") return "大会は中止されています。";
   return "大会状況を確認してください。";
 }
@@ -423,8 +423,22 @@ function RoundRollbackConfirmDialog({
   isSubmitting,
   onCancel,
   onConfirm,
+  releasesTournamentCompletion,
   targetRoundNumber,
 }) {
+  const hasLaterRounds = firstDiscardedRoundNumber != null;
+  const dialogTitle = hasLaterRounds ? "後続ラウンド破棄の確認" : "大会完了解除の確認";
+  const description = [
+    `第${targetRoundNumber}回戦を完了前に戻して結果を修正します。`,
+    releasesTournamentCompletion
+      ? "大会の完了状態も解除され、進行中に戻ります。"
+      : "",
+    hasLaterRounds
+      ? `第${firstDiscardedRoundNumber}回戦以降のラウンドと対戦結果をすべて破棄します。破棄した内容は元に戻せません。`
+      : "",
+    "続行しますか？",
+  ].join("");
+
   return (
     <div className="tournament-dialog-backdrop" role="presentation">
       <div
@@ -435,14 +449,14 @@ function RoundRollbackConfirmDialog({
         aria-describedby="round-rollback-dialog-description"
       >
         <div className="tournament-dialog-header">
-          <h3 id="round-rollback-dialog-title">後続ラウンド破棄の確認</h3>
+          <h3 id="round-rollback-dialog-title">{dialogTitle}</h3>
         </div>
-        <p id="round-rollback-dialog-description">
-          {`第${targetRoundNumber}回戦の結果を修正するため、第${firstDiscardedRoundNumber}回戦以降のラウンドと対戦結果をすべて破棄します。破棄した内容は元に戻せません。続行しますか？`}
-        </p>
+        <p id="round-rollback-dialog-description">{description}</p>
         <div className="tournament-entry-actions tournament-confirm-actions">
           <button type="button" className="danger-button" onClick={onConfirm} disabled={isSubmitting}>
-            第{firstDiscardedRoundNumber}回戦以降を破棄して修正
+            {hasLaterRounds
+              ? `第${firstDiscardedRoundNumber}回戦以降を破棄して修正`
+              : "大会の完了状態を解除して修正"}
           </button>
           <button
             type="button"
@@ -578,10 +592,10 @@ function RoundManagePanel({
 
   const canEditPairing = selectedRound?.status !== "completed";
   const reopenDisabledReason =
-    form.status === "completed"
-      ? "大会が完了しているため結果を修正できません。"
-      : latestCompletedRound?.id !== selectedRound?.id
-        ? `修正できるのは直前に完了した第${latestCompletedRound?.number || "-"}回戦だけです。`
+    latestCompletedRound?.id !== selectedRound?.id
+      ? `修正できるのは直前に完了した第${latestCompletedRound?.number || "-"}回戦だけです。`
+      : !["in_progress", "completed"].includes(form.status)
+        ? "進行中または完了した大会のラウンドのみ修正できます。"
         : "";
 
   return (
@@ -1545,7 +1559,40 @@ export default function TournamentManage({ compact = false }) {
 
   const finishRound = (roundId) => runAction(async () => completeRound(roundId, { authMode }), "ラウンドを完了しました。");
 
-  const reopenCompletedRound = async (roundId, { discardLaterRounds = false } = {}) => {
+  const reopenCompletedRound = async (
+    roundId,
+    { discardLaterRounds = false, tournamentCompletionConfirmed = false } = {}
+  ) => {
+    const targetRound = rounds.find((round) => round.id === roundId);
+    const latestCompletedRound = rounds
+      .filter((round) => round.status === "completed")
+      .reduce(
+        (latest, round) =>
+          !latest || Number(round.number) > Number(latest.number) ? round : latest,
+        null
+      );
+
+    if (
+      form.status === "completed" &&
+      targetRound?.id === latestCompletedRound?.id &&
+      !tournamentCompletionConfirmed
+    ) {
+      const laterRounds = rounds.filter(
+        (round) => Number(round.number) > Number(targetRound.number)
+      );
+      setError("");
+      setMessage("");
+      setRoundRollbackConfirmation({
+        roundId,
+        targetRoundNumber: targetRound.number,
+        firstDiscardedRoundNumber: laterRounds.length
+          ? Math.min(...laterRounds.map((round) => Number(round.number)))
+          : null,
+        releasesTournamentCompletion: true,
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     setError("");
     setMessage("");
@@ -1556,12 +1603,12 @@ export default function TournamentManage({ compact = false }) {
       await loadAll();
     } catch (actionError) {
       if (!discardLaterRounds && actionError.code === "later_rounds_exist") {
-        const targetRound = rounds.find((round) => round.id === roundId);
         setRoundRollbackConfirmation({
           roundId,
           targetRoundNumber: targetRound?.number,
           firstDiscardedRoundNumber:
             actionError.firstDiscardedRoundNumber || Number(targetRound?.number || 0) + 1,
+          releasesTournamentCompletion: form.status === "completed",
         });
       } else {
         setError(actionError.message);
@@ -1573,7 +1620,10 @@ export default function TournamentManage({ compact = false }) {
 
   const confirmRoundRollback = () => {
     if (!roundRollbackConfirmation) return;
-    reopenCompletedRound(roundRollbackConfirmation.roundId, { discardLaterRounds: true });
+    reopenCompletedRound(roundRollbackConfirmation.roundId, {
+      discardLaterRounds: roundRollbackConfirmation.firstDiscardedRoundNumber != null,
+      tournamentCompletionConfirmed: roundRollbackConfirmation.releasesTournamentCompletion,
+    });
   };
 
   const savePairings = (roundId, matches) =>
@@ -1813,6 +1863,7 @@ export default function TournamentManage({ compact = false }) {
           isSubmitting={isSubmitting}
           onCancel={() => setRoundRollbackConfirmation(null)}
           onConfirm={confirmRoundRollback}
+          releasesTournamentCompletion={roundRollbackConfirmation.releasesTournamentCompletion}
           targetRoundNumber={roundRollbackConfirmation.targetRoundNumber}
         />
       ) : null}

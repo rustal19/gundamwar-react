@@ -220,6 +220,7 @@ test("BO3入力後にラウンドを完了前へ戻して結果を訂正でき�
 
 test("後続ラウンドは専用確認ダイアログで明示してから結果ごと破棄する", async () => {
   seedStore({
+    tournament: { status: "completed" },
     rounds: [
       makeUiResultRound(1, "completed"),
       makeUiResultRound(2, "in_progress", "p2_win"),
@@ -234,7 +235,7 @@ test("後続ラウンドは専用確認ダイアログで明示してから結�
   let dialog = await screen.findByRole("dialog", { name: "後続ラウンド破棄の確認" });
   expect(
     within(dialog).getByText(
-      /第1回戦の結果を修正するため、第2回戦以降のラウンドと対戦結果をすべて破棄します/
+      /大会の完了状態も解除され、進行中に戻ります。第2回戦以降のラウンドと対戦結果をすべて破棄します/
     )
   ).toBeInTheDocument();
   expect(nativeConfirm).not.toHaveBeenCalled();
@@ -262,6 +263,7 @@ test("後続ラウンドは専用確認ダイアログで明示してから結�
 
 test("直前より前の完了ラウンドは理由を示して巻き戻し操作を拒否する", async () => {
   seedStore({
+    tournament: { status: "completed" },
     rounds: [
       makeUiResultRound(1, "completed"),
       makeUiResultRound(2, "completed", "p2_win"),
@@ -279,20 +281,49 @@ test("直前より前の完了ラウンドは理由を示して巻き戻し操�
   expect(screen.getByText("修正できるのは直前に完了した第2回戦だけです。")).toBeInTheDocument();
 });
 
-test("完了した大会はラウンドを巻き戻せないことを表示する", async () => {
+test("完了した大会の最終ラウンドを巻き戻し、修正後に大会を再完了できる", async () => {
   seedStore({
-    tournament: { status: "completed" },
+    tournament: { status: "completed", swissRounds: 1 },
     rounds: [makeUiResultRound(1, "completed")],
   });
+  const nativeConfirm = jest.spyOn(window, "confirm");
   renderManage();
 
   const reopenButton = await screen.findByRole("button", { name: "結果を修正" });
-  expect(reopenButton).toBeDisabled();
-  expect(reopenButton).toHaveAttribute(
-    "title",
-    "大会が完了しているため結果を修正できません。"
+  expect(reopenButton).toBeEnabled();
+  expect(
+    screen.getByText("大会は完了しています。直前に完了したラウンドの結果を修正できます。")
+  ).toBeInTheDocument();
+
+  fireEvent.click(reopenButton);
+  const dialog = await screen.findByRole("dialog", { name: "大会完了解除の確認" });
+  expect(
+    within(dialog).getByText(/大会の完了状態も解除され、進行中に戻ります/)
+  ).toBeInTheDocument();
+  expect(nativeConfirm).not.toHaveBeenCalled();
+  fireEvent.click(
+    within(dialog).getByRole("button", { name: "大会の完了状態を解除して修正" })
   );
-  expect(screen.getByText("大会は完了しています。完了後はラウンド結果を修正できません。")).toBeInTheDocument();
+
+  expect(
+    await screen.findByText("第1回戦を完了前に戻しました。結果を修正してください。")
+  ).toBeInTheDocument();
+  await waitFor(() => {
+    const store = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
+    expect(store.tournaments[0].status).toBe("in_progress");
+    expect(store.rounds["t-ui"][0].status).toBe("in_progress");
+  });
+
+  fireEvent.click(screen.getByRole("button", { name: "訂正" }));
+  fireEvent.click(screen.getByRole("button", { name: "0-2" }));
+  expect(await screen.findByText("結果を保存しました。")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "ラウンド完了" }));
+  expect(await screen.findByText("ラウンドを完了しました。")).toBeInTheDocument();
+  await waitFor(() => {
+    const store = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
+    expect(store.tournaments[0].status).toBe("completed");
+    expect(store.rounds["t-ui"][0].status).toBe("completed");
+  });
 });
 
 test("別の主催者には権限エラーだけを表示して管理操作を隠す", async () => {

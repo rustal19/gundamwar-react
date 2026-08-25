@@ -1943,11 +1943,8 @@ export async function reopenRound(
     if (!targetRound) throw new Error("ラウンドが見つかりません。");
 
     const tournament = getTournamentOrThrow(store, tournamentIdForRound);
-    if (tournament.status === "completed") {
-      throw new Error("完了した大会のラウンドは巻き戻せません。");
-    }
-    if (tournament.status !== "in_progress") {
-      throw new Error("進行中の大会のラウンドのみ巻き戻せます。");
+    if (!["in_progress", "completed"].includes(tournament.status)) {
+      throw new Error("進行中または完了した大会のラウンドのみ巻き戻せます。");
     }
     if (targetRound.status !== "completed") {
       throw new Error("完了済みのラウンドのみ巻き戻せます。");
@@ -1994,7 +1991,7 @@ export async function reopenRound(
       .map((round) => (round.id === targetRound.id ? reopenedRound : round));
     store.tournaments = store.tournaments.map((item) =>
       String(item.id) === String(tournamentIdForRound)
-        ? { ...item, updatedAt: nowIso() }
+        ? { ...item, status: "in_progress", updatedAt: nowIso() }
         : item
     );
     writeStore(store);
