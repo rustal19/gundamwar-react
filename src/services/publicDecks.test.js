@@ -1,5 +1,6 @@
 import {
   PUBLIC_STORAGE_KEY,
+  TOURNAMENT_STORAGE_KEY,
   fetchPublicDeck,
   fetchPublicDecks,
   setDeckPublication,
@@ -11,6 +12,39 @@ const ownerSavedKey = "gundamwar.savedDecks.v1:owner-1";
 
 function writeSavedDecks(decks) {
   window.localStorage.setItem(savedKey, JSON.stringify(decks));
+}
+
+function writeTournamentStore({ tournaments, entries }) {
+  window.localStorage.setItem(
+    TOURNAMENT_STORAGE_KEY,
+    JSON.stringify({ tournaments, entries, rounds: {} })
+  );
+}
+
+function tournament(overrides = {}) {
+  return {
+    id: "tournament-1",
+    title: "公開大会",
+    status: "completed",
+    decklistsPublic: true,
+    startsAt: "2026-02-01T00:00:00.000Z",
+    updatedAt: "2026-02-02T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function tournamentEntry(overrides = {}) {
+  return {
+    id: "entry-1",
+    tournamentId: "tournament-1",
+    user: { id: "player-1", name: "大会プレイヤー" },
+    deckItems: [{ cardId: "tournament-card", count: 50 }],
+    decklistSubmittedAt: "2026-01-31T00:00:00.000Z",
+    deckFormat: "スタンダード",
+    finalRank: 1,
+    status: "checked_in",
+    ...overrides,
+  };
 }
 
 describe("publicDecks mock service", () => {
@@ -89,7 +123,8 @@ describe("publicDecks mock service", () => {
     const result = await fetchPublicDecks({ authMode: "mock", page: 1, query: "blue" });
 
     expect(result.total).toBe(1);
-    expect(result.items.map((deck) => deck.id)).toEqual(["new"]);
+    expect(result.items.map((deck) => deck.id)).toEqual(["saved:new"]);
+    expect(result.items[0]).toMatchObject({ sourceType: "saved", sourceId: "new" });
     expect(result.pageSize).toBe(20);
   });
 
@@ -105,20 +140,28 @@ describe("publicDecks mock service", () => {
       };
     });
     window.localStorage.setItem(PUBLIC_STORAGE_KEY, JSON.stringify(decks));
+    const publicTournament = tournament();
+    writeTournamentStore({
+      tournaments: [publicTournament],
+      entries: {
+        [publicTournament.id]: [tournamentEntry()],
+      },
+    });
 
     const firstPage = await fetchPublicDecks({ authMode: "mock", page: 1 });
     const secondPage = await fetchPublicDecks({ authMode: "mock", page: 2 });
 
-    expect(firstPage).toMatchObject({ total: 25, page: 1, pageSize: 20 });
+    expect(firstPage).toMatchObject({ total: 26, page: 1, pageSize: 20 });
     expect(firstPage.items).toHaveLength(20);
-    expect(firstPage.items[0].id).toBe("deck-25");
-    expect(secondPage).toMatchObject({ total: 25, page: 2, pageSize: 20 });
+    expect(firstPage.items[0].id).toBe("entry:entry-1");
+    expect(secondPage).toMatchObject({ total: 26, page: 2, pageSize: 20 });
     expect(secondPage.items.map((deck) => deck.id)).toEqual([
-      "deck-5",
-      "deck-4",
-      "deck-3",
-      "deck-2",
-      "deck-1",
+      "saved:deck-6",
+      "saved:deck-5",
+      "saved:deck-4",
+      "saved:deck-3",
+      "saved:deck-2",
+      "saved:deck-1",
     ]);
   });
 
@@ -168,10 +211,10 @@ describe("publicDecks mock service", () => {
     const result = await fetchPublicDecks({ authMode: "mock", page: 1, format: "その他" });
 
     expect(result.total).toBe(1);
-    expect(result.items[0]).toMatchObject({ id: "other", format: "その他" });
+    expect(result.items[0]).toMatchObject({ id: "saved:other", format: "その他" });
   });
 
-  test("fetches a public deck detail and hides unpublished decks", async () => {
+  test("保存デッキ詳細は大会参照を破棄し、非公開デッキを隠す", async () => {
     window.localStorage.setItem(
       PUBLIC_STORAGE_KEY,
       JSON.stringify([
@@ -188,14 +231,236 @@ describe("publicDecks mock service", () => {
       ])
     );
 
-    await expect(fetchPublicDeck("deck-1", { authMode: "mock" })).resolves.toMatchObject({
-      id: "deck-1",
+    const publicDeck = await fetchPublicDeck("deck-1", { authMode: "mock" });
+    expect(publicDeck).toMatchObject({
+      id: "saved:deck-1",
+      sourceType: "saved",
       title: "Public",
-      tournament: { id: "tournament-1", title: "テスト大会" },
     });
+    expect(publicDeck).not.toHaveProperty("tournament");
     await expect(fetchPublicDeck("deck-2", { authMode: "mock" })).rejects.toThrow(
       "公開デッキが見つかりません。"
     );
+  });
+
+  test("保存デッキと公開可能な大会提出デッキだけを混在させ、ID衝突を防ぐ", async () => {
+    window.localStorage.setItem(
+      PUBLIC_STORAGE_KEY,
+      JSON.stringify([
+        {
+          id: "42",
+          title: "保存デッキ42",
+          isPublic: true,
+          format: "その他",
+          publishedAt: "2026-02-01T00:00:00.000Z",
+          owner: user,
+          tournamentId: "old-link",
+          tournamentName: "保存側に残った旧大会参照",
+        },
+      ])
+    );
+    const publicTournament = tournament({
+      id: "public-tournament",
+      title: "春の公開大会",
+      startsAt: "2026-03-01T00:00:00.000Z",
+    });
+    const privateTournament = tournament({
+      id: "private-tournament",
+      title: "非公開大会",
+      decklistsPublic: false,
+    });
+    const activeTournament = tournament({
+      id: "active-tournament",
+      title: "進行中大会",
+      status: "in_progress",
+    });
+    writeTournamentStore({
+      tournaments: [publicTournament, privateTournament, activeTournament],
+      entries: {
+        [publicTournament.id]: [
+          tournamentEntry({
+            id: "42",
+            tournamentId: publicTournament.id,
+            finalRank: 2,
+          }),
+          tournamentEntry({
+            id: "not-submitted",
+            tournamentId: publicTournament.id,
+            decklistSubmittedAt: null,
+          }),
+          tournamentEntry({
+            id: "empty-deck",
+            tournamentId: publicTournament.id,
+            deckItems: [],
+          }),
+        ],
+        [privateTournament.id]: [
+          tournamentEntry({ id: "private-entry", tournamentId: privateTournament.id }),
+        ],
+        [activeTournament.id]: [
+          tournamentEntry({ id: "active-entry", tournamentId: activeTournament.id }),
+        ],
+      },
+    });
+
+    const result = await fetchPublicDecks({ authMode: "mock", page: 1 });
+
+    expect(result.items.map((deck) => deck.id)).toEqual(["entry:42", "saved:42"]);
+    expect(result.items[0]).toMatchObject({
+      sourceType: "tournament",
+      sourceId: "42",
+      title: "大会プレイヤーの大会デッキ",
+      format: "スタンダード",
+      finalRank: 2,
+      participantCount: 3,
+      owner: { id: "player-1", name: "大会プレイヤー" },
+      tournament: {
+        id: "public-tournament",
+        title: "春の公開大会",
+        startsAt: "2026-03-01T00:00:00.000Z",
+      },
+    });
+    expect(result.items[1]).not.toHaveProperty("tournament");
+    expect(result.items.map((deck) => deck.id)).not.toContain("entry:private-entry");
+    expect(result.items.map((deck) => deck.id)).not.toContain("entry:active-entry");
+
+    const filtered = await fetchPublicDecks({
+      authMode: "mock",
+      page: 1,
+      query: "春の公開大会",
+      format: "スタンダード",
+    });
+    expect(filtered.items.map((deck) => deck.id)).toEqual(["entry:42"]);
+  });
+
+  test("保存デッキがなくても公開大会の提出デッキだけを返す", async () => {
+    const publicTournament = tournament({ id: "tournament-only" });
+    writeTournamentStore({
+      tournaments: [publicTournament],
+      entries: {
+        [publicTournament.id]: [
+          tournamentEntry({ id: "only-entry", tournamentId: publicTournament.id }),
+        ],
+      },
+    });
+
+    const result = await fetchPublicDecks({ authMode: "mock", page: 1 });
+
+    expect(result).toMatchObject({ total: 1, page: 1, pageSize: 20 });
+    expect(result.items).toEqual([
+      expect.objectContaining({ id: "entry:only-entry", sourceType: "tournament" }),
+    ]);
+  });
+
+  test("接頭辞付きIDを系統別に解決し、数値のみの既存URLは保存デッキとして扱う", async () => {
+    window.localStorage.setItem(
+      PUBLIC_STORAGE_KEY,
+      JSON.stringify([
+        { id: "42", title: "従来の保存デッキ", isPublic: true, items: [], owner: user },
+      ])
+    );
+    const publicTournament = tournament({ id: "public-tournament" });
+    const privateTournament = tournament({
+      id: "private-tournament",
+      decklistsPublic: false,
+    });
+    writeTournamentStore({
+      tournaments: [publicTournament, privateTournament],
+      entries: {
+        [publicTournament.id]: [
+          tournamentEntry({ id: "42", tournamentId: publicTournament.id }),
+        ],
+        [privateTournament.id]: [
+          tournamentEntry({ id: "private-entry", tournamentId: privateTournament.id }),
+        ],
+      },
+    });
+
+    await expect(fetchPublicDeck("42", { authMode: "mock" })).resolves.toMatchObject({
+      id: "saved:42",
+      title: "従来の保存デッキ",
+    });
+    await expect(fetchPublicDeck("saved:42", { authMode: "mock" })).resolves.toMatchObject({
+      id: "saved:42",
+      title: "従来の保存デッキ",
+    });
+    await expect(fetchPublicDeck("entry:42", { authMode: "mock" })).resolves.toMatchObject({
+      id: "entry:42",
+      sourceType: "tournament",
+    });
+    await expect(fetchPublicDeck("entry:private-entry", { authMode: "mock" })).rejects.toThrow(
+      "公開デッキが見つかりません。"
+    );
+  });
+
+  test("API詳細もentry接頭辞だけ大会エンドポイントへ振り分ける", async () => {
+    const originalFetch = global.fetch;
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          deck: {
+            id: "42",
+            title: "従来の保存デッキ",
+            isPublic: true,
+            items: [],
+            owner: user,
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          deck: {
+            id: "42",
+            entryId: "42",
+            items: [],
+            owner: { id: "player-1", name: "大会プレイヤー" },
+            deckFormat: "スタンダード",
+          },
+          finalRank: 1,
+          participantCount: 16,
+          tournament: {
+            id: "tournament-1",
+            title: "公開大会",
+            startsAt: "2026-02-01T00:00:00.000Z",
+          },
+        }),
+      });
+
+    try {
+      await expect(fetchPublicDeck("42", { authMode: "api" })).resolves.toMatchObject({
+        id: "saved:42",
+        sourceType: "saved",
+      });
+      await expect(fetchPublicDeck("entry:42", { authMode: "api" })).resolves.toMatchObject({
+        id: "entry:42",
+        sourceType: "tournament",
+        finalRank: 1,
+        participantCount: 16,
+        tournament: { id: "tournament-1", title: "公開大会" },
+      });
+      expect(global.fetch.mock.calls.map(([url]) => url)).toEqual([
+        "/api/public-decks/42",
+        "/api/tournament-decks/42",
+      ]);
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  test("大会デッキの公開設定は変更できない", async () => {
+    await expect(
+      setDeckPublication({
+        authMode: "mock",
+        user,
+        deckId: "entry:42",
+        isPublic: false,
+      })
+    ).rejects.toThrow("大会デッキの公開設定は変更できません。");
   });
 
   test("unpublishes a deck from the public deck store", async () => {

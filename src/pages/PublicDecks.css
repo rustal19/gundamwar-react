@@ -238,6 +238,39 @@
   font-weight: 700;
 }
 
+.public-deck-source-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.35rem;
+  border: 1px solid var(--gw-secondary-border);
+  background: var(--gw-field-bg);
+  color: var(--gw-text-muted);
+  padding: 0.12rem 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.public-deck-source-badge.tournament {
+  border-color: var(--gw-accent);
+  background: var(--gw-accent-soft);
+  color: var(--gw-accent);
+}
+
+.public-deck-tournament-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.55rem;
+  color: var(--gw-text-muted);
+  font-size: 0.86rem;
+}
+
+.public-deck-tournament-summary a {
+  color: var(--gw-primary);
+  font-weight: 700;
+}
+
 .public-deck-card p,
 .public-deck-description {
   margin: 0;

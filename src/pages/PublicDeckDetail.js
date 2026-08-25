@@ -15,7 +15,13 @@ import {
   DECK_TYPE_ORDER,
   groupDeckItemsByType,
 } from "../utils/deckExport";
-import { fetchPublicDeck, setDeckPublication } from "../services/publicDecks";
+import {
+  fetchPublicDeck,
+  getTournamentParticipantCount,
+  getTournamentRank,
+  isTournamentDeck,
+  setDeckPublication,
+} from "../services/publicDecks";
 import NotFound from "./NotFound";
 import "./PublicDecks.css";
 
@@ -44,18 +50,31 @@ function getOwnerReference(owner) {
 }
 
 function DeckMeta({ deck, mainCount, sideCount }) {
-  const owner = getOwnerReference(deck.owner);
+  const tournamentDeck = isTournamentDeck(deck);
+  const linkedOwner = getOwnerReference(deck.owner);
+  const ownerName = normalizeMetaText(deck.owner?.name);
+  const showOwner = tournamentDeck ? Boolean(ownerName) : Boolean(linkedOwner);
   const format = normalizeMetaText(deck.format);
-  const publishedAt = formatDate(deck.publishedAt || deck.updatedAt);
-  const tournament = deck.tournament;
+  const tournament = tournamentDeck ? deck.tournament : null;
+  const displayDate = formatDate(
+    tournamentDeck
+      ? tournament?.startsAt
+      : deck.publishedAt || deck.updatedAt
+  );
+  const finalRank = getTournamentRank(deck);
+  const participantCount = getTournamentParticipantCount(deck);
 
   return (
     <dl className="public-deck-detail-meta" aria-label="デッキ情報">
-      {owner ? (
+      {showOwner ? (
         <div>
-          <dt>投稿者</dt>
+          <dt>{tournamentDeck ? "提出者" : "投稿者"}</dt>
           <dd>
-            <Link to={`/users/${owner.id}`}>{owner.name}</Link>
+            {linkedOwner ? (
+              <Link to={`/users/${linkedOwner.id}`}>{linkedOwner.name}</Link>
+            ) : (
+              ownerName
+            )}
           </dd>
         </div>
       ) : null}
@@ -65,10 +84,10 @@ function DeckMeta({ deck, mainCount, sideCount }) {
           <dd>{format}</dd>
         </div>
       ) : null}
-      {publishedAt ? (
+      {displayDate ? (
         <div>
-          <dt>公開日</dt>
-          <dd>{publishedAt}</dd>
+          <dt>{tournamentDeck ? "開催日" : "公開日"}</dt>
+          <dd>{displayDate}</dd>
         </div>
       ) : null}
       {tournament ? (
@@ -77,6 +96,18 @@ function DeckMeta({ deck, mainCount, sideCount }) {
           <dd>
             <Link to={`/tournaments/${tournament.id}`}>{tournament.title}</Link>
           </dd>
+        </div>
+      ) : null}
+      {tournament ? (
+        <div>
+          <dt>順位</dt>
+          <dd>{finalRank == null ? "-" : `${finalRank}位`}</dd>
+        </div>
+      ) : null}
+      {tournament ? (
+        <div>
+          <dt>参加人数</dt>
+          <dd>{participantCount == null ? "-" : `${participantCount}人`}</dd>
         </div>
       ) : null}
       <div>
@@ -236,7 +267,7 @@ export default function PublicDeckDetail({ compact = false }) {
       await setDeckPublication({
         authMode,
         user,
-        deckId: deck.id,
+        deckId: deck.sourceId || deck.id,
         isPublic: false,
         description: deck.description || "",
         format: deck.format,
@@ -268,7 +299,7 @@ export default function PublicDeckDetail({ compact = false }) {
               このデッキをコピー
             </button>
           ) : null}
-          {deck && isAdmin ? (
+          {deck && isAdmin && !isTournamentDeck(deck) ? (
             <button
               type="button"
               className="results-link-button"
