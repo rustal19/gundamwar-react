@@ -187,6 +187,34 @@ export const SET_EXTRA_OPTIONS_EX = [
   { label: "コラボカード", value: "joke" },
 ];
 
+const SET_OPTIONS_BY_CODE = new Map(
+  [
+    ...SET_INCLUDED_OPTIONS,
+    ...SET_EXTRA_OPTIONS_BB,
+    ...SET_EXTRA_OPTIONS_ST,
+    ...SET_EXTRA_OPTIONS_DB,
+    ...SET_EXTRA_OPTIONS_EX,
+  ].map((option) => [option.value, option])
+);
+
+// card_set_inclusion.csv の列と同じ発売順。弾カットオフはこの配列の並びに
+// 依存するため、カテゴリ別の配列を単純連結したり順番を入れ替えたりしないこと。
+// CSV上のBS1は検索オプションでは従来からBSというコードで扱っている。
+const SET_RELEASE_ORDER_CODES = [
+  "1st", "2nd", "DS1_1", "DS1_2", "3rd", "4th", "DS2_1", "DS2_2", "DS2_3",
+  "5th", "DB1", "6th", "BS", "DB2", "7th", "BB1", "8th", "DS3", "9th", "BB2",
+  "10th", "DB3", "DS4", "11th", "SB", "CB1", "12th", "BB3", "13th", "EX1",
+  "DB4", "EX2", "14th", "DS5", "DB5", "15th", "TS1_1", "TS1_2", "DB6", "16th",
+  "EX3", "DB7", "TS2", "17th", "EB1", "18th", "DB8", "19th", "EB2", "TR1_1",
+  "TR1_2", "20th", "TS3_1", "TS3_2", "21st", "DB9", "22nd", "TS4_1", "TS4_2",
+  "EV", "23rd", "EB3", "24th", "DB10", "25th", "WS1", "CB2", "26th", "DB11",
+  "WB", "27th", "WS2", "28th", "PR", "BG", "joke",
+];
+
+export const SET_RELEASE_ORDER_OPTIONS = SET_RELEASE_ORDER_CODES.map((code) =>
+  SET_OPTIONS_BY_CODE.get(code)
+);
+
 // 収録弾の日本語名 → 検索APIの収録弾コード(setIncluded用)の逆引き。
 // フォーマットのallowedSetsは日本語名で保持している(デッキ検証がcard.setsの名前と
 // 直接照合するため)ので、検索でプールをサーバー側フィルタする際にコードへ変換する。

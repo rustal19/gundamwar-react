@@ -1,0 +1,107 @@
+.regulation-set-input {
+  display: block;
+}
+
+.regulation-set-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.regulation-set-input .regulation-set-modes label,
+.regulation-set-input .regulation-set-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.regulation-set-input .regulation-set-modes input[type="radio"],
+.regulation-set-input .regulation-set-options input[type="checkbox"] {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.regulation-set-help {
+  margin: 10px 0 6px;
+}
+
+.regulation-set-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px 10px;
+  max-height: 270px;
+  border: 1px solid var(--gw-border);
+  border-radius: var(--gw-radius-sm);
+  background: var(--gw-surface);
+  overflow-y: auto;
+  padding: 9px;
+}
+
+.regulation-set-input .regulation-set-options label {
+  min-width: 0;
+  border-radius: var(--gw-radius-sm);
+  padding: 4px 5px;
+}
+
+.regulation-set-input .regulation-set-options label:hover,
+.regulation-set-input .regulation-set-options label:focus-within {
+  background: var(--gw-primary-soft);
+}
+
+.regulation-set-options span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.regulation-set-cutoff {
+  display: grid;
+  gap: 6px;
+  max-width: 520px;
+  margin-top: 12px;
+}
+
+.regulation-set-cutoff label {
+  color: var(--gw-text-muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.regulation-set-cutoff p {
+  margin: 0;
+}
+
+.regulation-set-unknown {
+  margin-top: 10px;
+  border: 1px solid var(--gw-danger-border);
+  border-radius: var(--gw-radius-sm);
+  background: var(--gw-danger-soft-alt);
+  color: var(--gw-danger-text-alt);
+  padding: 10px;
+}
+
+.regulation-set-unknown p {
+  margin: 4px 0 0;
+}
+
+.regulation-set-unknown .regulation-card-selected {
+  margin-top: 7px;
+}
+
+.regulation-set-unknown-chip {
+  border-color: var(--gw-danger-border);
+  background: var(--gw-surface);
+  color: var(--gw-danger-text-alt);
+}
+
+@media (max-width: 760px) {
+  .regulation-set-modes {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .regulation-set-options {
+    grid-template-columns: 1fr;
+  }
+}
