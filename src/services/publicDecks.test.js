@@ -304,6 +304,100 @@ describe("publicDecks mock service", () => {
     });
   });
 
+  test("rejects changing a public deck to a preset it does not satisfy", async () => {
+    const items = validDeckItems();
+    items[0] = {
+      ...items[0],
+      cardId: "101020126",
+      card: { cardId: "101020126", name: "禁止テストカード" },
+    };
+    const existingDeck = {
+      id: "deck-1",
+      title: "Published Standard Deck",
+      items,
+      isPublic: true,
+      description: "公開中",
+      format: "スタンダード",
+      publishedAt: "2026-02-01T00:00:00.000Z",
+    };
+    writeSavedDecks([existingDeck]);
+    window.localStorage.setItem(
+      PUBLIC_STORAGE_KEY,
+      JSON.stringify([{ ...existingDeck, owner: user }])
+    );
+
+    const error = await setDeckPublication({
+      authMode: "mock",
+      user,
+      deckId: "deck-1",
+      isPublic: true,
+      description: "変更後の説明",
+      format: "関西クラシック",
+    }).catch((publicationError) => publicationError);
+
+    expect(error).toMatchObject({
+      code: "deck_format_violations",
+      format: "関西クラシック",
+      violations: expect.arrayContaining([
+        expect.objectContaining({
+          code: "banned",
+          cardName: "禁止テストカード",
+        }),
+      ]),
+    });
+    expect(JSON.parse(window.localStorage.getItem(savedKey))[0]).toMatchObject({
+      isPublic: true,
+      description: "公開中",
+      format: "スタンダード",
+    });
+    expect(JSON.parse(window.localStorage.getItem(PUBLIC_STORAGE_KEY))[0]).toMatchObject({
+      isPublic: true,
+      description: "公開中",
+      format: "スタンダード",
+    });
+  });
+
+  test("allows changing a public deck to a preset it satisfies", async () => {
+    const existingDeck = {
+      id: "deck-1",
+      title: "Published Standard Deck",
+      items: validDeckItems(),
+      isPublic: true,
+      description: "公開中",
+      format: "スタンダード",
+      publishedAt: "2026-02-01T00:00:00.000Z",
+    };
+    writeSavedDecks([existingDeck]);
+    window.localStorage.setItem(
+      PUBLIC_STORAGE_KEY,
+      JSON.stringify([{ ...existingDeck, owner: user }])
+    );
+
+    const deck = await setDeckPublication({
+      authMode: "mock",
+      user,
+      deckId: "deck-1",
+      isPublic: true,
+      description: "変更後の説明",
+      format: "関西クラシック",
+    });
+
+    expect(deck).toMatchObject({
+      isPublic: true,
+      description: "変更後の説明",
+      format: "関西クラシック",
+      publishedAt: existingDeck.publishedAt,
+    });
+    expect(JSON.parse(window.localStorage.getItem(savedKey))[0]).toMatchObject({
+      isPublic: true,
+      format: "関西クラシック",
+    });
+    expect(JSON.parse(window.localStorage.getItem(PUBLIC_STORAGE_KEY))[0]).toMatchObject({
+      isPublic: true,
+      format: "関西クラシック",
+    });
+  });
+
   test("filters public decks by format", async () => {
     window.localStorage.setItem(
       PUBLIC_STORAGE_KEY,

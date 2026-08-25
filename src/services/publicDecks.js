@@ -551,9 +551,15 @@ export async function setDeckPublication({
       throw new Error("保存デッキが見つかりません。");
     }
 
-    const isNewPublication =
-      nextIsPublic && !Boolean(savedDeck.isPublic || publicDeck?.isPublic);
-    if (isNewPublication) {
+    const isCurrentlyPublic = Boolean(savedDeck.isPublic || publicDeck?.isPublic);
+    const storedFormat = publicDeck?.isPublic ? publicDeck.format : savedDeck.format;
+    const currentFormat =
+      typeof storedFormat === "string" && storedFormat.trim()
+        ? storedFormat.trim()
+        : null;
+    const shouldValidatePublication =
+      nextIsPublic && (!isCurrentlyPublic || currentFormat !== nextFormat);
+    if (shouldValidatePublication) {
       const formatPreset = FORMAT_PRESETS.find(({ name }) => name === nextFormat);
       if (formatPreset) {
         const violations = validateDeck(savedDeck.items, formatPreset.regulation);
