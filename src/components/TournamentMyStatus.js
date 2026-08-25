@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { DECKLIST_STATE_LABELS } from "../data/statusLabels";
+import { getRoundLabel, getRoundLabelForNumber } from "../utils/tournament/roundLabel";
 
 function toLocalDateKey(value) {
   if (!value) return "";
@@ -252,7 +253,7 @@ function MatchHistory({ rounds, entries, myEntry }) {
               <tbody>
                 {rows.map(({ round, match, opponent, result }) => (
                   <tr key={`${round.id}-${match.id}`}>
-                    <td>第{round.number}回戦</td>
+                    <td>{getRoundLabel(round, rounds)}</td>
                     <td>{match.tableNo || "-"}</td>
                     <td>{opponent}</td>
                     <td>{result?.label || "未報告"}</td>
@@ -602,7 +603,10 @@ export default function TournamentMyStatus({
         <div>
           <p className="tournament-eyebrow">マイステータス</p>
           <h2>申請中(主催者の承認待ち)</h2>
-          <p>承認されると第{myEntry.joinedAtRound || 1}回戦まで不戦敗として追加されます。</p>
+          <p>
+            承認されると
+            {getRoundLabelForNumber(myEntry.joinedAtRound || 1, rounds, tournament)}まで不戦敗として追加されます。
+          </p>
           <DecklistStatusNotice entry={myEntry} canUpdateDeck={canEditDecklist} />
           <MatchHistory rounds={rounds} entries={entries} myEntry={myEntry} />
         </div>
@@ -661,7 +665,7 @@ export default function TournamentMyStatus({
           ) : (
             <>
               <div className="tournament-my-table">{myMatch?.tableNo ? `卓 ${myMatch.tableNo}` : "卓未定"}</div>
-              <h2>第{currentRound?.number || "-"}回戦</h2>
+              <h2>{getRoundLabel(currentRound, rounds)}</h2>
               <p>対戦相手: {opponentName(myMatch, entries, myEntry.id)}</p>
               {countdown ? <p className="tournament-round-timer">{countdown.label}</p> : null}
             </>

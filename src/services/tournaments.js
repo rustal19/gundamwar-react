@@ -1,4 +1,5 @@
 import { computeStandings } from "../utils/tournament/standings";
+import { getRoundLabel } from "../utils/tournament/roundLabel";
 import { buildBracket, nextRoundPairs } from "../utils/tournament/singleElimination";
 import { pairSwissRound } from "../utils/tournament/swissPairing";
 import { validateDeck } from "../utils/deckValidation";
@@ -1106,7 +1107,7 @@ export async function fetchStandings(id, { authMode, round } = {}) {
   if (authMode === "mock") {
     const store = readStore();
     const entries = getEntries(store, id);
-    const rounds = getRounds(store, id);
+    const rounds = getRounds(store, id).filter((item) => item.stage !== "top_cut");
     const matches = flattenMatches(
       round == null ? rounds : rounds.filter((item) => Number(item.number) <= Number(round))
     );
@@ -1690,7 +1691,29 @@ export async function createNextRound(tournamentId, { authMode } = {}) {
   });
 }
 
-export async function reportMatchResult({ matchId, player1Games, player2Games, result, authMode }) {
+export async function reportMatchResult({
+  matchId,
+  player1Games,
+  player2Games,
+  result,
+  stage,
+  authMode,
+}) {
+  const hasBothGameCounts =
+    player1Games !== undefined &&
+    player1Games !== null &&
+    player1Games !== "" &&
+    player2Games !== undefined &&
+    player2Games !== null &&
+    player2Games !== "";
+  if (
+    stage === "top_cut" &&
+    (result === "draw" ||
+      (hasBothGameCounts && Number(player1Games) === Number(player2Games)))
+  ) {
+    throw new Error("SEラウンドでは引き分けにできません。勝者が決まる結果を入力してください。");
+  }
+
   if (authMode === "mock") {
     if (result !== undefined && !["p1_win", "p2_win", "draw", "bye", null].includes(result)) {
       throw new Error("不正な結果です。");
@@ -1717,14 +1740,21 @@ export async function reportMatchResult({ matchId, player1Games, player2Games, r
       );
     }
 
+    const isTopCutRound = found.round.stage === "top_cut" || stage === "top_cut";
+    if (isTopCutRound && result === "draw") {
+      throw new Error("SEラウンドでは引き分けにできません。勝者が決まる結果を入力してください。");
+    }
     const isBye = found.match.player2EntryId == null || found.match.result === "bye" || result === "bye";
     const nextResult =
       result === null && player1Games == null && player2Games == null
         ? null
         : deriveResultFromGames({ player1Games, player2Games, result, isBye });
+    if (isTopCutRound && nextResult === "draw") {
+      throw new Error("SEラウンドでは引き分けにできません。勝者が決まる結果を入力してください。");
+    }
     const oldWinner = winnerEntryId(found.match);
     const nextWinner = nextResult ? winnerEntryId(found.match, nextResult) : null;
-    const isElimination = found.round.stage === "top_cut" || tournament.format === "single_elim";
+    const isElimination = isTopCutRound || tournament.format === "single_elim";
     const hasLaterRounds = getRounds(store, found.tournamentId).some(
       (round) => Number(round.number) > Number(found.round.number)
     );
@@ -1961,10 +1991,13 @@ export async function reopenRound(
 
     if (!latestCompletedRound || latestCompletedRound.id !== targetRound.id) {
       const latestRoundLabel = latestCompletedRound
-        ? `第${latestCompletedRound.number}回戦`
+        ? getRoundLabel(latestCompletedRound, rounds)
         : "直前に完了したラウンド";
       throw new Error(
-        `修正できるのは直前に完了した${latestRoundLabel}のみです。第${targetRound.number}回戦は巻き戻せません。`
+        `修正できるのは直前に完了した${latestRoundLabel}のみです。${getRoundLabel(
+          targetRound,
+          rounds
+        )}は巻き戻せません。`
       );
     }
 
@@ -1975,8 +2008,14 @@ export async function reopenRound(
       const firstDiscardedRoundNumber = Math.min(
         ...laterRounds.map((round) => Number(round.number))
       );
+      const firstDiscardedRound = laterRounds.find(
+        (round) => Number(round.number) === firstDiscardedRoundNumber
+      );
       const error = createServiceError(
-        `第${firstDiscardedRoundNumber}回戦以降のラウンドと対戦結果を破棄する確認が必要です。`,
+        `${getRoundLabel(
+          firstDiscardedRound,
+          rounds
+        )}以降のラウンドと対戦結果を破棄する確認が必要です。`,
         409
       );
       error.code = "later_rounds_exist";

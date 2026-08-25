@@ -1,4 +1,5 @@
 import React from "react";
+import { getRoundLabel } from "../utils/tournament/roundLabel";
 
 function findEntry(entries, entryId) {
   return (Array.isArray(entries) ? entries : []).find((entry) => entry.id === entryId) || null;
@@ -18,6 +19,23 @@ function playerName(entries, entryId) {
   return entry?.user?.name || entryId;
 }
 
+function resultLabel(result) {
+  if (result === "p1_win") return "P1勝利";
+  if (result === "p2_win") return "P2勝利";
+  if (result === "draw") return "引き分け";
+  if (result === "bye") return "不戦勝";
+  return "未報告";
+}
+
+function matchScoreLabel(match) {
+  if (match.result === "bye") return "不戦勝";
+  if (match.result == null) return "未報告";
+  if (match.player1Games == null || match.player2Games == null) {
+    return resultLabel(match.result);
+  }
+  return `${match.player1Games} - ${match.player2Games}（${resultLabel(match.result)}）`;
+}
+
 export default function Bracket({ rounds, entries, showResults = false }) {
   const topCutRounds = (Array.isArray(rounds) ? rounds : [])
     .filter((round) => round.stage === "top_cut")
@@ -28,17 +46,20 @@ export default function Bracket({ rounds, entries, showResults = false }) {
 
   return (
     <div className="tournament-bracket" aria-label="トーナメント表">
-      {topCutRounds.map((round, roundIndex) => {
+      {topCutRounds.map((round) => {
         const matches = (round.matches || [])
           .slice()
           .sort((left, right) => Number(left.tableNo || 0) - Number(right.tableNo || 0));
-        const isFinal = roundIndex === topCutRounds.length - 1;
+        const isFinal = matches.length === 1;
+        const showRoundResults = showResults || round.status === "completed";
+        const roundLabel = getRoundLabel(round, topCutRounds);
         return (
           <section
             key={round.id}
             className={isFinal ? "bracket-round final" : "bracket-round"}
+            aria-label={roundLabel}
           >
-            <h3>第{round.number}回戦</h3>
+            <h3>{roundLabel}</h3>
             <div className="bracket-match-list">
               {matches.map((match) => {
                 const winner = winnerEntryId(match);
@@ -65,7 +86,9 @@ export default function Bracket({ rounds, entries, showResults = false }) {
                         </div>
                       );
                     })}
-                    {showResults ? <div className="bracket-result">{match.result || "未報告"}</div> : null}
+                    {showRoundResults ? (
+                      <div className="bracket-result">{matchScoreLabel(match)}</div>
+                    ) : null}
                   </div>
                 );
               })}

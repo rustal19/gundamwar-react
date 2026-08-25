@@ -185,6 +185,9 @@ test("BO3入力後にラウンドを完了前へ戻して結果を訂正でき�
   renderManage();
 
   expect(await screen.findByText("UI大会")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "第1回戦" })).toBeInTheDocument();
+  expect(screen.queryByLabelText("トーナメント表")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "1-1" })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "2-1" }));
 
   await waitFor(() => {
@@ -216,6 +219,102 @@ test("BO3入力後にラウンドを完了前へ戻して結果を訂正でき�
   fireEvent.click(screen.getByRole("button", { name: "訂正" }));
   fireEvent.click(screen.getByRole("button", { name: "2-0" }));
   expect(await screen.findByText((content, element) => element?.classList.contains("score-badge") && content === "2-0")).toBeInTheDocument();
+});
+
+test("SEラウンドはSE内連番で表示し、引き分けスコアを入力できない", async () => {
+  seedStore({
+    tournament: { swissRounds: 3, topCutSize: 2 },
+    rounds: [
+      {
+        id: "round-ui-4",
+        tournamentId: "t-ui",
+        number: 4,
+        stage: "top_cut",
+        status: "in_progress",
+        matches: [
+          {
+            id: "match-ui-4",
+            roundId: "round-ui-4",
+            tableNo: 1,
+            player1EntryId: "entry-1",
+            player2EntryId: "entry-2",
+            player1Games: null,
+            player2Games: null,
+            result: null,
+          },
+        ],
+      },
+    ],
+  });
+  renderManage();
+
+  expect(await screen.findByRole("button", { name: "SE1回戦" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "1-1" })).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "..." }));
+  const player1Games = screen.getByLabelText("プレイヤー1ゲーム数");
+  const player2Games = screen.getByLabelText("プレイヤー2ゲーム数");
+  const saveButton = screen.getByRole("button", { name: "保存" });
+
+  fireEvent.change(player1Games, { target: { value: "1" } });
+  fireEvent.change(player2Games, { target: { value: "1" } });
+
+  expect(saveButton).toBeDisabled();
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "SEラウンドでは同数のスコアを保存できません。"
+  );
+
+  fireEvent.change(player2Games, { target: { value: "0" } });
+  expect(saveButton).toBeEnabled();
+  fireEvent.click(saveButton);
+
+  await waitFor(() => {
+    const storedMatch = JSON.parse(window.localStorage.getItem(STORAGE_KEY)).rounds["t-ui"][0]
+      .matches[0];
+    expect(storedMatch).toMatchObject({
+      player1Games: 1,
+      player2Games: 0,
+      result: "p1_win",
+    });
+  });
+});
+
+test("スイス完了後にSEを生成し、ブラケット決着まで進行できる", async () => {
+  seedStore({ tournament: { swissRounds: 1, topCutSize: 2 } });
+  renderManage();
+
+  await screen.findByText("UI大会");
+  fireEvent.click(screen.getByRole("button", { name: "2-0" }));
+  await screen.findByText(
+    (content, element) => element?.classList.contains("score-badge") && content === "2-0"
+  );
+  fireEvent.click(screen.getByRole("button", { name: "ラウンド完了" }));
+  await screen.findByText("ラウンドを完了しました。");
+
+  await waitFor(() => expect(screen.getByRole("button", { name: "次ラウンド生成" })).toBeEnabled());
+  fireEvent.click(screen.getByRole("button", { name: "次ラウンド生成" }));
+  await screen.findByText("次ラウンドを生成しました。");
+
+  fireEvent.click(await screen.findByRole("button", { name: "SE1回戦" }));
+  expect(screen.getByLabelText("トーナメント表")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "1-1" })).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "順位表" }));
+  expect(await screen.findByRole("heading", { name: "スイス順位表" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "ラウンド運営" }));
+  expect(await screen.findByRole("button", { name: "SE1回戦" })).toHaveClass("active");
+
+  fireEvent.click(screen.getByRole("button", { name: "0-2" }));
+  await screen.findByText(
+    (content, element) => element?.classList.contains("score-badge") && content === "0-2"
+  );
+  fireEvent.click(screen.getByRole("button", { name: "ラウンド完了" }));
+  await screen.findByText("ラウンドを完了しました。");
+
+  await waitFor(() => {
+    const storedTournament = JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0];
+    expect(storedTournament.status).toBe("completed");
+  });
 });
 
 test("後続ラウンドは専用確認ダイアログで明示してから結果ごと破棄する", async () => {

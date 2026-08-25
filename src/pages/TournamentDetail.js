@@ -25,6 +25,7 @@ import {
 } from "../data/statusLabels";
 import { FORMAT_PRESETS } from "../data/formats";
 import { defaultRegulation, validateDeck } from "../utils/deckValidation";
+import { getRoundLabel } from "../utils/tournament/roundLabel";
 import { computeStandings } from "../utils/tournament/standings";
 import NotFound from "./NotFound";
 import "./Tournaments.css";
@@ -319,16 +320,27 @@ export default function TournamentDetail({ compact = false }) {
     () => rounds.find((round) => Number(round.number) === Number(standingRoundNumber)) || null,
     [rounds, standingRoundNumber]
   );
+  const swissRounds = useMemo(
+    () => rounds.filter((round) => round.stage !== "top_cut"),
+    [rounds]
+  );
+  const topCutRounds = useMemo(
+    () => rounds.filter((round) => round.stage === "top_cut"),
+    [rounds]
+  );
   const pointInTimeStandings = useMemo(() => {
-    if (!selectedStandingRound) return standings;
-    const matches = rounds
-      .filter((round) => Number(round.number) <= Number(selectedStandingRound.number))
+    if (!rounds.length) return standings;
+    const matches = swissRounds
+      .filter(
+        (round) =>
+          !selectedStandingRound || Number(round.number) <= Number(selectedStandingRound.number)
+      )
       .flatMap((round) => round.matches || []);
     return computeStandings(entries, matches).map((standing) => ({
       ...standing,
       entry: findEntry(entries, standing.entryId),
     }));
-  }, [entries, rounds, selectedStandingRound, standings]);
+  }, [entries, rounds.length, selectedStandingRound, standings, swissRounds]);
 
   const submitDisabled =
     isSubmitting ||
@@ -560,7 +572,7 @@ export default function TournamentDetail({ compact = false }) {
         <section className="tournament-round">
           <div className="tournament-round-header">
             <h2>
-              第{selectedPairingRound.number}回戦 / {selectedPairingRound.stage === "top_cut" ? "トップカット" : "スイス"}
+              {getRoundLabel(selectedPairingRound, rounds)} / {selectedPairingRound.stage === "top_cut" ? "トップカット" : "スイス"}
             </h2>
             <span>{ROUND_STATUS_LABELS[selectedPairingRound.status] || selectedPairingRound.status}</span>
           </div>
@@ -615,7 +627,7 @@ export default function TournamentDetail({ compact = false }) {
         <section className="tournament-round">
           <div className="tournament-round-header">
             <h2>
-              第{selectedResultRound.number}回戦 / {selectedResultRound.stage === "top_cut" ? "トップカット" : "スイス"}
+              {getRoundLabel(selectedResultRound, rounds)} / {selectedResultRound.stage === "top_cut" ? "トップカット" : "スイス"}
             </h2>
           </div>
           <div className="tournament-table-wrap">
@@ -651,39 +663,60 @@ export default function TournamentDetail({ compact = false }) {
   );
 
   const renderStandings = () => (
-    <div>
-      <RoundTabs rounds={rounds} selectedRoundNumber={standingRoundNumber} onChange={setStandingRoundNumber} />
-      <div className="tournament-table-wrap">
-        <table className="tournament-table">
-          <thead>
-            <tr>
-              <th className="num">順位</th>
-              <th>プレイヤー</th>
-              <th className="num">勝</th>
-              <th className="num">敗</th>
-              <th className="num">分</th>
-              <th className="num">勝点</th>
-              <th className="num">OMW%</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pointInTimeStandings.map((standing) => {
-              const entry = standing.entry || findEntry(entries, standing.entryId);
-              return (
-                <tr key={standing.entryId}>
-                  <td className="num">{standing.rank}</td>
-                      <td><UserNameLink user={entry?.user} fallback={standing.entryId} /></td>
-                  <td className="num">{standing.wins}</td>
-                  <td className="num">{standing.losses}</td>
-                  <td className="num">{standing.draws}</td>
-                  <td className="num">{standing.points}</td>
-                  <td className="num">{Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%</td>
+    <div className="tournament-rounds">
+      {topCutRounds.length ? (
+        <section>
+          <h2>トップカット</h2>
+          <Bracket
+            rounds={rounds}
+            entries={entries}
+            showResults={tournament.status === "completed"}
+          />
+        </section>
+      ) : null}
+      {swissRounds.length > 0 || topCutRounds.length === 0 ? (
+        <section>
+          {topCutRounds.length ? <h2>スイス順位表</h2> : null}
+          <RoundTabs
+            rounds={swissRounds}
+            selectedRoundNumber={standingRoundNumber}
+            onChange={setStandingRoundNumber}
+          />
+          <div className="tournament-table-wrap">
+            <table className="tournament-table">
+              <thead>
+                <tr>
+                  <th className="num">順位</th>
+                  <th>プレイヤー</th>
+                  <th className="num">勝</th>
+                  <th className="num">敗</th>
+                  <th className="num">分</th>
+                  <th className="num">勝点</th>
+                  <th className="num">OMW%</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {pointInTimeStandings.map((standing) => {
+                  const entry = standing.entry || findEntry(entries, standing.entryId);
+                  return (
+                    <tr key={standing.entryId}>
+                      <td className="num">{standing.rank}</td>
+                      <td><UserNameLink user={entry?.user} fallback={standing.entryId} /></td>
+                      <td className="num">{standing.wins}</td>
+                      <td className="num">{standing.losses}</td>
+                      <td className="num">{standing.draws}</td>
+                      <td className="num">{standing.points}</td>
+                      <td className="num">
+                        {Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 

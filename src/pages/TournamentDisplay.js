@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import Bracket from "../components/Bracket";
 import { useAuth } from "../context/AuthContext";
 import { fetchRounds, fetchTournament } from "../services/tournaments";
+import { getRoundLabel } from "../utils/tournament/roundLabel";
 import { computeStandings } from "../utils/tournament/standings";
 import "./Tournaments.css";
 
@@ -78,22 +80,26 @@ export default function TournamentDisplay() {
     [rounds]
   );
   const timerText = remainingTime(currentRound, tournament?.roundTimeMinutes, now);
+  const swissRounds = useMemo(
+    () => rounds.filter((round) => round.stage !== "top_cut"),
+    [rounds]
+  );
   const standings = useMemo(() => {
-    const matches = rounds
+    const matches = swissRounds
       .filter((round) => !currentRound || Number(round.number) <= Number(currentRound.number))
       .flatMap((round) => round.matches || []);
     return computeStandings(entries, matches).map((standing) => ({
       ...standing,
       entry: findEntry(entries, standing.entryId),
     }));
-  }, [currentRound, entries, rounds]);
+  }, [currentRound, entries, swissRounds]);
 
   return (
     <main className="tournament-display-page">
       <header className="tournament-display-header">
         <div>
           <h1>{tournament?.title || "大会掲示"}</h1>
-          <p>{currentRound ? `現在ラウンド: 第${currentRound.number}回戦` : "ラウンド未作成"}</p>
+          <p>{currentRound ? `現在ラウンド: ${getRoundLabel(currentRound, rounds)}` : "ラウンド未作成"}</p>
         </div>
         {timerText ? (
           <div className="tournament-display-timer" aria-label="残り時間">
@@ -131,32 +137,36 @@ export default function TournamentDisplay() {
       {!isLoading && !error && activeView === "pairings" ? (
         <section className="tournament-display-section">
           {currentRound ? (
-            <div className="tournament-display-table-wrap">
-              <table className="tournament-display-table">
-                <thead>
-                  <tr>
-                    <th className="num">卓</th>
-                    <th>プレイヤー1</th>
-                    <th>プレイヤー2</th>
-                    <th>結果</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedMatches(currentRound).map((match) => {
-                    const player1 = findEntry(entries, match.player1EntryId);
-                    const player2 = match.player2EntryId == null ? null : findEntry(entries, match.player2EntryId);
-                    return (
-                      <tr key={match.id}>
-                        <td className="tournament-display-table-no num">{match.tableNo || "-"}</td>
-                        <td>{player1?.user?.name || "-"}</td>
-                        <td>{player2?.user?.name || "Bye"}</td>
-                        <td>{resultLabel(match)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            currentRound.stage === "top_cut" ? (
+              <Bracket rounds={rounds} entries={entries} />
+            ) : (
+              <div className="tournament-display-table-wrap">
+                <table className="tournament-display-table">
+                  <thead>
+                    <tr>
+                      <th className="num">卓</th>
+                      <th>プレイヤー1</th>
+                      <th>プレイヤー2</th>
+                      <th>結果</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedMatches(currentRound).map((match) => {
+                      const player1 = findEntry(entries, match.player1EntryId);
+                      const player2 = match.player2EntryId == null ? null : findEntry(entries, match.player2EntryId);
+                      return (
+                        <tr key={match.id}>
+                          <td className="tournament-display-table-no num">{match.tableNo || "-"}</td>
+                          <td>{player1?.user?.name || "-"}</td>
+                          <td>{player2?.user?.name || "Bye"}</td>
+                          <td>{resultLabel(match)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )
           ) : (
             <div className="tournament-display-empty">ペアリングはまだありません。</div>
           )}
@@ -165,34 +175,40 @@ export default function TournamentDisplay() {
 
       {!isLoading && !error && activeView === "standings" ? (
         <section className="tournament-display-section">
-          <div className="tournament-display-table-wrap">
-            <table className="tournament-display-table">
-              <thead>
-                <tr>
-                  <th className="num">順位</th>
-                  <th>プレイヤー</th>
-                  <th className="num">勝</th>
-                  <th className="num">敗</th>
-                  <th className="num">分</th>
-                  <th className="num">勝点</th>
-                  <th className="num">OMW%</th>
-                </tr>
-              </thead>
-              <tbody>
-                {standings.map((standing) => (
-                  <tr key={standing.entryId}>
-                    <td className="tournament-display-table-no num">{standing.rank}</td>
-                    <td>{standing.entry?.user?.name || standing.entryId}</td>
-                    <td className="num">{standing.wins}</td>
-                    <td className="num">{standing.losses}</td>
-                    <td className="num">{standing.draws}</td>
-                    <td className="num">{standing.points}</td>
-                    <td className="num">{Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%</td>
+          {swissRounds.length ? (
+            <div className="tournament-display-table-wrap">
+              <table className="tournament-display-table">
+                <thead>
+                  <tr>
+                    <th className="num">順位</th>
+                    <th>プレイヤー</th>
+                    <th className="num">勝</th>
+                    <th className="num">敗</th>
+                    <th className="num">分</th>
+                    <th className="num">勝点</th>
+                    <th className="num">OMW%</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {standings.map((standing) => (
+                    <tr key={standing.entryId}>
+                      <td className="tournament-display-table-no num">{standing.rank}</td>
+                      <td>{standing.entry?.user?.name || standing.entryId}</td>
+                      <td className="num">{standing.wins}</td>
+                      <td className="num">{standing.losses}</td>
+                      <td className="num">{standing.draws}</td>
+                      <td className="num">{standing.points}</td>
+                      <td className="num">{Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : rounds.some((round) => round.stage === "top_cut") ? (
+            <Bracket rounds={rounds} entries={entries} />
+          ) : (
+            <div className="tournament-display-empty">順位表はまだありません。</div>
+          )}
         </section>
       ) : null}
     </main>
