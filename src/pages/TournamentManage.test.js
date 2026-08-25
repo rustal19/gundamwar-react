@@ -224,6 +224,49 @@ test("次にやることのガイド行とフォーマットプリセット展�
   expect(screen.getByLabelText("メイン下限")).toHaveValue(50);
 });
 
+test("次ラウンド生成は進行中ラウンドの完了後に有効になる", async () => {
+  seedStore();
+  renderManage();
+
+  await screen.findByText("UI大会");
+  const generateButton = screen.getByRole("button", { name: "次ラウンド生成" });
+  expect(generateButton).toBeDisabled();
+  expect(generateButton).toHaveAttribute("title", "現在のラウンドを完了してください。");
+  expect(screen.getByText("次ラウンドを生成できません: 現在のラウンドを完了してください。")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "2-0" }));
+  await screen.findByText("結果を保存しました。");
+  await waitFor(() => {
+    expect(screen.getByRole("button", { name: "ラウンド完了" })).toBeEnabled();
+  });
+  fireEvent.click(screen.getByRole("button", { name: "ラウンド完了" }));
+  await screen.findByText("ラウンドを完了しました。");
+
+  await waitFor(() => {
+    expect(screen.getByRole("button", { name: "次ラウンド生成" })).toBeEnabled();
+  });
+  expect(screen.queryByText(/次ラウンドを生成できません/)).not.toBeInTheDocument();
+});
+
+test("アクティブな参加者がいないときは次ラウンド生成を無効にする", async () => {
+  seedStore({ rounds: [] });
+  const store = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
+  store.entries["t-ui"] = [];
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  renderManage();
+
+  await screen.findByText("UI大会");
+  const generateButton = screen.getByRole("button", { name: "次ラウンド生成" });
+  expect(generateButton).toBeDisabled();
+  expect(generateButton).toHaveAttribute(
+    "title",
+    "次ラウンド生成にはアクティブな参加者が2人以上必要です。"
+  );
+  expect(
+    screen.getByText("次ラウンドを生成できません: 次ラウンド生成にはアクティブな参加者が2人以上必要です。")
+  ).toBeInTheDocument();
+});
+
 test("ラウンド制限時間が未設定ならタイマー設定ヒントを表示する", async () => {
   seedStore({ tournament: { roundTimeMinutes: null } });
   renderManage();

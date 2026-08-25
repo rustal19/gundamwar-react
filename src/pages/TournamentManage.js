@@ -273,6 +273,29 @@ function hasMoreRoundsToPlay(form, rounds, activeEntryCount) {
   return Boolean(numberOrNull(form.topCutSize));
 }
 
+function roundGenerationDisabledReason(form, rounds, entries) {
+  if ((rounds || []).some((round) => round.status !== "completed")) {
+    return "現在のラウンドを完了してください。";
+  }
+
+  const nextRoundNumber = (rounds || []).length + 1;
+  const activeEntryCount = (entries || []).filter(
+    (entry) =>
+      entry.status !== "dropped" &&
+      entry.status !== "pending" &&
+      Number(entry.joinedAtRound || 1) <= nextRoundNumber
+  ).length;
+  if (activeEntryCount < 2) {
+    return "次ラウンド生成にはアクティブな参加者が2人以上必要です。";
+  }
+
+  if ((rounds || []).length > 0 && !hasMoreRoundsToPlay(form, rounds, activeEntryCount)) {
+    return "予定されている全ラウンドが終了しています。";
+  }
+
+  return "";
+}
+
 function nextActionText(form, rounds, activeEntryCount) {
   const status = form.status;
   if (status === "draft") return "内容を保存して「受付開始」を押してください。";
@@ -400,6 +423,8 @@ function RoundManagePanel({
       ),
     [entries, selectedRound]
   );
+  const generateRoundDisabledReason = roundGenerationDisabledReason(form, rounds, entries);
+  const generateRoundDisabled = isSubmitting || Boolean(generateRoundDisabledReason);
 
   useEffect(() => {
     setAnnouncementText(form.announcement || "");
@@ -430,10 +455,21 @@ function RoundManagePanel({
       <section className="tournament-tab-panel">
         <div className="tournament-round-header">
           <h2>ラウンド運営</h2>
-          <button type="button" onClick={onGenerateRound} disabled={isSubmitting}>
+          <button
+            type="button"
+            onClick={onGenerateRound}
+            disabled={generateRoundDisabled}
+            title={generateRoundDisabledReason || undefined}
+            aria-describedby={generateRoundDisabledReason ? "round-generation-disabled-reason" : undefined}
+          >
             次ラウンド生成
           </button>
         </div>
+        {generateRoundDisabledReason ? (
+          <p id="round-generation-disabled-reason" className="tournament-muted">
+            次ラウンドを生成できません: {generateRoundDisabledReason}
+          </p>
+        ) : null}
         {!form.roundTimeMinutes ? (
           <p className="tournament-muted">大会情報タブでラウンド制限時間を設定すると、残り時間タイマーを表示できます。</p>
         ) : null}
@@ -448,10 +484,21 @@ function RoundManagePanel({
     <section className="tournament-tab-panel">
       <div className="tournament-round-header">
         <h2>ラウンド運営</h2>
-        <button type="button" onClick={onGenerateRound} disabled={isSubmitting}>
+        <button
+          type="button"
+          onClick={onGenerateRound}
+          disabled={generateRoundDisabled}
+          title={generateRoundDisabledReason || undefined}
+          aria-describedby={generateRoundDisabledReason ? "round-generation-disabled-reason" : undefined}
+        >
           次ラウンド生成
         </button>
       </div>
+      {generateRoundDisabledReason ? (
+        <p id="round-generation-disabled-reason" className="tournament-muted">
+          次ラウンドを生成できません: {generateRoundDisabledReason}
+        </p>
+      ) : null}
       {!form.roundTimeMinutes ? (
         <p className="tournament-muted">大会情報タブでラウンド制限時間を設定すると、残り時間タイマーを表示できます。</p>
       ) : null}
