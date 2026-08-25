@@ -474,14 +474,14 @@ test("完了した大会の最終ラウンドを巻き戻し、修正後に大�
   });
 });
 
-test("別の主催者には権限エラーだけを表示して管理操作を隠す", async () => {
+test("一般参加者には権限エラーだけを表示して管理操作を隠す", async () => {
   mockAuthState = {
     authMode: "mock",
-    isOrganizer: true,
+    isOrganizer: false,
     user: {
-      id: "other-organizer",
-      name: "別の主催者",
-      role: "organizer",
+      id: "participant-user",
+      name: "一般参加者",
+      role: "user",
     },
   };
   seedStore();
@@ -490,6 +490,86 @@ test("別の主催者には権限エラーだけを表示して管理操作を�
   expect(await screen.findByText("この大会を管理する権限がありません。")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "受付開始" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "次ラウンド生成" })).not.toBeInTheDocument();
+});
+
+test("通常ユーザー権限の共同運営者が管理画面と掲示用導線を利用できる", async () => {
+  mockAuthState = {
+    authMode: "mock",
+    isOrganizer: false,
+    user: {
+      id: "co-organizer-user",
+      name: "共同運営ユーザー",
+      role: "user",
+    },
+  };
+  seedStore({
+    tournament: {
+      status: "draft",
+      coOrganizers: [{ id: "co-organizer-user", name: "共同運営ユーザー" }],
+    },
+  });
+  renderManage();
+
+  expect(await screen.findByText("UI大会")).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "掲示用に開く" })).toHaveAttribute(
+    "href",
+    "/tournaments/t-ui/display"
+  );
+  fireEvent.click(screen.getByRole("button", { name: "大会情報" }));
+  expect(await screen.findByRole("heading", { name: "大会運営者" })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "共同運営ユーザー" })).toHaveAttribute(
+    "href",
+    "/users/co-organizer-user"
+  );
+  expect(screen.queryByLabelText("共同運営者を検索")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "下書きを削除" })).not.toBeInTheDocument();
+  expect(
+    screen.getByText("共同運営者の追加・削除は主催者または管理者のみ行えます。")
+  ).toBeInTheDocument();
+});
+
+test("作成者がニックネーム検索で共同運営者を追加・削除できる", async () => {
+  window.localStorage.setItem(
+    "gundamwar.users.v1",
+    JSON.stringify([
+      {
+        id: "searched-user",
+        name: "非公開の氏名",
+        nickname: "検索ニックネーム",
+        role: "user",
+      },
+    ])
+  );
+  seedStore({ tournament: { status: "draft", coOrganizers: [] } });
+  renderManage();
+
+  await screen.findByText("UI大会");
+  fireEvent.click(screen.getByRole("button", { name: "大会情報" }));
+  expect(screen.getByRole("button", { name: "下書きを削除" })).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("共同運営者を検索"), {
+    target: { value: "検索ニックネーム" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "検索" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "検索ニックネーム を共同運営者に追加" })
+  );
+
+  expect(await screen.findByText("共同運営者を追加しました。")).toBeInTheDocument();
+  await waitFor(() => {
+    const store = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
+    expect(store.tournaments[0].coOrganizers).toEqual([
+      { id: "searched-user", name: "検索ニックネーム" },
+    ]);
+  });
+
+  fireEvent.click(
+    screen.getByRole("button", { name: "検索ニックネーム を共同運営者から削除" })
+  );
+  expect(await screen.findByText("共同運営者を削除しました。")).toBeInTheDocument();
+  await waitFor(() => {
+    const store = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
+    expect(store.tournaments[0].coOrganizers).toEqual([]);
+  });
 });
 
 test("途中参加の申請を参加者タブで許可できる", async () => {

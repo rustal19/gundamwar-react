@@ -22,6 +22,22 @@ describe("users service mock storage", () => {
     expect(result.total).toBe(1);
   });
 
+  it("filters mock users by nickname for co-organizer lookup", async () => {
+    window.localStorage.setItem(
+      USERS_STORAGE_KEY,
+      JSON.stringify([
+        { id: "u1", name: "Alice", nickname: "アリス", role: "user" },
+        { id: "u2", name: "Bob", nickname: "ボブ", role: "user" },
+      ])
+    );
+
+    const result = await fetchUsers({ query: "ボブ" });
+
+    expect(result.items).toEqual([
+      expect.objectContaining({ id: "u2", nickname: "ボブ" }),
+    ]);
+  });
+
   it("updates a mock user role", async () => {
     window.localStorage.setItem(
       USERS_STORAGE_KEY,

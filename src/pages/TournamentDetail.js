@@ -16,6 +16,7 @@ import {
   fetchRounds,
   fetchStandings,
   fetchTournament,
+  getTournamentPermissions,
   updateMyEntry,
 } from "../services/tournaments";
 import {
@@ -250,6 +251,10 @@ export default function TournamentDetail({ compact = false }) {
   }, [authMode, isAuthenticated, user]);
 
   const entries = useMemo(() => tournament?.entries || [], [tournament?.entries]);
+  const permissions = useMemo(
+    () => getTournamentPermissions(tournament, user),
+    [tournament, user]
+  );
   const activeEntryCount = useMemo(
     () => entries.filter((entry) => entry.status !== "dropped").length,
     [entries]
@@ -469,6 +474,35 @@ export default function TournamentDetail({ compact = false }) {
       <section>
         <h2>大会情報</h2>
         <dl className="tournament-definition-list">
+          <div>
+            <dt>主催者</dt>
+            <dd>
+              {tournament.createdBy?.id ? (
+                <Link to={`/users/${tournament.createdBy.id}`}>
+                  {tournament.createdBy.name || tournament.createdBy.id}
+                </Link>
+              ) : (
+                tournament.createdBy?.name || "-"
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt>共同運営者</dt>
+            <dd>
+              {Array.isArray(tournament.coOrganizers) && tournament.coOrganizers.length
+                ? tournament.coOrganizers.map((operator, index) => (
+                    <React.Fragment key={operator.id || `${operator.name}-${index}`}>
+                      {index > 0 ? "、" : ""}
+                      {operator.id ? (
+                        <Link to={`/users/${operator.id}`}>{operator.name || operator.id}</Link>
+                      ) : (
+                        operator.name || "共同運営者"
+                      )}
+                    </React.Fragment>
+                  ))
+                : "なし"}
+            </dd>
+          </div>
           <div>
             <dt>形式</dt>
             <dd>{tournament.format === "single_elim" ? "シングルエリミネーション" : "スイス"}</dd>
@@ -798,8 +832,15 @@ export default function TournamentDetail({ compact = false }) {
           <p>{tournament.description || "説明はありません。"}</p>
         </div>
         <div className="tournament-detail-badges">
-          <div className={`tournament-status ${tournament.status}`}>
-            {STATUS_LABELS[tournament.status] || tournament.status}
+          <div className="tournament-header-actions">
+            <div className={`tournament-status ${tournament.status}`}>
+              {STATUS_LABELS[tournament.status] || tournament.status}
+            </div>
+            {permissions.canManage ? (
+              <Link className="tournament-create-link" to={`/tournaments/${id}/manage`}>
+                大会管理
+              </Link>
+            ) : null}
           </div>
           {tournament.isListed === false ? (
             <div className="tournament-status unlisted">ローカル大会（非掲載）</div>

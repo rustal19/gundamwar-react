@@ -7,12 +7,13 @@ import {
 } from "../utils/tournament/swiss";
 import { pairSwissRound } from "../utils/tournament/swissPairing";
 import { validateDeck } from "../utils/deckValidation";
+import { fetchUsers } from "./users";
 
 const API_BASE_URL = (process.env.REACT_APP_API_BASE_URL || "").replace(/\/$/, "");
 const STORAGE_KEY = "gundamwar.tournaments.v1";
 const MOCK_USER_KEY = "gundamwar.auth.mockUser.v1";
 const PAGE_SIZE = 10;
-const MOCK_SEED_VERSION = 2;
+const MOCK_SEED_VERSION = 3;
 
 // These IDs are also used by the format restriction data in src/data, so the
 // seed decks resolve to real card images instead of test-only placeholder IDs.
@@ -139,6 +140,7 @@ function createInitialStore() {
   const tournamentId = "mock-tournament-1";
   const completedTournamentId = "mock-tournament-3";
   const organizer = { id: "organizer-1", name: "ローカル主催者" };
+  const coOrganizer = { id: "co-organizer-1", name: "共同運営者" };
   const entries = [
     {
       id: "entry-1",
@@ -271,6 +273,7 @@ function createInitialStore() {
         lateEntry: true,
         regulation: DEFAULT_REGULATION,
         createdBy: organizer,
+        coOrganizers: [coOrganizer],
         entryCount: entries.length,
         createdAt: daysFromNow(-10),
         updatedAt: daysFromNow(-1),
@@ -297,6 +300,7 @@ function createInitialStore() {
         lateEntry: false,
         regulation: DEFAULT_REGULATION,
         createdBy: organizer,
+        coOrganizers: [],
         entryCount: 0,
         createdAt: daysFromNow(-2),
         updatedAt: daysFromNow(-2),
@@ -324,6 +328,7 @@ function createInitialStore() {
         lateEntry: false,
         regulation: DEFAULT_REGULATION,
         createdBy: organizer,
+        coOrganizers: [],
         entryCount: completedEntries.length,
         createdAt: daysFromNow(-21),
         updatedAt: daysFromNow(-7),
@@ -509,6 +514,9 @@ function migrateMockSeedStore(store) {
               ? {
                   ...tournament,
                   lateEntry: latestInProgress.lateEntry,
+                  coOrganizers: Array.isArray(tournament.coOrganizers)
+                    ? tournament.coOrganizers
+                    : latestInProgress.coOrganizers,
                   entryCount: inProgressEntries.length,
                 }
               : tournament
@@ -529,6 +537,25 @@ function migrateMockSeedStore(store) {
       },
     },
   };
+}
+
+function normalizeTournamentOperator(operator, fallbackName = "運営者") {
+  if (!operator || operator.id == null) return null;
+  return {
+    id: String(operator.id),
+    name: String(operator.name || operator.nickname || fallbackName),
+  };
+}
+
+function normalizeCoOrganizers(coOrganizers) {
+  const seen = new Set();
+  return (Array.isArray(coOrganizers) ? coOrganizers : [])
+    .map((operator) => normalizeTournamentOperator(operator, "共同運営者"))
+    .filter((operator) => {
+      if (!operator || seen.has(operator.id)) return false;
+      seen.add(operator.id);
+      return true;
+    });
 }
 
 function normalizeTournament(tournament, entries = []) {
@@ -553,6 +580,10 @@ function normalizeTournament(tournament, entries = []) {
     roundTimeMinutes: tournament.roundTimeMinutes ?? null,
     lateEntry: Boolean(tournament.lateEntry),
     regulation: { ...DEFAULT_REGULATION, ...(tournament.regulation || {}) },
+    createdBy: normalizeTournamentOperator(tournament.createdBy, "主催者"),
+    coOrganizers: normalizeCoOrganizers(tournament.coOrganizers).filter(
+      (operator) => String(operator.id) !== String(tournament.createdBy?.id)
+    ),
     entryCount: countActiveEntries(entries),
   };
 }
@@ -726,7 +757,7 @@ function getAuditActor(user, tournament) {
     throw createServiceError("ログインしてから操作してください。", 401);
   }
   const id = String(viewer.id);
-  const isCreator = String(tournament.createdBy?.id) === id;
+  const { isCreator } = getTournamentPermissions(tournament, viewer);
   const name = user?.id
     ? user.displayNickname ||
       user.nickname ||
@@ -740,21 +771,44 @@ function deckFormatForTournament(tournament) {
   return tournament?.regulation?.name || DEFAULT_REGULATION.name || null;
 }
 
+export function getTournamentPermissions(tournament, viewer) {
+  const viewerId = viewer?.id == null ? "" : String(viewer.id);
+  const isAuthenticated = Boolean(viewerId);
+  const isAdmin = isAuthenticated && viewer?.role === "admin";
+  const isCreator =
+    isAuthenticated &&
+    tournament?.createdBy?.id != null &&
+    String(tournament.createdBy.id) === viewerId;
+  const isCoOrganizer =
+    isAuthenticated &&
+    normalizeCoOrganizers(tournament?.coOrganizers).some(
+      (operator) => operator.id === viewerId
+    );
+
+  return {
+    isAuthenticated,
+    isAdmin,
+    isCreator,
+    isCoOrganizer,
+    canCreate: isAuthenticated && (viewer?.role === "organizer" || isAdmin),
+    canManage: isAdmin || isCreator || isCoOrganizer,
+    canDelete: isAdmin || isCreator,
+    canManageCoOrganizers: isAdmin || isCreator,
+  };
+}
+
+export function canManageTournament(tournament, viewer) {
+  return getTournamentPermissions(tournament, viewer).canManage;
+}
+
 function assertCanManageTournament(tournament, viewer) {
   if (canManageTournament(tournament, viewer)) return;
-  if (viewer.role !== "organizer") {
-    throw createServiceError("主催者または管理者のみ利用できます。", 403);
-  }
   throw createServiceError("この大会を管理する権限がありません。", 403);
 }
 
-function canManageTournament(tournament, viewer) {
-  if (!viewer?.id) return false;
-  if (viewer.role === "admin") return true;
-  return (
-    viewer.role === "organizer" &&
-    String(tournament.createdBy?.id) === String(viewer.id)
-  );
+function assertCanAdministerTournament(tournament, viewer) {
+  if (getTournamentPermissions(tournament, viewer).canManageCoOrganizers) return;
+  throw createServiceError("この操作は大会の作成者または管理者のみ実行できます。", 403);
 }
 
 function getEntries(store, tournamentId) {
@@ -865,9 +919,9 @@ function assertCanDeleteEntry(tournament) {
 
 function sanitizeEntryForViewer(entry, tournament, viewer) {
   const isOwner = viewer?.id && entry.user.id === String(viewer.id);
-  const isOrganizer = viewer?.id && tournament.createdBy?.id === String(viewer.id);
+  const canManage = canManageTournament(tournament, viewer);
   const isPublicAfterCompleted = tournament.status === "completed" && tournament.decklistsPublic;
-  if (isOwner || isOrganizer || isPublicAfterCompleted) return entry;
+  if (isOwner || canManage || isPublicAfterCompleted) return entry;
   return { ...entry, deckItems: null, decklistSubmittedAt: entry.decklistSubmittedAt };
 }
 
@@ -934,13 +988,10 @@ function isMatchParticipant(match, viewer, entries) {
 
 function sanitizeMatchForViewer(match, tournament, viewer, entries, roundStatus) {
   const nextWinnerEntryId = winnerEntryId(match);
-  const isOrganizer = viewer?.id && tournament.createdBy?.id === String(viewer.id);
-  const isAdmin = viewer?.role === "admin";
   if (
     tournament.status === "completed" ||
     roundStatus === "completed" ||
-    isOrganizer ||
-    isAdmin ||
+    canManageTournament(tournament, viewer) ||
     isMatchParticipant(match, viewer, entries)
   ) {
     return { ...match, winnerEntryId: nextWinnerEntryId };
@@ -1157,15 +1208,21 @@ async function requestJson(path, options = {}) {
 export async function fetchTournaments({ status = "", page = 1, authMode, user } = {}) {
   if (authMode === "mock") {
     const store = readStore();
-    const currentUserId = user?.id ? String(user.id) : readMockUser()?.id;
+    const viewer = user?.id ? user : readMockViewer();
     const visible = store.tournaments
       .map((tournament) => normalizeTournament(tournament, getEntries(store, tournament.id)))
       .filter(Boolean)
-      .filter((tournament) => tournament.isListed)
+      .filter((tournament) => {
+        const { isCreator, isCoOrganizer } = getTournamentPermissions(
+          tournament,
+          viewer
+        );
+        return tournament.isListed || isCreator || isCoOrganizer;
+      })
       .filter(
         (tournament) =>
           tournament.status !== "draft" ||
-          (currentUserId && String(tournament.createdBy?.id) === currentUserId)
+          canManageTournament(tournament, viewer)
       )
       .filter((tournament) => !status || tournament.status === status)
       .sort((left, right) => String(right.startsAt || "").localeCompare(String(left.startsAt || "")));
@@ -1189,8 +1246,11 @@ export async function fetchTournament(id, { authMode, user } = {}) {
   if (authMode === "mock") {
     const store = readStore();
     const tournament = normalizeTournament(getTournamentOrThrow(store, id), getEntries(store, id));
-    const entries = getEntries(store, id).map((entry) => sanitizeEntryForViewer(entry, tournament, user));
-    const currentUserId = user?.id || readMockUser()?.id;
+    const viewer = user?.id ? user : readMockViewer();
+    const entries = getEntries(store, id).map((entry) =>
+      sanitizeEntryForViewer(entry, tournament, viewer)
+    );
+    const currentUserId = viewer?.id;
     const myEntry = currentUserId
       ? entries.find(
           (entry) =>
@@ -1261,7 +1321,7 @@ export async function fetchRounds(id, { authMode, user } = {}) {
   if (authMode === "mock") {
     const store = readStore();
     const tournament = getTournamentOrThrow(store, id);
-    const viewer = user || readMockUser();
+    const viewer = user?.id ? user : readMockViewer();
     return {
       rounds: sanitizeRoundsForViewer(getRounds(store, id), tournament, viewer, getEntries(store, id)),
     };
@@ -1270,9 +1330,11 @@ export async function fetchRounds(id, { authMode, user } = {}) {
   return requestJson(`/api/tournaments/${id}/rounds`, { method: "GET" });
 }
 
-export async function fetchRoundsForManage(id, { authMode } = {}) {
+export async function fetchRoundsForManage(id, { authMode, user } = {}) {
   if (authMode === "mock") {
     const store = readStore();
+    const tournament = getTournamentOrThrow(store, id);
+    assertCanManageTournament(tournament, getCurrentViewer(user));
     return {
       rounds: getRounds(store, id).map((round) => ({
         ...round,
@@ -1434,6 +1496,7 @@ export async function createTournament(data = {}) {
         lateEntry: Boolean(payload.lateEntry),
         regulation: { ...DEFAULT_REGULATION, ...(payload.regulation || {}) },
         createdBy: currentUser,
+        coOrganizers: [],
         entryCount: 0,
         createdAt: now,
         updatedAt: now,
@@ -1456,10 +1519,13 @@ export async function createTournament(data = {}) {
 }
 
 export async function updateTournament({ id, authMode, user, ...data }) {
+  delete data.createdBy;
+  delete data.coOrganizers;
   if (authMode === "mock") {
-    getCurrentUser(user);
+    const viewer = getCurrentViewer(user);
     const store = readStore();
     const existing = getTournamentOrThrow(store, id);
+    assertCanManageTournament(existing, viewer);
     const nextStartsAt = Object.prototype.hasOwnProperty.call(data, "startsAt")
       ? data.startsAt
       : existing.startsAt;
@@ -1540,9 +1606,10 @@ export async function updateTournament({ id, authMode, user, ...data }) {
 
 export async function deleteTournament(id, { authMode, user } = {}) {
   if (authMode === "mock") {
-    getCurrentUser(user);
+    const viewer = getCurrentViewer(user);
     const store = readStore();
     const existing = getTournamentOrThrow(store, id);
+    assertCanAdministerTournament(existing, viewer);
     if (existing.status !== "draft") {
       throw new Error("下書きの大会のみ削除できます。");
     }
@@ -1558,6 +1625,101 @@ export async function deleteTournament(id, { authMode, user } = {}) {
     method: "DELETE",
     body: JSON.stringify({}),
   });
+}
+
+async function resolveCoOrganizerUser(userId) {
+  const normalizedUserId = String(userId || "").trim();
+  if (!normalizedUserId) {
+    throw createServiceError("追加するユーザーを選択してください。", 400);
+  }
+  const payload = await fetchUsers({ query: normalizedUserId, authMode: "mock" });
+  const target = (payload.items || []).find((item) => String(item.id) === normalizedUserId);
+  if (!target) {
+    throw createServiceError("ユーザーが見つかりません。", 404);
+  }
+  return {
+    id: normalizedUserId,
+    name: target.nickname || normalizedUserId,
+  };
+}
+
+export async function addTournamentCoOrganizer({ tournamentId, userId, authMode, user }) {
+  if (authMode === "mock") {
+    const viewer = getCurrentViewer(user);
+    const store = readStore();
+    const tournament = getTournamentOrThrow(store, tournamentId);
+    assertCanAdministerTournament(tournament, viewer);
+    const target = await resolveCoOrganizerUser(userId);
+    if (String(tournament.createdBy?.id) === target.id) {
+      throw createServiceError("大会の作成者はすでに運営者です。", 409);
+    }
+    const coOrganizers = normalizeCoOrganizers(tournament.coOrganizers);
+    if (coOrganizers.some((operator) => operator.id === target.id)) {
+      throw createServiceError("このユーザーはすでに共同運営者です。", 409);
+    }
+    const updated = normalizeTournament(
+      {
+        ...tournament,
+        coOrganizers: [...coOrganizers, target],
+        updatedAt: nowIso(),
+      },
+      getEntries(store, tournamentId)
+    );
+    store.tournaments = store.tournaments.map((item) =>
+      String(item.id) === String(tournamentId) ? updated : item
+    );
+    writeStore(store);
+    return updated;
+  }
+
+  const payload = await requestJson(`/api/tournaments/${tournamentId}/co-organizers`, {
+    method: "POST",
+    body: JSON.stringify({ userId }),
+  });
+  return payload.tournament || payload;
+}
+
+export async function removeTournamentCoOrganizer({ tournamentId, userId, authMode, user }) {
+  if (authMode === "mock") {
+    const viewer = getCurrentViewer(user);
+    const store = readStore();
+    const tournament = getTournamentOrThrow(store, tournamentId);
+    assertCanAdministerTournament(tournament, viewer);
+    const targetUserId = String(userId || "").trim();
+    if (!targetUserId) {
+      throw createServiceError("削除する共同運営者を指定してください。", 400);
+    }
+    if (String(tournament.createdBy?.id) === targetUserId) {
+      throw createServiceError("大会の作成者は運営者から削除できません。", 409);
+    }
+    const coOrganizers = normalizeCoOrganizers(tournament.coOrganizers);
+    const nextCoOrganizers = coOrganizers.filter((operator) => operator.id !== targetUserId);
+    if (nextCoOrganizers.length === coOrganizers.length) {
+      throw createServiceError("共同運営者が見つかりません。", 404);
+    }
+    const updated = normalizeTournament(
+      {
+        ...tournament,
+        coOrganizers: nextCoOrganizers,
+        updatedAt: nowIso(),
+      },
+      getEntries(store, tournamentId)
+    );
+    store.tournaments = store.tournaments.map((item) =>
+      String(item.id) === String(tournamentId) ? updated : item
+    );
+    writeStore(store);
+    return updated;
+  }
+
+  const payload = await requestJson(
+    `/api/tournaments/${tournamentId}/co-organizers/${encodeURIComponent(userId)}`,
+    {
+      method: "DELETE",
+      body: JSON.stringify({}),
+    }
+  );
+  return payload.tournament || payload;
 }
 
 export async function checkInMyEntry({ tournamentId, authMode, user }) {
@@ -1666,10 +1828,11 @@ export async function unbanTournamentUser({ tournamentId, userId, authMode, user
   );
 }
 
-export async function createManualEntry({ tournamentId, name, deckItems = null, authMode }) {
+export async function createManualEntry({ tournamentId, name, deckItems = null, authMode, user }) {
   if (authMode === "mock") {
     const store = readStore();
     const tournament = getTournamentOrThrow(store, tournamentId);
+    assertCanManageTournament(tournament, getCurrentViewer(user));
     const entries = getEntries(store, tournamentId);
     if (!name || !String(name).trim()) {
       throw new Error("参加者名を入力してください。");
@@ -1710,10 +1873,11 @@ export async function createManualEntry({ tournamentId, name, deckItems = null, 
   });
 }
 
-export async function approveEntry({ tournamentId, entryId, authMode }) {
+export async function approveEntry({ tournamentId, entryId, authMode, user }) {
   if (authMode === "mock") {
     const store = readStore();
     const tournament = getTournamentOrThrow(store, tournamentId);
+    assertCanManageTournament(tournament, getCurrentViewer(user));
     const entries = getEntries(store, tournamentId);
     const existing = entries.find((entry) => entry.id === String(entryId));
     if (!existing || existing.status !== "pending") {
@@ -1742,10 +1906,11 @@ export async function approveEntry({ tournamentId, entryId, authMode }) {
   });
 }
 
-export async function rejectEntry({ tournamentId, entryId, authMode }) {
+export async function rejectEntry({ tournamentId, entryId, authMode, user }) {
   if (authMode === "mock") {
     const store = readStore();
-    getTournamentOrThrow(store, tournamentId);
+    const tournament = getTournamentOrThrow(store, tournamentId);
+    assertCanManageTournament(tournament, getCurrentViewer(user));
     const entries = getEntries(store, tournamentId);
     const existing = entries.find((entry) => entry.id === String(entryId));
     if (!existing || existing.status !== "pending") {
@@ -1937,10 +2102,11 @@ export async function updateEntryStatus({
   });
 }
 
-export async function createNextRound(tournamentId, { authMode } = {}) {
+export async function createNextRound(tournamentId, { authMode, user } = {}) {
   if (authMode === "mock") {
     const store = readStore();
     const tournament = getTournamentOrThrow(store, tournamentId);
+    assertCanManageTournament(tournament, getCurrentViewer(user));
     const shouldLockSwissRounds =
       tournament.format !== "single_elim" &&
       getRounds(store, tournamentId).length === 0 &&
@@ -1982,6 +2148,7 @@ export async function reportMatchResult({
   result,
   stage,
   authMode,
+  user,
 }) {
   const hasBothGameCounts =
     player1Games !== undefined &&
@@ -2015,6 +2182,7 @@ export async function reportMatchResult({
     if (!found) throw new Error("試合が見つかりません。");
 
     const tournament = getTournamentOrThrow(store, found.tournamentId);
+    assertCanManageTournament(tournament, getCurrentViewer(user));
     if (tournament.status === "completed") {
       throw new Error("完了した大会のラウンド結果は修正できません。");
     }
@@ -2081,7 +2249,7 @@ export async function reportMatchResult({
   });
 }
 
-export async function updateRoundMatches({ roundId, matches, authMode }) {
+export async function updateRoundMatches({ roundId, matches, authMode, user }) {
   if (authMode === "mock") {
     const store = readStore();
     let updatedRound = null;
@@ -2096,6 +2264,10 @@ export async function updateRoundMatches({ roundId, matches, authMode }) {
       }
     });
     if (!targetRound) throw new Error("ラウンドが見つかりません。");
+    assertCanManageTournament(
+      getTournamentOrThrow(store, tournamentIdForRound),
+      getCurrentViewer(user)
+    );
     if (targetRound.status === "completed") {
       throw new Error("完了済みラウンドの組み合わせは変更できません。");
     }
@@ -2148,7 +2320,7 @@ export async function updateRoundMatches({ roundId, matches, authMode }) {
   });
 }
 
-export async function deleteRound(roundId, { authMode } = {}) {
+export async function deleteRound(roundId, { authMode, user } = {}) {
   if (authMode === "mock") {
     const store = readStore();
     let deleted = false;
@@ -2156,6 +2328,10 @@ export async function deleteRound(roundId, { authMode } = {}) {
       const rounds = getRounds(store, tournamentId);
       const target = rounds.find((round) => round.id === roundId);
       if (!target) return;
+      assertCanManageTournament(
+        getTournamentOrThrow(store, tournamentId),
+        getCurrentViewer(user)
+      );
       if (target.status === "completed") {
         throw new Error("完了済みラウンドは削除できません。");
       }
@@ -2173,13 +2349,17 @@ export async function deleteRound(roundId, { authMode } = {}) {
   });
 }
 
-export async function startRoundTimer(roundId, { timerStartedAt, authMode } = {}) {
+export async function startRoundTimer(roundId, { timerStartedAt, authMode, user } = {}) {
   if (authMode === "mock") {
     const store = readStore();
     let updatedRound = null;
     Object.keys(store.rounds).forEach((tournamentId) => {
       store.rounds[tournamentId] = getRounds(store, tournamentId).map((round) => {
         if (round.id !== roundId) return round;
+        assertCanManageTournament(
+          getTournamentOrThrow(store, tournamentId),
+          getCurrentViewer(user)
+        );
         updatedRound = { ...round, timerStartedAt: timerStartedAt || nowIso() };
         return updatedRound;
       });
@@ -2195,7 +2375,7 @@ export async function startRoundTimer(roundId, { timerStartedAt, authMode } = {}
   });
 }
 
-export async function completeRound(roundId, { authMode } = {}) {
+export async function completeRound(roundId, { authMode, user } = {}) {
   if (authMode === "mock") {
     const store = readStore();
     let completedRound = null;
@@ -2204,6 +2384,10 @@ export async function completeRound(roundId, { authMode } = {}) {
     Object.keys(store.rounds).forEach((tournamentId) => {
       store.rounds[tournamentId] = getRounds(store, tournamentId).map((round) => {
         if (round.id !== roundId) return round;
+        assertCanManageTournament(
+          getTournamentOrThrow(store, tournamentId),
+          getCurrentViewer(user)
+        );
         if (!roundComplete(round)) {
           throw new Error("全ての卓結果を入力してください。");
         }
@@ -2239,7 +2423,7 @@ export async function completeRound(roundId, { authMode } = {}) {
 
 export async function reopenRound(
   roundId,
-  { authMode, discardLaterRounds = false } = {}
+  { authMode, discardLaterRounds = false, user } = {}
 ) {
   if (authMode === "mock") {
     const store = readStore();
@@ -2257,6 +2441,7 @@ export async function reopenRound(
     if (!targetRound) throw new Error("ラウンドが見つかりません。");
 
     const tournament = getTournamentOrThrow(store, tournamentIdForRound);
+    assertCanManageTournament(tournament, getCurrentViewer(user));
     if (!["in_progress", "completed"].includes(tournament.status)) {
       throw new Error("進行中または完了した大会のラウンドのみ巻き戻せます。");
     }

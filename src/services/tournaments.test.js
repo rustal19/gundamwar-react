@@ -1,4 +1,5 @@
 import {
+  addTournamentCoOrganizer,
   approveEntry,
   checkInMyEntry,
   completeRound,
@@ -6,6 +7,7 @@ import {
   createEntry,
   createManualEntry,
   createTournament,
+  deleteTournament,
   deleteRound,
   deleteMyEntry,
   fetchEntries,
@@ -17,9 +19,11 @@ import {
   fetchTournamentBans,
   fetchTournaments,
   kickEntry,
+  getTournamentPermissions,
   reopenRound,
   reportMatchResult,
   rejectEntry,
+  removeTournamentCoOrganizer,
   startRoundTimer,
   updateEntryStatus,
   updateRoundMatches,
@@ -28,6 +32,7 @@ import {
   unbanTournamentUser,
 } from "./tournaments";
 import { fetchPublicDeck, fetchPublicDecks } from "./publicDecks";
+import { USERS_STORAGE_KEY } from "./users";
 
 const STORAGE_KEY = "gundamwar.tournaments.v1";
 const MOCK_USER_KEY = "gundamwar.auth.mockUser.v1";
@@ -42,6 +47,21 @@ const organizer = {
   id: "org",
   name: "主催者",
   role: "organizer",
+};
+const coOrganizer = {
+  id: "co-org",
+  name: "共同運営者",
+  role: "user",
+};
+const participant = {
+  id: "participant",
+  name: "一般参加者",
+  role: "user",
+};
+const admin = {
+  id: "admin-user",
+  name: "管理者",
+  role: "admin",
 };
 const originalFetch = global.fetch;
 
@@ -88,6 +108,7 @@ function setRegistrationTournament(overrides = {}) {
       rounds: { t1: [] },
     })
   );
+  window.localStorage.setItem(MOCK_USER_KEY, JSON.stringify(organizer));
 }
 
 function makeValidDeck() {
@@ -146,6 +167,97 @@ function setRoundRollbackTournament(rounds, status = "in_progress") {
     createdAt: new Date().toISOString(),
   }));
   store.rounds.t1 = rounds;
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+}
+
+function setManagementAuthorizationTournament() {
+  setRegistrationTournament({
+    status: "in_progress",
+    swissRounds: 3,
+    roundTimeMinutes: 30,
+    coOrganizers: [{ id: coOrganizer.id, name: coOrganizer.name }],
+  });
+  const store = readStore();
+  const now = new Date().toISOString();
+  store.entries.t1 = [
+    {
+      id: "entry-1",
+      tournamentId: "t1",
+      user: { id: "player-1", name: "Player 1" },
+      deckItems: buildValidDeck("secret"),
+      decklistSubmittedAt: now,
+      deckLockedAt: now,
+      status: "checked_in",
+      joinedAtRound: 1,
+      createdAt: now,
+    },
+    {
+      id: "entry-2",
+      tournamentId: "t1",
+      user: { id: "player-2", name: "Player 2" },
+      deckItems: null,
+      decklistSubmittedAt: null,
+      deckLockedAt: null,
+      status: "checked_in",
+      joinedAtRound: 1,
+      createdAt: now,
+    },
+    {
+      id: "entry-pending-approve",
+      tournamentId: "t1",
+      user: { id: "pending-approve", name: "承認待ち1" },
+      deckItems: null,
+      decklistSubmittedAt: null,
+      status: "pending",
+      joinedAtRound: 2,
+      createdAt: now,
+    },
+    {
+      id: "entry-pending-reject",
+      tournamentId: "t1",
+      user: { id: "pending-reject", name: "承認待ち2" },
+      deckItems: null,
+      decklistSubmittedAt: null,
+      status: "pending",
+      joinedAtRound: 2,
+      createdAt: now,
+    },
+    {
+      id: "entry-kick",
+      tournamentId: "t1",
+      user: { id: "kick-user", name: "キック対象" },
+      deckItems: null,
+      decklistSubmittedAt: null,
+      status: "registered",
+      joinedAtRound: 1,
+      createdAt: now,
+    },
+  ];
+  store.rounds.t1 = [
+    {
+      id: "round-auth",
+      tournamentId: "t1",
+      number: 1,
+      stage: "swiss",
+      status: "completed",
+      timerStartedAt: null,
+      matches: [
+        {
+          id: "match-auth",
+          roundId: "round-auth",
+          tableNo: 1,
+          player1EntryId: "entry-1",
+          player2EntryId: "entry-2",
+          player1Games: 2,
+          player2Games: 0,
+          result: "p1_win",
+        },
+      ],
+    },
+  ];
+  store.bans = {
+    t1: [{ user: { id: "banned-user", name: "禁止対象" }, bannedAt: now }],
+  };
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
 }
 
@@ -348,7 +460,7 @@ describe("tournaments service mock mode", () => {
     const migratedStore = readStore();
     const serializedAfterMigration = window.localStorage.getItem(STORAGE_KEY);
 
-    expect(migratedStore.seedVersion).toBe(2);
+    expect(migratedStore.seedVersion).toBe(3);
     expect(migratedStore.tournaments).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: "mock-tournament-3", status: "completed" }),
@@ -515,8 +627,16 @@ describe("tournaments service mock mode", () => {
     });
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
 
-    const firstPage = await fetchTournaments({ authMode: "mock", page: 1 });
-    const secondPage = await fetchTournaments({ authMode: "mock", page: 2 });
+    const firstPage = await fetchTournaments({
+      authMode: "mock",
+      page: 1,
+      user: participant,
+    });
+    const secondPage = await fetchTournaments({
+      authMode: "mock",
+      page: 2,
+      user: participant,
+    });
     const visibleItems = [...firstPage.items, ...secondPage.items];
 
     expect(firstPage.items).toHaveLength(10);
@@ -527,6 +647,30 @@ describe("tournaments service mock mode", () => {
     expect(visibleItems.every((tournament) => tournament.isListed)).toBe(true);
     expect(visibleItems.find((tournament) => tournament.id === "t1")?.isListed).toBe(true);
     expect(visibleItems.some((tournament) => tournament.id.startsWith("unlisted-"))).toBe(false);
+  });
+
+  it("shows an unlisted tournament only to its creator and co-organizers in the public list", async () => {
+    setRegistrationTournament({
+      isListed: false,
+      coOrganizers: [{ id: coOrganizer.id, name: coOrganizer.name }],
+    });
+
+    const participantPayload = await fetchTournaments({
+      authMode: "mock",
+      user: participant,
+    });
+    const creatorPayload = await fetchTournaments({
+      authMode: "mock",
+      user: organizer,
+    });
+    const coOrganizerPayload = await fetchTournaments({
+      authMode: "mock",
+      user: coOrganizer,
+    });
+
+    expect(participantPayload.items).toEqual([]);
+    expect(creatorPayload.items.map((tournament) => tournament.id)).toEqual(["t1"]);
+    expect(coOrganizerPayload.items.map((tournament) => tournament.id)).toEqual(["t1"]);
   });
 
   it("allows direct access and entry for an unlisted tournament and exposes it only in related users' own list", async () => {
@@ -1430,7 +1574,7 @@ describe("tournaments service mock mode", () => {
     expect(entries.items[0].deckItems).toHaveLength(50);
   });
 
-  it("allows only the tournament creator or an admin to manage raw entries", async () => {
+  it("allows the tournament creator regardless of role or an admin to manage raw entries", async () => {
     setRegistrationTournament();
     const deckItems = [{ cardId: "secret", count: 1, zone: "main" }];
     const admin = { id: "admin-user", name: "管理者", role: "admin" };
@@ -1480,10 +1624,7 @@ describe("tournaments service mock mode", () => {
         authMode: "mock",
         user: { id: "org", name: "一般ユーザー", role: "user" },
       })
-    ).rejects.toMatchObject({
-      message: "主催者または管理者のみ利用できます。",
-      status: 403,
-    });
+    ).resolves.toMatchObject({ items: expect.any(Array) });
     await expect(
       updateEntryStatus({
         tournamentId: "t1",
@@ -1505,7 +1646,7 @@ describe("tournaments service mock mode", () => {
         user: { id: "regular-user", name: "一般ユーザー", role: "user" },
       })
     ).rejects.toMatchObject({
-      message: "主催者または管理者のみ利用できます。",
+      message: "この大会を管理する権限がありません。",
       status: 403,
     });
 
@@ -2019,7 +2160,7 @@ describe("tournaments service mock mode", () => {
       id: "t1",
       regulation: { bannedCards: ["proxy 1"] },
       authMode: "mock",
-      user,
+      user: organizer,
     });
     expect(updatedTournament.violations).toEqual([
       expect.objectContaining({ entryId: entry.id, violations: expect.any(Array) }),
@@ -2085,14 +2226,14 @@ describe("tournaments service mock mode", () => {
 
     await createNextRound("t1", { authMode: "mock" });
     await expect(
-      updateTournament({ id: "t1", swissRounds: 4, authMode: "mock", user })
+      updateTournament({ id: "t1", swissRounds: 4, authMode: "mock", user: organizer })
     ).rejects.toThrow("ラウンド生成後");
     await expect(
       updateTournament({
         id: "t1",
         swissEndCondition: "undefeated",
         authMode: "mock",
-        user,
+        user: organizer,
       })
     ).rejects.toThrow("ラウンド生成後");
   });
@@ -2550,4 +2691,371 @@ describe("tournaments service mock mode", () => {
       ).resolves.toMatchObject({ disposition: "removed" });
     }
   );
+
+  it("normalizes legacy co-organizer data and centralizes creator, co-organizer, participant, and admin permissions", async () => {
+    const seeded = await fetchTournament("mock-tournament-1", { authMode: "mock" });
+    expect(seeded.coOrganizers).toEqual([
+      { id: "co-organizer-1", name: "共同運営者" },
+    ]);
+
+    setRegistrationTournament({ coOrganizers: undefined });
+    const legacy = await fetchTournament("t1", { authMode: "mock", user: participant });
+    expect(legacy.coOrganizers).toEqual([]);
+
+    const tournament = {
+      ...legacy,
+      createdBy: { id: organizer.id, name: organizer.name },
+      coOrganizers: [{ id: coOrganizer.id, name: coOrganizer.name }],
+    };
+    expect(getTournamentPermissions(tournament, { ...organizer, role: "user" })).toMatchObject({
+      isCreator: true,
+      canManage: true,
+      canDelete: true,
+      canManageCoOrganizers: true,
+    });
+    expect(getTournamentPermissions(tournament, coOrganizer)).toMatchObject({
+      isCoOrganizer: true,
+      canManage: true,
+      canDelete: false,
+      canManageCoOrganizers: false,
+    });
+    expect(getTournamentPermissions(tournament, participant)).toMatchObject({
+      canManage: false,
+      canDelete: false,
+      canManageCoOrganizers: false,
+    });
+    expect(getTournamentPermissions(tournament, admin)).toMatchObject({
+      isAdmin: true,
+      canManage: true,
+      canDelete: true,
+      canManageCoOrganizers: true,
+    });
+
+    const created = await createTournament({
+      title: "共同運営者初期化テスト",
+      authMode: "mock",
+      user: organizer,
+    });
+    expect(created.coOrganizers).toEqual([]);
+  });
+
+  it("keeps private decklists visible to creator, co-organizer, and admin but hidden from participants", async () => {
+    setManagementAuthorizationTournament();
+
+    for (const manager of [organizer, coOrganizer, admin]) {
+      const managedEntries = await fetchEntries("t1", { authMode: "mock", user: manager });
+      expect(managedEntries.items.find((entry) => entry.id === "entry-1").deckItems).toHaveLength(17);
+      const detail = await fetchTournament("t1", { authMode: "mock", user: manager });
+      expect(detail.entries.find((entry) => entry.id === "entry-1").deckItems).toHaveLength(17);
+    }
+
+    await expect(
+      fetchEntries("t1", { authMode: "mock", user: participant })
+    ).rejects.toMatchObject({ status: 403 });
+    const participantDetail = await fetchTournament("t1", {
+      authMode: "mock",
+      user: participant,
+    });
+    expect(participantDetail.entries.find((entry) => entry.id === "entry-1").deckItems).toBeNull();
+
+    const store = readStore();
+    store.rounds.t1[0].status = "in_progress";
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    const coOrganizerRounds = await fetchRounds("t1", {
+      authMode: "mock",
+      user: coOrganizer,
+    });
+    const participantRounds = await fetchRounds("t1", {
+      authMode: "mock",
+      user: participant,
+    });
+    expect(coOrganizerRounds.rounds[0].matches[0]).toMatchObject({ result: "p1_win" });
+    expect(participantRounds.rounds[0].matches[0]).toMatchObject({
+      result: null,
+      player1Games: null,
+      player2Games: null,
+    });
+  });
+
+  it("allows a co-organizer to edit tournament and entry state, proxy decks, and kick or ban users", async () => {
+    setManagementAuthorizationTournament();
+
+    const updatedTournament = await updateTournament({
+      id: "t1",
+      title: "共同運営更新済み大会",
+      authMode: "mock",
+      user: coOrganizer,
+    });
+    expect(updatedTournament.title).toBe("共同運営更新済み大会");
+
+    await expect(
+      approveEntry({
+        tournamentId: "t1",
+        entryId: "entry-pending-approve",
+        authMode: "mock",
+        user: coOrganizer,
+      })
+    ).resolves.toMatchObject({ status: "registered" });
+    await expect(
+      rejectEntry({
+        tournamentId: "t1",
+        entryId: "entry-pending-reject",
+        authMode: "mock",
+        user: coOrganizer,
+      })
+    ).resolves.toBeUndefined();
+    await expect(
+      createManualEntry({
+        tournamentId: "t1",
+        name: "共同運営追加ゲスト",
+        authMode: "mock",
+        user: coOrganizer,
+      })
+    ).resolves.toMatchObject({ user: { name: "共同運営追加ゲスト" } });
+    await expect(
+      updateEntryStatus({
+        tournamentId: "t1",
+        entryId: "entry-2",
+        status: "dropped",
+        authMode: "mock",
+        user: coOrganizer,
+      })
+    ).resolves.toMatchObject({ status: "dropped" });
+
+    const proxyUpdated = await updateEntryStatus({
+      tournamentId: "t1",
+      entryId: "entry-1",
+      deckItems: buildValidDeck("co-proxy"),
+      authMode: "mock",
+      user: coOrganizer,
+    });
+    expect(proxyUpdated.deckUpdatedBy).toEqual({ id: coOrganizer.id, name: coOrganizer.name });
+    const unlocked = await updateEntryStatus({
+      tournamentId: "t1",
+      entryId: "entry-1",
+      decklistLocked: false,
+      authMode: "mock",
+      user: coOrganizer,
+    });
+    expect(unlocked.deckUnlockedBy).toEqual({ id: coOrganizer.id, name: coOrganizer.name });
+
+    const kicked = await kickEntry({
+      tournamentId: "t1",
+      entryId: "entry-kick",
+      ban: true,
+      authMode: "mock",
+      user: coOrganizer,
+    });
+    expect(kicked).toMatchObject({
+      disposition: "removed",
+      ban: { user: { id: "kick-user" } },
+    });
+    await expect(
+      unbanTournamentUser({
+        tournamentId: "t1",
+        userId: "kick-user",
+        authMode: "mock",
+        user: coOrganizer,
+      })
+    ).resolves.toBeUndefined();
+
+    await expect(
+      updateTournament({
+        id: "t1",
+        title: "管理者更新済み大会",
+        authMode: "mock",
+        user: admin,
+      })
+    ).resolves.toMatchObject({ title: "管理者更新済み大会" });
+  });
+
+  it("allows a co-organizer to generate and edit pairings, enter results, complete, and reopen rounds", async () => {
+    setRegistrationTournament({
+      status: "registration",
+      swissRounds: null,
+      roundTimeMinutes: 30,
+      coOrganizers: [{ id: coOrganizer.id, name: coOrganizer.name }],
+    });
+    const store = readStore();
+    const now = new Date().toISOString();
+    store.entries.t1 = ["1", "2", "3", "4"].map((suffix) => ({
+      id: `entry-${suffix}`,
+      tournamentId: "t1",
+      user: { id: `player-${suffix}`, name: `Player ${suffix}` },
+      deckItems: null,
+      decklistSubmittedAt: null,
+      status: "checked_in",
+      joinedAtRound: 1,
+      createdAt: now,
+    }));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const round = await createNextRound("t1", { authMode: "mock", user: coOrganizer });
+    await expect(
+      fetchTournament("t1", { authMode: "mock", user: coOrganizer })
+    ).resolves.toMatchObject({
+      swissRounds: 2,
+      swissEndCondition: "fixed_rounds",
+    });
+    const editedRound = await updateRoundMatches({
+      roundId: round.id,
+      matches: round.matches,
+      authMode: "mock",
+      user: coOrganizer,
+    });
+    expect(editedRound.matches).toHaveLength(2);
+    await expect(
+      startRoundTimer(round.id, {
+        timerStartedAt: now,
+        authMode: "mock",
+        user: coOrganizer,
+      })
+    ).resolves.toMatchObject({ timerStartedAt: now });
+    for (const match of round.matches) {
+      await reportMatchResult({
+        matchId: match.id,
+        player1Games: 2,
+        player2Games: 0,
+        authMode: "mock",
+        user: coOrganizer,
+      });
+    }
+    await expect(
+      completeRound(round.id, { authMode: "mock", user: coOrganizer })
+    ).resolves.toMatchObject({ status: "completed" });
+    await expect(
+      fetchRoundsForManage("t1", { authMode: "mock", user: coOrganizer })
+    ).resolves.toMatchObject({ rounds: expect.any(Array) });
+    await expect(
+      reopenRound(round.id, { authMode: "mock", user: coOrganizer })
+    ).resolves.toMatchObject({ status: "in_progress" });
+    await expect(
+      deleteRound(round.id, { authMode: "mock", user: coOrganizer })
+    ).resolves.toBeUndefined();
+  });
+
+  it.each([
+    ["大会情報の編集", () => updateTournament({ id: "t1", title: "拒否", authMode: "mock", user: participant })],
+    ["管理用エントリー取得", () => fetchEntries("t1", { authMode: "mock", user: participant })],
+    ["ban一覧取得", () => fetchTournamentBans("t1", { authMode: "mock", user: participant })],
+    ["管理用ラウンド取得", () => fetchRoundsForManage("t1", { authMode: "mock", user: participant })],
+    ["手動参加者追加", () => createManualEntry({ tournamentId: "t1", name: "拒否", authMode: "mock", user: participant })],
+    ["エントリー承認", () => approveEntry({ tournamentId: "t1", entryId: "entry-pending-approve", authMode: "mock", user: participant })],
+    ["エントリー却下", () => rejectEntry({ tournamentId: "t1", entryId: "entry-pending-reject", authMode: "mock", user: participant })],
+    ["参加状態変更", () => updateEntryStatus({ tournamentId: "t1", entryId: "entry-2", status: "dropped", authMode: "mock", user: participant })],
+    ["デッキリストの代理上書き", () => updateEntryStatus({ tournamentId: "t1", entryId: "entry-1", deckItems: buildValidDeck("denied-proxy"), authMode: "mock", user: participant })],
+    ["デッキリストのロック解除", () => updateEntryStatus({ tournamentId: "t1", entryId: "entry-1", decklistLocked: false, authMode: "mock", user: participant })],
+    ["キック・ban", () => kickEntry({ tournamentId: "t1", entryId: "entry-kick", ban: true, authMode: "mock", user: participant })],
+    ["ban解除", () => unbanTournamentUser({ tournamentId: "t1", userId: "banned-user", authMode: "mock", user: participant })],
+    ["ペアリング生成", () => createNextRound("t1", { authMode: "mock", user: participant })],
+    ["ペアリング編集", () => updateRoundMatches({ roundId: "round-auth", matches: [], authMode: "mock", user: participant })],
+    ["結果入力", () => reportMatchResult({ matchId: "match-auth", result: "p1_win", authMode: "mock", user: participant })],
+    ["タイマー開始", () => startRoundTimer("round-auth", { authMode: "mock", user: participant })],
+    ["ラウンド完了", () => completeRound("round-auth", { authMode: "mock", user: participant })],
+    ["ラウンド巻き戻し", () => reopenRound("round-auth", { authMode: "mock", user: participant })],
+    ["ラウンド削除", () => deleteRound("round-auth", { authMode: "mock", user: participant })],
+  ])("rejects a general participant attempting %s", async (_label, operation) => {
+    setManagementAuthorizationTournament();
+    await expect(operation()).rejects.toMatchObject({
+      message: "この大会を管理する権限がありません。",
+      status: 403,
+    });
+  });
+
+  it("keeps co-organizer management and tournament deletion limited to creator and admin", async () => {
+    window.localStorage.setItem(
+      USERS_STORAGE_KEY,
+      JSON.stringify([
+        { id: "new-co", name: "非公開名", nickname: "追加対象", role: "user" },
+      ])
+    );
+    setRegistrationTournament({
+      status: "draft",
+      coOrganizers: [{ id: coOrganizer.id, name: coOrganizer.name }],
+    });
+
+    await expect(
+      addTournamentCoOrganizer({
+        tournamentId: "t1",
+        userId: "new-co",
+        authMode: "mock",
+        user: coOrganizer,
+      })
+    ).rejects.toMatchObject({ status: 403 });
+    await expect(
+      removeTournamentCoOrganizer({
+        tournamentId: "t1",
+        userId: coOrganizer.id,
+        authMode: "mock",
+        user: coOrganizer,
+      })
+    ).rejects.toMatchObject({ status: 403 });
+    await expect(
+      removeTournamentCoOrganizer({
+        tournamentId: "t1",
+        userId: coOrganizer.id,
+        authMode: "mock",
+        user: participant,
+      })
+    ).rejects.toMatchObject({ status: 403 });
+
+    const added = await addTournamentCoOrganizer({
+      tournamentId: "t1",
+      userId: "new-co",
+      authMode: "mock",
+      user: organizer,
+    });
+    expect(added.coOrganizers).toEqual(
+      expect.arrayContaining([{ id: "new-co", name: "追加対象" }])
+    );
+    await expect(
+      removeTournamentCoOrganizer({
+        tournamentId: "t1",
+        userId: organizer.id,
+        authMode: "mock",
+        user: admin,
+      })
+    ).rejects.toMatchObject({ status: 409 });
+    await expect(
+      removeTournamentCoOrganizer({
+        tournamentId: "t1",
+        userId: coOrganizer.id,
+        authMode: "mock",
+        user: organizer,
+      })
+    ).resolves.toMatchObject({ coOrganizers: [{ id: "new-co", name: "追加対象" }] });
+    await expect(
+      removeTournamentCoOrganizer({
+        tournamentId: "t1",
+        userId: "new-co",
+        authMode: "mock",
+        user: admin,
+      })
+    ).resolves.toMatchObject({ coOrganizers: [] });
+    await expect(
+      addTournamentCoOrganizer({
+        tournamentId: "t1",
+        userId: "new-co",
+        authMode: "mock",
+        user: admin,
+      })
+    ).resolves.toMatchObject({
+      coOrganizers: [{ id: "new-co", name: "追加対象" }],
+    });
+
+    await expect(
+      deleteTournament("t1", { authMode: "mock", user: coOrganizer })
+    ).rejects.toMatchObject({ status: 403 });
+    await expect(
+      deleteTournament("t1", { authMode: "mock", user: participant })
+    ).rejects.toMatchObject({ status: 403 });
+    await expect(
+      deleteTournament("t1", { authMode: "mock", user: admin })
+    ).resolves.toBeUndefined();
+
+    setRegistrationTournament({ status: "draft" });
+    await expect(
+      deleteTournament("t1", { authMode: "mock", user: organizer })
+    ).resolves.toBeUndefined();
+  });
 });
