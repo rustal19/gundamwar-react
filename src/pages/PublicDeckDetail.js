@@ -37,39 +37,17 @@ function normalizeMetaText(value) {
   return String(value).trim();
 }
 
-function getFirstMetaText(...values) {
-  return values.map(normalizeMetaText).find(Boolean) || "";
-}
-
 function getOwnerReference(owner) {
   const id = normalizeMetaText(owner?.id);
   const name = normalizeMetaText(owner?.name);
   return id && name ? { id, name } : null;
 }
 
-function getTournamentReference(deck) {
-  const tournament = deck?.tournament;
-  const id = getFirstMetaText(
-    tournament?.id,
-    deck?.tournamentId,
-    deck?.tournament_id
-  );
-  const title = getFirstMetaText(
-    tournament?.title,
-    tournament?.name,
-    deck?.tournamentName,
-    deck?.tournament_name,
-    deck?.tournamentTitle,
-    deck?.tournament_title
-  );
-  return id && title ? { id, title } : null;
-}
-
 function DeckMeta({ deck, mainCount, sideCount }) {
   const owner = getOwnerReference(deck.owner);
   const format = normalizeMetaText(deck.format);
-  const publishedAt = formatDate(deck.publishedAt);
-  const tournament = getTournamentReference(deck);
+  const publishedAt = formatDate(deck.publishedAt || deck.updatedAt);
+  const tournament = deck.tournament;
 
   return (
     <dl className="public-deck-detail-meta" aria-label="デッキ情報">

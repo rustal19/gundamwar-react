@@ -99,7 +99,7 @@ test("欠損している投稿者・フォーマット・公開日・大会名�
     owner: { id: "", name: "名無し" },
     format: null,
     publishedAt: "",
-    updatedAt: "2026-08-02T12:34:00",
+    updatedAt: "",
     tournament: null,
   });
 
@@ -115,4 +115,38 @@ test("欠損している投稿者・フォーマット・公開日・大会名�
   expect(within(meta).queryByText("大会名", { selector: "dt" })).not.toBeInTheDocument();
   expect(within(meta).getByText("枚数", { selector: "dt" })).toBeInTheDocument();
   expect(within(meta).getByText("メイン0 / サイド0")).toBeInTheDocument();
+});
+
+test("公開日が無い場合は更新日を表示する", async () => {
+  const updatedAt = "2026-08-02T12:34:00";
+  fetchPublicDeck.mockResolvedValue({
+    id: "deck-1",
+    title: "更新日フォールバックデッキ",
+    items: [],
+    owner: { id: "", name: "名無し" },
+    format: null,
+    publishedAt: "",
+    updatedAt,
+    tournament: null,
+  });
+
+  const { container } = renderDetail();
+
+  expect(
+    await screen.findByRole("heading", { name: "更新日フォールバックデッキ" })
+  ).toBeInTheDocument();
+  const meta = container.querySelector(".public-deck-detail-meta");
+  expect(meta).toBeInTheDocument();
+  expect(within(meta).getByText("公開日", { selector: "dt" })).toBeInTheDocument();
+  expect(
+    within(meta).getByText(
+      new Date(updatedAt).toLocaleString("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    )
+  ).toBeInTheDocument();
 });
