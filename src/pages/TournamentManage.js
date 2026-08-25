@@ -1206,6 +1206,7 @@ export default function TournamentManage({ compact = false }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [isAccessDenied, setIsAccessDenied] = useState(false);
   const [regulationViolations, setRegulationViolations] = useState([]);
 
   const latestRoundNumber = rounds.length ? rounds[rounds.length - 1].number : null;
@@ -1216,10 +1217,11 @@ export default function TournamentManage({ compact = false }) {
     if (isNew || !isOrganizer) return;
     setIsLoading(true);
     setError("");
+    setIsAccessDenied(false);
     try {
       const [tournament, entryPayload, roundPayload, standingPayload] = await Promise.all([
         fetchTournament(id, { authMode, user }),
-        fetchEntries(id, { authMode }),
+        fetchEntries(id, { authMode, user }),
         fetchRoundsForManage(id, { authMode }),
         fetchStandings(id, { authMode }),
       ]);
@@ -1236,6 +1238,7 @@ export default function TournamentManage({ compact = false }) {
         );
       }
     } catch (loadError) {
+      if (loadError.status === 403) setIsAccessDenied(true);
       setError(loadError.message);
     } finally {
       setIsLoading(false);
@@ -1403,13 +1406,17 @@ export default function TournamentManage({ compact = false }) {
 
   const startTimer = (roundId) => runAction(async () => startRoundTimer(roundId, { authMode }), "タイマーを開始しました。");
 
-  if (!isOrganizer) {
+  if (!isOrganizer || isAccessDenied) {
     return (
       <main className={compact ? "tournament-page compact" : "tournament-page"}>
         <Link to="/tournaments" className="tournament-back-link">
           大会一覧へ
         </Link>
-        <div className="tournament-alert">主催者または管理者のみ利用できます。</div>
+        <div className="tournament-alert">
+          {isAccessDenied
+            ? "この大会を管理する権限がありません。"
+            : "主催者または管理者のみ利用できます。"}
+        </div>
       </main>
     );
   }

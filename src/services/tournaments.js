@@ -23,7 +23,7 @@ function buildApiUrl(path) {
   return API_BASE_URL ? `${API_BASE_URL}${path}` : path;
 }
 
-function readMockUser() {
+function readMockViewer() {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(MOCK_USER_KEY);
@@ -34,11 +34,17 @@ function readMockUser() {
     return {
       id: String(id),
       name: user.displayNickname || user.nickname || "プレイヤー",
+      role: user.role || "user",
     };
   } catch (error) {
     console.warn("Failed to read mock user.", error);
     return null;
   }
+}
+
+function readMockUser() {
+  const viewer = readMockViewer();
+  return viewer ? { id: viewer.id, name: viewer.name } : null;
 }
 
 function getCurrentUser(user) {
@@ -262,6 +268,33 @@ function getTournamentOrThrow(store, tournamentId) {
   const tournament = store.tournaments.find((item) => String(item.id) === id);
   if (!tournament) throw new Error("大会が見つかりません。");
   return tournament;
+}
+
+function createServiceError(message, status) {
+  const error = new Error(message);
+  error.status = status;
+  return error;
+}
+
+function getCurrentViewer(user) {
+  const viewer = user?.id ? user : readMockViewer();
+  if (!viewer?.id) {
+    throw createServiceError("ログインしてから操作してください。", 401);
+  }
+  return {
+    id: String(viewer.id),
+    role: viewer.role || "user",
+  };
+}
+
+function assertCanManageTournament(tournament, viewer) {
+  if (viewer.role === "admin") return;
+  if (viewer.role !== "organizer") {
+    throw createServiceError("主催者または管理者のみ利用できます。", 403);
+  }
+  if (String(tournament.createdBy?.id) !== viewer.id) {
+    throw createServiceError("この大会を管理する権限がありません。", 403);
+  }
 }
 
 function getEntries(store, tournamentId) {
@@ -648,7 +681,7 @@ export async function fetchStandings(id, { authMode, round } = {}) {
       const entry = entries.find((item) => item.id === standing.entryId);
       return {
         ...standing,
-        entry,
+        entry: entry ? { ...entry, deckItems: null } : entry,
       };
     });
     return { items: standings };
@@ -954,10 +987,12 @@ export async function checkInMyEntry({ tournamentId, authMode, user }) {
   });
 }
 
-export async function fetchEntries(tournamentId, { authMode } = {}) {
+export async function fetchEntries(tournamentId, { authMode, user } = {}) {
   if (authMode === "mock") {
+    const viewer = getCurrentViewer(user);
     const store = readStore();
-    getTournamentOrThrow(store, tournamentId);
+    const tournament = getTournamentOrThrow(store, tournamentId);
+    assertCanManageTournament(tournament, viewer);
     return { items: getEntries(store, tournamentId) };
   }
 
