@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { DECKLIST_STATE_LABELS } from "../data/statusLabels";
+import { createTournamentParticipantNameFormatter } from "../utils/tournament/participantDisplayName";
 import { getRoundLabel, getRoundLabelForNumber } from "../utils/tournament/roundLabel";
 
 function toLocalDateKey(value) {
@@ -94,12 +95,12 @@ function findMyMatch(round, myEntryId) {
   );
 }
 
-function opponentName(match, entries, myEntryId) {
+function opponentName(match, entries, myEntryId, formatParticipantName) {
   if (!match) return "-";
   const isPlayer1 = String(match.player1EntryId) === String(myEntryId);
   const opponentId = isPlayer1 ? match.player2EntryId : match.player1EntryId;
   if (opponentId == null) return "不戦勝";
-  return findEntry(entries, opponentId)?.user?.name || "-";
+  return formatParticipantName(findEntry(entries, opponentId), "-");
 }
 
 function hasGameScore(match) {
@@ -216,7 +217,7 @@ function CheckInConfirmDialog({ decklistState, isSubmitting, onCancel, onConfirm
   );
 }
 
-function MatchHistory({ rounds, entries, myEntry }) {
+function MatchHistory({ rounds, entries, myEntry, formatParticipantName }) {
   const [open, setOpen] = useState(false);
   if (!myEntry || !Array.isArray(rounds) || rounds.length === 0) return null;
 
@@ -227,7 +228,7 @@ function MatchHistory({ rounds, entries, myEntry }) {
       return {
         round,
         match,
-        opponent: opponentName(match, entries, myEntry.id),
+        opponent: opponentName(match, entries, myEntry.id, formatParticipantName),
         result: myResultInfo(match, myEntry.id),
       };
     })
@@ -442,9 +443,16 @@ export default function TournamentMyStatus({
   onCheckIn,
   submitDisabled,
   isSubmitting,
+  formatParticipantName: providedParticipantNameFormatter,
 }) {
   const [now, setNow] = useState(() => new Date());
   const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false);
+  const defaultParticipantNameFormatter = useMemo(
+    () => createTournamentParticipantNameFormatter(entries),
+    [entries]
+  );
+  const formatParticipantName =
+    providedParticipantNameFormatter || defaultParticipantNameFormatter;
   const phase = getMyStatusPhase(tournament, myEntry, rounds, now);
   const needsDeckWarning = Boolean(
     tournament?.decklistRequired && myEntry?.decklistState === "none"
@@ -608,7 +616,12 @@ export default function TournamentMyStatus({
             {getRoundLabelForNumber(myEntry.joinedAtRound || 1, rounds, tournament)}まで不戦敗として追加されます。
           </p>
           <DecklistStatusNotice entry={myEntry} canUpdateDeck={canEditDecklist} />
-          <MatchHistory rounds={rounds} entries={entries} myEntry={myEntry} />
+          <MatchHistory
+            rounds={rounds}
+            entries={entries}
+            myEntry={myEntry}
+            formatParticipantName={formatParticipantName}
+          />
         </div>
         {decklistEntryForm}
       </section>
@@ -666,7 +679,9 @@ export default function TournamentMyStatus({
             <>
               <div className="tournament-my-table">{myMatch?.tableNo ? `卓 ${myMatch.tableNo}` : "卓未定"}</div>
               <h2>{getRoundLabel(currentRound, rounds)}</h2>
-              <p>対戦相手: {opponentName(myMatch, entries, myEntry.id)}</p>
+              <p>
+                対戦相手: {opponentName(myMatch, entries, myEntry.id, formatParticipantName)}
+              </p>
               {countdown ? <p className="tournament-round-timer">{countdown.label}</p> : null}
             </>
           )}
@@ -682,7 +697,12 @@ export default function TournamentMyStatus({
             <span>結果は主催者が登録します。</span>
           )}
         </div>
-        <MatchHistory rounds={rounds} entries={entries} myEntry={myEntry} />
+        <MatchHistory
+          rounds={rounds}
+          entries={entries}
+          myEntry={myEntry}
+          formatParticipantName={formatParticipantName}
+        />
       </section>
     );
   }
@@ -719,7 +739,14 @@ export default function TournamentMyStatus({
           </button>
         </div>
       ) : null)}
-      {myEntry ? <MatchHistory rounds={rounds} entries={entries} myEntry={myEntry} /> : null}
+      {myEntry ? (
+        <MatchHistory
+          rounds={rounds}
+          entries={entries}
+          myEntry={myEntry}
+          formatParticipantName={formatParticipantName}
+        />
+      ) : null}
     </section>
   );
 }

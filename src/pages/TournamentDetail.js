@@ -25,6 +25,7 @@ import {
 } from "../data/statusLabels";
 import { FORMAT_PRESETS } from "../data/formats";
 import { defaultRegulation, validateDeck } from "../utils/deckValidation";
+import { createTournamentParticipantNameFormatter } from "../utils/tournament/participantDisplayName";
 import { getRoundLabel } from "../utils/tournament/roundLabel";
 import { computeStandings } from "../utils/tournament/standings";
 import NotFound from "./NotFound";
@@ -82,8 +83,9 @@ function findEntry(entries, entryId) {
   return entries.find((entry) => entry.id === entryId) || null;
 }
 
-function UserNameLink({ user, fallback = "-" }) {
-  const label = user?.name || fallback;
+function UserNameLink({ entry, formatParticipantName, fallback = "-" }) {
+  const user = entry?.user;
+  const label = formatParticipantName(entry, fallback);
   return user?.id ? <Link to={`/users/${user.id}`}>{label}</Link> : <span>{label}</span>;
 }
 
@@ -246,6 +248,10 @@ export default function TournamentDetail({ compact = false }) {
   const entries = useMemo(() => tournament?.entries || [], [tournament?.entries]);
   const activeEntryCount = useMemo(
     () => entries.filter((entry) => entry.status !== "dropped").length,
+    [entries]
+  );
+  const formatParticipantName = useMemo(
+    () => createTournamentParticipantNameFormatter(entries),
     [entries]
   );
   const visibleTabs = useMemo(
@@ -538,7 +544,7 @@ export default function TournamentDetail({ compact = false }) {
           {entries.map((entry, index) => (
             <tr key={entry.id}>
               <td className="num">{index + 1}</td>
-              <td><UserNameLink user={entry.user} /></td>
+              <td><UserNameLink entry={entry} formatParticipantName={formatParticipantName} /></td>
               <td>{ENTRY_STATUS_LABELS[entry.status] || entry.status}</td>
               <td>
                 {entry.deckItems ? (
@@ -567,7 +573,9 @@ export default function TournamentDetail({ compact = false }) {
             .filter((entry) => Array.isArray(entry.deckItems) && entry.deckItems.length > 0)
             .map((entry) => (
               <section key={entry.id} id={`decklist-${entry.id}`} className="tournament-decklist">
-                <h3><UserNameLink user={entry.user} /> のデッキリスト</h3>
+                <h3>
+                  <UserNameLink entry={entry} formatParticipantName={formatParticipantName} /> のデッキリスト
+                </h3>
                 <div className="tournament-deck-summary">
                   メイン {countCards(entry.deckItems, "main")} / サイド {countCards(entry.deckItems, "side")}
                 </div>
@@ -616,11 +624,15 @@ export default function TournamentDetail({ compact = false }) {
                     <tr key={match.id} className={isMyMatch ? "my-match" : ""}>
                       <td className="num">{match.tableNo || "-"}</td>
                       <td>
-                        <UserNameLink user={players.p1?.user} />
+                        <UserNameLink entry={players.p1} formatParticipantName={formatParticipantName} />
                         {match.player1EntryId === myEntry?.id ? "（あなた）" : ""}
                       </td>
                       <td>
-                        <UserNameLink user={players.p2?.user} fallback="不戦勝" />
+                        <UserNameLink
+                          entry={players.p2}
+                          formatParticipantName={formatParticipantName}
+                          fallback="不戦勝"
+                        />
                         {match.player2EntryId === myEntry?.id ? "（あなた）" : ""}
                       </td>
                       <td>{matchScoreLabel(match)}</td>
@@ -661,8 +673,16 @@ export default function TournamentDetail({ compact = false }) {
                   return (
                     <tr key={match.id}>
                       <td className="num">{match.tableNo || "-"}</td>
-                      <td><UserNameLink user={players.p1?.user} /></td>
-                      <td><UserNameLink user={players.p2?.user} fallback="不戦勝" /></td>
+                      <td>
+                        <UserNameLink entry={players.p1} formatParticipantName={formatParticipantName} />
+                      </td>
+                      <td>
+                        <UserNameLink
+                          entry={players.p2}
+                          formatParticipantName={formatParticipantName}
+                          fallback="不戦勝"
+                        />
+                      </td>
                       <td>{resultLabel(match.result)}</td>
                     </tr>
                   );
@@ -716,7 +736,13 @@ export default function TournamentDetail({ compact = false }) {
                   return (
                     <tr key={standing.entryId}>
                       <td className="num">{standing.rank}</td>
-                      <td><UserNameLink user={entry?.user} fallback={standing.entryId} /></td>
+                      <td>
+                        <UserNameLink
+                          entry={entry}
+                          formatParticipantName={formatParticipantName}
+                          fallback={standing.entryId}
+                        />
+                      </td>
                       <td className="num">{standing.wins}</td>
                       <td className="num">{standing.losses}</td>
                       <td className="num">{standing.draws}</td>
@@ -793,6 +819,7 @@ export default function TournamentDetail({ compact = false }) {
         onCheckIn={checkInEntry}
         submitDisabled={submitDisabled}
         isSubmitting={isSubmitting}
+        formatParticipantName={formatParticipantName}
       />
 
       {message ? <div className="tournament-success">{message}</div> : null}

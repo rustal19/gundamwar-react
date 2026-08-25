@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { getRoundLabel } from "../utils/tournament/roundLabel";
+import { createTournamentParticipantNameFormatter } from "../utils/tournament/participantDisplayName";
 
 function findEntry(entries, entryId) {
   return (Array.isArray(entries) ? entries : []).find((entry) => entry.id === entryId) || null;
@@ -13,10 +14,10 @@ function winnerEntryId(match) {
   return null;
 }
 
-function playerName(entries, entryId) {
+function playerName(entries, entryId, formatParticipantName) {
   if (entryId == null) return "未定";
   const entry = findEntry(entries, entryId);
-  return entry?.user?.name || entryId;
+  return formatParticipantName(entry, entryId);
 }
 
 function resultLabel(result) {
@@ -37,6 +38,10 @@ function matchScoreLabel(match) {
 }
 
 export default function Bracket({ rounds, entries, showResults = false }) {
+  const formatParticipantName = useMemo(
+    () => createTournamentParticipantNameFormatter(entries),
+    [entries]
+  );
   const topCutRounds = (Array.isArray(rounds) ? rounds : [])
     .filter((round) => round.stage === "top_cut")
     .slice()
@@ -81,7 +86,7 @@ export default function Bracket({ rounds, entries, showResults = false }) {
                             .filter(Boolean)
                             .join(" ")}
                         >
-                          <span>{playerName(entries, entryId)}</span>
+                          <span>{playerName(entries, entryId, formatParticipantName)}</span>
                           {isWinner ? <strong>✓</strong> : null}
                         </div>
                       );
