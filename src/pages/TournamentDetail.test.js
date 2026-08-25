@@ -105,7 +105,7 @@ test("レギュレーション枚数は同値を単一表記、異なる値を�
   expect(formatCardCountRange(50, 60)).toBe("50 - 60枚");
 });
 
-test("大会情報のレギュレーションに枚数単位を表示する", async () => {
+test("大会情報のレギュレーションにデッキ枚数を表示し同名上限は表示しない", async () => {
   mockTournament = registrationTournament({
     regulation: { mainMin: 50, mainMax: 50, sideSize: 10, maxCopies: 3 },
   });
@@ -114,7 +114,8 @@ test("大会情報のレギュレーションに枚数単位を表示する", as
 
   expect(await screen.findByText("50枚")).toBeInTheDocument();
   expect(screen.getByText("10枚")).toBeInTheDocument();
-  expect(screen.getByText("3枚")).toBeInTheDocument();
+  expect(screen.queryByText("同名上限")).not.toBeInTheDocument();
+  expect(screen.queryByText("3枚")).not.toBeInTheDocument();
   expect(screen.queryByText("50 - 50")).not.toBeInTheDocument();
 });
 

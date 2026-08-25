@@ -469,10 +469,6 @@ export default function TournamentDetail({ compact = false }) {
             <dt>サイド</dt>
             <dd>{regulation.sideSize}枚</dd>
           </div>
-          <div>
-            <dt>同名上限</dt>
-            <dd>{regulation.maxCopies}枚</dd>
-          </div>
           {regulationNote ? (
             <div>
               <dt>補足</dt>
