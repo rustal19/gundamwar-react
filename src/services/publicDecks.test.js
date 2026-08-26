@@ -425,6 +425,172 @@ describe("publicDecks mock service", () => {
     expect(result.items[0]).toMatchObject({ id: "saved:other", format: "その他" });
   });
 
+  test("採用カード・プレイヤー・大会・フォーマットを両系統へ単独またはANDで適用する", async () => {
+    const sharedCard = {
+      cardId: "100000001",
+      count: 2,
+      card: { cardId: "100000001", name: "共通採用カード" },
+      zone: "main",
+    };
+    window.localStorage.setItem(
+      PUBLIC_STORAGE_KEY,
+      JSON.stringify([
+        {
+          id: "saved-match",
+          title: "保存アムロの青デッキ",
+          isPublic: true,
+          description: "複合検索対象",
+          format: "スタンダード",
+          publishedAt: "2026-02-01T00:00:00.000Z",
+          owner: { id: "saved-player", name: "保存アムロ" },
+          items: [sharedCard],
+          tournamentName: "保存側の古い大会参照",
+        },
+        {
+          id: "saved-zero",
+          title: "0枚のデッキ",
+          isPublic: true,
+          format: "スタンダード",
+          publishedAt: "2026-01-01T00:00:00.000Z",
+          owner: { id: "zero-player", name: "別プレイヤー" },
+          items: [{ ...sharedCard, count: 0 }],
+        },
+      ])
+    );
+    const publicTournament = tournament({
+      id: "search-public",
+      title: "春の公開大会",
+      startsAt: "2026-03-01T00:00:00.000Z",
+    });
+    const privateTournament = tournament({
+      id: "search-private",
+      title: "春の非公開大会",
+      decklistsPublic: false,
+      startsAt: "2026-04-01T00:00:00.000Z",
+    });
+    const activeTournament = tournament({
+      id: "search-active",
+      title: "春の進行中大会",
+      status: "in_progress",
+      startsAt: "2026-05-01T00:00:00.000Z",
+    });
+    writeTournamentStore({
+      tournaments: [publicTournament, privateTournament, activeTournament],
+      entries: {
+        [publicTournament.id]: [
+          tournamentEntry({
+            id: "search-public-entry",
+            tournamentId: publicTournament.id,
+            user: { id: "tournament-player", name: "大会アムロ" },
+            deckItems: [sharedCard],
+          }),
+        ],
+        [privateTournament.id]: [
+          tournamentEntry({
+            id: "search-private-entry",
+            tournamentId: privateTournament.id,
+            user: { id: "private-player", name: "非公開アムロ" },
+            deckItems: [sharedCard],
+          }),
+        ],
+        [activeTournament.id]: [
+          tournamentEntry({
+            id: "search-active-entry",
+            tournamentId: activeTournament.id,
+            user: { id: "active-player", name: "進行中アムロ" },
+            deckItems: [sharedCard],
+          }),
+        ],
+      },
+    });
+
+    const byCard = await fetchPublicDecks({
+      authMode: "mock",
+      cardId: "100000001",
+    });
+    expect(byCard.items.map((deck) => deck.id)).toEqual([
+      "entry:search-public-entry",
+      "saved:saved-match",
+    ]);
+
+    const byPlayer = await fetchPublicDecks({ authMode: "mock", playerName: "アムロ" });
+    expect(byPlayer.items.map((deck) => deck.id)).toEqual([
+      "entry:search-public-entry",
+      "saved:saved-match",
+    ]);
+
+    const byTournament = await fetchPublicDecks({
+      authMode: "mock",
+      tournamentName: "春の公開",
+    });
+    expect(byTournament.items.map((deck) => deck.id)).toEqual([
+      "entry:search-public-entry",
+    ]);
+
+    const byFormat = await fetchPublicDecks({ authMode: "mock", format: "スタンダード" });
+    expect(byFormat.items.map((deck) => deck.id)).toEqual([
+      "entry:search-public-entry",
+      "saved:saved-match",
+      "saved:saved-zero",
+    ]);
+
+    const combined = await fetchPublicDecks({
+      authMode: "mock",
+      query: "アムロ",
+      format: "スタンダード",
+      cardId: "100000001",
+      playerName: "大会アム",
+      tournamentName: "公開大会",
+    });
+    expect(combined.items.map((deck) => deck.id)).toEqual([
+      "entry:search-public-entry",
+    ]);
+
+    const noMatch = await fetchPublicDecks({
+      authMode: "mock",
+      cardId: "999999999",
+      playerName: "該当なし",
+    });
+    expect(noMatch).toMatchObject({ items: [], total: 0, page: 1, pageSize: 20 });
+    expect(byCard.items.map((deck) => deck.id)).not.toContain("entry:search-private-entry");
+    expect(byCard.items.map((deck) => deck.id)).not.toContain("entry:search-active-entry");
+  });
+
+  test("APIモードは追加検索条件を同じクエリ名で転送する", async () => {
+    const originalFetch = global.fetch;
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ items: [], total: 0, page: 2, pageSize: 20 }),
+    });
+
+    try {
+      await fetchPublicDecks({
+        authMode: "api",
+        page: 2,
+        query: " 青単 ",
+        format: "スタンダード",
+        cardId: "100000001",
+        playerName: " アムロ ",
+        tournamentName: " 春の大会 ",
+      });
+
+      const [requestUrl] = global.fetch.mock.calls[0];
+      const url = new URL(requestUrl, "http://localhost");
+      expect(url.pathname).toBe("/api/public-decks");
+      expect(Object.fromEntries(url.searchParams.entries())).toEqual({
+        page: "2",
+        query: "青単",
+        format: "スタンダード",
+        cardId: "100000001",
+        playerName: "アムロ",
+        tournamentName: "春の大会",
+      });
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
   test("保存デッキ詳細は大会参照を破棄し、非公開デッキを隠す", async () => {
     window.localStorage.setItem(
       PUBLIC_STORAGE_KEY,

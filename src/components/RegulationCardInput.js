@@ -133,7 +133,14 @@ function displayCardLabel(card) {
   return card.name ? `${card.name} (${card.cardId})` : `カード名未取得 (${card.cardId})`;
 }
 
-export default function RegulationCardInput({ idPrefix, label, value, onChange }) {
+export default function RegulationCardInput({
+  idPrefix,
+  label,
+  value,
+  onChange,
+  allowBulk = true,
+  maxSelectedCards = Infinity,
+}) {
   const state = value || EMPTY_STATE;
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -235,15 +242,28 @@ export default function RegulationCardInput({ idPrefix, label, value, onChange }
   const selectCard = (card, rowId = "") => {
     const normalized = normalizeSelectedCard(card);
     if (!normalized) return;
-    onChange((current) => ({
-      ...current,
-      selectedCards: addSelectedCard(current.selectedCards, normalized),
-      rows: current.rows.filter((row) =>
-        rowId
-          ? row.id !== rowId
-          : row.input !== normalized.name && row.input !== normalized.cardId
-      ),
-    }));
+    onChange((current) => {
+      const selectedCards = addSelectedCard(current.selectedCards, normalized);
+      const parsedMaximum = Number(maxSelectedCards);
+      const normalizedMaximum = Number.isFinite(parsedMaximum)
+        ? Math.max(0, Math.floor(parsedMaximum))
+        : null;
+      const limitedCards =
+        normalizedMaximum != null
+          ? normalizedMaximum === 0
+            ? []
+            : selectedCards.slice(-normalizedMaximum)
+          : selectedCards;
+      return {
+        ...current,
+        selectedCards: limitedCards,
+        rows: current.rows.filter((row) =>
+          rowId
+            ? row.id !== rowId
+            : row.input !== normalized.name && row.input !== normalized.cardId
+        ),
+      };
+    });
     if (!rowId) {
       setSearchQuery("");
       setSearchResults([]);
@@ -415,25 +435,27 @@ export default function RegulationCardInput({ idPrefix, label, value, onChange }
         )}
       </div>
 
-      <div className="regulation-card-bulk">
-        <label htmlFor={`${idPrefix}-bulk`}>{label}一括入力</label>
-        <textarea
-          id={`${idPrefix}-bulk`}
-          value={state.draft}
-          onChange={(event) =>
-            onChange((current) => ({ ...current, draft: event.target.value }))
-          }
-          placeholder="カード名を1行に1件ずつ貼り付け"
-          aria-describedby={bulkHelpId}
-          aria-invalid={Boolean(state.draft.trim())}
-        />
-        <p id={bulkHelpId} className="tournament-muted">
-          カード名を改行区切りで入力してください。カードIDの直接検索には対応していないため、IDはカード名に直して解決してください。
-        </p>
-        <button type="button" onClick={processDraft} disabled={!state.draft.trim()}>
-          {label}を一括解決
-        </button>
-      </div>
+      {allowBulk ? (
+        <div className="regulation-card-bulk">
+          <label htmlFor={`${idPrefix}-bulk`}>{label}一括入力</label>
+          <textarea
+            id={`${idPrefix}-bulk`}
+            value={state.draft}
+            onChange={(event) =>
+              onChange((current) => ({ ...current, draft: event.target.value }))
+            }
+            placeholder="カード名を1行に1件ずつ貼り付け"
+            aria-describedby={bulkHelpId}
+            aria-invalid={Boolean(state.draft.trim())}
+          />
+          <p id={bulkHelpId} className="tournament-muted">
+            カード名を改行区切りで入力してください。カードIDの直接検索には対応していないため、IDはカード名に直して解決してください。
+          </p>
+          <button type="button" onClick={processDraft} disabled={!state.draft.trim()}>
+            {label}を一括解決
+          </button>
+        </div>
+      ) : null}
 
       {state.rows.length ? (
         <div className="regulation-card-unresolved" role="alert">

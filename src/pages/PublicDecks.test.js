@@ -6,6 +6,7 @@ import {
   TENSAKU_FORMAT_NAMES,
 } from "../data/formatGroups";
 import { OTHER_FORMAT_NAME } from "../data/formats";
+import { searchCardsByName } from "../services/cardSearch";
 import { fetchPublicDecks } from "../services/publicDecks";
 import PublicDecks from "./PublicDecks";
 
@@ -17,6 +18,24 @@ jest.mock("../services/publicDecks", () => ({
   ...jest.requireActual("../services/publicDecks"),
   fetchPublicDecks: jest.fn(),
 }));
+
+jest.mock("../services/cardSearch", () => ({
+  searchCardsByName: jest.fn(),
+  resolveCardReference: jest.fn(),
+}));
+
+function expectedFetch(overrides = {}) {
+  return {
+    page: 1,
+    query: "",
+    format: "",
+    cardId: "",
+    playerName: "",
+    tournamentName: "",
+    authMode: "mock",
+    ...overrides,
+  };
+}
 
 function createDecks(start, count) {
   return Array.from({ length: count }, (_, index) => {
@@ -62,6 +81,7 @@ function getLocationParams() {
 beforeEach(() => {
   jest.clearAllMocks();
   window.scrollTo = jest.fn();
+  searchCardsByName.mockResolvedValue({ cards: [], total: 0, isTruncated: false });
 });
 
 test("20件以下の公開デッキをすべて表示し、不要なページャーを出さない", async () => {
@@ -126,8 +146,13 @@ test("保存デッキと大会デッキをバッジで区別し、大会メタ�
   ).toHaveAttribute("href", "/tournaments/tournament-2");
   expect(within(deckCards[1]).getByText("2位")).toBeInTheDocument();
   expect(within(deckCards[1]).getByText("参加32人")).toBeInTheDocument();
-  expect(screen.getByPlaceholderText("デッキ名・大会名・説明・ユーザー名で検索"))
+  expect(screen.getByPlaceholderText("デッキ名・説明などを検索"))
     .toBeInTheDocument();
+  expect(
+    screen.getByText(
+      "大会名は大会デッキのみを対象に検索します。保存デッキは大会情報を持たないため対象外です。"
+    )
+  ).toBeInTheDocument();
 });
 
 test("各公開デッキのメインとサイドの枚数を分けて表示する", async () => {
@@ -153,6 +178,106 @@ test("各公開デッキのメインとサイドの枚数を分けて表示す�
   expect(within(deckCards[2]).getByText("メイン0 / サイド0")).toBeInTheDocument();
 });
 
+test("採用カード・プレイヤー名・大会名を候補選択からURLと取得条件へ反映する", async () => {
+  fetchPublicDecks.mockResolvedValue({
+    items: [],
+    total: 0,
+    page: 1,
+    pageSize: 20,
+  });
+  searchCardsByName.mockResolvedValue({
+    cards: [{ cardId: "100000005", name: "検索カード" }],
+    total: 1,
+    isTruncated: false,
+  });
+
+  renderPublicDecks("/decks?format=スタンダード&page=4");
+  await waitFor(() => expect(fetchPublicDecks).toHaveBeenCalled());
+
+  fireEvent.change(screen.getByLabelText("キーワード"), {
+    target: { value: "青単" },
+  });
+  fireEvent.change(screen.getByLabelText("プレイヤー名"), {
+    target: { value: "  アムロ  " },
+  });
+  fireEvent.change(screen.getByLabelText("大会名"), {
+    target: { value: "  春の大会  " },
+  });
+  fireEvent.change(screen.getByLabelText("採用カードを検索"), {
+    target: { value: "検索カード" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "採用カードの候補を検索" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "検索カード (100000005)" })
+  );
+  fireEvent.click(screen.getByRole("button", { name: "検索" }));
+
+  await waitFor(() =>
+    expect(fetchPublicDecks).toHaveBeenLastCalledWith(expectedFetch({
+      page: 1,
+      query: "青単",
+      format: "スタンダード",
+      cardId: "100000005",
+      playerName: "アムロ",
+      tournamentName: "春の大会",
+    }))
+  );
+  expect(getLocationParams().get("query")).toBe("青単");
+  expect(getLocationParams().get("format")).toBe("スタンダード");
+  expect(getLocationParams().get("cardId")).toBe("100000005");
+  expect(getLocationParams().get("cardName")).toBe("検索カード");
+  expect(getLocationParams().get("playerName")).toBe("アムロ");
+  expect(getLocationParams().get("tournamentName")).toBe("春の大会");
+  expect(getLocationParams().get("page")).toBe("1");
+});
+
+test("追加検索条件をURLから復元し、削除後は条件なしの空状態へ戻せる", async () => {
+  fetchPublicDecks.mockResolvedValue({
+    items: [],
+    total: 0,
+    page: 2,
+    pageSize: 20,
+  });
+
+  renderPublicDecks(
+    "/decks?query=赤単&cardId=100000006&cardName=復元カード&playerName=シャア&tournamentName=夏季杯&page=2"
+  );
+
+  await waitFor(() =>
+    expect(fetchPublicDecks).toHaveBeenCalledWith(expectedFetch({
+      page: 2,
+      query: "赤単",
+      cardId: "100000006",
+      playerName: "シャア",
+      tournamentName: "夏季杯",
+    }))
+  );
+  expect(screen.getByLabelText("キーワード")).toHaveValue("赤単");
+  expect(screen.getByLabelText("プレイヤー名")).toHaveValue("シャア");
+  expect(screen.getByLabelText("大会名")).toHaveValue("夏季杯");
+  expect(screen.getByText("復元カード (100000006)")).toBeInTheDocument();
+  expect(await screen.findByText("検索結果がありません。")).toBeInTheDocument();
+
+  fireEvent.change(screen.getByLabelText("キーワード"), { target: { value: "" } });
+  fireEvent.change(screen.getByLabelText("プレイヤー名"), { target: { value: "" } });
+  fireEvent.change(screen.getByLabelText("大会名"), { target: { value: "" } });
+  fireEvent.click(
+    screen.getByRole("button", { name: "復元カード (100000006) を削除" })
+  );
+  fireEvent.click(screen.getByRole("button", { name: "検索" }));
+
+  await waitFor(() =>
+    expect(fetchPublicDecks).toHaveBeenLastCalledWith(expectedFetch())
+  );
+  expect(getLocationParams().has("query")).toBe(false);
+  expect(getLocationParams().has("cardId")).toBe(false);
+  expect(getLocationParams().has("cardName")).toBe(false);
+  expect(getLocationParams().has("playerName")).toBe(false);
+  expect(getLocationParams().has("tournamentName")).toBe(false);
+  expect(getLocationParams().get("page")).toBe("1");
+  expect(await screen.findByText("公開デッキはありません。")).toBeInTheDocument();
+});
+
 test("20件を超える公開デッキは条件を維持したまま次ページへ移動できる", async () => {
   fetchPublicDecks.mockImplementation(({ page }) =>
     Promise.resolve({
@@ -164,18 +289,24 @@ test("20件を超える公開デッキは条件を維持したまま次ページ
   );
 
   render(
-    <MemoryRouter initialEntries={["/decks?query=Blue&format=スタンダード&page=1"]}>
+    <MemoryRouter
+      initialEntries={[
+        "/decks?query=Blue&format=スタンダード&cardId=100000001&cardName=採用カード&playerName=投稿者&tournamentName=公開大会&page=1",
+      ]}
+    >
       <PublicDecks />
     </MemoryRouter>
   );
 
   await waitFor(() =>
-    expect(fetchPublicDecks).toHaveBeenCalledWith({
+    expect(fetchPublicDecks).toHaveBeenCalledWith(expectedFetch({
       page: 1,
       query: "Blue",
       format: "スタンダード",
-      authMode: "mock",
-    })
+      cardId: "100000001",
+      playerName: "投稿者",
+      tournamentName: "公開大会",
+    }))
   );
   await waitFor(() => expect(screen.getAllByRole("article")).toHaveLength(20));
   expect(screen.getAllByText("1 / 2")).toHaveLength(2);
@@ -183,12 +314,14 @@ test("20件を超える公開デッキは条件を維持したまま次ページ
   fireEvent.click(screen.getAllByRole("button", { name: "次へ" })[0]);
 
   await waitFor(() =>
-    expect(fetchPublicDecks).toHaveBeenLastCalledWith({
+    expect(fetchPublicDecks).toHaveBeenLastCalledWith(expectedFetch({
       page: 2,
       query: "Blue",
       format: "スタンダード",
-      authMode: "mock",
-    })
+      cardId: "100000001",
+      playerName: "投稿者",
+      tournamentName: "公開大会",
+    }))
   );
   await waitFor(() => expect(screen.getAllByRole("article")).toHaveLength(5));
   expect(screen.getAllByText("2 / 2")).toHaveLength(2);
@@ -207,15 +340,19 @@ test("フォーマットタブ切替で検索語を維持し、1ページ目へ�
     pageSize: 20,
   });
 
-  renderPublicDecks("/decks?query=Blue&format=スタンダード&page=3");
+  renderPublicDecks(
+    "/decks?query=Blue&format=スタンダード&cardId=100000001&cardName=採用カード&playerName=投稿者&tournamentName=公開大会&page=3"
+  );
 
   await waitFor(() =>
-    expect(fetchPublicDecks).toHaveBeenCalledWith({
+    expect(fetchPublicDecks).toHaveBeenCalledWith(expectedFetch({
       page: 3,
       query: "Blue",
       format: "スタンダード",
-      authMode: "mock",
-    })
+      cardId: "100000001",
+      playerName: "投稿者",
+      tournamentName: "公開大会",
+    }))
   );
   expect(screen.getByRole("tab", { name: "スタンダード" })).toHaveAttribute(
     "aria-selected",
@@ -229,12 +366,14 @@ test("フォーマットタブ切替で検索語を維持し、1ページ目へ�
   });
 
   await waitFor(() =>
-    expect(fetchPublicDecks).toHaveBeenLastCalledWith({
+    expect(fetchPublicDecks).toHaveBeenLastCalledWith(expectedFetch({
       page: 1,
       query: "Blue",
       format: KANSAI_CLASSIC_FORMAT_NAME,
-      authMode: "mock",
-    })
+      cardId: "100000001",
+      playerName: "投稿者",
+      tournamentName: "公開大会",
+    }))
   );
   expect(screen.getByRole("tab", { name: "クラシック" })).toHaveAttribute(
     "aria-selected",
@@ -244,17 +383,22 @@ test("フォーマットタブ切替で検索語を維持し、1ページ目へ�
   await waitFor(() => expect(screen.getByRole("searchbox")).toHaveValue("Blue"));
   expect(getLocationParams().get("query")).toBe("Blue");
   expect(getLocationParams().get("format")).toBe(KANSAI_CLASSIC_FORMAT_NAME);
+  expect(getLocationParams().get("cardId")).toBe("100000001");
+  expect(getLocationParams().get("playerName")).toBe("投稿者");
+  expect(getLocationParams().get("tournamentName")).toBe("公開大会");
   expect(getLocationParams().get("page")).toBe("1");
 
   fireEvent.click(screen.getByRole("tab", { name: "すべて" }));
 
   await waitFor(() =>
-    expect(fetchPublicDecks).toHaveBeenLastCalledWith({
+    expect(fetchPublicDecks).toHaveBeenLastCalledWith(expectedFetch({
       page: 1,
       query: "Blue",
       format: "",
-      authMode: "mock",
-    })
+      cardId: "100000001",
+      playerName: "投稿者",
+      tournamentName: "公開大会",
+    }))
   );
   expect(getLocationParams().has("format")).toBe(false);
   expect(getLocationParams().get("page")).toBe("1");
@@ -274,12 +418,11 @@ test("添削杯タブ内で開催回を選び、URLと取得条件へ反映で�
   fireEvent.click(screen.getByRole("tab", { name: "添削杯" }));
 
   await waitFor(() =>
-    expect(fetchPublicDecks).toHaveBeenLastCalledWith({
+    expect(fetchPublicDecks).toHaveBeenLastCalledWith(expectedFetch({
       page: 1,
       query: "Blue",
       format: TENSAKU_FORMAT_NAMES[0],
-      authMode: "mock",
-    })
+    }))
   );
   expect(screen.getByRole("tab", { name: "添削杯" })).toHaveAttribute(
     "aria-selected",
@@ -292,12 +435,11 @@ test("添削杯タブ内で開催回を選び、URLと取得条件へ反映で�
   });
 
   await waitFor(() =>
-    expect(fetchPublicDecks).toHaveBeenLastCalledWith({
+    expect(fetchPublicDecks).toHaveBeenLastCalledWith(expectedFetch({
       page: 1,
       query: "Blue",
       format: TENSAKU_FORMAT_NAMES[2],
-      authMode: "mock",
-    })
+    }))
   );
   expect(getLocationParams().get("format")).toBe(TENSAKU_FORMAT_NAMES[2]);
   expect(getLocationParams().get("page")).toBe("1");
@@ -318,19 +460,18 @@ test("添削杯の開催回・ページ・検索語をURLから復元し、空�
   );
 
   await waitFor(() =>
-    expect(fetchPublicDecks).toHaveBeenCalledWith({
+    expect(fetchPublicDecks).toHaveBeenCalledWith(expectedFetch({
       page: 2,
       query: "赤単",
       format: restoredFormat,
-      authMode: "mock",
-    })
+    }))
   );
   expect(screen.getByRole("tab", { name: "添削杯" })).toHaveAttribute(
     "aria-selected",
     "true"
   );
   expect(screen.getByLabelText("添削杯の開催回")).toHaveValue(restoredFormat);
-  expect(await screen.findByText("公開デッキはありません。")).toBeInTheDocument();
+  expect(await screen.findByText("検索結果がありません。")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "次へ" })).not.toBeInTheDocument();
 
   fireEvent.change(screen.getByLabelText("添削杯の開催回"), {
@@ -338,12 +479,11 @@ test("添削杯の開催回・ページ・検索語をURLから復元し、空�
   });
 
   await waitFor(() =>
-    expect(fetchPublicDecks).toHaveBeenLastCalledWith({
+    expect(fetchPublicDecks).toHaveBeenLastCalledWith(expectedFetch({
       page: 1,
       query: "赤単",
       format: changedFormat,
-      authMode: "mock",
-    })
+    }))
   );
   expect(getLocationParams().get("page")).toBe("1");
 
@@ -351,12 +491,11 @@ test("添削杯の開催回・ページ・検索語をURLから復元し、空�
   fireEvent.click(screen.getByRole("button", { name: "検索" }));
 
   await waitFor(() =>
-    expect(fetchPublicDecks).toHaveBeenLastCalledWith({
+    expect(fetchPublicDecks).toHaveBeenLastCalledWith(expectedFetch({
       page: 1,
       query: "青赤",
       format: changedFormat,
-      authMode: "mock",
-    })
+    }))
   );
   expect(getLocationParams().get("query")).toBe("青赤");
   expect(getLocationParams().get("format")).toBe(changedFormat);
@@ -376,12 +515,11 @@ test("その他タブは具体的なフォーマットとその他ラベルをUR
   );
 
   await waitFor(() =>
-    expect(fetchPublicDecks).toHaveBeenCalledWith({
+    expect(fetchPublicDecks).toHaveBeenCalledWith(expectedFetch({
       page: 2,
       query: "大会",
       format: OTHER_FORMAT_NAME,
-      authMode: "mock",
-    })
+    }))
   );
   expect(screen.getByRole("tab", { name: "その他" })).toHaveAttribute(
     "aria-selected",
@@ -394,12 +532,11 @@ test("その他タブは具体的なフォーマットとその他ラベルをUR
   });
 
   await waitFor(() =>
-    expect(fetchPublicDecks).toHaveBeenLastCalledWith({
+    expect(fetchPublicDecks).toHaveBeenLastCalledWith(expectedFetch({
       page: 1,
       query: "大会",
       format: OTHER_FORMAT_NAMES[0],
-      authMode: "mock",
-    })
+    }))
   );
   expect(getLocationParams().get("format")).toBe(OTHER_FORMAT_NAMES[0]);
   expect(getLocationParams().get("page")).toBe("1");
