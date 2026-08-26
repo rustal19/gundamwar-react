@@ -1,5 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import RegulationCardInput, {
+  createRegulationCardState,
+  getRegulationCardIds,
+} from "../components/RegulationCardInput";
 import { useAuth } from "../context/AuthContext";
 import {
   FORMAT_GROUP_KEYS,
@@ -32,6 +36,20 @@ function formatDate(value) {
 function formatDeckItemsCount(items) {
   const { mainCount, sideCount } = getDeckCounts(items);
   return formatDeckCountSummary(mainCount, sideCount);
+}
+
+function createCardFilterState(cardId, cardName = "", knownCards = []) {
+  const normalizedCardId = String(cardId || "").trim();
+  const normalizedCardName = String(cardName || "").trim();
+  const matchingKnownCards = (Array.isArray(knownCards) ? knownCards : []).filter(
+    (card) => String(card?.cardId || "").trim() === normalizedCardId
+  );
+  return createRegulationCardState(normalizedCardId ? [normalizedCardId] : [], {
+    trustExistingIds: true,
+    knownCards: normalizedCardName
+      ? [{ cardId: normalizedCardId, name: normalizedCardName }]
+      : matchingKnownCards,
+  });
 }
 
 function OwnerLink({ owner }) {
@@ -68,21 +86,53 @@ export default function PublicDecks({ compact = false }) {
   const page = Number(params.get("page") || 1);
   const query = params.get("query") || "";
   const format = params.get("format") || "";
+  const cardId = params.get("cardId") || "";
+  const cardName = params.get("cardName") || "";
+  const playerName = params.get("playerName") || "";
+  const tournamentName = params.get("tournamentName") || "";
   const [searchText, setSearchText] = useState(query);
+  const [playerText, setPlayerText] = useState(playerName);
+  const [tournamentText, setTournamentText] = useState(tournamentName);
+  const [cardInput, setCardInput] = useState(() =>
+    createCardFilterState(cardId, cardName)
+  );
   const [result, setResult] = useState({ items: [], total: 0, page: 1, pageSize: 20 });
   const [isLoaded, setIsLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     setSearchText(query);
-  }, [format, query]);
+    setPlayerText(playerName);
+    setTournamentText(tournamentName);
+    setCardInput((current) => {
+      const currentCardId = getRegulationCardIds(current)[0] || "";
+      const currentCard = current.selectedCards.find(
+        (card) => String(card?.cardId || "") === cardId
+      );
+      if (
+        currentCardId === cardId &&
+        (!cardName || String(currentCard?.name || "") === cardName)
+      ) {
+        return current;
+      }
+      return createCardFilterState(cardId, cardName, current.selectedCards);
+    });
+  }, [cardId, cardName, format, playerName, query, tournamentName]);
 
   useEffect(() => {
     let isActive = true;
     setIsLoaded(false);
     setErrorMessage("");
 
-    fetchPublicDecks({ page, query, format, authMode })
+    fetchPublicDecks({
+      page,
+      query,
+      format,
+      cardId,
+      playerName,
+      tournamentName,
+      authMode,
+    })
       .then((payload) => {
         if (!isActive) return;
         setResult(payload);
@@ -99,7 +149,13 @@ export default function PublicDecks({ compact = false }) {
     return () => {
       isActive = false;
     };
-  }, [authMode, format, page, query]);
+  }, [authMode, cardId, format, page, playerName, query, tournamentName]);
+
+  const updateCardInput = useCallback((updater) => {
+    setCardInput((current) =>
+      typeof updater === "function" ? updater(current) : updater
+    );
+  }, []);
 
   const totalPages = Math.max(1, Math.ceil(result.total / result.pageSize || 1));
   const activeFormatGroup = format
@@ -169,11 +225,35 @@ export default function PublicDecks({ compact = false }) {
   const handleSearch = (event) => {
     event.preventDefault();
     const nextParams = new URLSearchParams(location.search);
+    const selectedCard = cardInput.selectedCards[0];
+    const selectedCardId = getRegulationCardIds(cardInput)[0] || "";
     if (searchText.trim()) nextParams.set("query", searchText.trim());
     else nextParams.delete("query");
+    if (selectedCardId) {
+      nextParams.set("cardId", selectedCardId);
+      if (selectedCard?.name) nextParams.set("cardName", selectedCard.name);
+      else nextParams.delete("cardName");
+    } else {
+      nextParams.delete("cardId");
+      nextParams.delete("cardName");
+    }
+    if (playerText.trim()) nextParams.set("playerName", playerText.trim());
+    else nextParams.delete("playerName");
+    if (tournamentText.trim()) nextParams.set("tournamentName", tournamentText.trim());
+    else nextParams.delete("tournamentName");
     nextParams.set("page", "1");
     navigate(`/decks?${nextParams.toString()}`);
   };
+
+  const hasSearchConditions = [
+    query,
+    format,
+    cardId,
+    playerName,
+    tournamentName,
+  ].some(
+    (value) => String(value || "").trim()
+  );
 
   const pagination = totalPages > 1 && (
     <div className="pagination">
@@ -255,16 +335,63 @@ export default function PublicDecks({ compact = false }) {
         ) : null}
       </section>
 
-      <form className="public-decks-search" onSubmit={handleSearch}>
-        <input
-          type="search"
-          value={searchText}
-          onChange={(event) => setSearchText(event.target.value)}
-          placeholder="デッキ名・大会名・説明・ユーザー名で検索"
-        />
-        <button type="submit" className="deck-action-button primary">
-          検索
-        </button>
+      <form
+        className="public-decks-search"
+        onSubmit={handleSearch}
+        aria-label="公開デッキ検索"
+      >
+        <div className="public-decks-search-fields">
+          <label>
+            <span>キーワード</span>
+            <input
+              type="search"
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              placeholder="デッキ名・説明などを検索"
+            />
+          </label>
+          <label>
+            <span>プレイヤー名</span>
+            <input
+              value={playerText}
+              onChange={(event) => setPlayerText(event.target.value)}
+              placeholder="プレイヤー名を入力"
+            />
+          </label>
+          <label>
+            <span>大会名</span>
+            <input
+              value={tournamentText}
+              onChange={(event) => setTournamentText(event.target.value)}
+              placeholder="大会名を入力"
+              aria-describedby="public-decks-tournament-filter-help"
+            />
+          </label>
+        </div>
+
+        <p id="public-decks-tournament-filter-help" className="public-decks-filter-help">
+          大会名は大会デッキのみを対象に検索します。保存デッキは大会情報を持たないため対象外です。
+        </p>
+
+        <div className="public-decks-card-filter">
+          <RegulationCardInput
+            idPrefix="public-decks-card"
+            label="採用カード"
+            value={cardInput}
+            onChange={updateCardInput}
+            allowBulk={false}
+            maxSelectedCards={1}
+          />
+          <p className="public-decks-filter-help">
+            カード名で検索し、候補から1枚選択してください。
+          </p>
+        </div>
+
+        <div className="public-decks-search-actions">
+          <button type="submit" className="deck-action-button primary">
+            検索
+          </button>
+        </div>
       </form>
 
       <div
@@ -279,7 +406,9 @@ export default function PublicDecks({ compact = false }) {
         ) : errorMessage ? (
           <div className="results-empty-state">{errorMessage}</div>
         ) : result.items.length === 0 ? (
-          <div className="results-empty-state">公開デッキはありません。</div>
+          <div className="results-empty-state">
+            {hasSearchConditions ? "検索結果がありません。" : "公開デッキはありません。"}
+          </div>
         ) : (
           <div className="results-list">
             {result.items.map((deck) => (

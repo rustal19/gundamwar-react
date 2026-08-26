@@ -81,13 +81,26 @@
 
 .public-decks-search {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.65rem;
   border: 1px solid var(--gw-border);
   border-radius: var(--gw-radius);
   background: var(--gw-surface);
   margin-bottom: 1rem;
   padding: 12px 16px;
+}
+
+.public-decks-search-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.public-decks-search-fields label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--gw-text-muted);
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .public-decks-search input,
@@ -97,6 +110,26 @@
   padding: 0.6rem 0.75rem;
   font: inherit;
   box-sizing: border-box;
+}
+
+.public-decks-filter-help {
+  margin: 0;
+  color: var(--gw-text-muted);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.public-decks-card-filter .regulation-card-input {
+  margin-top: 0;
+}
+
+.public-decks-card-filter > .public-decks-filter-help {
+  margin-top: 0.35rem;
+}
+
+.public-decks-search-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .public-decks-format-filter {
@@ -416,7 +449,7 @@
 }
 
 @media (max-width: 700px) {
-  .public-decks-search {
+  .public-decks-search-fields {
     grid-template-columns: 1fr;
   }
 

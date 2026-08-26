@@ -425,18 +425,51 @@ export function getDeckPublicationValidationError(items, format) {
     : null;
 }
 
-export async function fetchPublicDecks({ page = 1, query = "", format = "", authMode } = {}) {
+export async function fetchPublicDecks({
+  page = 1,
+  query = "",
+  format = "",
+  cardId = "",
+  playerName = "",
+  tournamentName = "",
+  authMode,
+} = {}) {
+  const normalizedQuery = String(query || "").trim().toLowerCase();
+  const normalizedFormat = String(format || "").trim();
+  const normalizedCardId = String(cardId || "").trim();
+  const normalizedPlayerName = String(playerName || "").trim().toLowerCase();
+  const normalizedTournamentName = String(tournamentName || "").trim().toLowerCase();
   const params = new URLSearchParams();
   params.set("page", String(getPage(page)));
-  if (query) params.set("query", query);
-  if (format) params.set("format", format);
+  if (normalizedQuery) params.set("query", String(query).trim());
+  if (normalizedFormat) params.set("format", normalizedFormat);
+  if (normalizedCardId) params.set("cardId", normalizedCardId);
+  if (normalizedPlayerName) params.set("playerName", String(playerName).trim());
+  if (normalizedTournamentName) params.set("tournamentName", String(tournamentName).trim());
 
   if (authMode === "mock") {
-    const normalizedQuery = String(query || "").trim().toLowerCase();
-    const normalizedFormat = String(format || "").trim();
     const decks = [...readMockPublicDecks(), ...readMockTournamentDecks()]
       .filter((deck) => deck.isPublic)
       .filter((deck) => !normalizedFormat || deck.format === normalizedFormat)
+      .filter(
+        (deck) =>
+          !normalizedCardId ||
+          deck.items.some(
+            (item) =>
+              String(item?.cardId ?? item?.card?.cardId ?? "").trim() === normalizedCardId &&
+              Number(item?.count) > 0
+          )
+      )
+      .filter(
+        (deck) =>
+          !normalizedPlayerName ||
+          String(deck.owner?.name || "").toLowerCase().includes(normalizedPlayerName)
+      )
+      .filter(
+        (deck) =>
+          !normalizedTournamentName ||
+          String(deck.tournament?.title || "").toLowerCase().includes(normalizedTournamentName)
+      )
       .filter((deck) => {
         if (!normalizedQuery) return true;
         return [deck.title, deck.description, deck.owner?.name, deck.tournament?.title]
