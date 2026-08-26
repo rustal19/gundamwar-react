@@ -364,6 +364,28 @@
   color: var(--gw-text-muted);
 }
 
+.tournament-status.unlisted {
+  border-color: var(--gw-warning-border);
+  background: var(--gw-warning-soft);
+  color: var(--gw-warning-text);
+}
+
+.tournament-detail-badges {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.tournament-unlisted-notice {
+  margin-top: 12px;
+  border: 1px solid var(--gw-warning-border);
+  border-radius: var(--gw-radius-sm);
+  background: var(--gw-warning-soft);
+  color: var(--gw-warning-text);
+  padding: 10px 12px;
+  font-weight: 700;
+}
+
 .tournament-pagination {
   justify-content: center;
   margin-top: 18px;
@@ -723,6 +745,19 @@
 .tournament-checkbox {
   align-items: center;
   grid-template-columns: auto 1fr;
+}
+
+.tournament-listing-setting {
+  display: grid;
+  gap: 4px;
+}
+
+.tournament-listing-setting .tournament-checkbox {
+  grid-column: auto;
+}
+
+.tournament-listing-setting .tournament-muted {
+  margin: 0 0 0 28px;
 }
 
 .manage-inline-checks {

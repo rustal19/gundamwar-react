@@ -283,6 +283,7 @@ function readMockTournamentDecks() {
 
   return tournaments.flatMap((tournament) => {
     // #29: この2条件を両方満たす大会以外は、エントリーを一切参照対象にしない。
+    // 非掲載は参加導線だけを絞る設定なので、isListed は公開条件に含めない。
     if (tournament?.status !== "completed" || tournament.decklistsPublic !== true) {
       return [];
     }

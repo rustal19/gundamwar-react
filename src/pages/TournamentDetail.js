@@ -831,17 +831,28 @@ export default function TournamentDetail({ compact = false }) {
           <p>開催地 {formatVenue(tournament)} / 開始 {formatDateTime(tournament.startsAt)}</p>
           <p>{tournament.description || "説明はありません。"}</p>
         </div>
-        <div className="tournament-header-actions">
-          <div className={`tournament-status ${tournament.status}`}>
-            {STATUS_LABELS[tournament.status] || tournament.status}
+        <div className="tournament-detail-badges">
+          <div className="tournament-header-actions">
+            <div className={`tournament-status ${tournament.status}`}>
+              {STATUS_LABELS[tournament.status] || tournament.status}
+            </div>
+            {permissions.canManage ? (
+              <Link className="tournament-create-link" to={`/tournaments/${id}/manage`}>
+                大会管理
+              </Link>
+            ) : null}
           </div>
-          {permissions.canManage ? (
-            <Link className="tournament-create-link" to={`/tournaments/${id}/manage`}>
-              大会管理
-            </Link>
+          {tournament.isListed === false ? (
+            <div className="tournament-status unlisted">ローカル大会（非掲載）</div>
           ) : null}
         </div>
       </div>
+
+      {tournament.isListed === false ? (
+        <div className="tournament-unlisted-notice" role="status">
+          この大会は一覧に表示されません。大会URLを共有された人が通常どおり参加できます。
+        </div>
+      ) : null}
 
       {tournament.announcement ? (
         <section className="tournament-announcement-band">

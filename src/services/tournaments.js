@@ -572,6 +572,7 @@ function normalizeTournament(tournament, entries = []) {
     capacity: tournament.capacity ?? null,
     venue: tournament.venue ? String(tournament.venue) : null,
     isOnline: Boolean(tournament.isOnline),
+    isListed: tournament.isListed !== false,
     selfCheckin: Boolean(tournament.selfCheckin),
     decklistsPublic: Boolean(tournament.decklistsPublic),
     decklistRequired: Boolean(tournament.decklistRequired),
@@ -1211,6 +1212,13 @@ export async function fetchTournaments({ status = "", page = 1, authMode, user }
     const visible = store.tournaments
       .map((tournament) => normalizeTournament(tournament, getEntries(store, tournament.id)))
       .filter(Boolean)
+      .filter((tournament) => {
+        const { isCreator, isCoOrganizer } = getTournamentPermissions(
+          tournament,
+          viewer
+        );
+        return tournament.isListed || isCreator || isCoOrganizer;
+      })
       .filter(
         (tournament) =>
           tournament.status !== "draft" ||
@@ -1258,6 +1266,7 @@ export async function fetchTournament(id, { authMode, user } = {}) {
 export async function fetchMyTournaments({ authMode, user } = {}) {
   if (authMode === "mock") {
     const currentUser = getCurrentUser(user);
+    const viewer = getCurrentViewer(user);
     const store = readStore();
     const items = store.tournaments
       .map((rawTournament) => {
@@ -1265,12 +1274,15 @@ export async function fetchMyTournaments({ authMode, user } = {}) {
         const entry = entries.find(
           (item) => item.user?.id === currentUser.id && item.status !== "dropped"
         );
-        if (!entry) return null;
+        const canManage = canManageTournament(rawTournament, viewer);
+        if (!entry && !canManage) return null;
         const tournament = normalizeTournament(rawTournament, entries);
         return {
           tournament,
-          entry,
-          needsDecklist: Boolean(tournament.decklistRequired && !entry.decklistSubmittedAt),
+          entry: entry || null,
+          needsDecklist: Boolean(
+            entry && tournament.decklistRequired && !entry.decklistSubmittedAt
+          ),
         };
       })
       .filter(Boolean)
@@ -1475,6 +1487,7 @@ export async function createTournament(data = {}) {
         capacity: payload.capacity ?? null,
         venue: payload.venue ? String(payload.venue) : null,
         isOnline: Boolean(payload.isOnline),
+        isListed: payload.isListed !== false,
         selfCheckin: Boolean(payload.selfCheckin),
         decklistsPublic: Boolean(payload.decklistsPublic),
         decklistRequired: Boolean(payload.decklistRequired),

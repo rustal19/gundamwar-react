@@ -80,6 +80,7 @@ const DEFAULT_FORM = {
   capacity: "",
   venue: "",
   isOnline: false,
+  isListed: true,
   selfCheckin: false,
   decklistsPublic: false,
   decklistRequired: false,
@@ -174,6 +175,7 @@ function formFromTournament(tournament, knownRegulation = null) {
     announcement: tournament.announcement || "",
     roundTimeMinutes: tournament.roundTimeMinutes ?? "",
     isOnline: Boolean(tournament.isOnline),
+    isListed: tournament.isListed !== false,
     selfCheckin: Boolean(tournament.selfCheckin),
     decklistsPublic: Boolean(tournament.decklistsPublic),
     decklistRequired: Boolean(tournament.decklistRequired),
@@ -224,6 +226,7 @@ function payloadFromForm(form) {
     capacity: numberOrNull(form.capacity),
     venue: form.venue?.trim() ? form.venue.trim() : null,
     isOnline: Boolean(form.isOnline),
+    isListed: Boolean(form.isListed),
     selfCheckin: Boolean(form.selfCheckin),
     decklistsPublic: Boolean(form.decklistsPublic),
     decklistRequired: Boolean(form.decklistRequired),
@@ -1612,6 +1615,20 @@ function InfoPanel({
             説明
             <textarea value={form.description} onChange={(event) => setField("description", event.target.value)} />
           </label>
+          <div className="tournament-form-wide tournament-listing-setting">
+            <label className="tournament-checkbox">
+              <input
+                type="checkbox"
+                checked={form.isListed}
+                aria-describedby="tournament-listing-description"
+                onChange={(event) => setField("isListed", event.target.checked)}
+              />
+              大会一覧に掲載する
+            </label>
+            <p id="tournament-listing-description" className="tournament-muted">
+              オフにするとローカル大会になり、大会一覧とホームの新着には表示されません。大会URLを知っている人だけが詳細を開き、通常どおり参加登録できます。
+            </p>
+          </div>
         </div>
       </section>
 
