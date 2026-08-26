@@ -5,10 +5,20 @@ jest.mock("../hooks/useDeckPreview", () => ({
   useDeckPreview: () => ({ previewUrl: "", isRendering: false, errorMessage: "" }),
 }));
 
+const validDeckItems = Array.from({ length: 17 }, (_, index) => ({
+  cardId: `test-card-${index + 1}`,
+  count: index === 16 ? 2 : 3,
+  zone: "main",
+  card: {
+    cardId: `test-card-${index + 1}`,
+    name: `テストカード${index + 1}`,
+  },
+}));
+
 const savedDeck = {
   id: "deck-1",
   title: "テストデッキ",
-  items: [],
+  items: validDeckItems,
   isPublic: false,
   description: "",
 };

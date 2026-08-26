@@ -6,6 +6,7 @@ import CardImage from "../components/CardImage";
 import BasicGAddDialog from "../components/BasicGAddDialog";
 import DeckExportDialog from "../components/DeckExportDialog";
 import DeckLoadDialog from "../components/DeckLoadDialog";
+import DeckPublicationPanel from "../components/DeckPublicationPanel";
 import DeckSaveDialog from "../components/DeckSaveDialog";
 import { useAuth } from "../context/AuthContext";
 import { useDeck } from "../context/DeckContext";
@@ -59,6 +60,7 @@ const DeckBuilder = ({ compact = false }) => {
     useSavedDecks();
 
   const [saveMessage, setSaveMessage] = useState("");
+  const [handledPublicationErrorMessage, setHandledPublicationErrorMessage] = useState("");
   const [deckTitle, setDeckTitle] = useState("");
   const [selectedDeckId, setSelectedDeckId] = useState("");
   const [deletingDeckId, setDeletingDeckId] = useState("");
@@ -134,6 +136,14 @@ const DeckBuilder = ({ compact = false }) => {
     []
   );
 
+  const handlePublicationError = useCallback((publicationError) => {
+    setHandledPublicationErrorMessage(publicationError?.message || "");
+  }, []);
+
+  const clearHandledPublicationError = useCallback(() => {
+    setHandledPublicationErrorMessage("");
+  }, []);
+
   useEffect(() => {
     if (!deckTitle && items.length > 0) {
       setDeckTitle(buildDefaultDeckTitle());
@@ -145,6 +155,12 @@ const DeckBuilder = ({ compact = false }) => {
       setSelectedDeckId("");
     }
   }, [selectedDeck, selectedDeckId]);
+
+  useEffect(() => {
+    if (!error) {
+      setHandledPublicationErrorMessage("");
+    }
+  }, [error]);
 
   useEffect(() => {
     const updateViewportOffset = () => {
@@ -313,19 +329,16 @@ const DeckBuilder = ({ compact = false }) => {
   };
 
   const handlePublicationChange = async ({ deckId, isPublic, description, format }) => {
+    setHandledPublicationErrorMessage("");
+    setPublishingDeckId(String(deckId));
     try {
-      setPublishingDeckId(String(deckId));
       const updatedDeck = await setPublication({ deckId, isPublic, description, format });
       if (String(deckId) === selectedDeckId) {
         handleFormatChange(updatedDeck.format || "");
       }
-      setSaveMessage(isPublic ? "デッキを公開しました。" : "デッキを非公開にしました。");
-    } catch (publicationError) {
-      setSaveMessage(publicationError.message);
-      throw publicationError;
+      return updatedDeck;
     } finally {
       setPublishingDeckId("");
-      clearSaveMessageSoon();
     }
   };
 
@@ -557,11 +570,25 @@ const DeckBuilder = ({ compact = false }) => {
               </div>
 
               {selectedDeck ? <p className="deck-panel-note">{`保存先: ${selectedDeck.title}`}</p> : null}
+              <DeckPublicationPanel
+                deck={selectedDeck}
+                formatValue={selectedFormatName}
+                onFormatChange={handleFormatChange}
+                onPublicationChange={handlePublicationChange}
+                onPublicationError={handlePublicationError}
+                onPublicationFeedbackClear={clearHandledPublicationError}
+                isLoading={isLoading}
+                isPublishing={Boolean(publishingDeckId)}
+                publishingDeckId={publishingDeckId}
+                className="deck-builder-publication-panel"
+              />
               {!isAuthenticated ? (
                 <p className="deck-panel-note">保存と読み込みはログイン後に利用できます。</p>
               ) : null}
               {saveMessage ? <div className="deck-copy-message">{saveMessage}</div> : null}
-              {error ? <div className="deck-panel-error">{error}</div> : null}
+              {error && error !== handledPublicationErrorMessage ? (
+                <div className="deck-panel-error">{error}</div>
+              ) : null}
             </section>
 
             <section className="deck-current-panel">
@@ -691,6 +718,8 @@ const DeckBuilder = ({ compact = false }) => {
         onLoad={handleLoadDeck}
         onDelete={handleDeleteSavedDeck}
         onPublicationChange={handlePublicationChange}
+        onPublicationError={handlePublicationError}
+        onPublicationFeedbackClear={clearHandledPublicationError}
         isLoading={isLoading}
         isDeleting={Boolean(deletingDeckId)}
         isPublishing={Boolean(publishingDeckId)}

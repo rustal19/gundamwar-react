@@ -1,0 +1,110 @@
+.deck-publication-panel {
+  border: 1px solid var(--gw-secondary-border-soft);
+  background: var(--gw-surface);
+  padding: 0.8rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.deck-publication-panel.is-unsaved {
+  background: var(--gw-field-bg);
+}
+
+.deck-publication-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--gw-primary);
+}
+
+.deck-publication-header span,
+.deck-publication-message,
+.deck-publication-validation-note {
+  color: var(--gw-text-muted);
+  font-size: 0.84rem;
+}
+
+.deck-publication-link {
+  color: var(--gw-primary);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.deck-publication-textarea {
+  width: 100%;
+  min-width: 0;
+  resize: vertical;
+  border: 1px solid var(--gw-secondary-border);
+  background: var(--gw-field-bg);
+  color: var(--gw-text);
+  padding: 0.55rem 0.65rem;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.deck-publication-format {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--gw-text-muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.deck-publication-format select {
+  min-height: 2.25rem;
+  border: 1px solid var(--gw-secondary-border);
+  background: var(--gw-surface);
+  color: var(--gw-text);
+  padding: 0.45rem 0.55rem;
+  font: inherit;
+}
+
+.deck-publication-format option {
+  background-color: var(--gw-surface);
+  color: var(--gw-text);
+}
+
+.deck-publication-format option:checked {
+  background-color: var(--gw-primary);
+  color: var(--gw-on-primary);
+}
+
+.deck-publication-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.deck-publication-message,
+.deck-publication-message p,
+.deck-publication-validation-note {
+  margin: 0;
+}
+
+.deck-publication-message.has-error {
+  color: var(--gw-danger-strong);
+}
+
+.deck-publication-message ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1.35rem;
+}
+
+.deck-builder-publication-panel {
+  padding: calc(0.65rem * var(--deck-ui-scale));
+  gap: calc(0.5rem * var(--deck-ui-scale));
+}
+
+.deck-builder-publication-panel .deck-publication-textarea {
+  min-height: calc(3.8rem * var(--deck-ui-scale));
+  font-size: calc(0.84rem * var(--deck-ui-scale));
+}
+
+.deck-builder-publication-panel .deck-publication-format,
+.deck-builder-publication-panel .deck-publication-message,
+.deck-builder-publication-panel .deck-publication-validation-note,
+.deck-builder-publication-panel .deck-publication-link {
+  font-size: calc(0.78rem * var(--deck-ui-scale));
+}

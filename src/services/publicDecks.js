@@ -407,6 +407,24 @@ function createFormatValidationError(formatName, violations) {
   return error;
 }
 
+function getDeckPublicationViolations(items, format) {
+  const normalizedFormat = String(format || "").trim();
+  const formatPreset = FORMAT_PRESETS.find(({ name }) => name === normalizedFormat);
+  return formatPreset ? validateDeck(items, formatPreset.regulation) : [];
+}
+
+export function getDeckPublicationValidationError(items, format) {
+  const normalizedFormat = String(format || "").trim();
+  if (!normalizedFormat) {
+    return new Error("フォーマットを選択してください。");
+  }
+
+  const violations = getDeckPublicationViolations(items, normalizedFormat);
+  return violations.length > 0
+    ? createFormatValidationError(normalizedFormat, violations)
+    : null;
+}
+
 export async function fetchPublicDecks({ page = 1, query = "", format = "", authMode } = {}) {
   const params = new URLSearchParams();
   params.set("page", String(getPage(page)));
@@ -499,7 +517,7 @@ export async function setDeckPublication({
   const nextFormat = typeof format === "string" && format.trim() ? format.trim() : null;
 
   if (nextIsPublic && !nextFormat) {
-    throw new Error("フォーマットを選択してください。");
+    throw getDeckPublicationValidationError([], nextFormat);
   }
 
   if (authMode === "mock") {
@@ -561,12 +579,9 @@ export async function setDeckPublication({
     const shouldValidatePublication =
       nextIsPublic && (!isCurrentlyPublic || currentFormat !== nextFormat);
     if (shouldValidatePublication) {
-      const formatPreset = FORMAT_PRESETS.find(({ name }) => name === nextFormat);
-      if (formatPreset) {
-        const violations = validateDeck(savedDeck.items, formatPreset.regulation);
-        if (violations.length > 0) {
-          throw createFormatValidationError(nextFormat, violations);
-        }
+      const validationError = getDeckPublicationValidationError(savedDeck.items, nextFormat);
+      if (validationError) {
+        throw validationError;
       }
     }
 
