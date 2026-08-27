@@ -1,5 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { getCardImageCandidates, getCardPlaceholderLabel } from "../utils/cardImages";
+import {
+  getCardImageCandidates,
+  getCardPlaceholderLabel,
+  getThumbnailPath,
+} from "../utils/cardImages";
 import "./CardImage.css";
 
 const CardImage = ({
@@ -7,11 +11,20 @@ const CardImage = ({
   className = "",
   compact = false,
   preferThumbnail = true,
+  hideInternalId = false,
+  inline = false,
 }) => {
-  const candidates = useMemo(
-    () => getCardImageCandidates(card, { preferThumbnail }),
-    [card, preferThumbnail]
-  );
+  const candidates = useMemo(() => {
+    const generatedCandidates = getCardImageCandidates(card, { preferThumbnail });
+    if (!preferThumbnail) return generatedCandidates;
+    const explicitImagePaths = [
+      card?.imagePath,
+      ...(Array.isArray(card?.imageCandidates) ? card.imageCandidates : []),
+    ]
+      .map((candidate) => getThumbnailPath(candidate))
+      .filter(Boolean);
+    return Array.from(new Set([...explicitImagePaths, ...generatedCandidates]));
+  }, [card, preferThumbnail]);
   const [candidateIndex, setCandidateIndex] = useState(0);
 
   useEffect(() => {
@@ -19,6 +32,9 @@ const CardImage = ({
   }, [candidates]);
 
   const resolvedSrc = candidates[candidateIndex] || "";
+  const placeholderCard = hideInternalId ? { ...card, cardId: null } : card;
+  const FrameElement = inline ? "span" : "div";
+  const PlaceholderElement = inline ? "span" : "div";
   const wrapperClassName = [
     "card-image-frame",
     compact ? "card-image-frame-compact" : "",
@@ -28,7 +44,7 @@ const CardImage = ({
     .join(" ");
 
   return (
-    <div className={wrapperClassName}>
+    <FrameElement className={wrapperClassName}>
       {resolvedSrc ? (
         <img
           className="card-image-element"
@@ -45,14 +61,16 @@ const CardImage = ({
           }}
         />
       ) : (
-        <div className="card-image-placeholder">
-          <div className="card-image-placeholder-code">
-            {getCardPlaceholderLabel(card)}
-          </div>
-          <div className="card-image-placeholder-name">{card?.name || "Card image"}</div>
-        </div>
+        <PlaceholderElement className="card-image-placeholder">
+          <PlaceholderElement className="card-image-placeholder-code">
+            {getCardPlaceholderLabel(placeholderCard)}
+          </PlaceholderElement>
+          <PlaceholderElement className="card-image-placeholder-name">
+            {card?.name || "Card image"}
+          </PlaceholderElement>
+        </PlaceholderElement>
       )}
-    </div>
+    </FrameElement>
   );
 };
 
