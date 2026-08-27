@@ -1351,7 +1351,7 @@ test("一括入力で一意に解決した禁止カードをチップ化し、�
   });
   fireEvent.click(screen.getByRole("button", { name: "禁止カードを一括解決" }));
 
-  expect(await screen.findByText("一意カード (100000001)")).toBeInTheDocument();
+  expect(await screen.findByText("一意カード")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "保存" }));
   expect(await screen.findByText("大会情報を保存しました。")).toBeInTheDocument();
 
@@ -1365,8 +1365,8 @@ test("一括入力が複数の同名カードに一致した場合は候補選�
   seedStore({ rounds: [] });
   mockCardSearch({
     同名カード: [
-      { cardId: "100000002", name: "同名カード" },
-      { cardId: "100000003", name: "同名カード" },
+      { cardId: "100000002", name: "同名カード", setName: "第1弾" },
+      { cardId: "100000003", name: "同名カード", setName: "第2弾" },
     ],
   });
   renderManage();
@@ -1378,12 +1378,12 @@ test("一括入力が複数の同名カードに一致した場合は候補選�
   fireEvent.click(screen.getByRole("button", { name: "禁止カードを一括解決" }));
 
   expect(
-    await screen.findByRole("button", { name: "同名カード (100000003)" })
+    await screen.findByRole("button", { name: "同名カード、収録弾: 第2弾" })
   ).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "保存" })).toBeDisabled();
 
-  fireEvent.click(screen.getByRole("button", { name: "同名カード (100000003)" }));
-  expect(await screen.findByText("同名カード (100000003)")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "同名カード、収録弾: 第2弾" }));
+  expect(await screen.findByText("同名カード")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "保存" })).toBeEnabled();
   fireEvent.click(screen.getByRole("button", { name: "保存" }));
   await screen.findByText("大会情報を保存しました。");
@@ -1434,7 +1434,7 @@ test("既存のカード名は読み込み時に解決するが、保存操作�
   renderManage();
   await openRegulationEditor();
 
-  expect(await screen.findByText("既存カード名 (100000004)")).toBeInTheDocument();
+  expect(await screen.findByText("既存カード名")).toBeInTheDocument();
   expect(
     JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0].regulation.bannedCards
   ).toEqual(["既存カード名"]);
@@ -1458,13 +1458,17 @@ test("通常検索でカードを追加し、追加済みチップから個別�
     target: { value: "検索カード" },
   });
   fireEvent.click(screen.getByRole("button", { name: "禁止カードの候補を検索" }));
-  fireEvent.click(await screen.findByRole("button", { name: "検索カード (100000005)" }));
-
-  expect(screen.getByText("検索カード (100000005)")).toBeInTheDocument();
   fireEvent.click(
-    screen.getByRole("button", { name: "検索カード (100000005) を削除" })
+    await screen.findByRole("button", {
+      name: "検索カード、収録弾: 不明",
+    })
   );
-  expect(screen.queryByText("検索カード (100000005)")).not.toBeInTheDocument();
+
+  expect(screen.getByText("検索カード")).toBeInTheDocument();
+  fireEvent.click(
+    screen.getByRole("button", { name: "検索カード を削除" })
+  );
+  expect(screen.queryByText("検索カード")).not.toBeInTheDocument();
 });
 
 test("解決できない既存カード名は元データを消さず未解決として残す", async () => {
@@ -1519,7 +1523,7 @@ test("制限カードも検索解決したカードIDだけを保存する", asy
     target: { value: "制限対象カード" },
   });
   fireEvent.click(screen.getByRole("button", { name: "制限カードを一括解決" }));
-  expect(await screen.findByText("制限対象カード (100000007)")).toBeInTheDocument();
+  expect(await screen.findByText("制限対象カード")).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("button", { name: "保存" }));
   await screen.findByText("大会情報を保存しました。");

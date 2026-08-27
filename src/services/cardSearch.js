@@ -20,10 +20,38 @@ function normalizeCards(cards) {
   }, []);
 }
 
-export async function searchCardsByName(query, { signal, nameForward = false } = {}) {
-  const name = String(query || "").trim();
-  if (!name) return { cards: [], total: 0, isTruncated: false };
+function normalizeComparableName(value) {
+  const name = String(value || "").trim();
+  try {
+    return name.normalize("NFKC").toLocaleLowerCase("ja-JP");
+  } catch (_error) {
+    return name.toLowerCase();
+  }
+}
 
+function sortCardsByNameMatch(cards, query) {
+  const normalizedQuery = normalizeComparableName(query);
+  if (!normalizedQuery) return cards;
+
+  return cards
+    .map((card, index) => {
+      const normalizedName = normalizeComparableName(card.name);
+      const matchPriority =
+        normalizedName === normalizedQuery
+          ? 0
+          : normalizedName.startsWith(normalizedQuery)
+            ? 1
+            : 2;
+      return { card, index, matchPriority };
+    })
+    .sort(
+      (left, right) =>
+        left.matchPriority - right.matchPriority || left.index - right.index
+    )
+    .map(({ card }) => card);
+}
+
+async function fetchCardsByNamePage(name, { signal, nameForward }) {
   const response = await fetch(API_SEARCH_URL, {
     method: "POST",
     headers: {
@@ -47,10 +75,35 @@ export async function searchCardsByName(query, { signal, nameForward = false } =
   const cards = normalizeCards(payload?.data);
   const parsedTotal = Number(payload?.total);
   const total = Number.isFinite(parsedTotal) ? parsedTotal : cards.length;
+  return { cards, total };
+}
+
+export async function searchCardsByName(query, { signal, nameForward = false } = {}) {
+  const name = String(query || "").trim();
+  if (!name) return { cards: [], total: 0, isTruncated: false };
+
+  if (nameForward) {
+    const result = await fetchCardsByNamePage(name, { signal, nameForward: true });
+    const cards = sortCardsByNameMatch(result.cards, name);
+    return {
+      cards,
+      total: result.total,
+      isTruncated: result.total > cards.length,
+    };
+  }
+
+  const [partialResult, prefixResult] = await Promise.all([
+    fetchCardsByNamePage(name, { signal, nameForward: false }),
+    fetchCardsByNamePage(name, { signal, nameForward: true }),
+  ]);
+  const cards = sortCardsByNameMatch(
+    normalizeCards([...prefixResult.cards, ...partialResult.cards]),
+    name
+  );
   return {
     cards,
-    total,
-    isTruncated: total > cards.length,
+    total: partialResult.total,
+    isTruncated: partialResult.total > cards.length,
   };
 }
 
@@ -67,9 +120,10 @@ export async function resolveCardReference(value, { signal } = {}) {
     return {
       status: "ambiguous",
       candidates: exactMatches,
+      candidateTotal: exactMatches.length,
       message: result.isTruncated
-        ? "検索候補が200件を超えています。自動確定せず、カードIDを確認して選択してください。"
-        : "同名カードが複数あります。カードIDを確認して選択してください。",
+        ? "検索結果が多いため自動確定できません。カード画像と収録弾を確認して選択してください。"
+        : "同名カードが複数あります。カード画像と収録弾を確認して選択してください。",
     };
   }
 
@@ -77,8 +131,9 @@ export async function resolveCardReference(value, { signal } = {}) {
     return {
       status: "ambiguous",
       candidates: result.cards,
+      candidateTotal: result.total,
       message: result.isTruncated
-        ? "完全一致するカードがなく、候補が多いため先頭200件を表示しています。"
+        ? "完全一致するカードがなく、候補が多くあります。カード名をより具体的に入力してください。"
         : "完全一致するカードがありません。候補から選択するか、カード名を修正してください。",
     };
   }

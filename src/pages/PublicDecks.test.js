@@ -100,6 +100,17 @@ test("20件以下の公開デッキをすべて表示し、不要なページャ
 
   await waitFor(() => expect(screen.getAllByRole("article")).toHaveLength(7));
   expect(container.querySelector(".pagination")).not.toBeInTheDocument();
+  expect(screen.queryByRole("region", { name: "適用中の条件" })).not.toBeInTheDocument();
+
+  const formatFilter = container.querySelector(".public-decks-format-filter");
+  const results = container.querySelector("#public-decks-results");
+  const searchForm = screen.getByRole("form", { name: "公開デッキ検索" });
+  expect(
+    formatFilter.compareDocumentPosition(results) & window.Node.DOCUMENT_POSITION_FOLLOWING
+  ).toBeTruthy();
+  expect(
+    results.compareDocumentPosition(searchForm) & window.Node.DOCUMENT_POSITION_FOLLOWING
+  ).toBeTruthy();
 
   const firstDeck = screen.getAllByRole("article")[0];
   expect(within(firstDeck).getByRole("link", { name: "公開デッキ1" })).toHaveAttribute(
@@ -108,6 +119,65 @@ test("20件以下の公開デッキをすべて表示し、不要なページャ
   );
   expect(within(firstDeck).getByText("保存デッキ")).toBeInTheDocument();
   expect(within(firstDeck).getByText("スタンダード")).toBeInTheDocument();
+});
+
+test("適用中の条件を結果の上に短く示し、詳細条件へ移動できる", async () => {
+  fetchPublicDecks.mockResolvedValue({
+    items: [],
+    total: 0,
+    page: 2,
+    pageSize: 20,
+  });
+
+  const { container } = renderPublicDecks(
+    "/decks?format=スタンダード&query=青単&playerName=アムロ&tournamentName=春季杯&cardId=100000005&cardName=検索カード&page=2"
+  );
+
+  await waitFor(() => expect(fetchPublicDecks).toHaveBeenCalled());
+
+  const summary = screen.getByRole("region", { name: "適用中の条件" });
+  expect(within(summary).getByText("フォーマット: スタンダード")).toBeInTheDocument();
+  expect(within(summary).getByText("キーワード: 青単")).toBeInTheDocument();
+  expect(within(summary).getByText("プレイヤー名: アムロ")).toBeInTheDocument();
+  expect(within(summary).getByText("大会名: 春季杯")).toBeInTheDocument();
+  expect(within(summary).getByText("採用カード: 検索カード")).toBeInTheDocument();
+  expect(within(summary).queryByText(/100000005/)).not.toBeInTheDocument();
+
+  const formatFilter = container.querySelector(".public-decks-format-filter");
+  const results = container.querySelector("#public-decks-results");
+  const searchForm = screen.getByRole("form", { name: "公開デッキ検索" });
+  expect(
+    formatFilter.compareDocumentPosition(summary) & window.Node.DOCUMENT_POSITION_FOLLOWING
+  ).toBeTruthy();
+  expect(
+    summary.compareDocumentPosition(results) & window.Node.DOCUMENT_POSITION_FOLLOWING
+  ).toBeTruthy();
+  expect(
+    results.compareDocumentPosition(searchForm) & window.Node.DOCUMENT_POSITION_FOLLOWING
+  ).toBeTruthy();
+
+  const scrollIntoView = jest.fn();
+  searchForm.scrollIntoView = scrollIntoView;
+  fireEvent.click(within(summary).getByRole("button", { name: "条件を変更" }));
+
+  expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "auto", block: "start" });
+  expect(screen.getByLabelText("キーワード")).toHaveFocus();
+});
+
+test("カード名を復元できない適用条件だけはカードIDを手がかりとして示す", async () => {
+  fetchPublicDecks.mockResolvedValue({
+    items: [],
+    total: 0,
+    page: 1,
+    pageSize: 20,
+  });
+
+  renderPublicDecks("/decks?cardId=100000099");
+
+  const summary = await screen.findByRole("region", { name: "適用中の条件" });
+  expect(
+    within(summary).getByText("採用カード: カード名未取得 (100000099)")
+  ).toBeInTheDocument();
 });
 
 test("保存デッキと大会デッキをバッジで区別し、大会メタと接頭辞付きリンクを表示する", async () => {
@@ -191,7 +261,7 @@ test("採用カード・プレイヤー名・大会名を候補選択からURL�
     isTruncated: false,
   });
 
-  renderPublicDecks("/decks?format=スタンダード&page=4");
+  const { container } = renderPublicDecks("/decks?format=スタンダード&page=4");
   await waitFor(() => expect(fetchPublicDecks).toHaveBeenCalled());
 
   fireEvent.change(screen.getByLabelText("キーワード"), {
@@ -207,10 +277,17 @@ test("採用カード・プレイヤー名・大会名を候補選択からURL�
     target: { value: "検索カード" },
   });
   fireEvent.click(screen.getByRole("button", { name: "採用カードの候補を検索" }));
+  fireEvent.click((await screen.findByText("検索カード")).closest("button"));
+
+  const results = container.querySelector("#public-decks-results");
+  const scrollIntoView = jest.fn();
+  results.scrollIntoView = scrollIntoView;
   fireEvent.click(
-    await screen.findByRole("button", { name: "検索カード (100000005)" })
+    screen.getByRole("button", { name: "この条件で検索して結果へ戻る" })
   );
-  fireEvent.click(screen.getByRole("button", { name: "検索" }));
+
+  expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "auto", block: "start" });
+  expect(results).toHaveFocus();
 
   await waitFor(() =>
     expect(fetchPublicDecks).toHaveBeenLastCalledWith(expectedFetch({
@@ -255,16 +332,18 @@ test("追加検索条件をURLから復元し、削除後は条件なしの空�
   expect(screen.getByLabelText("キーワード")).toHaveValue("赤単");
   expect(screen.getByLabelText("プレイヤー名")).toHaveValue("シャア");
   expect(screen.getByLabelText("大会名")).toHaveValue("夏季杯");
-  expect(screen.getByText("復元カード (100000006)")).toBeInTheDocument();
+  expect(screen.getByText("復元カード")).toBeInTheDocument();
   expect(await screen.findByText("検索結果がありません。")).toBeInTheDocument();
 
   fireEvent.change(screen.getByLabelText("キーワード"), { target: { value: "" } });
   fireEvent.change(screen.getByLabelText("プレイヤー名"), { target: { value: "" } });
   fireEvent.change(screen.getByLabelText("大会名"), { target: { value: "" } });
   fireEvent.click(
-    screen.getByRole("button", { name: "復元カード (100000006) を削除" })
+    screen.getByRole("button", { name: "復元カード を削除" })
   );
-  fireEvent.click(screen.getByRole("button", { name: "検索" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "この条件で検索して結果へ戻る" })
+  );
 
   await waitFor(() =>
     expect(fetchPublicDecks).toHaveBeenLastCalledWith(expectedFetch())
@@ -276,6 +355,7 @@ test("追加検索条件をURLから復元し、削除後は条件なしの空�
   expect(getLocationParams().has("tournamentName")).toBe(false);
   expect(getLocationParams().get("page")).toBe("1");
   expect(await screen.findByText("公開デッキはありません。")).toBeInTheDocument();
+  expect(screen.queryByRole("region", { name: "適用中の条件" })).not.toBeInTheDocument();
 });
 
 test("20件を超える公開デッキは条件を維持したまま次ページへ移動できる", async () => {
@@ -488,7 +568,9 @@ test("添削杯の開催回・ページ・検索語をURLから復元し、空�
   expect(getLocationParams().get("page")).toBe("1");
 
   fireEvent.change(screen.getByRole("searchbox"), { target: { value: "青赤" } });
-  fireEvent.click(screen.getByRole("button", { name: "検索" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "この条件で検索して結果へ戻る" })
+  );
 
   await waitFor(() =>
     expect(fetchPublicDecks).toHaveBeenLastCalledWith(expectedFetch({

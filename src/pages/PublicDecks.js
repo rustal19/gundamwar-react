@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import RegulationCardInput, {
   createRegulationCardState,
@@ -99,6 +99,9 @@ export default function PublicDecks({ compact = false }) {
   const [result, setResult] = useState({ items: [], total: 0, page: 1, pageSize: 20 });
   const [isLoaded, setIsLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const resultsRef = useRef(null);
+  const searchFormRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   useEffect(() => {
     setSearchText(query);
@@ -243,17 +246,40 @@ export default function PublicDecks({ compact = false }) {
     else nextParams.delete("tournamentName");
     nextParams.set("page", "1");
     navigate(`/decks?${nextParams.toString()}`);
+    resultsRef.current?.scrollIntoView?.({ behavior: "auto", block: "start" });
+    resultsRef.current?.focus({ preventScroll: true });
   };
 
-  const hasSearchConditions = [
-    query,
-    format,
-    cardId,
-    playerName,
-    tournamentName,
-  ].some(
-    (value) => String(value || "").trim()
-  );
+  const appliedFormat = String(format || "").trim();
+  const appliedQuery = String(query || "").trim();
+  const appliedPlayerName = String(playerName || "").trim();
+  const appliedTournamentName = String(tournamentName || "").trim();
+  const appliedCardId = String(cardId || "").trim();
+  const appliedCardName = String(cardName || "").trim();
+  const appliedConditions = [
+    appliedFormat && { key: "format", label: `フォーマット: ${appliedFormat}` },
+    appliedQuery && { key: "query", label: `キーワード: ${appliedQuery}` },
+    appliedPlayerName && {
+      key: "playerName",
+      label: `プレイヤー名: ${appliedPlayerName}`,
+    },
+    appliedTournamentName && {
+      key: "tournamentName",
+      label: `大会名: ${appliedTournamentName}`,
+    },
+    appliedCardId && {
+      key: "cardId",
+      label: `採用カード: ${
+        appliedCardName || `カード名未取得 (${appliedCardId})`
+      }`,
+    },
+  ].filter(Boolean);
+  const hasSearchConditions = appliedConditions.length > 0;
+
+  const handleMoveToSearch = () => {
+    searchFormRef.current?.scrollIntoView?.({ behavior: "auto", block: "start" });
+    searchInputRef.current?.focus({ preventScroll: true });
+  };
 
   const pagination = totalPages > 1 && (
     <div className="pagination">
@@ -335,69 +361,32 @@ export default function PublicDecks({ compact = false }) {
         ) : null}
       </section>
 
-      <form
-        className="public-decks-search"
-        onSubmit={handleSearch}
-        aria-label="公開デッキ検索"
-      >
-        <div className="public-decks-search-fields">
-          <label>
-            <span>キーワード</span>
-            <input
-              type="search"
-              value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
-              placeholder="デッキ名・説明などを検索"
-            />
-          </label>
-          <label>
-            <span>プレイヤー名</span>
-            <input
-              value={playerText}
-              onChange={(event) => setPlayerText(event.target.value)}
-              placeholder="プレイヤー名を入力"
-            />
-          </label>
-          <label>
-            <span>大会名</span>
-            <input
-              value={tournamentText}
-              onChange={(event) => setTournamentText(event.target.value)}
-              placeholder="大会名を入力"
-              aria-describedby="public-decks-tournament-filter-help"
-            />
-          </label>
-        </div>
-
-        <p id="public-decks-tournament-filter-help" className="public-decks-filter-help">
-          大会名は大会デッキのみを対象に検索します。保存デッキは大会情報を持たないため対象外です。
-        </p>
-
-        <div className="public-decks-card-filter">
-          <RegulationCardInput
-            idPrefix="public-decks-card"
-            label="採用カード"
-            value={cardInput}
-            onChange={updateCardInput}
-            allowBulk={false}
-            maxSelectedCards={1}
-          />
-          <p className="public-decks-filter-help">
-            カード名で検索し、候補から1枚選択してください。
-          </p>
-        </div>
-
-        <div className="public-decks-search-actions">
-          <button type="submit" className="deck-action-button primary">
-            検索
+      {hasSearchConditions ? (
+        <section className="public-decks-active-filters" aria-label="適用中の条件">
+          <span className="public-decks-active-filters-label">適用中の条件</span>
+          <div className="public-decks-active-filter-chips">
+            {appliedConditions.map((condition) => (
+              <span key={condition.key} className="public-decks-active-filter-chip">
+                {condition.label}
+              </span>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="public-decks-filter-jump"
+            onClick={handleMoveToSearch}
+          >
+            条件を変更
           </button>
-        </div>
-      </form>
+        </section>
+      ) : null}
 
       <div
+        ref={resultsRef}
         id="public-decks-results"
         role="tabpanel"
         aria-labelledby={`public-decks-format-tab-${activeFormatGroup}`}
+        tabIndex={-1}
       >
         {pagination}
 
@@ -457,6 +446,68 @@ export default function PublicDecks({ compact = false }) {
 
         {pagination}
       </div>
+
+      <form
+        ref={searchFormRef}
+        className="public-decks-search"
+        onSubmit={handleSearch}
+        aria-label="公開デッキ検索"
+      >
+        <h2>詳細な絞り込み条件</h2>
+        <div className="public-decks-search-fields">
+          <label>
+            <span>キーワード</span>
+            <input
+              ref={searchInputRef}
+              type="search"
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              placeholder="デッキ名・説明などを検索"
+            />
+          </label>
+          <label>
+            <span>プレイヤー名</span>
+            <input
+              value={playerText}
+              onChange={(event) => setPlayerText(event.target.value)}
+              placeholder="プレイヤー名を入力"
+            />
+          </label>
+          <label>
+            <span>大会名</span>
+            <input
+              value={tournamentText}
+              onChange={(event) => setTournamentText(event.target.value)}
+              placeholder="大会名を入力"
+              aria-describedby="public-decks-tournament-filter-help"
+            />
+          </label>
+        </div>
+
+        <p id="public-decks-tournament-filter-help" className="public-decks-filter-help">
+          大会名は大会デッキのみを対象に検索します。保存デッキは大会情報を持たないため対象外です。
+        </p>
+
+        <div className="public-decks-card-filter">
+          <RegulationCardInput
+            idPrefix="public-decks-card"
+            label="採用カード"
+            value={cardInput}
+            onChange={updateCardInput}
+            allowBulk={false}
+            maxSelectedCards={1}
+          />
+          <p className="public-decks-filter-help">
+            カード名で検索し、候補から1枚選択してください。
+          </p>
+        </div>
+
+        <div className="public-decks-search-actions">
+          <button type="submit" className="deck-action-button primary">
+            この条件で検索して結果へ戻る
+          </button>
+        </div>
+      </form>
     </main>
   );
 }

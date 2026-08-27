@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import CardImage from "./CardImage";
 import { resolveCardReference, searchCardsByName } from "../services/cardSearch";
+import { getCardSets } from "../utils/deckValidation";
 import "./RegulationCardInput.css";
 
 const CARD_ID_PATTERN = /^\d{9}$/;
+export const CARD_CANDIDATE_DISPLAY_LIMIT = 10;
 const EMPTY_STATE = {
   selectedCards: [],
   rows: [],
@@ -79,6 +82,7 @@ export function createRegulationCardState(
       lineNumber: index + 1,
       status: "pending",
       candidates: [],
+      candidateTotal: 0,
       message: "解決中です。",
       origin: "existing",
     });
@@ -130,7 +134,38 @@ export function getRegulationCardErrors(label, state) {
 }
 
 function displayCardLabel(card) {
-  return card.name ? `${card.name} (${card.cardId})` : `カード名未取得 (${card.cardId})`;
+  return card.name || `カード名未取得 (${card.cardId})`;
+}
+
+function getCardSetLabel(card) {
+  const sets = Array.from(new Set(getCardSets(card)));
+  return sets.length ? sets.join(" / ") : "不明";
+}
+
+function CardCandidateButton({ card, onSelect }) {
+  const cardLabel = displayCardLabel(card);
+  const setLabel = getCardSetLabel(card);
+
+  return (
+    <button
+      type="button"
+      className="regulation-card-candidate-button"
+      onClick={() => onSelect(card)}
+      aria-label={`${cardLabel}、収録弾: ${setLabel}`}
+    >
+      <CardImage
+        card={card}
+        className="regulation-card-candidate-image"
+        compact
+        hideInternalId
+        inline
+      />
+      <span className="regulation-card-candidate-details">
+        <strong>{cardLabel}</strong>
+        <span>{`収録弾: ${setLabel}`}</span>
+      </span>
+    </button>
+  );
 }
 
 export default function RegulationCardInput({
@@ -178,6 +213,7 @@ export default function RegulationCardInput({
           outcomesById.set(row.id, {
             status: "unresolved",
             candidates: [],
+            candidateTotal: 0,
             message: "カード名を入力してください。",
           });
           continue;
@@ -193,6 +229,7 @@ export default function RegulationCardInput({
             outcomesByInput.set(input, {
               status: "error",
               candidates: [],
+              candidateTotal: 0,
               message: error.message || "カード検索に失敗しました。",
             });
           }
@@ -217,6 +254,8 @@ export default function RegulationCardInput({
             ...row,
             status: outcome.status,
             candidates: outcome.candidates || [],
+            candidateTotal:
+              outcome.candidateTotal ?? (outcome.candidates || []).length,
             message: outcome.message || "未解決です。",
           });
           return nextRows;
@@ -314,6 +353,7 @@ export default function RegulationCardInput({
           lineNumber: line.lineNumber,
           status: "pending",
           candidates: [],
+          candidateTotal: 0,
           message: "解決中です。",
           origin: "bulk",
         })),
@@ -332,6 +372,7 @@ export default function RegulationCardInput({
               input,
               status: "unresolved",
               candidates: [],
+              candidateTotal: 0,
               message: "編集後に「再解決」を実行してください。",
             }
           : row
@@ -344,7 +385,13 @@ export default function RegulationCardInput({
       ...current,
       rows: current.rows.map((row) =>
         row.id === rowId
-          ? { ...row, status: "pending", candidates: [], message: "解決中です。" }
+          ? {
+              ...row,
+              status: "pending",
+              candidates: [],
+              candidateTotal: 0,
+              message: "解決中です。",
+            }
           : row
       ),
       resolveVersion: current.resolveVersion + 1,
@@ -361,6 +408,8 @@ export default function RegulationCardInput({
   const isResolving = rowsToResolve.length > 0;
   const searchListId = `${idPrefix}-search-results`;
   const bulkHelpId = `${idPrefix}-bulk-help`;
+  const visibleSearchResults = searchResults.slice(0, CARD_CANDIDATE_DISPLAY_LIMIT);
+  const visibleSearchTotal = Math.max(Number(searchTotal) || 0, searchResults.length);
 
   return (
     <fieldset className="tournament-form-wide regulation-card-input">
@@ -391,15 +440,15 @@ export default function RegulationCardInput({
       {searchResults.length ? (
         <div id={searchListId} className="regulation-card-search-results">
           <p>
-            {searchTotal}件の候補があります。追加するカードを選んでください。
-            {searchTotal > searchResults.length ? "（先頭200件を表示）" : ""}
+            {`${visibleSearchTotal}件の候補があります。`}
+            {visibleSearchTotal > visibleSearchResults.length
+              ? `先頭${visibleSearchResults.length}件を表示しています。カード名をより具体的に入力して絞り込んでください。`
+              : "追加するカードを選んでください。"}
           </p>
           <ul>
-            {searchResults.map((card) => (
+            {visibleSearchResults.map((card) => (
               <li key={card.cardId}>
-                <button type="button" onClick={() => selectCard(card)}>
-                  {displayCardLabel(card)}
-                </button>
+                <CardCandidateButton card={card} onSelect={selectCard} />
               </li>
             ))}
           </ul>
@@ -463,7 +512,14 @@ export default function RegulationCardInput({
           <ul>
             {state.rows.map((row) => {
               const statusText = `${label} ${row.lineNumber || 1}行目「${normalizeReference(row.input) || "空欄"}」: ${rowStatusMessage(row)}`;
-              const visibleCandidates = (row.candidates || []).slice(0, 20);
+              const visibleCandidates = (row.candidates || []).slice(
+                0,
+                CARD_CANDIDATE_DISPLAY_LIMIT
+              );
+              const candidateTotal = Math.max(
+                Number(row.candidateTotal) || 0,
+                (row.candidates || []).length
+              );
               return (
                 <li key={row.id} className="regulation-card-unresolved-row">
                   <strong>{statusText}</strong>
@@ -487,15 +543,19 @@ export default function RegulationCardInput({
                   </div>
                   {visibleCandidates.length ? (
                     <div className="regulation-card-row-candidates" aria-label={`${statusText}の候補`}>
-                      <span>候補:</span>
+                      <span className="regulation-card-candidate-summary">
+                        {`${candidateTotal}件の候補があります。`}
+                        {candidateTotal > visibleCandidates.length || row.candidates.length > visibleCandidates.length
+                          ? `先頭${visibleCandidates.length}件を表示しています。カード名を修正して絞り込んでください。`
+                          : "カード画像と収録弾を確認して選択してください。"}
+                      </span>
                       {visibleCandidates.map((card) => (
-                        <button key={card.cardId} type="button" onClick={() => selectCard(card, row.id)}>
-                          {displayCardLabel(card)}
-                        </button>
+                        <CardCandidateButton
+                          key={card.cardId}
+                          card={card}
+                          onSelect={(selectedCard) => selectCard(selectedCard, row.id)}
+                        />
                       ))}
-                      {row.candidates.length > visibleCandidates.length ? (
-                        <span>候補が多いため先頭20件を表示しています。カード名を修正して絞り込んでください。</span>
-                      ) : null}
                     </div>
                   ) : null}
                 </li>
