@@ -319,7 +319,13 @@ export default function PortalHome({ compact = false }) {
         ) : tournamentsError ? (
           <div className="portal-empty">{tournamentsError}</div>
         ) : featuredTournaments.length === 0 ? (
-          <div className="portal-empty">受付中・進行中の大会はありません。</div>
+          // 自分の大会として上に出したぶんを除外した結果ここが空になることがある。
+          // その場合に「大会はありません」と出すと、上に表示されている大会と矛盾する。
+          <div className="portal-empty">
+            {myTournaments.length > 0
+              ? "ほかに受付中・進行中の大会はありません。"
+              : "受付中・進行中の大会はありません。"}
+          </div>
         ) : (
           <div className="portal-tournament-list">
             {featuredTournaments.map((tournament) => (
