@@ -20,17 +20,53 @@
   --gw-danger-soft: #f9ebea;
 
   /* 形状・奥行き */
+  --gw-radius-xs: 4px;
   --gw-radius: 8px;
-  --gw-radius-sm: 6px;
+  --gw-radius-sm: var(--gw-radius);
+  --gw-radius-pill: 999px;
+  --gw-radius-circle: 50%;
   --gw-shadow-card: 0 1px 2px rgba(38, 48, 42, 0.06);
 
-  /* 余白スケール */
-  --gw-space-1: 4px;  --gw-space-2: 8px;  --gw-space-3: 12px;
-  --gw-space-4: 16px; --gw-space-5: 24px; --gw-space-6: 32px;
+  /* 余白スケール（2px の微調整 + 4px グリッド） */
+  --gw-space-3xs: 2px;
+  --gw-space-2xs: 4px;
+  --gw-space-xs: 8px;
+  --gw-space-sm: 12px;
+  --gw-space-md: 16px;
+  --gw-space-lg: 20px;
+  --gw-space-xl: 24px;
+  --gw-space-2xl: 32px;
+  --gw-space-3xl: 40px;
+  --gw-space-4xl: 48px;
+  --gw-space-5xl: 56px;
+  --gw-space-6xl: 64px;
+
+  /* 既存参照用エイリアス */
+  --gw-space-1: var(--gw-space-2xs);
+  --gw-space-2: var(--gw-space-xs);
+  --gw-space-3: var(--gw-space-sm);
+  --gw-space-4: var(--gw-space-md);
+  --gw-space-5: var(--gw-space-xl);
+  --gw-space-6: var(--gw-space-2xl);
 
   /* タイポグラフィ */
+  --gw-font-size-2xs: 10px;
+  --gw-font-size-xs: 12px;
+  --gw-font-size-sm: 14px;
+  --gw-font-size-md: 16px;
+  --gw-font-size-lg: 18px;
+  --gw-font-size-xl: 20px;
+  --gw-font-size-2xl: 24px;
+  --gw-font-size-3xl: 28px;
+  --gw-font-size-4xl: 32px;
+  --gw-font-size-5xl: 40px;
   --gw-font: "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Noto Sans JP",
              system-ui, sans-serif;
+
+  /* 固定レイアウト寸法（余白スケールとは分離） */
+  --gw-sidebar-width: 200px;
+  --gw-sidebar-collapsed-width: 56px;
+  --gw-mobile-app-bar-height: 52px;
 
   /* D1 既存UIをトークン化するための補助色 */
   --gw-text-strong: #1d2620;
@@ -82,11 +118,45 @@ body {
   margin: 0;
   background: var(--gw-bg);
   color: var(--gw-text);
+  font-size: var(--gw-font-size-md);
   font-family: var(--gw-font), -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1 {
+  font-size: var(--gw-font-size-4xl);
+}
+
+h2 {
+  font-size: var(--gw-font-size-2xl);
+}
+
+h3 {
+  font-size: var(--gw-font-size-lg);
+}
+
+h4 {
+  font-size: var(--gw-font-size-md);
+}
+
+h5 {
+  font-size: var(--gw-font-size-sm);
+}
+
+h6,
+small {
+  font-size: var(--gw-font-size-xs);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: var(--gw-font-size-sm);
 }
 
 code {

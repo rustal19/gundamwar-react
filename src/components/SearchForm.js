@@ -541,12 +541,12 @@ const SearchForm = ({ onSearch, compact = false }) => {
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1em' // チェックボックス行とセレクトボックス行の余白
+                gap: 'var(--gw-space-md)' // チェックボックス行とセレクトボックス行の余白
               }}
             >
               <div className="checkbox-group">
                 {UNIT_FEATURE_OPTIONS.map(({ label, value }) => (
-                  <label key={value} style={{ marginRight: "1em" }}>
+                  <label key={value} style={{ marginRight: "var(--gw-space-md)" }}>
                     <input
                       type="checkbox"
                       name="unitFeature"
@@ -579,12 +579,12 @@ const SearchForm = ({ onSearch, compact = false }) => {
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1em' // チェックボックス行とセレクトボックス行の余白
+                gap: 'var(--gw-space-md)' // チェックボックス行とセレクトボックス行の余白
               }}
             >
               <div className="checkbox-group">
                 {CHAR_FEATURE_OPTIONS.map(({ label, value }) => (
-                  <label key={value} style={{ marginRight: "1em" }}>
+                  <label key={value} style={{ marginRight: "var(--gw-space-md)" }}>
                     <input
                       type="checkbox"
                       name="charFeature"
@@ -697,7 +697,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
                     value={formValues.formatName}
                     onChange={handleFormatNameChange}
                     aria-label="添削杯の開催回"
-                    style={{ marginLeft: "8px" }}
+                    style={{ marginLeft: "var(--gw-space-xs)" }}
                   >
                     {TENSAKU_FORMAT_NAMES.map((name) => (
                       <option key={name} value={name}>
@@ -715,7 +715,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
                     value={formValues.formatName}
                     onChange={handleFormatNameChange}
                     aria-label="その他のフォーマット"
-                    style={{ marginLeft: "8px" }}
+                    style={{ marginLeft: "var(--gw-space-xs)" }}
                   >
                     {OTHER_FORMAT_NAMES.map((name) => (
                       <option key={name} value={name}>{name}</option>

@@ -2,27 +2,27 @@
 .grid-form {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 20px;
+  gap: var(--gw-space-lg);
   max-width: 1200px;
-  margin: 20px auto;
-  padding: 20px;
+  margin: var(--gw-space-lg) auto;
+  padding: var(--gw-space-lg);
   background-color: var(--gw-primary-soft);
   border: 1px solid var(--gw-border);
-  border-radius: 4px;
+  border-radius: var(--gw-radius-xs);
   box-sizing: border-box;
 }
 
 .not-found-page {
   width: min(720px, calc(100% - 2rem));
-  margin: 2rem auto 0;
+  margin: var(--gw-space-2xl) auto 0;
 }
 
 .not-found-panel {
   border: 1px solid var(--gw-secondary-border-soft);
   background: var(--gw-surface);
-  padding: 1.5rem;
+  padding: var(--gw-space-xl);
   display: grid;
-  gap: 0.9rem;
+  gap: var(--gw-space-md);
 }
 
 .not-found-panel h1,
@@ -32,7 +32,7 @@
 
 .not-found-eyebrow {
   color: var(--gw-text-muted);
-  font-size: 0.82rem;
+  font-size: var(--gw-font-size-sm);
   font-weight: 800;
   letter-spacing: 0;
 }
@@ -40,14 +40,14 @@
 .not-found-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: var(--gw-space-sm);
 }
 
 .not-found-actions .results-link-button {
   border: 1px solid var(--gw-secondary-border);
   background: var(--gw-surface);
   color: var(--gw-primary);
-  padding: 0.6rem 0.9rem;
+  padding: var(--gw-space-xs) var(--gw-space-md);
   text-decoration: none;
 }
 
@@ -60,7 +60,7 @@
 .grid-form .form-th {
   font-weight: 700;
   text-align: center;
-  padding: 1px;
+  padding: var(--gw-space-3xs);
 }
 
 /* 各行：ラベルと入力グループを2列に配置 */
@@ -68,13 +68,13 @@
   display: grid;
   grid-template-columns: 100px auto;
   align-items: center;
-  gap: 10px;
+  gap: var(--gw-space-xs);
 }
 
 .form-row:not(:last-child) {
   border-bottom: 1px solid var(--gw-border-strong);
-  padding-bottom: 10px;
-  margin-bottom: 0px;
+  padding-bottom: var(--gw-space-xs);
+  margin-bottom: 0;
 }
 
 /* 右カラム内のレイアウトを2カラムにするラッパー */
@@ -82,7 +82,7 @@
   display: flex;
   flex-wrap: nowrap; /* 横並び */
   align-items: flex-start;
-  gap: 10px;
+  gap: var(--gw-space-xs);
 }
 
 /* 左側：チェックボックス群を2段グリッドにする */
@@ -90,7 +90,7 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr); /* 7列に均等分割 */
   grid-template-rows: repeat(2, auto);    /* 2段 */
-  gap: 5px;
+  gap: var(--gw-space-2xs);
   flex: 1 1 auto;
   align-items: center;    /* 各セル内を縦方向中央に */
   justify-items: center;  /* 各セル内を横方向中央に */
@@ -100,7 +100,7 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr) auto; /* 前7列=1fr、最後1列=auto */
   grid-template-rows: repeat(2, auto);       /* 2行 */
-  gap: 8px;
+  gap: var(--gw-space-xs);
   width: 100%;
   box-sizing: border-box;
 }
@@ -109,7 +109,7 @@
 .color-cell {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--gw-space-2xs);
 }
 
 /* ドロップダウンセル */
@@ -125,14 +125,14 @@
 .color-group {
   display: flex;
   flex-wrap: wrap; /* 必要に応じて改行 */
-  gap: 5px;
+  gap: var(--gw-space-2xs);
 }
 
 /* 各チェックボックスアイテム */
 .color-checkbox {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: var(--gw-space-3xs);
 }
 
 /* 右側：ドロップダウンコンテナ */
@@ -149,7 +149,7 @@
   display: flex;
   flex-wrap: nowrap;  /* 折り返さず1行に */
   align-items: center;
-  gap: 10px;
+  gap: var(--gw-space-xs);
   width: 100%;
   overflow-x: auto;  /* 横幅が足りない場合に横スクロール */
 }
@@ -160,13 +160,13 @@
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 5px;
+  gap: var(--gw-space-2xs);
   white-space: nowrap;
 }
 
 .deck-range-group {
   display: grid;
-  gap: 0.45rem;
+  gap: var(--gw-space-xs);
   min-width: 0;
 }
 
@@ -174,7 +174,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--gw-space-xs);
 }
 
 .deck-range-select {
@@ -200,11 +200,11 @@
 
 .deck-range-format-note {
   display: grid;
-  gap: 0.2rem;
+  gap: var(--gw-space-2xs);
   max-width: 72ch;
   margin: 0;
   color: var(--gw-text-muted);
-  font-size: 0.85rem;
+  font-size: var(--gw-font-size-sm);
   line-height: 1.45;
   white-space: normal;
 }
@@ -217,7 +217,7 @@
 .inline-container.four-col {
   display: flex;
   flex-wrap: wrap;  /* nowrap ではなく wrap にする */
-  gap: 13px;
+  gap: var(--gw-space-sm);
   width: 100%;
 }
 
@@ -238,19 +238,19 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: var(--gw-space-xs);
 }
 
 /* ボタングループ */
 .button-group {
   display: flex;
   justify-content: flex-end; /* 右詰めに配置 */
-  gap: 10px;               /* ボタン間の隙間 */
+  gap: var(--gw-space-xs);               /* ボタン間の隙間 */
 }
 
 .button-group button {
   flex: 0 0 120px;         /* 両方120pxの固定幅に */
-  padding: 12px 20px;
+  padding: var(--gw-space-sm) var(--gw-space-lg);
   text-align: center;      /* テキストを中央揃え */
   box-sizing: border-box;
 }
@@ -263,8 +263,8 @@
 .checkbox-grid6 {
   display: grid;
   grid-template-columns: repeat(6, 1fr); /* 8等分 */
-  gap: 10px;
-  margin-bottom: 10px; /* 下に少し余白 */
+  gap: var(--gw-space-xs);
+  margin-bottom: var(--gw-space-xs); /* 下に少し余白 */
 }
 
 
@@ -272,14 +272,14 @@
 .checkbox-item {
   display: flex;
   align-items: center;
-  gap: 5px; /* チェックボックスとラベルの隙間 */
+  gap: var(--gw-space-2xs); /* チェックボックスとラベルの隙間 */
 }
 
 /* セレクトボックスを横に並べる */
 .select-row {
   display: flex;
   flex-wrap: wrap; /* 画面幅が狭い場合は折り返す */
-  gap: 10px;
+  gap: var(--gw-space-xs);
 }
 
 /* react-select のコンテナ調整 (必要に応じて) */
@@ -302,15 +302,15 @@
   /* 全体のフォームコンテナの余白・パディングを縮小 */
   .grid-form {
     max-width: 100%;
-    margin: 10px auto;
-    padding: 10px;
-    gap: 10px;
+    margin: var(--gw-space-xs) auto;
+    padding: var(--gw-space-xs);
+    gap: var(--gw-space-xs);
   }
 
   /* 各行を1カラム表示に変更 */
   .form-row {
     grid-template-columns: 1fr;
-    gap: 5px;
+    gap: var(--gw-space-2xs);
     /* 必要に応じてフォントサイズも調整 */
   }
 
@@ -329,13 +329,13 @@
      必要に応じて gap を少し小さく */
   .checkbox-container {
     grid-template-columns: repeat(1, 1fr);
-    gap: 4px;
+    gap: var(--gw-space-2xs);
   }
   .checkbox-group,
   .checkbox-grid6
    {
     grid-template-columns: repeat(2, 1fr); /* 2列に変更 */
-    gap: 8px;
+    gap: var(--gw-space-xs);
   }
   /* 2行×8列のグリッド（色チェックボックス＋ドロップダウン）の場合も余白を縮小 */
   .grid-2row-8col {
@@ -366,7 +366,7 @@
   .button-group button {
     flex: 1 1 auto;   /* 固定幅を解除して幅いっぱいに */
     width: 100%;
-    padding: 10px;    /* 少しパディングを減らす */
+    padding: var(--gw-space-xs);    /* 少しパディングを減らす */
   }
 
   /* セレクトボックス群を縦に並べる場合 */

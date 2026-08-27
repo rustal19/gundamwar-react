@@ -29,18 +29,18 @@
 .portal-section-header h2 {
   margin: 0;
   color: var(--gw-text-strong);
-  font-size: 1.15rem;
+  font-size: var(--gw-font-size-lg);
   font-weight: 700;
 }
 
 .portal-more-link {
   min-height: 32px;
   border: 1px solid var(--gw-primary);
-  border-radius: var(--gw-radius-sm);
+  border-radius: var(--gw-radius);
   background: var(--gw-surface);
   color: var(--gw-primary);
   padding: var(--gw-space-1) var(--gw-space-3);
-  font-size: 0.9rem;
+  font-size: var(--gw-font-size-sm);
   font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
@@ -56,7 +56,7 @@
   align-items: center;
   gap: var(--gw-space-3);
   border: 1px solid var(--gw-border);
-  border-radius: var(--gw-radius-sm);
+  border-radius: var(--gw-radius);
   background: var(--gw-surface);
   box-shadow: var(--gw-shadow-card);
   padding: var(--gw-space-3);
@@ -66,10 +66,10 @@
   min-width: 0;
   min-height: 42px;
   border: 1px solid var(--gw-border);
-  border-radius: var(--gw-radius-sm);
+  border-radius: var(--gw-radius);
   background: var(--gw-field-bg);
   color: var(--gw-text);
-  font-size: 1rem;
+  font-size: var(--gw-font-size-md);
   padding: var(--gw-space-2) var(--gw-space-3);
 }
 
@@ -77,7 +77,7 @@
 .tournament-card-action {
   min-height: 40px;
   border: 1px solid var(--gw-primary);
-  border-radius: var(--gw-radius-sm);
+  border-radius: var(--gw-radius);
   cursor: pointer;
   font-weight: 800;
   padding: var(--gw-space-2) var(--gw-space-4);
@@ -112,12 +112,12 @@
   display: inline-flex;
   align-items: center;
   min-height: 24px;
-  border-radius: var(--gw-radius-sm);
+  border-radius: var(--gw-radius);
   background: var(--gw-accent-soft);
   color: var(--gw-accent);
-  font-size: 12px;
+  font-size: var(--gw-font-size-xs);
   font-weight: 800;
-  padding: 3px 8px;
+  padding: var(--gw-space-3xs) var(--gw-space-xs);
 }
 
 .tournament-card {
@@ -126,7 +126,7 @@
   align-items: center;
   gap: var(--gw-space-4);
   border: 1px solid var(--gw-border);
-  border-radius: var(--gw-radius-sm);
+  border-radius: var(--gw-radius);
   background: var(--gw-surface);
   box-shadow: var(--gw-shadow-card);
   padding: var(--gw-space-3);
@@ -139,7 +139,7 @@
 .tournament-card-date {
   display: grid;
   justify-items: center;
-  gap: 1px;
+  gap: var(--gw-space-3xs);
   border-right: 1px solid var(--gw-divider);
   color: var(--gw-text-muted);
   line-height: 1.05;
@@ -153,7 +153,7 @@
 
 .tournament-card-date strong {
   color: var(--gw-text-strong);
-  font-size: 1.55rem;
+  font-size: var(--gw-font-size-2xl);
 }
 
 .tournament-card-main {
@@ -170,7 +170,7 @@
 .tournament-card-title-row h3 {
   min-width: 0;
   margin: 0;
-  font-size: 15px;
+  font-size: var(--gw-font-size-md);
   font-weight: 700;
   line-height: 1.35;
 }
@@ -190,10 +190,10 @@
   width: fit-content;
   min-height: 24px;
   border: 1px solid transparent;
-  border-radius: var(--gw-radius-sm);
+  border-radius: var(--gw-radius);
   background: var(--gw-field-bg);
   color: var(--gw-text);
-  font-size: 0.75rem;
+  font-size: var(--gw-font-size-xs);
   font-weight: 800;
   padding: var(--gw-space-1) var(--gw-space-2);
   white-space: nowrap;
@@ -231,14 +231,14 @@
   gap: var(--gw-space-2) var(--gw-space-4);
   margin-top: var(--gw-space-2);
   color: var(--gw-text-muted);
-  font-size: 12px;
+  font-size: var(--gw-font-size-xs);
   line-height: 1.35;
 }
 
 .tournament-card-meta span {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--gw-space-2xs);
   min-width: 0;
 }
 
@@ -270,7 +270,7 @@
 .portal-deck-colors {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: var(--gw-space-3xs);
   min-width: 22px;
 }
 
@@ -278,7 +278,7 @@
   width: 9px;
   height: 9px;
   border: 1px solid var(--gw-border);
-  border-radius: 50%;
+  border-radius: var(--gw-radius-circle);
 }
 
 .portal-deck-title {
@@ -297,7 +297,7 @@
 
 .portal-deck-owner {
   color: var(--gw-text-muted);
-  font-size: 0.82rem;
+  font-size: var(--gw-font-size-sm);
   white-space: nowrap;
 }
 
@@ -316,11 +316,11 @@ a.portal-deck-owner:hover {
 
 .portal-deck-format {
   color: var(--gw-text-muted);
-  font-size: 0.82rem;
+  font-size: var(--gw-font-size-sm);
   white-space: nowrap;
   padding: var(--gw-space-1) var(--gw-space-2);
   border: 1px solid var(--gw-divider);
-  border-radius: 999px;
+  border-radius: var(--gw-radius-pill);
 }
 
 .portal-deck-format:empty {
@@ -330,7 +330,7 @@ a.portal-deck-owner:hover {
 
 .portal-deck-date {
   color: var(--gw-text-muted);
-  font-size: 0.88rem;
+  font-size: var(--gw-font-size-sm);
   white-space: nowrap;
 }
 

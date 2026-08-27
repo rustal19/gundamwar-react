@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: var(--gw-space-xl);
   background: var(--gw-overlay);
 }
 
@@ -14,43 +14,43 @@
   border: 1px solid var(--gw-secondary-border-soft);
   background: var(--gw-surface);
   box-shadow: 0 20px 56px var(--gw-shadow-modal-color);
-  padding: 1.25rem;
+  padding: var(--gw-space-lg);
   display: grid;
-  gap: 1rem;
+  gap: var(--gw-space-md);
   box-sizing: border-box;
 }
 
 .nickname-gate-header {
   display: grid;
-  gap: 0.35rem;
+  gap: var(--gw-space-2xs);
 }
 
 .nickname-gate-header h3 {
   margin: 0;
   color: var(--gw-text-strong);
-  font-size: 1.08rem;
+  font-size: var(--gw-font-size-lg);
 }
 
 .nickname-gate-header p {
   margin: 0;
   color: var(--gw-text-muted);
-  font-size: 0.9rem;
+  font-size: var(--gw-font-size-sm);
   line-height: 1.55;
 }
 
 .nickname-gate-field {
   display: grid;
-  gap: 0.35rem;
+  gap: var(--gw-space-2xs);
   color: var(--gw-primary);
   font-weight: 700;
-  font-size: 0.92rem;
+  font-size: var(--gw-font-size-sm);
 }
 
 .nickname-gate-field input {
   width: 100%;
   min-width: 0;
   border: 1px solid var(--gw-secondary-border);
-  padding: 0.58rem 0.7rem;
+  padding: var(--gw-space-xs) var(--gw-space-sm);
   font: inherit;
   box-sizing: border-box;
 }
@@ -58,12 +58,12 @@
 .nickname-gate-error {
   margin: 0;
   color: var(--gw-danger-strong);
-  font-size: 0.9rem;
+  font-size: var(--gw-font-size-sm);
 }
 
 .nickname-gate-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.55rem;
+  gap: var(--gw-space-xs);
   flex-wrap: wrap;
 }

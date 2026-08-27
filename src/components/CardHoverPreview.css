@@ -29,7 +29,7 @@
   left: calc(100% + 0.75rem);
   transform: translateY(-50%);
   width: 220px;
-  padding: 0.45rem;
+  padding: var(--gw-space-xs);
   border: 1px solid var(--gw-secondary-border);
   background: var(--gw-surface);
   box-shadow: 0 14px 34px var(--gw-shadow-modal-color);
