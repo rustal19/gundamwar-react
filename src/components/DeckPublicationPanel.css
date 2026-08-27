@@ -1,9 +1,9 @@
 .deck-publication-panel {
   border: 1px solid var(--gw-secondary-border-soft);
   background: var(--gw-surface);
-  padding: 0.8rem;
+  padding: var(--gw-space-sm);
   display: grid;
-  gap: 0.65rem;
+  gap: var(--gw-space-sm);
 }
 
 .deck-publication-panel.is-unsaved {
@@ -14,7 +14,7 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--gw-space-md);
   color: var(--gw-primary);
 }
 
@@ -22,12 +22,12 @@
 .deck-publication-message,
 .deck-publication-validation-note {
   color: var(--gw-text-muted);
-  font-size: 0.84rem;
+  font-size: var(--gw-font-size-sm);
 }
 
 .deck-publication-link {
   color: var(--gw-primary);
-  font-size: 0.84rem;
+  font-size: var(--gw-font-size-sm);
   font-weight: 700;
 }
 
@@ -38,16 +38,16 @@
   border: 1px solid var(--gw-secondary-border);
   background: var(--gw-field-bg);
   color: var(--gw-text);
-  padding: 0.55rem 0.65rem;
+  padding: var(--gw-space-xs) var(--gw-space-sm);
   font: inherit;
   box-sizing: border-box;
 }
 
 .deck-publication-format {
   display: grid;
-  gap: 0.35rem;
+  gap: var(--gw-space-2xs);
   color: var(--gw-text-muted);
-  font-size: 0.88rem;
+  font-size: var(--gw-font-size-sm);
   font-weight: 700;
 }
 
@@ -56,7 +56,7 @@
   border: 1px solid var(--gw-secondary-border);
   background: var(--gw-surface);
   color: var(--gw-text);
-  padding: 0.45rem 0.55rem;
+  padding: var(--gw-space-xs) var(--gw-space-xs);
   font: inherit;
 }
 
@@ -73,7 +73,7 @@
 .deck-publication-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.55rem;
+  gap: var(--gw-space-xs);
   flex-wrap: wrap;
 }
 
@@ -88,23 +88,23 @@
 }
 
 .deck-publication-message ul {
-  margin: 0.4rem 0 0;
-  padding-left: 1.35rem;
+  margin: var(--gw-space-xs) 0 0;
+  padding-left: var(--gw-space-lg);
 }
 
 .deck-builder-publication-panel {
-  padding: calc(0.65rem * var(--deck-ui-scale));
-  gap: calc(0.5rem * var(--deck-ui-scale));
+  padding: var(--gw-space-xs);
+  gap: var(--gw-space-xs);
 }
 
 .deck-builder-publication-panel .deck-publication-textarea {
   min-height: calc(3.8rem * var(--deck-ui-scale));
-  font-size: calc(0.84rem * var(--deck-ui-scale));
+  font-size: var(--gw-font-size-xs);
 }
 
 .deck-builder-publication-panel .deck-publication-format,
 .deck-builder-publication-panel .deck-publication-message,
 .deck-builder-publication-panel .deck-publication-validation-note,
 .deck-builder-publication-panel .deck-publication-link {
-  font-size: calc(0.78rem * var(--deck-ui-scale));
+  font-size: var(--gw-font-size-xs);
 }

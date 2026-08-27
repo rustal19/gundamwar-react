@@ -1,10 +1,10 @@
 .google-signin-panel {
   display: grid;
-  gap: 0.65rem;
+  gap: var(--gw-space-sm);
 }
 
 .google-signin-panel-header {
-  gap: 0.25rem;
+  gap: var(--gw-space-2xs);
   align-items: end;
 }
 
@@ -12,16 +12,16 @@
   border: 1px solid var(--gw-primary);
   background: var(--gw-primary);
   color: var(--gw-on-primary);
-  padding: 0.7rem 1rem;
+  padding: var(--gw-space-sm) var(--gw-space-md);
   font: inherit;
   cursor: pointer;
 }
 
 .google-mock-role-field {
   display: grid;
-  gap: 0.25rem;
+  gap: var(--gw-space-2xs);
   color: var(--gw-primary);
-  font-size: 0.85rem;
+  font-size: var(--gw-font-size-sm);
   font-weight: 600;
 }
 
@@ -29,32 +29,32 @@
   border: 1px solid var(--gw-secondary-border);
   background: var(--gw-surface);
   color: var(--gw-primary);
-  padding: 0.45rem 0.55rem;
+  padding: var(--gw-space-xs) var(--gw-space-xs);
   font: inherit;
 }
 
 .google-signin-note {
   margin: 0;
   color: var(--gw-text-muted);
-  font-size: 0.92rem;
+  font-size: var(--gw-font-size-sm);
 }
 
 .google-signin-status {
   margin: 0;
   color: var(--gw-primary);
-  font-size: 0.95rem;
+  font-size: var(--gw-font-size-md);
   font-weight: 600;
 }
 
 .google-signin-error {
   margin: 0;
   color: var(--gw-danger-strong-alt);
-  font-size: 0.92rem;
+  font-size: var(--gw-font-size-sm);
 }
 
 .google-signin-panel-header .google-signin-status,
 .google-signin-panel-header .google-signin-error {
-  font-size: 0.8rem;
+  font-size: var(--gw-font-size-xs);
   text-align: right;
 }
 

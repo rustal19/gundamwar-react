@@ -1,34 +1,34 @@
 .regulation-card-input {
   min-width: 0;
-  margin: 6px 0 0;
+  margin: var(--gw-space-2xs) 0 0;
   border: 1px solid var(--gw-border);
-  border-radius: var(--gw-radius-sm);
-  padding: 12px;
+  border-radius: var(--gw-radius);
+  padding: var(--gw-space-sm);
 }
 
 .regulation-card-input legend {
   color: var(--gw-text);
   font-weight: 800;
-  padding: 0 5px;
+  padding: 0 var(--gw-space-2xs);
 }
 
 .regulation-card-search-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
-  gap: 8px;
+  gap: var(--gw-space-xs);
 }
 
 .regulation-card-control,
 .regulation-card-bulk {
   display: grid;
-  gap: 5px;
+  gap: var(--gw-space-2xs);
 }
 
 .regulation-card-control label,
 .regulation-card-bulk label {
   color: var(--gw-text-muted);
-  font-size: 0.9rem;
+  font-size: var(--gw-font-size-sm);
   font-weight: 700;
 }
 
@@ -40,28 +40,28 @@
 }
 
 .regulation-card-search-error {
-  margin: 8px 0 0;
+  margin: var(--gw-space-xs) 0 0;
   color: var(--gw-danger-text-alt);
   font-weight: 700;
 }
 
 .regulation-card-search-results {
-  margin-top: 8px;
+  margin-top: var(--gw-space-xs);
   border: 1px solid var(--gw-border);
-  border-radius: var(--gw-radius-sm);
+  border-radius: var(--gw-radius);
   background: var(--gw-surface);
-  padding: 8px;
+  padding: var(--gw-space-xs);
 }
 
 .regulation-card-search-results p {
-  margin: 0 0 6px;
+  margin: 0 0 var(--gw-space-2xs);
   color: var(--gw-text-muted);
-  font-size: 0.88rem;
+  font-size: var(--gw-font-size-sm);
 }
 
 .regulation-card-search-results ul {
   display: grid;
-  gap: 4px;
+  gap: var(--gw-space-2xs);
   max-height: 240px;
   margin: 0;
   overflow-y: auto;
@@ -72,11 +72,11 @@
 .regulation-card-search-results button {
   width: 100%;
   border: 1px solid transparent;
-  border-radius: var(--gw-radius-sm);
+  border-radius: var(--gw-radius);
   background: var(--gw-primary-soft);
   color: var(--gw-text);
   cursor: pointer;
-  padding: 7px 9px;
+  padding: var(--gw-space-xs) var(--gw-space-xs);
   text-align: left;
 }
 
@@ -85,36 +85,36 @@
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr);
   align-items: center;
-  gap: 9px;
+  gap: var(--gw-space-xs);
   width: 100%;
   min-height: 70px;
-  padding: 5px 8px;
+  padding: var(--gw-space-2xs) var(--gw-space-xs);
   text-align: left;
 }
 
 .regulation-card-candidate-image {
   width: 48px;
   max-width: 48px;
-  border-radius: 2px;
+  border-radius: var(--gw-radius-xs);
 }
 
 .regulation-card-candidate-image .card-image-placeholder {
-  padding: 3px;
+  padding: var(--gw-space-3xs);
 }
 
 .regulation-card-candidate-image .card-image-placeholder-code {
   margin: 0;
-  font-size: 0.58rem;
+  font-size: var(--gw-font-size-2xs);
 }
 
 .regulation-card-candidate-image .card-image-placeholder-name {
-  font-size: 0.55rem;
+  font-size: var(--gw-font-size-2xs);
   line-height: 1.15;
 }
 
 .regulation-card-candidate-details {
   display: grid;
-  gap: 4px;
+  gap: var(--gw-space-2xs);
   min-width: 0;
 }
 
@@ -125,7 +125,7 @@
 
 .regulation-card-candidate-details span {
   color: var(--gw-text-muted);
-  font-size: 0.82rem;
+  font-size: var(--gw-font-size-sm);
   line-height: 1.35;
 }
 
@@ -137,22 +137,22 @@
 .regulation-card-selected {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
-  margin-top: 10px;
+  gap: var(--gw-space-xs);
+  margin-top: var(--gw-space-xs);
 }
 
 .regulation-card-chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--gw-space-2xs);
   max-width: 100%;
   border: 1px solid var(--gw-primary);
-  border-radius: 999px;
+  border-radius: var(--gw-radius-pill);
   background: var(--gw-primary-soft);
   color: var(--gw-primary-strong);
-  font-size: 0.86rem;
+  font-size: var(--gw-font-size-sm);
   font-weight: 700;
-  padding: 4px 5px 4px 9px;
+  padding: var(--gw-space-2xs) var(--gw-space-2xs) var(--gw-space-2xs) var(--gw-space-xs);
 }
 
 .regulation-card-chip > span {
@@ -164,11 +164,11 @@
   width: 24px;
   min-height: 24px;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--gw-radius-circle);
   background: transparent;
   color: inherit;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: var(--gw-font-size-md);
   line-height: 1;
   padding: 0;
   place-items: center;
@@ -180,7 +180,7 @@
 }
 
 .regulation-card-bulk {
-  margin-top: 12px;
+  margin-top: var(--gw-space-sm);
 }
 
 .regulation-card-bulk p {
@@ -192,19 +192,19 @@
 }
 
 .regulation-card-unresolved {
-  margin-top: 10px;
+  margin-top: var(--gw-space-xs);
   border: 1px solid var(--gw-danger-border);
-  border-radius: var(--gw-radius-sm);
+  border-radius: var(--gw-radius);
   background: var(--gw-danger-soft-alt);
   color: var(--gw-danger-text-alt);
-  padding: 10px;
+  padding: var(--gw-space-xs);
 }
 
 .regulation-card-unresolved > ul {
   display: grid;
-  gap: 9px;
-  margin: 8px 0 0;
-  padding-left: 20px;
+  gap: var(--gw-space-xs);
+  margin: var(--gw-space-xs) 0 0;
+  padding-left: var(--gw-space-lg);
 }
 
 .regulation-card-unresolved-row {
@@ -214,31 +214,31 @@
 .regulation-card-unresolved-actions {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 6px;
-  margin-top: 6px;
+  gap: var(--gw-space-2xs);
+  margin-top: var(--gw-space-2xs);
 }
 
 .regulation-card-row-candidates {
   display: grid;
-  gap: 5px;
+  gap: var(--gw-space-2xs);
   max-height: 360px;
-  margin-top: 6px;
+  margin-top: var(--gw-space-2xs);
   overflow-y: auto;
 }
 
 .regulation-card-candidate-summary {
   color: var(--gw-danger-text-alt);
-  font-size: 0.86rem;
+  font-size: var(--gw-font-size-sm);
   line-height: 1.45;
 }
 
 .regulation-card-row-candidates button {
   border: 1px solid var(--gw-danger-border);
-  border-radius: var(--gw-radius-sm);
+  border-radius: var(--gw-radius);
   background: var(--gw-surface);
   color: var(--gw-text);
   cursor: pointer;
-  padding: 5px 8px;
+  padding: var(--gw-space-2xs) var(--gw-space-xs);
 }
 
 @media (max-width: 760px) {

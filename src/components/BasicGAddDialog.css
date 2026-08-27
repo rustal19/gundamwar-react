@@ -5,7 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: var(--gw-space-xl);
   z-index: 1100;
 }
 
@@ -20,8 +20,8 @@
   box-shadow: 0 20px 56px var(--gw-shadow-modal-color);
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: 0.9rem;
-  padding: 1.1rem;
+  gap: var(--gw-space-md);
+  padding: var(--gw-space-md);
   overflow: hidden;
 }
 
@@ -35,21 +35,21 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 0.75rem;
+  gap: var(--gw-space-sm);
 }
 
 .basic-g-dialog-header h3,
 .basic-g-art-dialog-header h3 {
   margin: 0;
-  font-size: 1.02rem;
+  font-size: var(--gw-font-size-md);
   color: var(--gw-text-strong);
 }
 
 .basic-g-dialog-note,
 .basic-g-art-dialog-note {
-  margin: 0.28rem 0 0;
+  margin: var(--gw-space-2xs) 0 0;
   color: var(--gw-text-muted);
-  font-size: 0.84rem;
+  font-size: var(--gw-font-size-sm);
   line-height: 1.4;
 }
 
@@ -57,23 +57,23 @@
 .basic-g-art-grid-scroll {
   min-height: 0;
   overflow: auto;
-  padding-right: 0.15rem;
+  padding-right: var(--gw-space-3xs);
 }
 
 .basic-g-color-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 0.7rem;
+  gap: var(--gw-space-sm);
 }
 
 .basic-g-color-card {
   border: 1px solid var(--gw-secondary-border-soft);
   background: var(--gw-field-bg);
-  padding: 0.7rem 0.5rem;
+  padding: var(--gw-space-sm) var(--gw-space-xs);
   display: grid;
   justify-items: center;
   align-content: start;
-  gap: 0.45rem;
+  gap: var(--gw-space-xs);
 }
 
 .basic-g-color-label {
@@ -101,7 +101,7 @@
   width: 100%;
   display: grid;
   grid-template-columns: 1fr 1.2fr 1fr;
-  gap: 0.35rem;
+  gap: var(--gw-space-2xs);
   align-items: stretch;
 }
 
@@ -111,7 +111,7 @@
   border: 1px solid var(--gw-secondary-border);
   background: var(--gw-surface);
   color: var(--gw-text-strong);
-  font-size: 0.92rem;
+  font-size: var(--gw-font-size-sm);
 }
 
 .basic-g-stepper-button {
@@ -134,7 +134,7 @@
 .basic-g-art-dialog-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.55rem;
+  gap: var(--gw-space-xs);
   flex-wrap: wrap;
 }
 
@@ -145,13 +145,13 @@
 
 .basic-g-art-tabs {
   display: flex;
-  gap: 0.4rem;
+  gap: var(--gw-space-xs);
   flex-wrap: wrap;
 }
 
 .basic-g-art-tab {
   min-width: 3rem;
-  padding: 0.48rem 0.7rem;
+  padding: var(--gw-space-xs) var(--gw-space-sm);
   border: 1px solid var(--gw-secondary-border);
   background: var(--gw-surface);
   color: var(--gw-text);
@@ -167,13 +167,13 @@
 .basic-g-art-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--basic-g-art-tile-min), 1fr));
-  gap: 0.65rem;
+  gap: var(--gw-space-sm);
 }
 
 .basic-g-art-tile {
   border: 1px solid var(--gw-secondary-border-soft);
   background: var(--gw-surface);
-  padding: 0.35rem;
+  padding: var(--gw-space-2xs);
   display: grid;
   cursor: pointer;
 }
@@ -205,7 +205,7 @@
 
 @media (max-width: 900px) {
   .basic-g-dialog-overlay {
-    padding: 1rem;
+    padding: var(--gw-space-md);
   }
 
   .basic-g-dialog,
@@ -213,7 +213,7 @@
     --basic-g-thumb-width: 4.2rem;
     width: min(100vw - 2rem, 760px);
     max-height: calc(100vh - 2rem);
-    padding: 1rem;
+    padding: var(--gw-space-md);
   }
 
   .basic-g-color-grid {
@@ -239,56 +239,56 @@
     height: 100dvh;
     border: 0;
     box-shadow: none;
-    padding: 0.9rem 0.8rem;
-    gap: 0.8rem;
+    padding: var(--gw-space-md) var(--gw-space-sm);
+    gap: var(--gw-space-sm);
   }
 
   .basic-g-dialog-header h3,
   .basic-g-art-dialog-header h3 {
-    font-size: 0.96rem;
+    font-size: var(--gw-font-size-md);
   }
 
   .basic-g-dialog-note,
   .basic-g-art-dialog-note {
-    font-size: 0.76rem;
+    font-size: var(--gw-font-size-xs);
   }
 
   .basic-g-color-grid-mobile {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.55rem;
+    gap: var(--gw-space-xs);
   }
 
   .basic-g-color-card-mobile {
-    padding: 0.65rem 0.45rem;
-    gap: 0.4rem;
+    padding: var(--gw-space-sm) var(--gw-space-xs);
+    gap: var(--gw-space-xs);
   }
 
   .basic-g-stepper {
-    gap: 0.28rem;
+    gap: var(--gw-space-2xs);
   }
 
   .basic-g-stepper-button,
   .basic-g-stepper-value {
     min-height: 2rem;
-    font-size: 0.88rem;
+    font-size: var(--gw-font-size-sm);
   }
 
   .basic-g-dialog-actions-mobile {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.45rem;
+    gap: var(--gw-space-xs);
   }
 
   .basic-g-dialog-actions-mobile button {
     width: 100%;
     min-width: 0;
-    padding-inline: 0.3rem;
+    padding-inline: var(--gw-space-2xs);
   }
 
   .basic-g-art-tabs {
     flex-wrap: nowrap;
     overflow-x: auto;
-    padding-bottom: 0.1rem;
+    padding-bottom: var(--gw-space-3xs);
   }
 
   .basic-g-art-tab {
@@ -297,7 +297,7 @@
 
   .basic-g-art-grid-mobile {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.45rem;
+    gap: var(--gw-space-xs);
   }
 }
 
@@ -305,7 +305,7 @@
   .basic-g-dialog-mobile,
   .basic-g-art-dialog-mobile {
     --basic-g-thumb-width: 3.85rem;
-    padding: 0.8rem 0.7rem;
+    padding: var(--gw-space-sm) var(--gw-space-sm);
   }
 
   .basic-g-art-grid-mobile {

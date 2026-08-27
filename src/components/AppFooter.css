@@ -1,9 +1,9 @@
 .app-footer {
   border-top: 1px solid var(--gw-secondary-border-soft);
   color: var(--gw-text-muted);
-  font-size: 0.86rem;
-  margin-top: 2rem;
-  padding: 1rem 0.85rem;
+  font-size: var(--gw-font-size-sm);
+  margin-top: var(--gw-space-2xl);
+  padding: var(--gw-space-md) var(--gw-space-sm);
   text-align: left;
 }
 
@@ -11,9 +11,9 @@
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.8rem 1.1rem;
+  gap: var(--gw-space-sm) var(--gw-space-md);
   justify-content: space-between;
-  margin-bottom: 0.45rem;
+  margin-bottom: var(--gw-space-xs);
 }
 
 .app-footer-brand {
@@ -23,7 +23,7 @@
 .app-footer-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.8rem;
+  gap: var(--gw-space-sm);
   justify-content: flex-end;
   margin-bottom: 0;
 }
@@ -48,26 +48,26 @@
   line-height: 1.8;
   margin: 0 auto;
   max-width: 720px;
-  padding: 2rem 1rem 0;
+  padding: var(--gw-space-2xl) var(--gw-space-md) 0;
 }
 
 .legal-page h1 {
-  font-size: 1.8rem;
-  margin: 0 0 1rem;
+  font-size: var(--gw-font-size-3xl);
+  margin: 0 0 var(--gw-space-md);
 }
 
 .legal-page h2 {
-  font-size: 1.15rem;
-  margin: 1.7rem 0 0.4rem;
+  font-size: var(--gw-font-size-lg);
+  margin: var(--gw-space-xl) 0 var(--gw-space-xs);
 }
 
 .legal-page p {
-  margin: 0.45rem 0 0;
+  margin: var(--gw-space-xs) 0 0;
 }
 
 .legal-page-draft-note {
   background: var(--gw-warning-soft);
   border: 1px solid var(--gw-warning-border);
   color: var(--gw-warning-text);
-  padding: 0.5rem 0.7rem;
+  padding: var(--gw-space-xs) var(--gw-space-sm);
 }

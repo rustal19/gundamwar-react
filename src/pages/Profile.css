@@ -1,17 +1,17 @@
 .profile-page {
   width: min(1040px, calc(100% - 2rem));
-  margin: 1.25rem auto 0;
+  margin: var(--gw-space-lg) auto 0;
   display: grid;
-  gap: 1rem;
+  gap: var(--gw-space-md);
 }
 
 .profile-panel {
   border: 1px solid var(--gw-border);
   border-radius: var(--gw-radius);
   background: var(--gw-surface);
-  padding: 1.25rem;
+  padding: var(--gw-space-lg);
   display: grid;
-  gap: 1rem;
+  gap: var(--gw-space-md);
 }
 
 .profile-panel h1,
@@ -22,24 +22,24 @@
 }
 
 .profile-panel h1 {
-  font-size: 1.35rem;
+  font-size: var(--gw-font-size-xl);
 }
 
 .profile-panel h2 {
-  margin-bottom: 8px;
-  font-size: 1.15rem;
+  margin-bottom: var(--gw-space-xs);
+  font-size: var(--gw-font-size-lg);
   font-weight: 700;
 }
 
 .profile-panel h3 {
-  font-size: 0.95rem;
+  font-size: var(--gw-font-size-md);
 }
 
 .profile-note,
 .profile-empty {
   margin: 0;
   color: var(--gw-text-muted);
-  font-size: 0.92rem;
+  font-size: var(--gw-font-size-sm);
 }
 
 .profile-identity {
@@ -50,7 +50,7 @@
 .profile-avatar {
   width: 58px;
   height: 58px;
-  border-radius: 50%;
+  border-radius: var(--gw-radius-circle);
   display: grid;
   place-items: center;
   background: var(--gw-primary-soft);
@@ -62,18 +62,18 @@
 .profile-identity-main {
   min-width: 0;
   display: grid;
-  gap: 0.25rem;
+  gap: var(--gw-space-2xs);
 }
 
 .profile-google-name {
   margin: 0;
   color: var(--gw-text-muted);
-  font-size: 11px;
+  font-size: var(--gw-font-size-xs);
 }
 
 .profile-public-link {
   color: var(--gw-primary);
-  font-size: 0.88rem;
+  font-size: var(--gw-font-size-sm);
   text-decoration: none;
 }
 
@@ -84,15 +84,15 @@
 .profile-form {
   display: flex;
   align-items: end;
-  gap: 0.65rem;
+  gap: var(--gw-space-sm);
 }
 
 .profile-field {
   display: grid;
-  gap: 0.35rem;
+  gap: var(--gw-space-2xs);
   color: var(--gw-primary);
   font-weight: 700;
-  font-size: 0.88rem;
+  font-size: var(--gw-font-size-sm);
   flex: 1;
 }
 
@@ -100,7 +100,7 @@
   width: 100%;
   min-width: 0;
   border: 1px solid var(--gw-secondary-border);
-  padding: 0.58rem 0.7rem;
+  padding: var(--gw-space-xs) var(--gw-space-sm);
   font: inherit;
   box-sizing: border-box;
 }
@@ -108,7 +108,7 @@
 .profile-error,
 .profile-message {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--gw-font-size-sm);
 }
 
 .profile-error {
@@ -122,43 +122,43 @@
 .profile-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.75rem;
+  gap: var(--gw-space-sm);
 }
 
 .profile-metrics > div {
   border: 1px solid var(--gw-border);
   border-radius: var(--gw-radius);
   background: var(--gw-surface);
-  padding: 0.9rem;
+  padding: var(--gw-space-md);
   display: grid;
-  gap: 0.2rem;
+  gap: var(--gw-space-2xs);
 }
 
 .profile-metrics span {
   color: var(--gw-text-muted);
-  font-size: 0.78rem;
+  font-size: var(--gw-font-size-xs);
 }
 
 .profile-metrics strong {
   color: var(--gw-text-strong);
-  font-size: 1.4rem;
+  font-size: var(--gw-font-size-2xl);
 }
 
 .profile-section-heading {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--gw-space-md);
   align-items: center;
 }
 
 .profile-section-heading span {
   color: var(--gw-text-muted);
-  font-size: 0.84rem;
+  font-size: var(--gw-font-size-sm);
 }
 
 .profile-list-section {
   display: grid;
-  gap: 0.5rem;
+  gap: var(--gw-space-xs);
 }
 
 .profile-tournament-list,
@@ -172,30 +172,30 @@
   color: inherit;
   text-decoration: none;
   border-bottom: 1px solid var(--gw-secondary-border-soft);
-  padding: 0.72rem 0;
+  padding: var(--gw-space-sm) 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
+  gap: var(--gw-space-md);
 }
 
 .profile-tournament-row strong,
 .profile-result-row strong {
   display: block;
   color: var(--gw-text-strong);
-  font-size: 0.95rem;
+  font-size: var(--gw-font-size-md);
 }
 
 .profile-tournament-row span,
 .profile-result-row span {
   color: var(--gw-text-muted);
-  font-size: 0.82rem;
+  font-size: var(--gw-font-size-sm);
 }
 
 .profile-row-meta {
   display: flex;
   justify-content: flex-end;
-  gap: 0.4rem;
+  gap: var(--gw-space-xs);
   flex-wrap: wrap;
 }
 
@@ -203,8 +203,8 @@
   border: 1px solid var(--gw-secondary-border);
   background: var(--gw-field-bg);
   color: var(--gw-text-muted);
-  padding: 0.18rem 0.45rem;
-  font-size: 0.76rem;
+  padding: var(--gw-space-3xs) var(--gw-space-xs);
+  font-size: var(--gw-font-size-xs);
   white-space: nowrap;
 }
 
