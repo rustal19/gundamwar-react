@@ -240,10 +240,21 @@ export default function PortalHome({ compact = false }) {
     [myTournamentItems]
   );
 
-  const featuredTournaments = useMemo(
-    () => tournaments.slice(0, 5),
-    [tournaments]
-  );
+  const featuredTournaments = useMemo(() => {
+    const displayedMyTournamentIds = new Set(
+      myTournaments
+        .map((tournament) => tournament?.id)
+        .filter((id) => id != null)
+        .map(String)
+    );
+
+    return tournaments
+      .filter(
+        (tournament) =>
+          tournament?.id == null || !displayedMyTournamentIds.has(String(tournament.id))
+      )
+      .slice(0, 5);
+  }, [myTournaments, tournaments]);
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
@@ -257,24 +268,12 @@ export default function PortalHome({ compact = false }) {
 
   return (
     <main className={compact ? "portal-home compact" : "portal-home"}>
-      {myTournaments.length > 0 ? (
-        <section className="portal-section portal-section-first">
-          <div className="portal-section-header">
-            <h2>あなたの大会</h2>
-          </div>
-          <div className="portal-tournament-list">
-            {myTournaments.map((tournament) => (
-              <div key={`my-${tournament.id}`} className="portal-my-tournament-item">
-                {tournament.needsDecklist ? <span className="portal-warning-badge">未提出</span> : null}
-                <TournamentCard tournament={tournament} buildPath={buildPath} />
-              </div>
-            ))}
-          </div>
-          {myTournamentsError ? <div className="portal-empty">{myTournamentsError}</div> : null}
-        </section>
-      ) : null}
-
-      <form className="portal-card-search" onSubmit={handleSearchSubmit}>
+      <form
+        className="portal-card-search"
+        role="search"
+        aria-label="カード名検索"
+        onSubmit={handleSearchSubmit}
+      >
         <SearchIcon size={22} />
         <input
           type="search"
@@ -285,6 +284,27 @@ export default function PortalHome({ compact = false }) {
         />
         <button type="submit">検索</button>
       </form>
+
+      {myTournaments.length > 0 ? (
+        <section className="portal-section">
+          <div className="portal-section-header">
+            <h2>あなたの大会</h2>
+          </div>
+          <div className="portal-tournament-list">
+            {myTournaments.map((tournament) => (
+              <div key={`my-${tournament.id}`} className="portal-my-tournament-item">
+                {tournament.needsDecklist ? <span className="portal-warning-badge">未提出</span> : null}
+                <TournamentCard
+                  tournament={tournament}
+                  buildPath={buildPath}
+                  actionTone="secondary"
+                />
+              </div>
+            ))}
+          </div>
+          {myTournamentsError ? <div className="portal-empty">{myTournamentsError}</div> : null}
+        </section>
+      ) : null}
 
       <section className="portal-section">
         <div className="portal-section-header">
@@ -303,7 +323,12 @@ export default function PortalHome({ compact = false }) {
         ) : (
           <div className="portal-tournament-list">
             {featuredTournaments.map((tournament) => (
-              <TournamentCard key={tournament.id} tournament={tournament} buildPath={buildPath} />
+              <TournamentCard
+                key={tournament.id}
+                tournament={tournament}
+                buildPath={buildPath}
+                actionTone="secondary"
+              />
             ))}
           </div>
         )}

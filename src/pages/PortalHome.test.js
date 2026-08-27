@@ -4,12 +4,14 @@ import { fetchPublicDecks } from "../services/publicDecks";
 import { fetchMyTournaments, fetchTournaments } from "../services/tournaments";
 import PortalHome from "./PortalHome";
 
+let mockAuthState = {
+  authMode: "mock",
+  isAuthenticated: true,
+  user: { id: "user-1", name: "テストユーザー" },
+};
+
 jest.mock("../context/AuthContext", () => ({
-  useAuth: () => ({
-    authMode: "mock",
-    isAuthenticated: true,
-    user: { id: "user-1", name: "テストユーザー" },
-  }),
+  useAuth: () => mockAuthState,
 }));
 
 jest.mock("../services/tournaments", () => ({
@@ -51,6 +53,11 @@ const inProgressTournaments = Array.from({ length: 3 }, (_, index) => ({
 }));
 
 beforeEach(() => {
+  mockAuthState = {
+    authMode: "mock",
+    isAuthenticated: true,
+    user: { id: "user-1", name: "テストユーザー" },
+  };
   fetchMyTournaments.mockResolvedValue({
     items: [
       {
@@ -104,7 +111,7 @@ test("PortalHome は道具箱トップ構成で大会と公開デッキを最大
 
   await waitFor(() => {
     expect(screen.getByRole("heading", { name: "あなたの大会" })).toBeInTheDocument();
-    expect(screen.getAllByText("受付中大会1")).toHaveLength(2);
+    expect(screen.getAllByText("受付中大会1")).toHaveLength(1);
     expect(screen.getByText("公開デッキ1")).toBeInTheDocument();
   });
 
@@ -115,6 +122,87 @@ test("PortalHome は道具箱トップ構成で大会と公開デッキを最大
     "/tournaments?mobileLayout=ios"
   );
   expect(screen.getAllByLabelText("デッキ色: 青")).toHaveLength(3);
+});
+
+test("カード名検索は自分の大会がある場合もホームの最上部に表示する", async () => {
+  const { container } = render(
+    <MemoryRouter>
+      <PortalHome />
+    </MemoryRouter>
+  );
+
+  const mySection = (await screen.findByRole("heading", { name: "あなたの大会" })).closest(
+    "section"
+  );
+  const home = container.querySelector("main.portal-home");
+  const searchForm = screen.getByRole("search", { name: "カード名検索" });
+
+  expect(home.firstElementChild).toBe(searchForm);
+  expect(searchForm.nextElementSibling).toBe(mySection);
+});
+
+test("あなたの大会を大会セクションから除外し後続候補で5件まで補う", async () => {
+  render(
+    <MemoryRouter>
+      <PortalHome />
+    </MemoryRouter>
+  );
+
+  const mySection = (await screen.findByRole("heading", { name: "あなたの大会" })).closest(
+    "section"
+  );
+  const featuredSection = screen.getByRole("heading", { name: "大会" }).closest("section");
+
+  await waitFor(() => {
+    expect(within(featuredSection).getAllByRole("article")).toHaveLength(5);
+  });
+  expect(within(mySection).getByText("受付中大会1")).toBeInTheDocument();
+  expect(within(featuredSection).queryByText("受付中大会1")).not.toBeInTheDocument();
+  expect(within(featuredSection).getByText("進行中大会2")).toBeInTheDocument();
+  expect(within(featuredSection).queryByText("進行中大会3")).not.toBeInTheDocument();
+  within(featuredSection)
+    .getAllByRole("link", { name: /^(詳細|観戦)$/ })
+    .forEach((action) => expect(action).toHaveClass("secondary"));
+});
+
+test("未ログインでは検索を先頭に保ち自分の大会を取得しない", async () => {
+  mockAuthState = {
+    authMode: "mock",
+    isAuthenticated: false,
+    user: null,
+  };
+
+  const { container } = render(
+    <MemoryRouter>
+      <PortalHome />
+    </MemoryRouter>
+  );
+
+  await screen.findByText("受付中大会1");
+  expect(fetchMyTournaments).not.toHaveBeenCalled();
+  expect(screen.queryByRole("heading", { name: "あなたの大会" })).not.toBeInTheDocument();
+  expect(container.querySelector("main.portal-home").firstElementChild).toBe(
+    screen.getByRole("search", { name: "カード名検索" })
+  );
+});
+
+test("大会と公開デッキが0件でも検索と各セクションの空表示を保つ", async () => {
+  fetchMyTournaments.mockResolvedValue({ items: [] });
+  fetchTournaments.mockResolvedValue({ items: [] });
+  fetchPublicDecks.mockResolvedValue({ items: [] });
+
+  const { container } = render(
+    <MemoryRouter>
+      <PortalHome />
+    </MemoryRouter>
+  );
+
+  expect(await screen.findByText("受付中・進行中の大会はありません。")).toBeInTheDocument();
+  expect(await screen.findByText("公開デッキはありません。")).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "あなたの大会" })).not.toBeInTheDocument();
+  expect(container.querySelector("main.portal-home").firstElementChild).toBe(
+    screen.getByRole("search", { name: "カード名検索" })
+  );
 });
 
 test("取得済みの掲載大会をホームに表示し、あなたの大会には参加中の非掲載大会を表示する", async () => {
