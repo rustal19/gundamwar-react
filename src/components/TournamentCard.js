@@ -63,11 +63,16 @@ function buildDetailPath(tournament, buildPath) {
   return buildPath(basePath);
 }
 
-export default function TournamentCard({ tournament, buildPath = (path) => path }) {
+export default function TournamentCard({
+  tournament,
+  buildPath = (path) => path,
+  actionTone,
+}) {
   const dateParts = formatDateParts(tournament?.startsAt);
   const isInProgress = tournament?.status === "in_progress";
   const buttonLabel = isInProgress ? "観戦" : "詳細";
-  const buttonTone = tournament?.status === "registration" ? "primary" : "secondary";
+  const buttonTone =
+    actionTone || (tournament?.status === "registration" ? "primary" : "secondary");
 
   return (
     <article className="tournament-card">
