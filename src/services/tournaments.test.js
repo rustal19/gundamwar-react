@@ -20,6 +20,7 @@ import {
   fetchTournaments,
   kickEntry,
   getTournamentPermissions,
+  promoteWaitlistedEntries,
   reopenRound,
   reportMatchResult,
   rejectEntry,
@@ -773,6 +774,28 @@ describe("tournaments service mock mode", () => {
     expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 
+  it("posts the waitlist promotion contract to the API", async () => {
+    const responsePayload = {
+      promotedCount: 1,
+      promotedEntries: [{ id: "waitlisted-entry", isWaitlisted: false }],
+      availableSlotsBefore: 1,
+      remainingSlots: 0,
+      remainingWaitlistCount: 0,
+    };
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => responsePayload,
+    });
+
+    await expect(
+      promoteWaitlistedEntries({ tournamentId: "t1", user: organizer })
+    ).resolves.toEqual(responsePayload);
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/tournaments/t1/entries/waitlist/promote",
+      expect.objectContaining({ credentials: "include", method: "POST", body: "{}" })
+    );
+  });
+
   it("creates, updates, and deletes my entry", async () => {
     setRegistrationTournament();
     const deckItems = buildValidDeck("card");
@@ -795,6 +818,65 @@ describe("tournaments service mock mode", () => {
 
     await deleteMyEntry("t1", { authMode: "mock", user });
     expect(readStore().entries.t1).toEqual([]);
+  });
+
+  it("accepts entries over capacity as waitlisted and keeps later entries behind the existing queue", async () => {
+    setRegistrationTournament({ capacity: 1 });
+    const firstUser = { id: "first-user", name: "先着参加者" };
+    const secondUser = { id: "second-user", name: "待機参加者" };
+    const laterUser = { id: "later-user", name: "後続参加者" };
+
+    const first = await createEntry({ tournamentId: "t1", authMode: "mock", user: firstUser });
+    const second = await createEntry({ tournamentId: "t1", authMode: "mock", user: secondUser });
+
+    expect(first).toMatchObject({ status: "registered", isWaitlisted: false });
+    expect(second).toMatchObject({ status: "registered", isWaitlisted: true });
+    expect((await fetchTournament("t1", { authMode: "mock", user: secondUser })).entryCount).toBe(2);
+
+    await deleteMyEntry("t1", { authMode: "mock", user: firstUser });
+    const later = await createEntry({ tournamentId: "t1", authMode: "mock", user: laterUser });
+    expect(later.isWaitlisted).toBe(true);
+  });
+
+  it("never creates a waitlist when capacity is unset", async () => {
+    setRegistrationTournament({ capacity: null });
+
+    const entries = await Promise.all(
+      ["one", "two", "three"].map((id) =>
+        createEntry({
+          tournamentId: "t1",
+          authMode: "mock",
+          user: { id: `unlimited-${id}`, name: id },
+        })
+      )
+    );
+
+    expect(entries.every((entry) => entry.isWaitlisted === false)).toBe(true);
+  });
+
+  it("allows a waitlisted participant to check in while keeping them waitlisted and locking their deck", async () => {
+    jest.useFakeTimers("modern");
+    jest.setSystemTime(new Date(2026, 7, 26, 10, 0));
+    const startsAt = new Date(2026, 7, 26, 18, 0).toISOString();
+    setRegistrationTournament({ capacity: 1, startsAt, selfCheckin: true });
+    const admittedUser = { id: "admitted-user", name: "通常参加者" };
+    const waitlistedUser = { id: "waitlisted-user", name: "待機参加者" };
+    await createEntry({ tournamentId: "t1", authMode: "mock", user: admittedUser });
+    const waitlisted = await createEntry({
+      tournamentId: "t1",
+      authMode: "mock",
+      user: waitlistedUser,
+    });
+
+    expect(waitlisted.isWaitlisted).toBe(true);
+    const checkedIn = await checkInMyEntry({
+      tournamentId: "t1",
+      authMode: "mock",
+      user: waitlistedUser,
+    });
+
+    expect(checkedIn).toMatchObject({ status: "checked_in", isWaitlisted: true });
+    expect(checkedIn.deckLockedAt).toBeTruthy();
   });
 
   it("uses only the stored nickname for a public player name", async () => {
@@ -1856,6 +1938,89 @@ describe("tournaments service mock mode", () => {
       .sort();
 
     expect(pairedEntryIds).toEqual(["checked-1", "checked-2", "checked-late"]);
+  });
+
+  it("keeps checked-in waitlisted entries out of pairings and standings", async () => {
+    setRegistrationTournament({ status: "in_progress", swissRounds: 3, capacity: 2 });
+    const store = readStore();
+    const now = new Date().toISOString();
+    store.entries.t1 = [
+      { id: "admitted-1", status: "checked_in", isWaitlisted: false },
+      { id: "admitted-2", status: "checked_in", isWaitlisted: false },
+      { id: "waitlisted", status: "checked_in", isWaitlisted: true },
+      { id: "unchecked", status: "registered", isWaitlisted: false },
+    ].map((entry) => ({
+      ...entry,
+      tournamentId: "t1",
+      user: { id: `user-${entry.id}`, name: entry.id },
+      joinedAtRound: 1,
+      createdAt: now,
+    }));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const round = await createNextRound("t1", { authMode: "mock" });
+    const pairedEntryIds = round.matches
+      .flatMap((match) => [match.player1EntryId, match.player2EntryId])
+      .filter(Boolean);
+    const standingEntryIds = (await fetchStandings("t1", { authMode: "mock" })).items.map(
+      (standing) => standing.entryId
+    );
+
+    expect(pairedEntryIds.sort()).toEqual(["admitted-1", "admitted-2"]);
+    expect(standingEntryIds.sort()).toEqual(["admitted-1", "admitted-2"]);
+    expect(standingEntryIds).not.toContain("waitlisted");
+    expect(standingEntryIds).not.toContain("unchecked");
+  });
+
+  it("promotes only checked-in waitlisted entries in registration order and never over capacity", async () => {
+    setRegistrationTournament({ status: "in_progress", capacity: 3 });
+    const store = readStore();
+    const makeEntry = ({ id, status, isWaitlisted, createdAt }) => ({
+      id,
+      tournamentId: "t1",
+      user: { id: `user-${id}`, name: id },
+      status,
+      isWaitlisted,
+      joinedAtRound: 1,
+      createdAt,
+    });
+    store.entries.t1 = [
+      makeEntry({ id: "admitted-1", status: "checked_in", isWaitlisted: false, createdAt: "2026-01-01T00:00:00.000Z" }),
+      makeEntry({ id: "admitted-2", status: "checked_in", isWaitlisted: false, createdAt: "2026-01-01T00:00:01.000Z" }),
+      makeEntry({ id: "wait-unchecked", status: "registered", isWaitlisted: true, createdAt: "2026-01-01T00:00:02.000Z" }),
+      makeEntry({ id: "wait-first-eligible", status: "checked_in", isWaitlisted: true, createdAt: "2026-01-01T00:00:03.000Z" }),
+      makeEntry({ id: "wait-second-eligible", status: "checked_in", isWaitlisted: true, createdAt: "2026-01-01T00:00:04.000Z" }),
+    ];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const promoted = await promoteWaitlistedEntries({
+      tournamentId: "t1",
+      authMode: "mock",
+      user: organizer,
+    });
+
+    expect(promoted).toMatchObject({
+      promotedCount: 1,
+      availableSlotsBefore: 1,
+      remainingSlots: 0,
+      remainingWaitlistCount: 2,
+    });
+    expect(promoted.promotedEntries.map((entry) => entry.id)).toEqual(["wait-first-eligible"]);
+    let entries = (await fetchEntries("t1", { authMode: "mock", user: organizer })).items;
+    expect(entries.find((entry) => entry.id === "wait-unchecked").isWaitlisted).toBe(true);
+    expect(entries.find((entry) => entry.id === "wait-first-eligible").isWaitlisted).toBe(false);
+    expect(entries.find((entry) => entry.id === "wait-second-eligible").isWaitlisted).toBe(true);
+
+    const atCapacity = await promoteWaitlistedEntries({
+      tournamentId: "t1",
+      authMode: "mock",
+      user: organizer,
+    });
+    expect(atCapacity).toMatchObject({ promotedCount: 0, availableSlotsBefore: 0, remainingSlots: 0 });
+    entries = (await fetchEntries("t1", { authMode: "mock", user: organizer })).items;
+    expect(
+      entries.filter((entry) => entry.status === "checked_in" && !entry.isWaitlisted)
+    ).toHaveLength(3);
   });
 
   it.each([0, 1])(
@@ -2947,6 +3112,7 @@ describe("tournaments service mock mode", () => {
     ["デッキリストのロック解除", () => updateEntryStatus({ tournamentId: "t1", entryId: "entry-1", decklistLocked: false, authMode: "mock", user: participant })],
     ["キック・ban", () => kickEntry({ tournamentId: "t1", entryId: "entry-kick", ban: true, authMode: "mock", user: participant })],
     ["ban解除", () => unbanTournamentUser({ tournamentId: "t1", userId: "banned-user", authMode: "mock", user: participant })],
+    ["キャンセル待ち繰り上げ", () => promoteWaitlistedEntries({ tournamentId: "t1", authMode: "mock", user: participant })],
     ["ペアリング生成", () => createNextRound("t1", { authMode: "mock", user: participant })],
     ["ペアリング編集", () => updateRoundMatches({ roundId: "round-auth", matches: [], authMode: "mock", user: participant })],
     ["結果入力", () => reportMatchResult({ matchId: "match-auth", result: "p1_win", authMode: "mock", user: participant })],

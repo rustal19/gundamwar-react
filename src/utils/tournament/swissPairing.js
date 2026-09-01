@@ -72,7 +72,9 @@ function searchPairings(players, previousOpponents, allowRematches) {
 }
 
 export function pairSwissRound(entries, previousMatches, standingsEntries = entries) {
-  const activeEntries = entries.filter((entry) => entry.status !== "dropped");
+  const activeEntries = entries.filter(
+    (entry) => entry.status === "checked_in" && !entry.isWaitlisted
+  );
   if (activeEntries.length === 0) return [];
 
   const activeEntryIds = new Set(activeEntries.map((entry) => entry.id));

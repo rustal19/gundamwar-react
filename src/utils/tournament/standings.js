@@ -87,16 +87,21 @@ function headToHeadWins(recordA, recordB, matches) {
 }
 
 export function computeStandings(entries, matches) {
+  const eligibleEntries = entries.filter(
+    (entry) =>
+      !entry.isWaitlisted && ["checked_in", "dropped"].includes(entry.status)
+  );
   const droppedEntryIds = new Set(
-    entries.filter((entry) => entry.status === "dropped").map((entry) => entry.id)
+    eligibleEntries.filter((entry) => entry.status === "dropped").map((entry) => entry.id)
   );
   const records = new Map(
-    entries
+    eligibleEntries
+      .slice()
       .sort((a, b) => compareEntryIds(a.id, b.id))
       .map((entry) => [entry.id, createRecord(entry.id)])
   );
 
-  entries.forEach((entry) => {
+  eligibleEntries.forEach((entry) => {
     const record = records.get(entry.id);
     if (!record) return;
     record.losses += Math.max(0, joinedAtRound(entry) - 1);

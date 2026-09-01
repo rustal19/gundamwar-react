@@ -39,6 +39,20 @@ describe("pairSwissRound", () => {
     ]);
   });
 
+  it("excludes unchecked and checked-in waitlisted entries", () => {
+    const tournamentEntries = [
+      { id: "1", status: "checked_in" },
+      { id: "2", status: "checked_in" },
+      { id: "3", status: "registered" },
+      { id: "4", status: "pending" },
+      { id: "5", status: "checked_in", isWaitlisted: true },
+    ];
+
+    expect(pairSwissRound(tournamentEntries, [])).toEqual([
+      { player1EntryId: "1", player2EntryId: "2" },
+    ]);
+  });
+
   it("uses results against dropped opponents when choosing the next bye", () => {
     const activeEntries = entries(["A", "C", "D"]);
     const standingsEntries = [

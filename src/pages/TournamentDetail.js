@@ -256,8 +256,32 @@ export default function TournamentDetail({ compact = false }) {
     [tournament, user]
   );
   const activeEntryCount = useMemo(
-    () => entries.filter((entry) => entry.status !== "dropped").length,
+    () =>
+      entries.filter(
+        (entry) => entry.status !== "dropped" && !entry.isWaitlisted
+      ).length,
     [entries]
+  );
+  const waitlistedEntries = useMemo(
+    () =>
+      entries
+        .filter((entry) => entry.isWaitlisted && entry.status !== "dropped")
+        .slice()
+        .sort((left, right) => {
+          const createdAtComparison = String(left.createdAt || "").localeCompare(
+            String(right.createdAt || "")
+          );
+          if (createdAtComparison !== 0) return createdAtComparison;
+          return String(left.id).localeCompare(String(right.id), undefined, {
+            numeric: true,
+            sensitivity: "base",
+          });
+        }),
+    [entries]
+  );
+  const waitlistPositions = useMemo(
+    () => new Map(waitlistedEntries.map((entry, index) => [entry.id, index + 1])),
+    [waitlistedEntries]
   );
   const formatParticipantName = useMemo(
     () => createTournamentParticipantNameFormatter(entries),
@@ -313,8 +337,7 @@ export default function TournamentDetail({ compact = false }) {
   const canRegister = Boolean(
     tournament &&
       tournament.status === "registration" &&
-      isBefore(tournament.registrationClosesAt) &&
-      (tournament.capacity == null || activeEntryCount < tournament.capacity)
+      isBefore(tournament.registrationClosesAt)
   );
   const canUpdateDeck = Boolean(
     tournament &&
@@ -386,11 +409,13 @@ export default function TournamentDetail({ compact = false }) {
         setMessage("デッキリストを提出しました。");
       } else {
         const deckItems = submittedItems.length > 0 ? submittedItems : null;
-        await createEntry({ tournamentId: id, deckItems, authMode, user });
+        const createdEntry = await createEntry({ tournamentId: id, deckItems, authMode, user });
         setMessage(
-          deckItems
-            ? "エントリーし、デッキリストを提出しました。"
-            : "エントリーしました。"
+          createdEntry?.isWaitlisted
+            ? "キャンセル待ちとしてエントリーしました。繰り上げには当日のチェックインが必要です。"
+            : deckItems
+              ? "エントリーし、デッキリストを提出しました。"
+              : "エントリーしました。"
         );
       }
       await loadTournament();
@@ -441,7 +466,11 @@ export default function TournamentDetail({ compact = false }) {
     setMessage("");
     try {
       await checkInMyEntry({ tournamentId: id, authMode, user });
-      setMessage("チェックインしました。");
+      setMessage(
+        myEntry?.isWaitlisted
+          ? "チェックインしました。主催者によるキャンセル待ちの繰り上げをお待ちください。"
+          : "チェックインしました。"
+      );
       await loadTournament();
     } catch (checkInError) {
       setError(checkInError.message);
@@ -544,7 +573,7 @@ export default function TournamentDetail({ compact = false }) {
             <dd>
               {tournament.capacity == null
                 ? "なし"
-                : `${activeEntryCount} / ${tournament.capacity}`}
+                : `${activeEntryCount} / ${tournament.capacity}${waitlistedEntries.length ? `（キャンセル待ち ${waitlistedEntries.length}人）` : ""}`}
             </dd>
           </div>
           <div>
@@ -595,7 +624,11 @@ export default function TournamentDetail({ compact = false }) {
             <tr key={entry.id}>
               <td className="num">{index + 1}</td>
               <td><UserNameLink entry={entry} formatParticipantName={formatParticipantName} /></td>
-              <td>{ENTRY_STATUS_LABELS[entry.status] || entry.status}</td>
+              <td>
+                {entry.isWaitlisted && entry.status !== "dropped"
+                  ? `キャンセル待ち（${waitlistPositions.get(entry.id)}番目） / ${ENTRY_STATUS_LABELS[entry.status] || entry.status}`
+                  : ENTRY_STATUS_LABELS[entry.status] || entry.status}
+              </td>
               <td>
                 {entry.deckItems ? (
                   <>
