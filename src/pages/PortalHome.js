@@ -4,9 +4,15 @@ import TournamentCard from "../components/TournamentCard";
 import { SearchIcon } from "../components/icons";
 import { useAuth } from "../context/AuthContext";
 import { fetchPublicDecks } from "../services/publicDecks";
-import { fetchMyTournaments, fetchTournaments } from "../services/tournaments";
+import {
+  fetchMyTournaments,
+  fetchRounds,
+  fetchTournament,
+  fetchTournaments,
+} from "../services/tournaments";
 import { buildPathWithForcedMobileLayout } from "../utils/deviceLayout";
 import { getDeckColors } from "../utils/deckColors";
+import { getRoundProgressLabel } from "../utils/tournament/roundLabel";
 import "./PortalHome.css";
 
 function formatDate(value) {
@@ -75,6 +81,175 @@ function shouldShowTournamentOnHome(tournament, now = new Date(Date.now())) {
     referenceDate.getDate() + 2
   );
   return now < hideAt;
+}
+
+const HOME_WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+
+function formatTournamentSchedule(value) {
+  if (!value) return "日時未定";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "日時未定";
+  return `${date.getMonth() + 1}月${date.getDate()}日(${HOME_WEEKDAYS[date.getDay()]}) ${String(
+    date.getHours()
+  ).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+function latestHomeRound(rounds) {
+  const sorted = [...(Array.isArray(rounds) ? rounds : [])].sort(
+    (left, right) => Number(right.number || 0) - Number(left.number || 0)
+  );
+  return sorted.find((round) => round.status === "in_progress") || sorted[0] || null;
+}
+
+function findMyMatch(round, entryId) {
+  if (entryId == null) return null;
+  return (round?.matches || []).find((match) =>
+    [match.player1EntryId, match.player2EntryId].some(
+      (matchEntryId) => matchEntryId != null && String(matchEntryId) === String(entryId)
+    )
+  ) || null;
+}
+
+function participantName(entry) {
+  return (
+    entry?.user?.nickname ||
+    entry?.user?.displayNickname ||
+    entry?.user?.name ||
+    entry?.nickname ||
+    entry?.name ||
+    "確認中"
+  );
+}
+
+function opponentName(match, entries, entryId) {
+  if (!match) return "発表待ち";
+  const isPlayer1 = String(match.player1EntryId) === String(entryId);
+  const opponentId = isPlayer1 ? match.player2EntryId : match.player1EntryId;
+  if (opponentId == null) return "不戦勝";
+
+  const opponent = (entries || []).find(
+    (entry) => entry?.id != null && String(entry.id) === String(opponentId)
+  );
+  const inlineName = isPlayer1
+    ? match.player2Name || match.player2?.name
+    : match.player1Name || match.player1?.name;
+  return opponent ? participantName(opponent) : inlineName || "確認中";
+}
+
+function myTournamentPriority(tournament, needsDecklist = tournament.needsDecklist) {
+  if (needsDecklist) return 0;
+  if (tournament.status === "in_progress") return 1;
+  return 2;
+}
+
+function MyTournamentCard({ tournament, buildPath }) {
+  const detailPath = buildPath(`/tournaments/${tournament.id}`);
+
+  if (tournament.needsDecklist) {
+    return (
+      <article
+        className="portal-my-tournament-item portal-my-tournament-item--warning"
+        data-home-state="needs-action"
+      >
+        <div className="portal-my-tournament-main">
+          <p className="portal-my-tournament-kicker">対応が必要</p>
+          <h3>
+            <Link to={detailPath}>{tournament.title}</Link>
+          </h3>
+          <p className="portal-my-tournament-instruction">
+            デッキリストが未提出です。
+          </p>
+        </div>
+        <Link
+          className="tournament-card-action portal-my-tournament-action warning"
+          to={detailPath}
+        >
+          デッキを提出
+        </Link>
+      </article>
+    );
+  }
+
+  if (tournament.status === "in_progress") {
+    const currentRound = latestHomeRound(tournament.rounds);
+    const myMatch = findMyMatch(currentRound, tournament.myEntry?.id);
+    const isPending = tournament.myEntry?.status === "pending";
+    const isWaitingForPairing = !currentRound || currentRound.status === "completed";
+    const isBye = Boolean(
+      myMatch &&
+      (myMatch.player1EntryId == null || myMatch.player2EntryId == null)
+    );
+    const nextAction = isPending
+      ? "主催者の承認を待つ"
+      : isWaitingForPairing || myMatch?.result || isBye
+        ? "次のペアリング発表を待つ"
+        : myMatch
+          ? "卓へ移動して対戦する"
+          : "運営からの案内を確認する";
+    const roundLabel = currentRound
+      ? getRoundProgressLabel(currentRound, tournament.rounds, tournament)
+      : "ペアリング発表待ち";
+
+    return (
+      <article
+        className="portal-my-tournament-item portal-my-tournament-item--active"
+        data-home-state="in-progress"
+      >
+        <div className="portal-my-tournament-main">
+          <div className="portal-my-tournament-heading">
+            <h3>
+              <Link to={detailPath}>{tournament.title}</Link>
+            </h3>
+            <span className="tournament-status in_progress">進行中</span>
+          </div>
+          <p className="portal-my-tournament-round">{roundLabel}</p>
+          <div className="portal-my-tournament-focus" aria-label="現在の対戦">
+            <span>
+              <small>卓番号</small>
+              <strong>{myMatch?.tableNo ? `${myMatch.tableNo}卓` : "未定"}</strong>
+            </span>
+            <span>
+              <small>対戦相手</small>
+              <strong>{opponentName(myMatch, tournament.entries, tournament.myEntry?.id)}</strong>
+            </span>
+          </div>
+          <p className="portal-my-tournament-next-action">
+            <span>次の操作</span>
+            <strong>{nextAction}</strong>
+          </p>
+        </div>
+        <Link
+          className="tournament-card-action portal-my-tournament-action primary"
+          to={buildPath(`/tournaments/${tournament.id}?tab=rounds`)}
+        >
+          ペアリングを確認
+        </Link>
+      </article>
+    );
+  }
+
+  return (
+    <article
+      className="portal-my-tournament-item portal-my-tournament-item--upcoming"
+      data-home-state="upcoming"
+    >
+      <time dateTime={tournament.startsAt || undefined}>
+        {formatTournamentSchedule(tournament.startsAt)}
+      </time>
+      <div className="portal-my-tournament-heading">
+        <h3>
+          <Link to={detailPath}>{tournament.title}</Link>
+        </h3>
+        <span className="portal-my-tournament-status">参加予定</span>
+      </div>
+      <Link
+        className="tournament-card-action portal-my-tournament-action secondary"
+        to={detailPath}
+      >
+        詳細
+      </Link>
+    </article>
+  );
 }
 
 function OwnerLink({ owner, buildPath }) {
@@ -184,14 +359,51 @@ export default function PortalHome({ compact = false }) {
     }
 
     Promise.resolve(fetchMyTournaments({ authMode, user }))
-      .then((payload) => {
-        if (!isActive) return;
-        setMyTournamentItems(
-          (payload?.items || []).filter(({ tournament, entry }) =>
+      .then(async (payload) => {
+        const activeItems = (payload?.items || []).filter(
+          ({ tournament, entry }) =>
+            Boolean(entry) &&
             ["registration", "in_progress"].includes(tournament?.status) &&
-            entry?.status !== "dropped"
-          )
+            entry.status !== "dropped"
         );
+        const visibleItems = activeItems
+          .sort(
+            (left, right) =>
+              myTournamentPriority(left.tournament, left.needsDecklist) -
+                myTournamentPriority(right.tournament, right.needsDecklist) ||
+              compareStartsAt(left.tournament, right.tournament)
+          )
+          .slice(0, 5);
+        const enrichedItems = await Promise.all(
+          visibleItems.map(async (item) => {
+            if (item.needsDecklist || item.tournament.status !== "in_progress") return item;
+
+            const knownEntries = Array.isArray(item.entries)
+              ? item.entries
+              : Array.isArray(item.tournament.entries)
+                ? item.tournament.entries
+                : null;
+            const [roundPayload, detailPayload] = await Promise.all([
+              Array.isArray(item.rounds)
+                ? Promise.resolve({ rounds: item.rounds })
+                : Promise.resolve(
+                    fetchRounds(item.tournament.id, { authMode, user })
+                  ).catch(() => ({ rounds: [] })),
+              knownEntries
+                ? Promise.resolve({ entries: knownEntries })
+                : Promise.resolve(
+                    fetchTournament(item.tournament.id, { authMode, user })
+                  ).catch(() => ({ entries: [] })),
+            ]);
+            return {
+              ...item,
+              rounds: roundPayload?.rounds || [],
+              entries: detailPayload?.entries || knownEntries || [],
+            };
+          })
+        );
+        if (!isActive) return;
+        setMyTournamentItems(enrichedItems);
       })
       .catch((error) => {
         if (!isActive) return;
@@ -231,11 +443,18 @@ export default function PortalHome({ compact = false }) {
   const myTournaments = useMemo(
     () =>
       myTournamentItems
-        .map(({ tournament, entry, needsDecklist }) => ({
+        .map(({ tournament, entry, needsDecklist, rounds, entries }) => ({
           ...tournament,
           myEntry: entry,
           needsDecklist,
+          rounds: rounds || [],
+          entries: entries || [],
         }))
+        .sort(
+          (left, right) =>
+            myTournamentPriority(left) - myTournamentPriority(right) ||
+            compareStartsAt(left, right)
+        )
         .slice(0, 5),
     [myTournamentItems]
   );
@@ -286,20 +505,17 @@ export default function PortalHome({ compact = false }) {
       </form>
 
       {myTournaments.length > 0 ? (
-        <section className="portal-section">
+        <section className="portal-section" aria-labelledby="portal-my-tournaments-heading">
           <div className="portal-section-header">
-            <h2>あなたの大会</h2>
+            <h2 id="portal-my-tournaments-heading">あなたの大会</h2>
           </div>
-          <div className="portal-tournament-list">
+          <div className="portal-my-tournament-list">
             {myTournaments.map((tournament) => (
-              <div key={`my-${tournament.id}`} className="portal-my-tournament-item">
-                {tournament.needsDecklist ? <span className="portal-warning-badge">未提出</span> : null}
-                <TournamentCard
-                  tournament={tournament}
-                  buildPath={buildPath}
-                  actionTone="secondary"
-                />
-              </div>
+              <MyTournamentCard
+                key={`my-${tournament.id}`}
+                tournament={tournament}
+                buildPath={buildPath}
+              />
             ))}
           </div>
           {myTournamentsError ? <div className="portal-empty">{myTournamentsError}</div> : null}
@@ -327,7 +543,7 @@ export default function PortalHome({ compact = false }) {
               : "受付中・進行中の大会はありません。"}
           </div>
         ) : (
-          <div className="portal-tournament-list">
+          <div className="portal-tournament-list portal-featured-tournament-list">
             {featuredTournaments.map((tournament) => (
               <TournamentCard
                 key={tournament.id}
@@ -355,18 +571,43 @@ export default function PortalHome({ compact = false }) {
         ) : decks.length === 0 ? (
           <div className="portal-empty">公開デッキはありません。</div>
         ) : (
-          <div className="portal-deck-list">
-            {decks.map((deck) => (
-              <article key={deck.id} className="portal-deck-row">
-                <DeckColorDots items={deck.items} />
-                <Link className="portal-deck-title" to={buildPath(`/decks/${deck.id}`)}>
-                  {deck.title}
-                </Link>
-                <OwnerLink owner={deck.owner} buildPath={buildPath} />
-                <span className="portal-deck-format">{deck.format || ""}</span>
-                <span className="portal-deck-date">{formatDate(deck.publishedAt || deck.updatedAt)}</span>
-              </article>
-            ))}
+          <div className="portal-deck-list" role="table" aria-label="新着公開デッキ一覧">
+            <div className="portal-deck-header" role="row">
+              <span role="columnheader">デッキ名</span>
+              <span role="columnheader">フォーマット</span>
+              <span role="columnheader">プレイヤー</span>
+              <span role="columnheader">公開日</span>
+            </div>
+            <div className="portal-deck-rows" role="rowgroup">
+              {decks.map((deck) => (
+                <article key={deck.id} className="portal-deck-row" role="row">
+                  <div className="portal-deck-name" role="cell">
+                    <DeckColorDots items={deck.items} />
+                    <Link className="portal-deck-title" to={buildPath(`/decks/${deck.id}`)}>
+                      {deck.title}
+                    </Link>
+                  </div>
+                  <div className="portal-deck-row-meta" role="presentation">
+                    <span className="portal-deck-format" role="cell">
+                      <span className="portal-deck-cell-label">フォーマット:</span>
+                      {deck.format || "未設定"}
+                    </span>
+                    <span className="portal-deck-player" role="cell">
+                      <span className="portal-deck-cell-label">プレイヤー:</span>
+                      <OwnerLink owner={deck.owner} buildPath={buildPath} />
+                    </span>
+                    <time
+                      className="portal-deck-date"
+                      role="cell"
+                      dateTime={deck.publishedAt || deck.updatedAt || undefined}
+                    >
+                      <span className="portal-deck-cell-label">公開日:</span>
+                      {formatDate(deck.publishedAt || deck.updatedAt)}
+                    </time>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
         )}
       </section>
