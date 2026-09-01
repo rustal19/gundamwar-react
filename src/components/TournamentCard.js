@@ -31,6 +31,13 @@ function formatDateParts(value) {
   };
 }
 
+// 縦積み(既定)は「7月 / 15 / (水)」と3行に分かれるため日付の数字だけで読めるが、
+// 横一列に並べると「7月15(水)」となり「日」が抜けて読めない。並べ方で表記を変える。
+function formatDateInline(parts) {
+  if (parts.day === "-") return "-";
+  return `${parts.month}${parts.day}日`;
+}
+
 function formatTime(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
@@ -67,8 +74,10 @@ export default function TournamentCard({
   tournament,
   buildPath = (path) => path,
   actionTone,
+  dateLayout = "stacked",
 }) {
   const dateParts = formatDateParts(tournament?.startsAt);
+  const isInlineDate = dateLayout === "inline";
   const isInProgress = tournament?.status === "in_progress";
   const buttonLabel = isInProgress ? "観戦" : "詳細";
   const buttonTone =
@@ -77,9 +86,18 @@ export default function TournamentCard({
   return (
     <article className="tournament-card">
       <div className="tournament-card-date" aria-label="開催日">
-        <span>{dateParts.month}</span>
-        <strong>{dateParts.day}</strong>
-        <span>{dateParts.weekday}</span>
+        {isInlineDate ? (
+          <>
+            <strong>{formatDateInline(dateParts)}</strong>
+            <span>{dateParts.weekday}</span>
+          </>
+        ) : (
+          <>
+            <span>{dateParts.month}</span>
+            <strong>{dateParts.day}</strong>
+            <span>{dateParts.weekday}</span>
+          </>
+        )}
       </div>
       <div className="tournament-card-main">
         <div className="tournament-card-title-row">

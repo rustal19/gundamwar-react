@@ -550,6 +550,7 @@ export default function PortalHome({ compact = false }) {
                 tournament={tournament}
                 buildPath={buildPath}
                 actionTone="secondary"
+                dateLayout="inline"
               />
             ))}
           </div>
