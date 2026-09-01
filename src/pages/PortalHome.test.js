@@ -1,7 +1,12 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { BrowserRouter, MemoryRouter } from "react-router-dom";
 import { fetchPublicDecks } from "../services/publicDecks";
-import { fetchMyTournaments, fetchTournaments } from "../services/tournaments";
+import {
+  fetchMyTournaments,
+  fetchRounds,
+  fetchTournament,
+  fetchTournaments,
+} from "../services/tournaments";
 import PortalHome from "./PortalHome";
 
 let mockAuthState = {
@@ -17,6 +22,8 @@ jest.mock("../context/AuthContext", () => ({
 jest.mock("../services/tournaments", () => ({
   __esModule: true,
   fetchMyTournaments: jest.fn(),
+  fetchRounds: jest.fn(),
+  fetchTournament: jest.fn(),
   fetchTournaments: jest.fn(),
 }));
 
@@ -75,6 +82,8 @@ beforeEach(() => {
     };
     return Promise.resolve({ items: itemsByStatus[status] || [] });
   });
+  fetchRounds.mockResolvedValue({ rounds: [] });
+  fetchTournament.mockResolvedValue({ entries: [] });
   fetchPublicDecks.mockResolvedValue({
     items: Array.from({ length: 6 }, (_, index) => ({
       id: `deck-${index}`,
@@ -141,6 +150,133 @@ test("カード名検索は自分の大会がある場合もホームの最上�
   expect(searchForm.nextElementSibling).toBe(mySection);
 });
 
+test("開催前の参加大会は予定だけをコンパクトに表示する", async () => {
+  fetchMyTournaments.mockResolvedValue({
+    items: [
+      {
+        tournament: {
+          ...registrationTournaments[1],
+          title: "参加予定大会",
+          startsAt: "2026-07-03T19:30:00",
+        },
+        entry: { id: "upcoming-entry", status: "registered" },
+        needsDecklist: false,
+      },
+    ],
+  });
+
+  render(
+    <MemoryRouter>
+      <PortalHome />
+    </MemoryRouter>
+  );
+
+  const mySection = await screen.findByRole("region", { name: "あなたの大会" });
+  const card = within(mySection).getByRole("article");
+
+  expect(card).toHaveAttribute("data-home-state", "upcoming");
+  expect(within(card).getByText("参加予定")).toBeInTheDocument();
+  expect(within(card).getByText("7月3日(金) 19:30")).toBeInTheDocument();
+  expect(within(card).getByRole("link", { name: "詳細" })).toHaveAttribute(
+    "href",
+    "/tournaments/registration-1"
+  );
+  expect(within(card).queryByText("卓番号")).not.toBeInTheDocument();
+});
+
+test("進行中の参加大会は卓番号・対戦相手・次の操作を強調する", async () => {
+  const activeTournament = {
+    ...inProgressTournaments[0],
+    id: "my-active",
+    title: "参加中大会",
+    swissRounds: 3,
+  };
+  fetchMyTournaments.mockResolvedValue({
+    items: [
+      {
+        tournament: activeTournament,
+        entry: { id: "my-entry", status: "checked_in" },
+        needsDecklist: false,
+      },
+    ],
+  });
+  fetchRounds.mockResolvedValue({
+    rounds: [
+      {
+        id: "round-1",
+        number: 1,
+        status: "in_progress",
+        matches: [
+          {
+            id: "match-1",
+            tableNo: 7,
+            player1EntryId: "my-entry",
+            player2EntryId: "opponent-entry",
+            result: null,
+          },
+        ],
+      },
+    ],
+  });
+  fetchTournament.mockResolvedValue({
+    entries: [
+      { id: "my-entry", user: { id: "user-1", name: "テストユーザー" } },
+      { id: "opponent-entry", user: { id: "user-2", name: "対戦プレイヤー" } },
+    ],
+  });
+
+  render(
+    <MemoryRouter initialEntries={["/?mobileLayout=ios"]}>
+      <PortalHome />
+    </MemoryRouter>
+  );
+
+  const mySection = await screen.findByRole("region", { name: "あなたの大会" });
+  const card = within(mySection).getByRole("article");
+
+  expect(card).toHaveAttribute("data-home-state", "in-progress");
+  expect(within(card).getByText("第1回戦 / 全3回戦")).toBeInTheDocument();
+  expect(within(card).getByText("卓番号")).toBeInTheDocument();
+  expect(within(card).getByText("7卓")).toBeInTheDocument();
+  expect(within(card).getByText("対戦相手")).toBeInTheDocument();
+  expect(within(card).getByText("対戦プレイヤー")).toBeInTheDocument();
+  expect(within(card).getByText("次の操作")).toBeInTheDocument();
+  expect(within(card).getByText("卓へ移動して対戦する")).toBeInTheDocument();
+  expect(within(card).getByRole("link", { name: "ペアリングを確認" })).toHaveAttribute(
+    "href",
+    "/tournaments/my-active?tab=rounds&mobileLayout=ios"
+  );
+  expect(fetchRounds).toHaveBeenCalledWith("my-active", {
+    authMode: "mock",
+    user: mockAuthState.user,
+  });
+  expect(fetchTournament).toHaveBeenCalledWith("my-active", {
+    authMode: "mock",
+    user: mockAuthState.user,
+  });
+});
+
+test("デッキリスト未提出はほかの情報より対応操作を優先して警告する", async () => {
+  render(
+    <MemoryRouter>
+      <PortalHome />
+    </MemoryRouter>
+  );
+
+  const mySection = await screen.findByRole("region", { name: "あなたの大会" });
+  const card = within(mySection).getByRole("article");
+
+  expect(card).toHaveAttribute("data-home-state", "needs-action");
+  expect(within(card).getByText("対応が必要")).toBeInTheDocument();
+  expect(within(card).getByText("デッキリストが未提出です。")).toBeInTheDocument();
+  expect(within(card).getByRole("link", { name: "デッキを提出" })).toHaveAttribute(
+    "href",
+    "/tournaments/registration-0"
+  );
+  expect(within(card).queryByRole("link", { name: "詳細" })).not.toBeInTheDocument();
+  expect(within(card).queryByText("卓番号")).not.toBeInTheDocument();
+});
+
 test("あなたの大会を大会セクションから除外し後続候補で5件まで補う", async () => {
   render(
     <MemoryRouter>
@@ -186,6 +322,27 @@ test("未ログインでは検索を先頭に保ち自分の大会を取得し�
   );
 });
 
+test("運営だけしている大会は参加大会として表示しない", async () => {
+  fetchMyTournaments.mockResolvedValue({
+    items: [
+      {
+        tournament: { ...registrationTournaments[0], title: "運営中大会" },
+        entry: null,
+        needsDecklist: false,
+      },
+    ],
+  });
+
+  render(
+    <MemoryRouter>
+      <PortalHome />
+    </MemoryRouter>
+  );
+
+  await screen.findByRole("heading", { name: "大会" });
+  expect(screen.queryByRole("heading", { name: "あなたの大会" })).not.toBeInTheDocument();
+});
+
 test("大会と公開デッキが0件でも検索と各セクションの空表示を保つ", async () => {
   fetchMyTournaments.mockResolvedValue({ items: [] });
   fetchTournaments.mockResolvedValue({ items: [] });
@@ -203,6 +360,52 @@ test("大会と公開デッキが0件でも検索と各セクションの空表�
   expect(container.querySelector("main.portal-home").firstElementChild).toBe(
     screen.getByRole("search", { name: "カード名検索" })
   );
+});
+
+test("新着公開デッキはPCの列見出しとcompactの行内ラベルを両方持つ", async () => {
+  fetchMyTournaments.mockResolvedValue({ items: [] });
+  fetchPublicDecks.mockResolvedValue({
+    items: [
+      {
+        id: "labeled-deck",
+        title: "ラベル確認デッキ",
+        format: "スタンダード",
+        items: [],
+        owner: { id: "player-1", name: "投稿プレイヤー" },
+        publishedAt: "2026-09-02T10:00:00.000Z",
+      },
+    ],
+  });
+
+  render(
+    <MemoryRouter>
+      <PortalHome compact />
+    </MemoryRouter>
+  );
+
+  const deckTable = await screen.findByRole("table", { name: "新着公開デッキ一覧" });
+  expect(screen.getByRole("main")).toHaveClass("compact");
+  expect(within(deckTable).getByRole("columnheader", { name: "デッキ名" })).toBeInTheDocument();
+  expect(
+    within(deckTable).getByRole("columnheader", { name: "フォーマット" })
+  ).toBeInTheDocument();
+  expect(
+    within(deckTable).getByRole("columnheader", { name: "プレイヤー" })
+  ).toBeInTheDocument();
+  expect(within(deckTable).getByRole("columnheader", { name: "公開日" })).toBeInTheDocument();
+
+  const dataRow = within(deckTable).getByRole("row", { name: /ラベル確認デッキ/ });
+  expect(within(dataRow).getByText("フォーマット:")).toHaveClass(
+    "portal-deck-cell-label"
+  );
+  expect(within(dataRow).getByText("スタンダード")).toBeInTheDocument();
+  expect(within(dataRow).getByText("プレイヤー:")).toHaveClass("portal-deck-cell-label");
+  expect(within(dataRow).getByRole("link", { name: "投稿プレイヤー" })).toHaveAttribute(
+    "href",
+    "/users/player-1"
+  );
+  expect(within(dataRow).getByText("公開日:")).toHaveClass("portal-deck-cell-label");
+  expect(within(dataRow).getByText("2026/09/02")).toBeInTheDocument();
 });
 
 test("取得済みの掲載大会をホームに表示し、あなたの大会には参加中の非掲載大会を表示する", async () => {
