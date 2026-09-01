@@ -957,6 +957,95 @@ test("主催者のチェックイン操作は確認ダイアログなしで実�
   });
 });
 
+test("キャンセル待ちの待ち順を表示し、チェックイン済みだけを空き数まで繰り上げる", async () => {
+  seedStore({
+    tournament: { capacity: 3 },
+    entries: [
+      {
+        id: "wait-unchecked",
+        tournamentId: "t-ui",
+        user: { id: "wait-user-unchecked", name: "未チェックイン待機者" },
+        status: "registered",
+        isWaitlisted: true,
+        joinedAtRound: 1,
+        createdAt: "2026-01-01T00:00:01.000Z",
+      },
+      {
+        id: "wait-first-eligible",
+        tournamentId: "t-ui",
+        user: { id: "wait-user-first", name: "先のチェックイン待機者" },
+        status: "checked_in",
+        isWaitlisted: true,
+        joinedAtRound: 1,
+        createdAt: "2026-01-01T00:00:02.000Z",
+      },
+      {
+        id: "wait-second-eligible",
+        tournamentId: "t-ui",
+        user: { id: "wait-user-second", name: "後のチェックイン待機者" },
+        status: "checked_in",
+        isWaitlisted: true,
+        joinedAtRound: 1,
+        createdAt: "2026-01-01T00:00:03.000Z",
+      },
+    ],
+  });
+  renderManage();
+
+  fireEvent.click(await screen.findByRole("button", { name: "参加者" }));
+  expect(screen.getByText("キャンセル待ち（1番目） / 登録済み")).toBeInTheDocument();
+  expect(screen.getByText("キャンセル待ち（2番目） / チェックイン済み")).toBeInTheDocument();
+  expect(screen.getByText("キャンセル待ち（3番目） / チェックイン済み")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "キャンセル待ちを繰り上げる" }));
+
+  expect(
+    await screen.findByText("キャンセル待ちから1人を繰り上げました。")
+  ).toBeInTheDocument();
+  await waitFor(() => {
+    const storedEntries = JSON.parse(window.localStorage.getItem(STORAGE_KEY)).entries["t-ui"];
+    expect(storedEntries.find((entry) => entry.id === "wait-unchecked").isWaitlisted).toBe(true);
+    expect(storedEntries.find((entry) => entry.id === "wait-first-eligible")).toMatchObject({
+      status: "checked_in",
+      isWaitlisted: false,
+      joinedAtRound: 2,
+    });
+    expect(storedEntries.find((entry) => entry.id === "wait-second-eligible").isWaitlisted).toBe(true);
+  });
+});
+
+test("定員に空きがないキャンセル待ち繰り上げを主催者へ案内する", async () => {
+  seedStore({
+    tournament: { capacity: 2 },
+    entries: [
+      {
+        id: "wait-at-capacity",
+        tournamentId: "t-ui",
+        user: { id: "wait-user-at-capacity", name: "満員時待機者" },
+        status: "checked_in",
+        isWaitlisted: true,
+        joinedAtRound: 1,
+        createdAt: "2026-01-01T00:00:01.000Z",
+      },
+    ],
+  });
+  renderManage();
+
+  fireEvent.click(await screen.findByRole("button", { name: "参加者" }));
+  fireEvent.click(screen.getByRole("button", { name: "キャンセル待ちを繰り上げる" }));
+
+  expect(
+    await screen.findByText(
+      "チェックイン済みの参加者が定員に達しているため、繰り上げませんでした。"
+    )
+  ).toBeInTheDocument();
+  expect(
+    JSON.parse(window.localStorage.getItem(STORAGE_KEY)).entries["t-ui"].find(
+      (entry) => entry.id === "wait-at-capacity"
+    ).isWaitlisted
+  ).toBe(true);
+});
+
 test("参加者ごとのデッキリスト状態と主催者の監査記録を表示する", async () => {
   seedStore({
     entries: [

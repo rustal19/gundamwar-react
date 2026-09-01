@@ -438,6 +438,61 @@ test("任意大会ではデッキなしでエントリーし未提出として�
   expect(screen.queryByText("デッキリストを提出しました。")).not.toBeInTheDocument();
 });
 
+test("定員到達後もキャンセル待ちとしてエントリーできる", async () => {
+  mockAuthState = {
+    authMode: "mock",
+    isAuthenticated: true,
+    user: { id: "waitlisted-player", name: "待機希望者" },
+  };
+  mockTournament = registrationTournament({
+    capacity: 1,
+    entries: [
+      {
+        id: "admitted-entry",
+        user: { id: "admitted-player", name: "先着参加者" },
+        status: "registered",
+        isWaitlisted: false,
+      },
+    ],
+  });
+  createEntry.mockResolvedValueOnce({
+    id: "waitlisted-entry",
+    status: "registered",
+    isWaitlisted: true,
+  });
+
+  renderDetail();
+
+  expect(await screen.findByText("1 / 1")).toBeInTheDocument();
+  const entryButton = screen.getByRole("button", { name: "エントリー" });
+  expect(entryButton).toBeEnabled();
+  fireEvent.click(entryButton);
+
+  expect(
+    await screen.findByText(
+      "キャンセル待ちとしてエントリーしました。繰り上げには当日のチェックインが必要です。"
+    )
+  ).toBeInTheDocument();
+});
+
+test("自分のキャンセル待ち状態と繰り上げ条件を表示する", async () => {
+  setMyDecklistState("submitted", {
+    entry: {
+      isWaitlisted: true,
+      createdAt: "2026-01-01T00:00:00.000Z",
+    },
+  });
+
+  renderDetail();
+
+  expect(await screen.findByRole("heading", { name: "キャンセル待ち" })).toBeInTheDocument();
+  expect(
+    screen.getByText(/繰り上げ対象になるには当日のチェックインが必要です。/)
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "参加者" }));
+  expect(screen.getByText("キャンセル待ち（1番目） / 登録済み")).toBeInTheDocument();
+});
+
 test("ドロップ済みの本人は大会枠に数えず、キックのみ後の再エントリー導線を表示する", async () => {
   mockAuthState = {
     authMode: "mock",
@@ -618,6 +673,36 @@ test("セルフチェックイン確認後にチェックインを実行する",
   });
   expect(await screen.findByText("チェックインしました。")).toBeInTheDocument();
   expect(screen.queryByRole("dialog", { name: "チェックインの確認" })).not.toBeInTheDocument();
+});
+
+test("キャンセル待ちもセルフチェックインでき、繰り上げ待ちを案内する", async () => {
+  setMyDecklistState("submitted", {
+    entry: { isWaitlisted: true },
+    tournament: {
+      selfCheckin: true,
+      startsAt: new Date().toISOString(),
+      registrationClosesAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    },
+  });
+  renderDetail();
+
+  fireEvent.click(await screen.findByRole("button", { name: "チェックインする" }));
+  fireEvent.click(
+    within(screen.getByRole("dialog", { name: "チェックインの確認" })).getByRole("button", {
+      name: "チェックインする",
+    })
+  );
+
+  expect(checkInMyEntry).toHaveBeenCalledWith({
+    tournamentId: "t-detail",
+    authMode: "mock",
+    user: { id: "player-1", name: "テストユーザー" },
+  });
+  expect(
+    await screen.findByText(
+      "チェックインしました。主催者によるキャンセル待ちの繰り上げをお待ちください。"
+    )
+  ).toBeInTheDocument();
 });
 
 test("デッキリスト未提出のセルフチェックインでは追加警告を表示する", async () => {

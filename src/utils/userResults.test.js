@@ -5,7 +5,7 @@ function entry(id, userId) {
     id,
     tournamentId: "t1",
     user: { id: userId, name: userId },
-    status: "registered",
+    status: "checked_in",
     joinedAtRound: 1,
   };
 }

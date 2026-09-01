@@ -632,6 +632,7 @@ function normalizeEntry(entry, tournament) {
         ? null
         : Number(entry.finalRank),
     status: entry.status || "registered",
+    isWaitlisted: Boolean(entry.isWaitlisted),
     joinedAtRound: Math.max(1, Number(entry.joinedAtRound || 1)),
     createdAt: entry.createdAt || nowIso(),
   };
@@ -652,6 +653,31 @@ function setEntries(store, tournamentId, entries) {
 
 function countActiveEntries(entries) {
   return entries.filter((entry) => entry.status !== "dropped").length;
+}
+
+function countAdmittedEntries(entries) {
+  return entries.filter(
+    (entry) =>
+      !["pending", "dropped"].includes(entry.status) && !entry.isWaitlisted
+  ).length;
+}
+
+function shouldWaitlistEntry(tournament, entries) {
+  if (tournament.capacity == null) return false;
+  const capacity = Number(tournament.capacity);
+  if (!Number.isFinite(capacity) || capacity < 1) return false;
+  const hasActiveWaitlist = entries.some(
+    (entry) => entry.isWaitlisted && entry.status !== "dropped"
+  );
+  return hasActiveWaitlist || countAdmittedEntries(entries) >= capacity;
+}
+
+function compareEntriesByRegistrationOrder(left, right) {
+  const createdAtComparison = String(left.createdAt || "").localeCompare(
+    String(right.createdAt || "")
+  );
+  if (createdAtComparison !== 0) return createdAtComparison;
+  return compareEntryIds(left.id, right.id);
 }
 
 function normalizeBanRecord(record) {
@@ -868,9 +894,6 @@ function assertCanEnter(tournament, entries, currentUser) {
   if (!acceptsLateEntry && !isBefore(tournament.registrationClosesAt)) {
     throw new Error("エントリー締切を過ぎています。");
   }
-  if (tournament.capacity != null && countActiveEntries(entries) >= tournament.capacity) {
-    throw new Error("定員に達しています。");
-  }
   if (entries.some((entry) => entry.user.id === currentUser.id && entry.status !== "dropped")) {
     throw new Error("すでにエントリー済みです。");
   }
@@ -939,7 +962,9 @@ function entryHasMatchReference(rounds, entryId) {
 }
 
 function activeEntriesForPairing(entries) {
-  return entries.filter((entry) => entry.status === "checked_in");
+  return entries.filter(
+    (entry) => entry.status === "checked_in" && !entry.isWaitlisted
+  );
 }
 
 function activeEntriesForRound(entries, roundNumber) {
@@ -1361,6 +1386,7 @@ export async function createEntry({ tournamentId, deckItems = null, authMode, us
 
     const now = nowIso();
     const isLatePending = tournament.status === "in_progress" && tournament.lateEntry;
+    const isWaitlisted = !isLatePending && shouldWaitlistEntry(tournament, entries);
     const hasDeckItems = Array.isArray(deckItems) && deckItems.length > 0;
     const entry = normalizeEntry(
       {
@@ -1371,6 +1397,7 @@ export async function createEntry({ tournamentId, deckItems = null, authMode, us
         decklistSubmittedAt: hasDeckItems ? now : null,
         deckFormat: hasDeckItems ? deckFormatForTournament(tournament) : null,
         status: isLatePending ? "pending" : "registered",
+        isWaitlisted,
         joinedAtRound: isLatePending ? nextJoinRound(store, tournamentId) : 1,
         createdAt: now,
       },
@@ -1791,6 +1818,73 @@ export async function fetchEntries(tournamentId, { authMode, user } = {}) {
   return requestJson(`/api/tournaments/${tournamentId}/entries`, { method: "GET" });
 }
 
+export async function promoteWaitlistedEntries({ tournamentId, authMode, user }) {
+  if (authMode === "mock") {
+    const viewer = getCurrentViewer(user);
+    const store = readStore();
+    const tournament = getTournamentOrThrow(store, tournamentId);
+    assertCanManageTournament(tournament, viewer);
+    const entries = getEntries(store, tournamentId);
+    const capacity = tournament.capacity == null ? null : Number(tournament.capacity);
+    const checkedInCount = entries.filter(
+      (entry) => entry.status === "checked_in" && !entry.isWaitlisted
+    ).length;
+    const availableSlots =
+      capacity == null || !Number.isFinite(capacity)
+        ? 0
+        : Math.max(0, Math.floor(capacity) - checkedInCount);
+    const eligibleEntries = entries
+      .filter((entry) => entry.isWaitlisted && entry.status === "checked_in")
+      .sort(compareEntriesByRegistrationOrder);
+    const promotedEntryIds = new Set(
+      eligibleEntries.slice(0, availableSlots).map((entry) => entry.id)
+    );
+    const joinedAtRound = nextJoinRound(store, tournamentId);
+    const nextEntries = entries.map((entry) =>
+      promotedEntryIds.has(entry.id)
+        ? normalizeEntry(
+            {
+              ...entry,
+              isWaitlisted: false,
+              joinedAtRound: Math.max(Number(entry.joinedAtRound || 1), joinedAtRound),
+            },
+            tournament
+          )
+        : entry
+    );
+    const promotedEntries = nextEntries.filter((entry) => promotedEntryIds.has(entry.id));
+
+    if (promotedEntries.length > 0) {
+      setEntries(store, tournamentId, nextEntries);
+      store.tournaments = store.tournaments.map((item) =>
+        String(item.id) === String(tournamentId)
+          ? { ...item, updatedAt: nowIso() }
+          : item
+      );
+      writeStore(store);
+    }
+
+    return {
+      promotedCount: promotedEntries.length,
+      promotedEntries,
+      eligibleWaitlistCount: eligibleEntries.length,
+      availableSlotsBefore: availableSlots,
+      remainingSlots:
+        capacity == null || !Number.isFinite(capacity)
+          ? null
+          : Math.max(0, Math.floor(capacity) - checkedInCount - promotedEntries.length),
+      remainingWaitlistCount: nextEntries.filter(
+        (entry) => entry.isWaitlisted && entry.status !== "dropped"
+      ).length,
+    };
+  }
+
+  return requestJson(`/api/tournaments/${tournamentId}/entries/waitlist/promote`, {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}
+
 export async function fetchTournamentBans(tournamentId, { authMode, user } = {}) {
   if (authMode === "mock") {
     const viewer = getCurrentViewer(user);
@@ -1851,6 +1945,7 @@ export async function createManualEntry({ tournamentId, name, deckItems = null, 
         deckFormat: hasDeckItems ? deckFormatForTournament(tournament) : null,
         deckLockedAt: tournament.status === "in_progress" ? now : null,
         status: "registered",
+        isWaitlisted: shouldWaitlistEntry(tournament, entries),
         joinedAtRound:
           tournament.status === "in_progress" ? nextJoinRound(store, tournamentId) : 1,
         createdAt: now,
@@ -1887,6 +1982,7 @@ export async function approveEntry({ tournamentId, entryId, authMode, user }) {
       {
         ...existing,
         status: "registered",
+        isWaitlisted: shouldWaitlistEntry(tournament, entries),
         joinedAtRound: nextJoinRound(store, tournamentId),
       },
       tournament

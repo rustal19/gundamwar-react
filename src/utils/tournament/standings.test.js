@@ -66,7 +66,7 @@ describe("computeStandings", () => {
       [
         { id: "A", status: "checked_in" },
         { id: "B", status: "checked_in" },
-        { id: "C", status: "registered", joinedAtRound: 3 },
+        { id: "C", status: "checked_in", joinedAtRound: 3 },
       ],
       [
         { player1EntryId: "C", player2EntryId: "A", result: "p1_win" },
@@ -91,5 +91,24 @@ describe("computeStandings", () => {
     expect(standings).toHaveLength(1);
     expect(standings[0]).toMatchObject({ entryId: "A", wins: 1, losses: 0, points: 3 });
     expect(standings[0].omwPercent).toBeCloseTo(1 / 3);
+  });
+
+  it("excludes unchecked and waitlisted entries from records and the table", () => {
+    const standings = computeStandings(
+      [
+        { id: "checked", status: "checked_in" },
+        { id: "registered", status: "registered" },
+        { id: "pending", status: "pending" },
+        { id: "waitlisted", status: "checked_in", isWaitlisted: true },
+      ],
+      [
+        { player1EntryId: "registered", player2EntryId: "checked", result: "p1_win" },
+        { player1EntryId: "waitlisted", player2EntryId: "checked", result: "p1_win" },
+      ]
+    );
+
+    expect(standings).toEqual([
+      expect.objectContaining({ entryId: "checked", wins: 0, losses: 0, points: 0 }),
+    ]);
   });
 });

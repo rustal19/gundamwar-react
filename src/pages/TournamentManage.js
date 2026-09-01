@@ -31,6 +31,7 @@ import {
   fetchTournamentBans,
   getTournamentPermissions,
   kickEntry,
+  promoteWaitlistedEntries,
   rejectEntry,
   reopenRound,
   removeTournamentCoOrganizer,
@@ -376,6 +377,7 @@ function pairingEntriesForRound(entries, roundNumber) {
   return (entries || []).filter(
     (entry) =>
       entry.status === "checked_in" &&
+      !entry.isWaitlisted &&
       Number(entry.joinedAtRound || 1) <= Number(roundNumber)
   );
 }
@@ -384,8 +386,20 @@ function uncheckedEntriesForRound(entries, roundNumber) {
   return (entries || []).filter(
     (entry) =>
       entry.status === "registered" &&
+      !entry.isWaitlisted &&
       Number(entry.joinedAtRound || 1) <= Number(roundNumber)
   );
+}
+
+function compareEntriesByRegistrationOrder(left, right) {
+  const createdAtComparison = String(left.createdAt || "").localeCompare(
+    String(right.createdAt || "")
+  );
+  if (createdAtComparison !== 0) return createdAtComparison;
+  return String(left.id).localeCompare(String(right.id), undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
 }
 
 function roundGenerationDisabledReason(form, rounds, entries) {
@@ -668,6 +682,7 @@ function RoundManagePanel({
       entries.filter(
         (entry) =>
           entry.status === "checked_in" &&
+          !entry.isWaitlisted &&
           Number(entry.joinedAtRound || 1) <= Number(selectedRound?.number || 1)
       ),
     [entries, selectedRound]
@@ -1070,6 +1085,7 @@ function ParticipantsPanel({
   onDeckLockChange,
   onDeckRegister,
   onKick,
+  onPromoteWaitlist,
   onReject,
   onStatusChange,
   onUnban,
@@ -1083,6 +1099,18 @@ function ParticipantsPanel({
   const [exportError, setExportError] = useState("");
   const [kickTarget, setKickTarget] = useState(null);
   const pendingEntries = entries.filter((entry) => entry.status === "pending");
+  const waitlistedEntries = useMemo(
+    () =>
+      entries
+        .filter((entry) => entry.isWaitlisted && entry.status !== "dropped")
+        .slice()
+        .sort(compareEntriesByRegistrationOrder),
+    [entries]
+  );
+  const waitlistPositions = useMemo(
+    () => new Map(waitlistedEntries.map((entry, index) => [entry.id, index + 1])),
+    [waitlistedEntries]
+  );
   const visibleEntries = entries.filter(
     (entry) => !missingOnly || entry.decklistState === "none"
   );
@@ -1149,6 +1177,30 @@ function ParticipantsPanel({
       </div>
       {exportMessage ? <div className="tournament-success">{exportMessage}</div> : null}
       {exportError ? <div className="tournament-alert">{exportError}</div> : null}
+      {form.capacity !== "" && form.capacity != null ? (
+        <div className="pending-entry-section">
+          <div className="tournament-round-header">
+            <h3>キャンセル待ち</h3>
+            <button
+              type="button"
+              onClick={onPromoteWaitlist}
+              disabled={isSubmitting || waitlistedEntries.length === 0}
+            >
+              キャンセル待ちを繰り上げる
+            </button>
+          </div>
+          <p>
+            チェックイン済みの参加者数が定員未満の場合、チェックイン済みのキャンセル待ちを登録順に繰り上げます。
+          </p>
+          {waitlistedEntries.length ? (
+            <p className="tournament-muted">
+              待機中 {waitlistedEntries.length}人 / チェックイン済み {waitlistedEntries.filter((entry) => entry.status === "checked_in").length}人
+            </p>
+          ) : (
+            <p className="tournament-muted">キャンセル待ちの参加者はいません。</p>
+          )}
+        </div>
+      ) : null}
       {form.lateEntry && pendingEntries.length ? (
         <div className="pending-entry-section">
           <h3>申請中</h3>
@@ -1262,7 +1314,11 @@ function ParticipantsPanel({
                 <tr key={entry.id}>
                   <td className="num">{index + 1}</td>
                   <td>{formatParticipantName(entry, "-")}</td>
-                  <td>{ENTRY_STATUS_LABELS[entry.status] || entry.status}</td>
+                  <td>
+                    {entry.isWaitlisted && entry.status !== "dropped"
+                      ? `キャンセル待ち（${waitlistPositions.get(entry.id)}番目） / ${ENTRY_STATUS_LABELS[entry.status] || entry.status}`
+                      : ENTRY_STATUS_LABELS[entry.status] || entry.status}
+                  </td>
                   <td>
                     <div className="tournament-deck-state-cell">
                       <span className={`decklist-state-badge ${entry.decklistState || "unknown"}`}>
@@ -1302,6 +1358,9 @@ function ParticipantsPanel({
                   </td>
                   <td>
                     {entry.user?.id == null ? <span className="mini-badge">ゲスト</span> : null}
+                    {entry.isWaitlisted && entry.status !== "dropped" ? (
+                      <span className="mini-badge">キャンセル待ち</span>
+                    ) : null}
                     {Number(entry.joinedAtRound || 1) > 1 ? (
                       <span className="mini-badge">
                         {getRoundLabelForNumber(entry.joinedAtRound, rounds, form)}から
@@ -2059,8 +2118,10 @@ export default function TournamentManage({ compact = false }) {
     setError("");
     setMessage("");
     try {
-      await action();
-      if (successMessage) setMessage(successMessage);
+      const result = await action();
+      const resolvedSuccessMessage =
+        typeof successMessage === "function" ? successMessage(result) : successMessage;
+      if (resolvedSuccessMessage) setMessage(resolvedSuccessMessage);
       await loadAll();
     } catch (actionError) {
       setError(actionError.message);
@@ -2299,6 +2360,20 @@ export default function TournamentManage({ compact = false }) {
     runAction(
       async () => updateEntryStatus({ tournamentId: id, entryId, status, authMode, user }),
       "参加者の状態を更新しました。"
+    );
+
+  const promoteWaitlist = () =>
+    runAction(
+      async () => promoteWaitlistedEntries({ tournamentId: id, authMode, user }),
+      (result) => {
+        if (result.promotedCount > 0) {
+          return `キャンセル待ちから${result.promotedCount}人を繰り上げました。`;
+        }
+        if (result.remainingSlots === 0) {
+          return "チェックイン済みの参加者が定員に達しているため、繰り上げませんでした。";
+        }
+        return "チェックイン済みのキャンセル待ちがいないため、繰り上げませんでした。";
+      }
     );
 
   const kickParticipant = (entryId, ban) =>
@@ -2546,6 +2621,7 @@ export default function TournamentManage({ compact = false }) {
           onDeckLockChange={changeDecklistLock}
           onDeckRegister={deckRegister}
           onKick={kickParticipant}
+          onPromoteWaitlist={promoteWaitlist}
           onReject={rejectPendingEntry}
           onStatusChange={changeEntryStatus}
           onUnban={unbanParticipant}

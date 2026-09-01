@@ -632,6 +632,56 @@ export default function TournamentMyStatus({
     );
   }
 
+  if (myEntry.isWaitlisted) {
+    return (
+      <section className="tournament-my-status-band warning">
+        <div>
+          <p className="tournament-eyebrow">マイステータス</p>
+          <h2>{checkedIn ? "チェックイン済み・キャンセル待ち" : "キャンセル待ち"}</h2>
+          <p>
+            繰り上げ対象になるには当日のチェックインが必要です。チェックイン済みのキャンセル待ちから登録順に、定員に空きがある場合のみ主催者が繰り上げます。
+          </p>
+          {checkedIn ? (
+            <p>主催者による繰り上げをお待ちください。</p>
+          ) : (
+            <p>チェックイン前は繰り上げ対象になりません。</p>
+          )}
+          <DecklistStatusNotice entry={myEntry} canUpdateDeck={canEditDecklist} />
+        </div>
+        {decklistEntryForm || (canCancel ? (
+          <div className="tournament-entry-actions">
+            <button type="button" onClick={onCancelEntry} disabled={isSubmitting}>
+              取り消し
+            </button>
+          </div>
+        ) : null)}
+        {!checkedIn && tournament?.selfCheckin ? (
+          <div className="tournament-entry-actions">
+            <button
+              type="button"
+              onClick={() => setIsCheckInDialogOpen(true)}
+              disabled={isSubmitting || !selfCheckinOpen}
+              title={selfCheckinUnavailableReason || undefined}
+            >
+              チェックインする
+            </button>
+            {selfCheckinUnavailableReason ? (
+              <p className="tournament-my-warning">{selfCheckinUnavailableReason}</p>
+            ) : null}
+          </div>
+        ) : null}
+        {isCheckInDialogOpen ? (
+          <CheckInConfirmDialog
+            decklistState={myEntry.decklistState}
+            isSubmitting={isSubmitting}
+            onCancel={() => setIsCheckInDialogOpen(false)}
+            onConfirm={confirmCheckIn}
+          />
+        ) : null}
+      </section>
+    );
+  }
+
   if (phase === "checkin") {
     return (
       <section className={`tournament-my-status-band ${bandTone}`}>
