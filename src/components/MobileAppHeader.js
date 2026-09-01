@@ -38,13 +38,13 @@ export default function MobileAppHeader() {
       </header>
       {drawerOpen ? (
         <div className="mobile-drawer-layer" id="mobile-navigation-drawer">
+          <Sidebar drawer onNavigate={() => setDrawerOpen(false)} />
           <button
             type="button"
             className="mobile-drawer-backdrop"
             aria-label="メニューを閉じる"
             onClick={() => setDrawerOpen(false)}
           />
-          <Sidebar drawer onNavigate={() => setDrawerOpen(false)} />
         </div>
       ) : null}
     </>

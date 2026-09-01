@@ -67,6 +67,41 @@ test("home renders the portal brand and desktop sidebar links", () => {
   expect(sidebar.querySelector('a[href="/tournaments"]')).toBeInTheDocument();
 });
 
+test("mobile menu keeps aria state in sync and closes from the backdrop or navigation", () => {
+  const { container } = renderApp("/terms?mobileLayout=ios");
+  const toggle = screen.getByRole("button", { name: "メニューを開く" });
+
+  expect(toggle).toHaveAttribute("aria-expanded", "false");
+  expect(toggle).toHaveAttribute("aria-controls", "mobile-navigation-drawer");
+  expect(container.querySelector("#mobile-navigation-drawer")).not.toBeInTheDocument();
+
+  fireEvent.click(toggle);
+
+  const layer = container.querySelector("#mobile-navigation-drawer");
+  const drawer = layer.querySelector(".gw-sidebar-drawer");
+  expect(toggle).toHaveAttribute("aria-expanded", "true");
+  expect(toggle).toHaveAccessibleName("メニューを閉じる");
+  expect(drawer).toBeInTheDocument();
+  expect(layer.firstElementChild).toBe(drawer);
+
+  fireEvent.click(layer.querySelector(".mobile-drawer-backdrop"));
+
+  expect(toggle).toHaveAttribute("aria-expanded", "false");
+  expect(toggle).toHaveAccessibleName("メニューを開く");
+  expect(container.querySelector("#mobile-navigation-drawer")).not.toBeInTheDocument();
+
+  fireEvent.click(toggle);
+  const reopenedDrawer = container.querySelector(".gw-sidebar-drawer");
+  const searchLink = reopenedDrawer.querySelector('a[href="/search?mobileLayout=ios"]');
+  expect(searchLink).toBeInTheDocument();
+
+  fireEvent.click(searchLink);
+
+  expect(toggle).toHaveAttribute("aria-expanded", "false");
+  expect(toggle).toHaveAccessibleName("メニューを開く");
+  expect(container.querySelector("#mobile-navigation-drawer")).not.toBeInTheDocument();
+});
+
 test("/search renders the search form and collapsed sidebar", () => {
   const { container } = renderApp("/search");
 

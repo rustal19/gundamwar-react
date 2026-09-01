@@ -20,6 +20,7 @@
   --gw-danger-soft: #f9ebea;
 
   /* 形状・奥行き */
+  --gw-border-width: 1px;
   --gw-radius-xs: 4px;
   --gw-radius: 8px;
   --gw-radius-sm: var(--gw-radius);

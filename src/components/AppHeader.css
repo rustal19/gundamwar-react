@@ -418,10 +418,13 @@
 }
 
 .gw-sidebar-drawer {
-  border-right: 1px solid var(--gw-secondary-border-soft);
-  box-shadow: 0 12px 28px var(--gw-shadow-modal-color);
+  border-left: var(--gw-border-width) solid var(--gw-secondary-border-soft);
+  border-right: 0;
+  box-shadow: calc(-1 * var(--gw-space-xs)) 0 var(--gw-space-xl) var(--gw-shadow-modal-color);
+  left: auto;
   max-width: min(82vw, 280px);
   padding-top: var(--gw-space-md);
+  right: 0;
   width: 240px;
   z-index: 55;
 }

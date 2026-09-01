@@ -405,12 +405,22 @@
   display: flex;
   align-items: baseline;
   align-content: normal;
+  color: var(--gw-text-strong);
+  font-size: var(--gw-font-size-sm);
+  font-weight: 700;
   gap: var(--gw-space-3xs);
   white-space: nowrap;
 }
 
 .portal-home .portal-featured-tournament-list .tournament-card-date strong {
-  font-size: var(--gw-font-size-md);
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.portal-home .portal-featured-tournament-list .tournament-card-date span:last-child {
+  color: var(--gw-text-muted);
+  font-weight: 400;
 }
 
 .portal-home .portal-featured-tournament-list .tournament-card-main {
