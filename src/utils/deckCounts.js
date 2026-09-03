@@ -31,5 +31,5 @@ export function getDeckCounts(items) {
 }
 
 export function formatDeckCountSummary(mainCount, sideCount) {
-  return `メイン${normalizeCount(mainCount)} / サイド${normalizeCount(sideCount)}`;
+  return `メイン${normalizeCount(mainCount)}枚 / サイド${normalizeCount(sideCount)}枚`;
 }

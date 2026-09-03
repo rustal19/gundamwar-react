@@ -286,6 +286,7 @@ function EntryForm({
   savedDecksError,
   onRetrySavedDecks,
   submittedItems,
+  currentDeckItems,
   deckViolations,
   onSubmitEntry,
   onCancelEntry,
@@ -376,7 +377,9 @@ function EntryForm({
                 className={deckSource === "current" ? "tournament-choice-button active" : "tournament-choice-button"}
                 onClick={() => onDeckSourceChange("current")}
               >
-                現在のデッキを使う <DeckCountPreview items={submittedItems} />
+                {/* submittedItems は選択中の提出物なので、保存デッキ選択中は
+                    保存デッキの枚数になる。ここは常に現在のデッキ内容を出す。 */}
+                現在のデッキを使う <DeckCountPreview items={currentDeckItems} />
               </button>
             </section>
             <section className="tournament-submit-choice">
@@ -472,6 +475,7 @@ export default function TournamentMyStatus({
   savedDecksError,
   onRetrySavedDecks,
   submittedItems,
+  currentDeckItems,
   deckViolations,
   onSubmitEntry,
   onRequestLateEntry,
@@ -533,6 +537,7 @@ export default function TournamentMyStatus({
       savedDecksError={savedDecksError}
       onRetrySavedDecks={onRetrySavedDecks}
       submittedItems={submittedItems}
+      currentDeckItems={currentDeckItems}
       deckViolations={deckViolations}
       onSubmitEntry={onSubmitEntry}
       onCancelEntry={onCancelEntry}
@@ -632,6 +637,7 @@ export default function TournamentMyStatus({
           savedDecksError={savedDecksError}
           onRetrySavedDecks={onRetrySavedDecks}
           submittedItems={submittedItems}
+          currentDeckItems={currentDeckItems}
           deckViolations={deckViolations}
           onSubmitEntry={onSubmitEntry}
           onCancelEntry={onCancelEntry}

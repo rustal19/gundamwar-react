@@ -62,6 +62,16 @@
   padding: var(--gw-space-sm);
 }
 
+.tournament-filter-group {
+  display: grid;
+  gap: var(--gw-space-3xs);
+}
+
+.tournament-filter-label {
+  color: var(--gw-text-muted);
+  font-size: var(--gw-font-size-xs);
+}
+
 .tournament-tabs.tournament-list-tabs {
   margin-top: 0;
   border: 1px solid var(--gw-border);
@@ -936,7 +946,9 @@
   color: var(--gw-primary-strong);
 }
 
-.tournament-table tbody tr:first-child {
+/* 先頭行の強調は「順位1位」を表す。参加者表・対戦表・デッキ表にも効くと
+   選択中や勝者のような誤った意味を与えるので、順位表だけに限定する。 */
+.tournament-standings-table tbody tr:first-child {
   background: var(--gw-primary-soft);
   color: var(--gw-primary-strong);
 }

@@ -1355,6 +1355,7 @@ export default function TournamentDetail({ compact = false }) {
           savedDecksError={savedDecksError}
           onRetrySavedDecks={loadSavedDecks}
           submittedItems={submittedItems}
+          currentDeckItems={currentDeck.items || []}
           deckViolations={deckViolations}
           onSubmitEntry={submitEntry}
           onRequestLateEntry={requestLateEntry}

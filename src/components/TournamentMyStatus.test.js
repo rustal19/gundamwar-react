@@ -139,6 +139,10 @@ function statusProps(overrides = {}) {
     selectedDeckId: "",
     onSelectedDeckChange: jest.fn(),
     savedDecks: [],
+    currentDeckItems: [
+      { id: "main-1", zone: "main", count: 2 },
+      { id: "side-1", zone: "side", count: 1 },
+    ],
     submittedItems: [
       { id: "main-1", zone: "main", count: 2 },
       { id: "side-1", zone: "side", count: 1 },
@@ -202,7 +206,7 @@ test("チェックイン開始時刻以降は前日でもボタンを有効化�
 test("デッキ枚数は提出デッキ行だけに表示し、開始前は対戦履歴を表示しない", () => {
   render(<TournamentMyStatus {...statusProps()} />);
 
-  expect(screen.getAllByText("メイン2 / サイド1")).toHaveLength(1);
+  expect(screen.getAllByText("メイン2枚 / サイド1枚")).toHaveLength(1);
   expect(screen.queryByRole("button", { name: "対戦履歴" })).not.toBeInTheDocument();
 });
 
@@ -490,4 +494,37 @@ test("完了済み大会の未エントリー状態では受付終了だけを�
 
   expect(screen.getByText("受付が終了しました。")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "エントリー" })).not.toBeInTheDocument();
+});
+
+test("保存デッキ選択中でも「現在のデッキを使う」には現在のデッキの枚数を出す", () => {
+  const savedDeck = {
+    id: "deck-saved",
+    title: "保存デッキ",
+    items: [
+      { id: "s-main-1", zone: "main", count: 50 },
+      { id: "s-side-1", zone: "side", count: 10 },
+    ],
+  };
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        deckSource: "saved",
+        selectedDeckId: savedDeck.id,
+        savedDecks: [savedDeck],
+        // 提出対象は保存デッキ、デッキビルダー側は別内容
+        submittedItems: savedDeck.items,
+        currentDeckItems: [
+          { id: "c-main-1", zone: "main", count: 4 },
+          { id: "c-side-1", zone: "side", count: 3 },
+        ],
+      })}
+    />
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "デッキを選ぶ" }));
+
+  const currentDeckButton = screen.getByRole("button", { name: /現在のデッキを使う/ });
+  expect(currentDeckButton).toHaveTextContent("メイン4枚");
+  expect(currentDeckButton).toHaveTextContent("サイド3枚");
+  expect(currentDeckButton).not.toHaveTextContent("メイン50枚");
 });

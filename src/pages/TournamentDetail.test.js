@@ -474,10 +474,10 @@ test("提出済み枚数を共通表記にし、公開デッキ表に列見出�
     "ステータス",
     "デッキ",
   ]);
-  expect(participantRow).toHaveTextContent("提出済み（メイン3 / サイド1）");
+  expect(participantRow).toHaveTextContent("提出済み（メイン3枚 / サイド1枚）");
   const deckHeading = screen.getByRole("heading", { name: /公開選手.*のデッキリスト/ });
   const deckSection = deckHeading.closest("section");
-  expect(within(deckSection).getByText("メイン3 / サイド1")).toBeInTheDocument();
+  expect(within(deckSection).getByText("メイン3枚 / サイド1枚")).toBeInTheDocument();
 
   const deckTable = within(deckSection).getByRole("table");
   expect(deckTable).toHaveClass("tournament-card-table", "tournament-public-decklist-table");

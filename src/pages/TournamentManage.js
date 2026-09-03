@@ -1155,6 +1155,17 @@ function ParticipantsPanel({
     (entry) => !missingOnly || entry.decklistState === "none"
   );
   const selectedEntry = entries.find((entry) => entry.id === selectedEntryId) || null;
+  // デッキ詳細は参加者表の後ろに描画されるため、参加者が多いと「閲覧」を押した位置から
+  // 画面数個ぶん離れた場所に出る。押しても何も起きなかったように見えるので、
+  // 開いたら見出しへスクロールしてフォーカスを移す。
+  const deckViewerHeadingRef = useRef(null);
+  useEffect(() => {
+    if (!selectedEntryId) return;
+    const heading = deckViewerHeadingRef.current;
+    if (!heading) return;
+    heading.scrollIntoView({ block: "start" });
+    heading.focus();
+  }, [selectedEntryId]);
   const selectedDeck = useMemo(() => splitDeckItems(selectedEntry?.deckItems), [selectedEntry?.deckItems]);
   const selectedMainCount = countCards(selectedDeck.mainItems);
   const selectedSideCount = countCards(selectedDeck.sideItems);
@@ -1498,7 +1509,9 @@ function ParticipantsPanel({
       {selectedEntry ? (
         <div className="tournament-deck-viewer">
           <div className="tournament-round-header">
-            <h3>{formatParticipantName(selectedEntry, "-")} のデッキリスト</h3>
+            <h3 ref={deckViewerHeadingRef} tabIndex={-1}>
+              {formatParticipantName(selectedEntry, "-")} のデッキリスト
+            </h3>
             <button type="button" onClick={() => setSelectedEntryId("")}>
               閉じる
             </button>

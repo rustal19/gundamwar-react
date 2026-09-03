@@ -49,3 +49,22 @@ test("公開中の大会は従来どおり詳細ページへリンクする", ()
     "/tournaments/t-card"
   );
 });
+
+test("縦積み・横並びのどちらでも日付から「日」が抜けない", () => {
+  const { unmount } = render(
+    <MemoryRouter>
+      <TournamentCard tournament={baseTournament} />
+    </MemoryRouter>
+  );
+  // 縦積み(既定)。大会一覧のモバイル幅ではCSSがこの3要素を横一列にするため、
+  // 数字だけだと「8月 1 (土)」と読めなくなる。
+  expect(screen.getByText("1日")).toBeInTheDocument();
+  unmount();
+
+  render(
+    <MemoryRouter>
+      <TournamentCard tournament={baseTournament} dateLayout="inline" />
+    </MemoryRouter>
+  );
+  expect(screen.getByText("8月1日")).toBeInTheDocument();
+});

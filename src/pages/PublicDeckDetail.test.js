@@ -103,8 +103,8 @@ test("大会デッキに提出者・開催日・大会名・順位・参加人�
   expect(within(meta).getByText("参加人数", { selector: "dt" })).toBeInTheDocument();
   expect(within(meta).getByText("32人")).toBeInTheDocument();
   expect(within(meta).getByText("枚数", { selector: "dt" })).toBeInTheDocument();
-  expect(within(meta).getByText("メイン50 / サイド0")).toBeInTheDocument();
-  expect(screen.getAllByText("メイン50 / サイド0")).toHaveLength(1);
+  expect(within(meta).getByText("メイン50枚 / サイド0枚")).toBeInTheDocument();
+  expect(screen.getAllByText("メイン50枚 / サイド0枚")).toHaveLength(1);
   expect(screen.getByRole("button", { name: "このデッキをコピー" })).toBeInTheDocument();
 });
 
@@ -181,7 +181,7 @@ test("保存デッキには旧データの大会参照が残っていても大�
   expect(within(meta).queryByText("開催日", { selector: "dt" })).not.toBeInTheDocument();
   expect(within(meta).queryByText("紐付けてはいけない大会")).not.toBeInTheDocument();
   expect(within(meta).getByText("枚数", { selector: "dt" })).toBeInTheDocument();
-  expect(within(meta).getByText("メイン0 / サイド0")).toBeInTheDocument();
+  expect(within(meta).getByText("メイン0枚 / サイド0枚")).toBeInTheDocument();
 });
 
 test("公開日が無い場合は更新日の日付だけを表示する", async () => {

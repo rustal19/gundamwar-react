@@ -8,7 +8,7 @@ function summarize(items) {
 describe("deck count summary", () => {
   test("メインのみでもサイド0枚を表示する", () => {
     expect(summarize([{ cardId: "main-1", count: 50 }])).toBe(
-      "メイン50 / サイド0"
+      "メイン50枚 / サイド0枚"
     );
   });
 
@@ -19,10 +19,10 @@ describe("deck count summary", () => {
         { cardId: "main-2", count: "3" },
         { cardId: "side-1", count: 10, zone: "side" },
       ])
-    ).toBe("メイン50 / サイド10");
+    ).toBe("メイン50枚 / サイド10枚");
   });
 
   test("空デッキは両方0枚と表示する", () => {
-    expect(summarize([])).toBe("メイン0 / サイド0");
+    expect(summarize([])).toBe("メイン0枚 / サイド0枚");
   });
 });

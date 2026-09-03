@@ -126,7 +126,7 @@ test("自分の大会へ切り替えると参加中と参加済みの大会を�
   });
 
   renderList("/tournaments?status=&page=3&mobileLayout=1");
-  const viewGroup = screen.getByRole("group", { name: "大会の表示範囲" });
+  const viewGroup = screen.getByRole("group", { name: "表示範囲" });
   fireEvent.click(within(viewGroup).getByRole("button", { name: "自分の大会" }));
 
   await waitFor(() =>
@@ -158,7 +158,7 @@ test("URLから自分の大会表示を復元する", async () => {
   expect(await screen.findByText("過去に参加した大会")).toBeInTheDocument();
   expect(fetchTournaments).not.toHaveBeenCalled();
   expect(
-    within(screen.getByRole("group", { name: "大会の表示範囲" })).getByRole("button", {
+    within(screen.getByRole("group", { name: "表示範囲" })).getByRole("button", {
       name: "自分の大会",
     })
   ).toHaveAttribute("aria-pressed", "true");
@@ -209,7 +209,7 @@ test("自分の大会の取得に失敗しても全大会のカードを残さ�
   expect(await screen.findByText("全大会にだけある大会")).toBeInTheDocument();
 
   fireEvent.click(
-    within(screen.getByRole("group", { name: "大会の表示範囲" })).getByRole("button", {
+    within(screen.getByRole("group", { name: "表示範囲" })).getByRole("button", {
       name: "自分の大会",
     })
   );
@@ -259,7 +259,7 @@ test("未ログインでは自分の大会を選べず、直リンクではロ�
   renderList("/tournaments?view=mine");
 
   const myTournamentsButton = within(
-    screen.getByRole("group", { name: "大会の表示範囲" })
+    screen.getByRole("group", { name: "表示範囲" })
   ).getByRole("button", { name: "自分の大会" });
   expect(myTournamentsButton).toBeDisabled();
   expect(fetchMyTournaments).not.toHaveBeenCalled();

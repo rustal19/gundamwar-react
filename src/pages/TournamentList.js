@@ -149,37 +149,57 @@ export default function TournamentList({ compact = false }) {
               大会を作成
             </Link>
           ) : null}
-          <div className="tournament-tabs tournament-list-tabs" role="group" aria-label="大会の表示範囲">
-            <button
-              type="button"
-              className={view === VIEW_ALL ? "active" : ""}
-              aria-pressed={view === VIEW_ALL}
-              onClick={() => setView(VIEW_ALL)}
+          {/* 「すべて」というボタンが表示範囲とステータスの両方にあるため、
+              可視の見出しがないとどちらの絞り込みか区別できない。 */}
+          <div className="tournament-filter-group">
+            <span className="tournament-filter-label" id="tournament-view-label">
+              表示範囲
+            </span>
+            <div
+              className="tournament-tabs tournament-list-tabs"
+              role="group"
+              aria-labelledby="tournament-view-label"
             >
-              すべて
-            </button>
-            <button
-              type="button"
-              className={view === VIEW_MINE ? "active" : ""}
-              aria-pressed={view === VIEW_MINE}
-              disabled={!canViewMyTournaments}
-              title={!canViewMyTournaments ? "ログイン後に利用できます" : undefined}
-              onClick={() => setView(VIEW_MINE)}
-            >
-              自分の大会
-            </button>
-          </div>
-          <div className="tournament-filter" aria-label="大会ステータス">
-            {STATUS_OPTIONS.map((option) => (
               <button
-                key={option.value || "all"}
                 type="button"
-                className={status === option.value ? "active" : ""}
-                onClick={() => setFilter(option.value)}
+                className={view === VIEW_ALL ? "active" : ""}
+                aria-pressed={view === VIEW_ALL}
+                onClick={() => setView(VIEW_ALL)}
               >
-                {option.label}
+                すべて
               </button>
-            ))}
+              <button
+                type="button"
+                className={view === VIEW_MINE ? "active" : ""}
+                aria-pressed={view === VIEW_MINE}
+                disabled={!canViewMyTournaments}
+                title={!canViewMyTournaments ? "ログイン後に利用できます" : undefined}
+                onClick={() => setView(VIEW_MINE)}
+              >
+                自分の大会
+              </button>
+            </div>
+          </div>
+          <div className="tournament-filter-group">
+            <span className="tournament-filter-label" id="tournament-status-label">
+              ステータス
+            </span>
+            <div
+              className="tournament-filter"
+              role="group"
+              aria-labelledby="tournament-status-label"
+            >
+              {STATUS_OPTIONS.map((option) => (
+                <button
+                  key={option.value || "all"}
+                  type="button"
+                  className={status === option.value ? "active" : ""}
+                  onClick={() => setFilter(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

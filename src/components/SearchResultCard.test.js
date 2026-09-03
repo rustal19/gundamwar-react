@@ -60,7 +60,7 @@ describe("SearchResultCardの数値ラベル", () => {
 
     expect(container.querySelector(".result-card-image-count")).toHaveTextContent("合計4枚");
     expect(container.querySelector(".result-card-image-meta")).toHaveTextContent(
-      "メイン3 / サイド1"
+      "メイン3枚 / サイド1枚"
     );
   });
 

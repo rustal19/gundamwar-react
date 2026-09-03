@@ -31,11 +31,18 @@ function formatDateParts(value) {
   };
 }
 
-// 縦積み(既定)は「7月 / 15 / (水)」と3行に分かれるため日付の数字だけで読めるが、
-// 横一列に並べると「7月15(水)」となり「日」が抜けて読めない。並べ方で表記を変える。
+// 横一列に並べると「7月15(水)」となり「日」が抜けて読めないので、月日を1語にまとめる。
 function formatDateInline(parts) {
   if (parts.day === "-") return "-";
   return `${parts.month}${parts.day}日`;
+}
+
+// 縦積みでも「日」を落とさない。大会一覧のモバイル幅では CSS が
+// この3要素を横一列へ変えるため(pages/Tournaments.css の @media)、
+// 数字だけにすると「7月 15 (水)」と読めなくなる。
+function formatDayLabel(parts) {
+  if (parts.day === "-") return "-";
+  return `${parts.day}日`;
 }
 
 function formatTime(value) {
@@ -94,7 +101,7 @@ export default function TournamentCard({
         ) : (
           <>
             <span>{dateParts.month}</span>
-            <strong>{dateParts.day}</strong>
+            <strong>{formatDayLabel(dateParts)}</strong>
             <span>{dateParts.weekday}</span>
           </>
         )}

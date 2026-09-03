@@ -243,9 +243,9 @@ test("各公開デッキのメインとサイドの枚数を分けて表示す�
   renderPublicDecks("/decks");
 
   const deckCards = await screen.findAllByRole("article");
-  expect(within(deckCards[0]).getByText("メイン50 / サイド0")).toBeInTheDocument();
-  expect(within(deckCards[1]).getByText("メイン50 / サイド10")).toBeInTheDocument();
-  expect(within(deckCards[2]).getByText("メイン0 / サイド0")).toBeInTheDocument();
+  expect(within(deckCards[0]).getByText("メイン50枚 / サイド0枚")).toBeInTheDocument();
+  expect(within(deckCards[1]).getByText("メイン50枚 / サイド10枚")).toBeInTheDocument();
+  expect(within(deckCards[2]).getByText("メイン0枚 / サイド0枚")).toBeInTheDocument();
 });
 
 test("採用カード・プレイヤー名・大会名を候補選択からURLと取得条件へ反映する", async () => {
