@@ -1,4 +1,19 @@
-import { SET_NAME_TO_CODE } from "../data/searchOptions";
+import {
+  CARD_TYPE_OPTIONS,
+  CHARACTER_EXTRA_OPTIONS,
+  CHAR_FEATURE_OPTIONS,
+  COLOR_EXCLUDE_OPTIONS,
+  COLOR_INCLUDE_OPTIONS,
+  OTHER_FEATURE_OPTIONS,
+  SET_EXTRA_OPTIONS_BB,
+  SET_EXTRA_OPTIONS_DB,
+  SET_EXTRA_OPTIONS_EX,
+  SET_EXTRA_OPTIONS_ST,
+  SET_INCLUDED_OPTIONS,
+  SET_NAME_TO_CODE,
+  UNIT_EXTRA_OPTIONS,
+  UNIT_FEATURE_OPTIONS,
+} from "../data/searchOptions";
 
 export const API_SEARCH_URL =
   process.env.REACT_APP_API_SEARCH_URL || "https://gundamwar.net/api/search";
@@ -142,6 +157,131 @@ export function hasSearchCriteria(params) {
 
 export function formatSearchResultsSummary(total, page, totalPages) {
   return `全${total}件・${page} / ${totalPages}ページ`;
+}
+
+function hasSummaryValue(value) {
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === "string") return value.trim() !== "";
+  return value !== null && value !== undefined && value !== false;
+}
+
+function getOptionLabels(value, options) {
+  const values = Array.isArray(value) ? value : hasSummaryValue(value) ? [value] : [];
+
+  return values
+    .map((item) => {
+      const itemValue = typeof item === "object" && item !== null ? item.value : item;
+      const itemLabel = typeof item === "object" && item !== null ? item.label : "";
+      const option = options.find(({ value: optionValue }) => (
+        String(optionValue) === String(itemValue)
+      ));
+      return option?.label || itemLabel || String(itemValue ?? "");
+    })
+    .filter(Boolean)
+    .join("、");
+}
+
+function formatRange(minimum, maximum) {
+  const hasMinimum = hasSummaryValue(minimum);
+  const hasMaximum = hasSummaryValue(maximum);
+
+  if (hasMinimum && hasMaximum) return `${minimum}〜${maximum}`;
+  if (hasMinimum) return `${minimum}以上`;
+  if (hasMaximum) return `${maximum}以下`;
+  return "";
+}
+
+const DECK_RANGE_TYPE_LABELS = {
+  tensaku: "添削杯",
+  classic: "クラシック",
+  rising: "ライジング",
+};
+
+function formatDeckRangeDate(value) {
+  if (!hasSummaryValue(value)) return "";
+
+  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return String(value);
+
+  const [, year, month, day] = match;
+  return `${year}年${Number(month)}月${Number(day)}日まで`;
+}
+
+// URLに保存された検索条件を、結果画面で読み直せる日本語の要約へ変換する。
+export function buildSearchCriteriaSummary(params = {}) {
+  const summary = [];
+  const add = (key, label, value) => {
+    if (!hasSummaryValue(value)) return;
+    summary.push({ key, label, value: String(value) });
+  };
+  const addOptions = (key, label, options) => {
+    add(key, label, getOptionLabels(params[key], options));
+  };
+  const addRange = (key, label, minimumKey, maximumKey) => {
+    add(key, label, formatRange(params[minimumKey], params[maximumKey]));
+  };
+
+  if (hasSummaryValue(params.name)) {
+    add(
+      "name",
+      "カード名",
+      params.name_forward ? `${params.name}（前方一致）` : params.name
+    );
+  } else if (params.name_forward) {
+    add("name_forward", "カード名の一致", "前方一致");
+  }
+
+  addOptions("cardType", "カードタイプ", CARD_TYPE_OPTIONS);
+  addOptions("colorInclude", "含む色", COLOR_INCLUDE_OPTIONS);
+  addOptions("colorExclude", "除外する色", COLOR_EXCLUDE_OPTIONS);
+  if (params.colorMulti === "not") add("colorMulti", "多色", "除く");
+
+  addRange("spCost", "指定国力", "spCostMin", "spCostMax");
+  addRange("totalCost", "合計国力", "totalCostMin", "totalCostMax");
+  addRange("resourceCost", "資源コスト", "resourceCostMin", "resourceCostMax");
+  if (params.includeUndecided) add("includeUndecided", "国力", "Xも含む");
+
+  add("text", "カードテキスト", params.text);
+  addRange("fight", "格闘", "fightMin", "fightMax");
+  addRange("shoot", "射撃", "shootMin", "shootMax");
+  addRange("defense", "防御", "defenseMin", "defenseMax");
+  if (params.includeAltStats === false) {
+    add("includeAltStats", "戦闘修正", "変形状態を含めない");
+  }
+
+  add("terrain", "地形適正", Array.isArray(params.terrain) ? params.terrain.join("、") : params.terrain);
+  addOptions("unitFeature", "UNIT特徴", UNIT_FEATURE_OPTIONS);
+  addOptions("unitFeatureExtra", "UNIT追加特徴", UNIT_EXTRA_OPTIONS);
+  addOptions("charFeature", "CHARACTER特徴", CHAR_FEATURE_OPTIONS);
+  addOptions("charFeatureExtra", "CHARACTER追加特徴", CHARACTER_EXTRA_OPTIONS);
+  addOptions("otherFeature", "その他の特徴", OTHER_FEATURE_OPTIONS);
+  add("traitText", "所属・系統", params.traitText);
+  if (params.traits_logic === "or") add("traits_logic", "特徴の一致", "いずれかを含む");
+  add("exclusivePilotText", "専用", params.exclusivePilotText);
+
+  if (hasSummaryValue(params.formatName)) {
+    // 現行URLではフォーマット名が権威値。旧URL用の内部値と重複表示しない。
+    add("formatName", "構築範囲", params.formatName);
+  } else {
+    if (hasSummaryValue(params.deckRangeType) && params.deckRangeType !== "none") {
+      add(
+        "deckRangeType",
+        "構築範囲",
+        DECK_RANGE_TYPE_LABELS[params.deckRangeType] || "日付による指定"
+      );
+    }
+    add("deckRangeDetail", "収録日の上限", formatDeckRangeDate(params.deckRangeDetail));
+  }
+  if (params.exclude === "banned") add("exclude", "禁止制限", "禁止カードを除く");
+  if (params.exclude === "restricted") add("exclude", "禁止制限", "制限カードを除く");
+
+  addOptions("setIncluded", "収録弾", SET_INCLUDED_OPTIONS);
+  addOptions("setFeatureExtraBB", "BB・EB", SET_EXTRA_OPTIONS_BB);
+  addOptions("setFeatureExtraST", "スターター", SET_EXTRA_OPTIONS_ST);
+  addOptions("setFeatureExtraDB", "特殊ブースター", SET_EXTRA_OPTIONS_DB);
+  addOptions("setFeatureExtraEX", "その他の収録弾", SET_EXTRA_OPTIONS_EX);
+
+  return summary;
 }
 
 export function getCardFormatStatus(card, regulation) {

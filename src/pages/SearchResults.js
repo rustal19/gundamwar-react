@@ -7,6 +7,7 @@ import { ASYNC_STATUS, useAsyncResource } from "../hooks/useAsyncResource";
 import { buildPathWithForcedMobileLayout } from "../utils/deviceLayout";
 import {
   API_SEARCH_URL,
+  buildSearchCriteriaSummary,
   formatSearchResultsSummary,
   getCardFormatStatus,
   getFormatSetCodes,
@@ -49,6 +50,14 @@ const SearchResults = ({ compact = false }) => {
     const formatName = parsedSearchParams.formatName;
     return FORMAT_PRESETS.find(({ name }) => name === formatName) || null;
   }, [parsedSearchParams]);
+  const appliedCriteria = useMemo(
+    () => buildSearchCriteriaSummary(parsedSearchParams),
+    [parsedSearchParams]
+  );
+  const editSearchTarget = {
+    pathname: "/search",
+    search: location.search,
+  };
 
   useEffect(() => {
     const apiSearchParams = { ...parsedSearchParams };
@@ -263,12 +272,6 @@ const SearchResults = ({ compact = false }) => {
           <div className="search-results-toolbar-actions">
             {viewToggle}
             <Link
-              className="results-link-button"
-              to={buildPathWithForcedMobileLayout("/search", location.search)}
-            >
-              検索に戻る
-            </Link>
-            <Link
               className="results-link-button primary"
               to={buildPathWithForcedMobileLayout("/deck", location.search)}
             >
@@ -277,6 +280,26 @@ const SearchResults = ({ compact = false }) => {
           </div>
         )}
       </div>
+
+      <section className="search-criteria-panel" aria-labelledby="search-criteria-title">
+        <div className="search-criteria-panel-heading">
+          <h2 id="search-criteria-title">現在の検索条件</h2>
+          <Link
+            className="results-link-button search-criteria-edit-link"
+            to={editSearchTarget}
+            state={{ searchEditing: true }}
+          >
+            検索に戻る
+          </Link>
+        </div>
+        <ul className="search-criteria-list">
+          {appliedCriteria.map(({ key, label, value }) => (
+            <li key={key} className="search-criteria-chip">
+              {label}: {value}
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {hasCompletedSearch ? pagination : null}
 

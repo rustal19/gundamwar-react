@@ -36,11 +36,14 @@ const AppContent = () => {
   const isNarrowSidebarRoute = location.pathname === "/search" || location.pathname === "/deck";
   const { isCompactDesktop, isCompactLayout, isMobileOs, isIos, isAndroid } =
     useLayoutTier(location.search);
-  // /search はフォームと結果を排他表示する(本番同様)。検索条件があれば結果、
-  // なければフォーム。モバイルは従来どおりフォームを常時表示(縦積み)。
+  // /search はフォームと結果を排他表示する。条件編集中はURLのクエリを保ったまま
+  // フォームへ戻し、検索後は画面幅にかかわらず結果を先に表示する。
   const isSearchActive =
     location.pathname === "/search" &&
     hasSearchCriteria(parseSearchParams(location.search));
+  const isSearchEditing = location.state?.searchEditing === true;
+  const showSearchForm =
+    location.pathname === "/search" && (!isSearchActive || isSearchEditing);
 
   if (isDisplayRoute) {
     return (
@@ -73,12 +76,15 @@ const AppContent = () => {
         {isCompactLayout ? <MobileAppHeader /> : <Sidebar collapsed={isNarrowSidebarRoute} />}
         <main className="app-main">
           <NicknameGate />
-          {location.pathname === "/search" && (isCompactLayout || !isSearchActive) ? (
+          {showSearchForm ? (
             <SearchForm compact={isCompactLayout} />
           ) : null}
           <Routes>
             <Route path="/" element={<PortalHome compact={isCompactLayout} />} />
-            <Route path="/search" element={<SearchResults compact={isCompactLayout} />} />
+            <Route
+              path="/search"
+              element={showSearchForm ? null : <SearchResults compact={isCompactLayout} />}
+            />
             <Route path="/deck" element={<DeckBuilder compact={isCompactLayout} />} />
             <Route path="/decks" element={<PublicDecks compact={isCompactLayout} />} />
             <Route path="/decks/:id" element={<PublicDeckDetail compact={isCompactLayout} />} />
