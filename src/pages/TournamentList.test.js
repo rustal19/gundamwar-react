@@ -189,8 +189,11 @@ test("自分の参加大会が0件なら既存の空状態文言を表示する"
   renderList("/tournaments?view=mine");
 
   await waitFor(() => expect(fetchMyTournaments).toHaveBeenCalledTimes(1));
-  await waitFor(() => expect(screen.queryByText("読み込み中...")).not.toBeInTheDocument());
-  expect(screen.getByText("表示できる大会がありません。")).toBeInTheDocument();
+  await waitFor(() =>
+    expect(screen.queryByText("大会一覧を読み込み中...")).not.toBeInTheDocument()
+  );
+  expect(screen.getByText("参加中または運営中の大会はありません。")).toBeInTheDocument();
+  expect(screen.queryByText(/1 \/ 1/)).not.toBeInTheDocument();
 });
 
 test("自分の大会の取得に失敗しても全大会のカードを残さない", async () => {
@@ -211,8 +214,37 @@ test("自分の大会の取得に失敗しても全大会のカードを残さ�
     })
   );
 
-  expect(await screen.findByText("自分の大会を取得できませんでした。")).toBeInTheDocument();
+  expect(await screen.findByText("自分の大会を読み込めませんでした。")).toBeInTheDocument();
   expect(screen.queryByText("全大会にだけある大会")).not.toBeInTheDocument();
+  expect(screen.queryByText("参加中または運営中の大会はありません。")).not.toBeInTheDocument();
+});
+
+test("大会一覧の取得失敗を空状態と区別し、画面内から再試行できる", async () => {
+  fetchTournaments
+    .mockRejectedValueOnce(new Error("Failed to fetch"))
+    .mockResolvedValueOnce({ items: [], total: 0, page: 1, pageSize: 10 });
+
+  renderList();
+
+  expect(await screen.findByText("大会一覧を読み込めませんでした。")).toBeInTheDocument();
+  expect(screen.queryByText("表示できる大会はありません。")).not.toBeInTheDocument();
+  expect(screen.queryByText(/1 \/ 1/)).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "再試行" }));
+
+  expect(await screen.findByText("表示できる大会はありません。")).toBeInTheDocument();
+  expect(screen.queryByText("大会一覧を読み込めませんでした。")).not.toBeInTheDocument();
+  expect(fetchTournaments).toHaveBeenCalledTimes(2);
+});
+
+test("読み込み中は空状態やページャを表示しない", () => {
+  fetchTournaments.mockReturnValue(new Promise(() => {}));
+
+  renderList();
+
+  expect(screen.getByText("大会一覧を読み込み中...")).toBeInTheDocument();
+  expect(screen.queryByText("表示できる大会はありません。")).not.toBeInTheDocument();
+  expect(screen.queryByText(/1 \/ 1/)).not.toBeInTheDocument();
 });
 
 test("未ログインでは自分の大会を選べず、直リンクではログインを案内する", async () => {

@@ -1,7 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import AsyncState from "../components/AsyncState";
 import TournamentCard from "../components/TournamentCard";
 import { useAuth } from "../context/AuthContext";
+import { ASYNC_STATUS, useAsyncResource } from "../hooks/useAsyncResource";
 import { fetchMyTournaments, fetchTournaments } from "../services/tournaments";
 import { TOURNAMENT_STATUS_OPTIONS as STATUS_OPTIONS } from "../data/statusLabels";
 import "./Tournaments.css";
@@ -9,6 +11,12 @@ import "./Tournaments.css";
 const VIEW_ALL = "all";
 const VIEW_MINE = "mine";
 const PAGE_SIZE = 10;
+const EMPTY_PAYLOAD = {
+  items: [],
+  total: 0,
+  page: 1,
+  pageSize: PAGE_SIZE,
+};
 
 function normalizeMyTournaments(payload, { status, page }) {
   const items = (payload?.items || [])
@@ -35,64 +43,75 @@ export default function TournamentList({ compact = false }) {
   const canViewMyTournaments = Boolean(isAuthenticated && user?.id);
   const showLoginPrompt =
     view === VIEW_MINE && isReady !== false && !canViewMyTournaments;
-  const [payload, setPayload] = useState({
-    items: [],
-    total: 0,
-    page: 1,
-    pageSize: PAGE_SIZE,
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const requestIdRef = useRef(0);
+  const {
+    status: listStatus,
+    data: payload,
+    error: listError,
+    start: startList,
+    succeed: succeedList,
+    fail: failList,
+    reset: resetList,
+  } = useAsyncResource(EMPTY_PAYLOAD, (nextPayload) => !nextPayload?.items?.length);
+
+  const loadTournaments = useCallback(async () => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    startList();
+    try {
+      const nextPayload =
+        view === VIEW_MINE
+          ? await fetchMyTournaments({ authMode, user }).then((result) =>
+              normalizeMyTournaments(result, { status, page })
+            )
+          : await fetchTournaments({ status, page, authMode, user });
+      if (requestIdRef.current === requestId) succeedList(nextPayload);
+    } catch (_loadError) {
+      if (requestIdRef.current === requestId) {
+        failList(
+          view === VIEW_MINE
+            ? "自分の大会を読み込めませんでした。"
+            : "大会一覧を読み込めませんでした。"
+        );
+      }
+    }
+  }, [authMode, failList, page, startList, status, succeedList, user, view]);
 
   useEffect(() => {
-    let cancelled = false;
-
     if (view === VIEW_MINE && isReady === false) {
-      setIsLoading(true);
-      setError("");
+      requestIdRef.current += 1;
+      startList();
       return () => {
-        cancelled = true;
+        requestIdRef.current += 1;
       };
     }
 
     if (view === VIEW_MINE && !canViewMyTournaments) {
-      setPayload({ items: [], total: 0, page: 1, pageSize: PAGE_SIZE });
-      setIsLoading(false);
-      setError("");
+      requestIdRef.current += 1;
+      resetList();
       return () => {
-        cancelled = true;
+        requestIdRef.current += 1;
       };
     }
 
-    setPayload({ items: [], total: 0, page, pageSize: PAGE_SIZE });
-    setIsLoading(true);
-    setError("");
-    const request =
-      view === VIEW_MINE
-        ? fetchMyTournaments({ authMode, user }).then((nextPayload) =>
-            normalizeMyTournaments(nextPayload, { status, page })
-          )
-        : fetchTournaments({ status, page, authMode, user });
-
-    request
-      .then((nextPayload) => {
-        if (!cancelled) setPayload(nextPayload);
-      })
-      .catch((loadError) => {
-        if (!cancelled) setError(loadError.message);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
+    loadTournaments();
     return () => {
-      cancelled = true;
+      requestIdRef.current += 1;
     };
-  }, [authMode, canViewMyTournaments, isReady, page, status, user, view]);
+  }, [canViewMyTournaments, isReady, loadTournaments, resetList, startList, view]);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil((payload.total || 0) / (payload.pageSize || 10))),
     [payload.pageSize, payload.total]
   );
+  const emptyMessage =
+    view === VIEW_MINE
+      ? status
+        ? "選択したステータスに一致する自分の大会はありません。"
+        : "参加中または運営中の大会はありません。"
+      : status
+        ? "選択したステータスに一致する大会はありません。"
+        : "表示できる大会はありません。";
 
   const setFilter = (nextStatus) => {
     const next = new URLSearchParams(searchParams);
@@ -171,31 +190,43 @@ export default function TournamentList({ compact = false }) {
           <Link to="/profile">ログイン</Link>
         </div>
       ) : (
-        <>
-          {error ? <div className="tournament-alert">{error}</div> : null}
-          {isLoading ? <div className="tournament-muted">読み込み中...</div> : null}
+        <AsyncState
+          status={listStatus}
+          error={listError}
+          idleMessage="大会一覧はまだ読み込まれていません。"
+          loadingMessage="大会一覧を読み込み中..."
+          emptyMessage={emptyMessage}
+          errorMessage={
+            view === VIEW_MINE
+              ? "自分の大会を読み込めませんでした。"
+              : "大会一覧を読み込めませんでした。"
+          }
+          onRetry={loadTournaments}
+          className={listStatus === ASYNC_STATUS.ERROR ? "tournament-alert" : "tournament-empty"}
+          retryButtonClassName="tournament-secondary-button"
+        >
+          <>
+            <div className="tournament-list">
+              {payload.items.map((tournament) => (
+                <TournamentCard key={tournament.id} tournament={tournament} />
+              ))}
+            </div>
 
-          <div className="tournament-list">
-            {payload.items.length === 0 && !isLoading ? (
-              <div className="tournament-empty">表示できる大会がありません。</div>
+            {totalPages > 1 ? (
+              <div className="tournament-pagination">
+                <button type="button" onClick={() => setPage(page - 1)} disabled={page <= 1}>
+                  前へ
+                </button>
+                <span>
+                  {page} / {totalPages}
+                </span>
+                <button type="button" onClick={() => setPage(page + 1)} disabled={page >= totalPages}>
+                  次へ
+                </button>
+              </div>
             ) : null}
-            {payload.items.map((tournament) => (
-              <TournamentCard key={tournament.id} tournament={tournament} />
-            ))}
-          </div>
-
-          <div className="tournament-pagination">
-            <button type="button" onClick={() => setPage(page - 1)} disabled={page <= 1}>
-              前へ
-            </button>
-            <span>
-              {page} / {totalPages}
-            </span>
-            <button type="button" onClick={() => setPage(page + 1)} disabled={page >= totalPages}>
-              次へ
-            </button>
-          </div>
-        </>
+          </>
+        </AsyncState>
       )}
     </main>
   );

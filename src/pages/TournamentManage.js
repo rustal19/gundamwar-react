@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import AsyncState from "../components/AsyncState";
 import Bracket from "../components/Bracket";
 import CardHoverPreview from "../components/CardHoverPreview";
 import RegulationCardInput, {
@@ -15,6 +16,7 @@ import RegulationSetInput, {
 import RoundTabs from "../components/RoundTabs";
 import { useAuth } from "../context/AuthContext";
 import { useDeckPreview } from "../hooks/useDeckPreview";
+import { ASYNC_STATUS, useAsyncResource } from "../hooks/useAsyncResource";
 import {
   addTournamentCoOrganizer,
   approveEntry,
@@ -119,6 +121,26 @@ const BO3_PRESETS = [
   [1, 2],
   [0, 2],
 ];
+
+function TournamentAsyncState({ status, ...props }) {
+  return (
+    <AsyncState
+      status={status}
+      className={status === ASYNC_STATUS.ERROR ? "tournament-alert" : "tournament-empty"}
+      retryButtonClassName="tournament-secondary-button"
+      {...props}
+    />
+  );
+}
+
+function readyOrEmptyStatus(status) {
+  return status === ASYNC_STATUS.EMPTY ? ASYNC_STATUS.SUCCESS : status;
+}
+
+function localizedActionError(error, fallback = "操作に失敗しました。もう一度お試しください。") {
+  const message = typeof error?.message === "string" ? error.message.trim() : "";
+  return /[\u3040-\u30ff\u3400-\u9fff]/.test(message) ? message : fallback;
+}
 
 function toDateTimeLocal(value) {
   if (!value) return "";
@@ -812,8 +834,9 @@ function RoundManagePanel({
           {selectedRound.stage === "top_cut" ? (
             <Bracket rounds={rounds} entries={entries} showResults />
           ) : null}
-          <div className="tournament-table-wrap">
-            <table className="tournament-table manage-table">
+          {(selectedRound.matches || []).length > 0 ? (
+            <div className="tournament-table-wrap">
+              <table className="tournament-table manage-table">
               <thead>
                 <tr>
                   <th className="num">卓</th>
@@ -948,8 +971,11 @@ function RoundManagePanel({
                   );
                 })}
               </tbody>
-            </table>
-          </div>
+              </table>
+            </div>
+          ) : (
+            <div className="tournament-empty">このラウンドには対戦がありません。</div>
+          )}
           <details className="pairing-editor">
             <summary>ペアリング編集</summary>
             <div className="pairing-editor-list">
@@ -1075,6 +1101,8 @@ function RoundManagePanel({
 
 function ParticipantsPanel({
   bans = [],
+  bansStatus,
+  bansError,
   compact,
   entries,
   formatParticipantName,
@@ -1087,9 +1115,13 @@ function ParticipantsPanel({
   onKick,
   onPromoteWaitlist,
   onReject,
+  onRetryBans,
+  onRetryRounds,
   onStatusChange,
   onUnban,
   rounds,
+  roundsStatus,
+  roundsError,
 }) {
   const [missingOnly, setMissingOnly] = useState(false);
   const [manualName, setManualName] = useState("");
@@ -1127,6 +1159,8 @@ function ParticipantsPanel({
   });
   const nextRound = Math.max(1, (rounds || []).length + 1);
   const decklistChangesBlocked = form.status === "completed";
+  const bansReady = [ASYNC_STATUS.EMPTY, ASYNC_STATUS.SUCCESS].includes(bansStatus);
+  const roundsReady = [ASYNC_STATUS.EMPTY, ASYNC_STATUS.SUCCESS].includes(roundsStatus);
 
   const copyAllDecks = async () => {
     setExportMessage("");
@@ -1177,6 +1211,16 @@ function ParticipantsPanel({
       </div>
       {exportMessage ? <div className="tournament-success">{exportMessage}</div> : null}
       {exportError ? <div className="tournament-alert">{exportError}</div> : null}
+      {!roundsReady ? (
+        <TournamentAsyncState
+          status={roundsStatus}
+          error={roundsError}
+          idleMessage="ラウンド情報はまだ読み込まれていません。"
+          loadingMessage="ラウンド情報を読み込み中..."
+          errorMessage="参加ラウンドの情報を読み込めませんでした。"
+          onRetry={onRetryRounds}
+        />
+      ) : null}
       {form.capacity !== "" && form.capacity != null ? (
         <div className="pending-entry-section">
           <div className="tournament-round-header">
@@ -1217,7 +1261,7 @@ function ParticipantsPanel({
                 </p>
               </div>
               <div className="tournament-row-actions">
-                <button type="button" onClick={() => onApprove(entry.id)} disabled={isSubmitting}>
+                <button type="button" onClick={() => onApprove(entry.id)} disabled={isSubmitting || !roundsReady}>
                   許可
                 </button>
                 <button type="button" onClick={() => onReject(entry.id)} disabled={isSubmitting}>
@@ -1230,31 +1274,39 @@ function ParticipantsPanel({
       ) : null}
       <div className="pending-entry-section tournament-ban-section">
         <h3>再エントリー禁止中</h3>
-        {bans.length ? (
-          bans.map((record) => (
-            <div key={record.user.id} className="pending-entry-row">
-              <div>
-                <strong>{record.user.name || "参加者"}</strong>
-                <p>
-                  ユーザーID: {record.user.id}
-                  {record.bannedAt ? ` / 禁止日時: ${formatAuditDateTime(record.bannedAt)}` : ""}
-                </p>
+        <TournamentAsyncState
+          status={bansStatus}
+          error={bansError}
+          idleMessage="再エントリー禁止情報はまだ読み込まれていません。"
+          loadingMessage="再エントリー禁止情報を読み込み中..."
+          emptyMessage="再エントリー禁止中のユーザーはいません。"
+          errorMessage="再エントリー禁止情報を読み込めませんでした。"
+          onRetry={onRetryBans}
+        >
+          <>
+            {bans.map((record) => (
+              <div key={record.user.id} className="pending-entry-row">
+                <div>
+                  <strong>{record.user.name || "参加者"}</strong>
+                  <p>
+                    ユーザーID: {record.user.id}
+                    {record.bannedAt ? ` / 禁止日時: ${formatAuditDateTime(record.bannedAt)}` : ""}
+                  </p>
+                </div>
+                <div className="tournament-row-actions">
+                  <button
+                    type="button"
+                    onClick={() => onUnban(record.user.id)}
+                    disabled={isSubmitting}
+                    aria-label={`${record.user.name || "参加者"} の再エントリー禁止を解除`}
+                  >
+                    禁止を解除
+                  </button>
+                </div>
               </div>
-              <div className="tournament-row-actions">
-                <button
-                  type="button"
-                  onClick={() => onUnban(record.user.id)}
-                  disabled={isSubmitting}
-                  aria-label={`${record.user.name || "参加者"} の再エントリー禁止を解除`}
-                >
-                  禁止を解除
-                </button>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="tournament-muted">再エントリー禁止中のユーザーはいません。</p>
-        )}
+            ))}
+          </>
+        </TournamentAsyncState>
       </div>
       <div className="manual-entry-form">
         <h3>+ 参加者を追加</h3>
@@ -1284,7 +1336,9 @@ function ParticipantsPanel({
         </button>
       </div>
       {entries.length === 0 ? (
-        <div className="tournament-empty">参加登録されていません</div>
+        <div className="tournament-empty">参加者はまだ登録されていません。</div>
+      ) : visibleEntries.length === 0 ? (
+        <div className="tournament-empty">デッキリスト未提出の参加者はいません。</div>
       ) : (
         <div className="tournament-table-wrap">
           <table className="tournament-table tournament-participants-table">
@@ -1397,8 +1451,14 @@ function ParticipantsPanel({
                     <button
                       type="button"
                       onClick={() => onStatusChange(entry.id, "checked_in")}
-                      disabled={isSubmitting || isBanned}
-                      title={isBanned ? "再エントリー禁止を解除してからチェックインしてください。" : undefined}
+                      disabled={isSubmitting || !bansReady || isBanned}
+                      title={
+                        !bansReady
+                          ? "再エントリー禁止情報の読み込み後に操作できます。"
+                          : isBanned
+                            ? "再エントリー禁止を解除してからチェックインしてください。"
+                            : undefined
+                      }
                     >
                       チェックイン
                     </button>
@@ -1476,10 +1536,16 @@ function CoOrganizersPanel({
   tournament,
 }) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
-  const [searchError, setSearchError] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const searchRequestIdRef = useRef(0);
+  const {
+    status: searchStatus,
+    data: results,
+    error: searchError,
+    start: startSearch,
+    succeed: succeedSearch,
+    fail: failSearch,
+    reset: resetSearch,
+  } = useAsyncResource([]);
   const coOrganizers = Array.isArray(tournament?.coOrganizers)
     ? tournament.coOrganizers
     : [];
@@ -1492,26 +1558,38 @@ function CoOrganizersPanel({
     (candidate) => !operatorIds.has(String(candidate.id))
   );
 
-  const searchUsers = async (event) => {
-    event.preventDefault();
+  const runUserSearch = async () => {
     const normalizedQuery = query.trim();
     if (!normalizedQuery) return;
-    setIsSearching(true);
-    setHasSearched(false);
-    setSearchError("");
+    const requestId = searchRequestIdRef.current + 1;
+    searchRequestIdRef.current = requestId;
+    startSearch();
     try {
       const payload = await fetchUsers({ query: normalizedQuery, authMode });
-      setResults(
+      if (searchRequestIdRef.current !== requestId) return;
+      succeedSearch(
         (payload.items || []).filter((candidate) => !operatorIds.has(String(candidate.id)))
       );
-      setHasSearched(true);
-    } catch (error) {
-      setResults([]);
-      setSearchError(error.message || "ユーザーを検索できませんでした。");
-    } finally {
-      setIsSearching(false);
+    } catch (_error) {
+      if (searchRequestIdRef.current !== requestId) return;
+      failSearch("ユーザーを検索できませんでした。");
     }
   };
+  const searchUsers = (event) => {
+    event.preventDefault();
+    runUserSearch();
+  };
+  const displayedSearchStatus =
+    searchStatus === ASYNC_STATUS.SUCCESS && addableResults.length === 0
+      ? ASYNC_STATUS.EMPTY
+      : searchStatus;
+
+  useEffect(
+    () => () => {
+      searchRequestIdRef.current += 1;
+    },
+    []
+  );
 
   return (
     <section className="tournament-tab-panel tournament-co-organizers" aria-labelledby="co-organizers-title">
@@ -1566,37 +1644,45 @@ function CoOrganizersPanel({
               value={query}
               onChange={(event) => {
                 setQuery(event.target.value);
-                setResults([]);
-                setHasSearched(false);
+                searchRequestIdRef.current += 1;
+                resetSearch();
               }}
             />
-            <button type="submit" disabled={isSearching || !query.trim()}>
-              {isSearching ? "検索中..." : "検索"}
+            <button type="submit" disabled={searchStatus === ASYNC_STATUS.LOADING || !query.trim()}>
+              {searchStatus === ASYNC_STATUS.LOADING ? "検索中..." : "検索"}
             </button>
           </form>
-          {searchError ? <div className="tournament-alert">{searchError}</div> : null}
-          {addableResults.map((candidate) => {
-            const label = candidate.nickname || candidate.id;
-            return (
-              <div key={candidate.id} className="pending-entry-row">
-                <div>
-                  <strong>{label}</strong>
-                  <p>ユーザーID: {candidate.id}</p>
-                </div>
-                <button
-                  type="button"
-                  disabled={isSubmitting}
-                  aria-label={`${label} を共同運営者に追加`}
-                  onClick={() => onAdd(candidate.id)}
-                >
-                  追加
-                </button>
-              </div>
-            );
-          })}
-          {!isSearching && hasSearched && addableResults.length === 0 && !searchError ? (
-            <p className="tournament-muted">追加できるユーザーが見つかりません。</p>
-          ) : null}
+          <TournamentAsyncState
+            status={displayedSearchStatus}
+            error={searchError}
+            idleMessage="共同運営者の検索はまだ実行されていません。"
+            loadingMessage="ユーザーを検索中..."
+            emptyMessage="追加できるユーザーが見つかりません。"
+            errorMessage="ユーザーを検索できませんでした。"
+            onRetry={runUserSearch}
+          >
+            <>
+              {addableResults.map((candidate) => {
+                const label = candidate.nickname || candidate.id;
+                return (
+                  <div key={candidate.id} className="pending-entry-row">
+                    <div>
+                      <strong>{label}</strong>
+                      <p>ユーザーID: {candidate.id}</p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      aria-label={`${label} を共同運営者に追加`}
+                      onClick={() => onAdd(candidate.id)}
+                    >
+                      追加
+                    </button>
+                  </div>
+                );
+              })}
+            </>
+          </TournamentAsyncState>
         </div>
       ) : (
         <p className="tournament-muted">共同運営者の追加・削除は主催者または管理者のみ行えます。</p>
@@ -1610,6 +1696,7 @@ function InfoPanel({
   form,
   formatParticipantName,
   hasRounds,
+  roundSettingsLockMessage,
   isNew,
   isSubmitting,
   onSave,
@@ -1736,14 +1823,14 @@ function InfoPanel({
       <section className="manage-form-section">
         <h2>進行方式</h2>
         <div className="tournament-form-grid">
-          <label title={hasRounds ? "ラウンド生成後は変更できません" : ""}>
+          <label title={roundSettingsLockMessage}>
             形式 {hasRounds ? "🔒" : ""}
             <select value={form.format} onChange={(event) => setField("format", event.target.value)} disabled={hasRounds}>
               <option value="swiss">スイス</option>
               <option value="single_elim">シングルエリミネーション</option>
             </select>
           </label>
-          <label title={hasRounds ? "ラウンド生成後は変更できません" : ""}>
+          <label title={roundSettingsLockMessage}>
             スイス回戦数 {hasRounds ? "🔒" : ""}
             <input
               type="number"
@@ -1756,7 +1843,7 @@ function InfoPanel({
             />
             <span className="tournament-muted">未入力の場合、参加人数から初戦生成時に確定します。</span>
           </label>
-          <label title={hasRounds ? "ラウンド生成後は変更できません" : ""}>
+          <label title={roundSettingsLockMessage}>
             終了条件 {hasRounds ? "🔒" : ""}
             <select
               aria-label="終了条件"
@@ -1768,7 +1855,7 @@ function InfoPanel({
               <option value={SWISS_END_CONDITION_UNDEFEATED}>全勝者が1人以下になったら終了</option>
             </select>
           </label>
-          <label title={hasRounds ? "ラウンド生成後は変更できません" : ""}>
+          <label title={roundSettingsLockMessage}>
             トップカット {hasRounds ? "🔒" : ""}
             <input
               type="number"
@@ -1935,8 +2022,9 @@ function StandingsPanel({
             selectedRoundNumber={selectedRoundNumber}
             onChange={setSelectedRoundNumber}
           />
-          <div className="tournament-table-wrap">
-            <table className="tournament-table">
+          {swissStandings.length > 0 ? (
+            <div className="tournament-table-wrap">
+              <table className="tournament-table">
               <thead>
                 <tr>
                   <th className="num">順位</th>
@@ -1966,8 +2054,11 @@ function StandingsPanel({
                   );
                 })}
               </tbody>
-            </table>
-          </div>
+              </table>
+            </div>
+          ) : (
+            <div className="tournament-empty">スイス順位データはまだありません。</div>
+          )}
         </div>
       ) : null}
     </section>
@@ -1978,64 +2069,242 @@ export default function TournamentManage({ compact = false }) {
   const { id } = useParams();
   const isNew = !id;
   const navigate = useNavigate();
-  const { authMode, user } = useAuth();
-  const [tournament, setTournament] = useState(null);
+  const { authMode, isReady, user } = useAuth();
+  const requestContextKey = [
+    id || "new",
+    authMode || "",
+    user?.id || "",
+    user?.role || "",
+    isReady === false ? "pending" : "ready",
+  ].join("::");
+  const currentRequestContextRef = useRef(requestContextKey);
+  currentRequestContextRef.current = requestContextKey;
+  const isCurrentRequestContext = useCallback(
+    (contextKey) => currentRequestContextRef.current === contextKey,
+    []
+  );
   const [form, setForm] = useState(DEFAULT_FORM);
-  const [entries, setEntries] = useState([]);
-  const [bans, setBans] = useState([]);
-  const [rounds, setRounds] = useState([]);
-  const [standings, setStandings] = useState([]);
   const [activeTab, setActiveTab] = useState("rounds");
   const [selectedRoundNumber, setSelectedRoundNumber] = useState(null);
   const [selectedStandingRoundNumber, setSelectedStandingRoundNumber] = useState(null);
-  const [isLoading, setIsLoading] = useState(!isNew);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isAccessDenied, setIsAccessDenied] = useState(false);
+  const [tournamentContextKey, setTournamentContextKey] = useState("");
   const [regulationViolations, setRegulationViolations] = useState([]);
   const [roundRollbackConfirmation, setRoundRollbackConfirmation] = useState(null);
+  const requestIdRef = useRef({ tournament: 0, entries: 0, bans: 0, rounds: 0, standings: 0 });
+  const {
+    status: tournamentStatus,
+    data: tournament,
+    error: tournamentError,
+    start: startTournament,
+    succeed: succeedTournament,
+    fail: failTournament,
+  } = useAsyncResource(null);
+  const {
+    status: tournamentRefreshStatus,
+    error: tournamentRefreshError,
+    start: startTournamentRefresh,
+    fail: failTournamentRefresh,
+    reset: resetTournamentRefresh,
+  } = useAsyncResource(null);
+  const {
+    status: entriesStatus,
+    data: entries,
+    error: entriesError,
+    start: startEntries,
+    succeed: succeedEntries,
+    fail: failEntries,
+  } = useAsyncResource([]);
+  const {
+    status: bansStatus,
+    data: bans,
+    error: bansError,
+    start: startBans,
+    succeed: succeedBans,
+    fail: failBans,
+  } = useAsyncResource([]);
+  const {
+    status: roundsStatus,
+    data: rounds,
+    error: roundsError,
+    start: startRounds,
+    succeed: succeedRounds,
+    fail: failRounds,
+  } = useAsyncResource([]);
+  const {
+    status: standingsStatus,
+    data: standings,
+    error: standingsError,
+    start: startStandings,
+    succeed: succeedStandings,
+    fail: failStandings,
+  } = useAsyncResource([]);
   const formatParticipantName = useMemo(
     () => createTournamentParticipantNameFormatter(entries),
     [entries]
   );
   const permissions = useMemo(
-    () => getTournamentPermissions(tournament, user),
-    [tournament, user]
+    () => getTournamentPermissions(isNew ? null : tournament, user),
+    [isNew, tournament, user]
   );
 
   const latestRoundNumber = rounds.length ? rounds[rounds.length - 1].number : null;
   const detailUrl = isNew ? "" : `${window.location.origin}/tournaments/${id}`;
   const displayUrl = isNew ? "" : `/tournaments/${id}/display`;
 
-  const loadAll = useCallback(async () => {
-    if (isNew) return;
-    setIsLoading(true);
-    setBans([]);
-    setError("");
+  const loadTournament = useCallback(async ({ background = false } = {}) => {
+    const contextKey = requestContextKey;
+    if (isNew || !isCurrentRequestContext(contextKey)) return null;
+    const requestId = requestIdRef.current.tournament + 1;
+    requestIdRef.current.tournament = requestId;
+    setTournamentContextKey(contextKey);
+    if (!background) {
+      startTournament();
+      resetTournamentRefresh();
+    }
     setIsAccessDenied(false);
     try {
-      const [nextTournament, entryPayload, banPayload, roundPayload, standingPayload] =
-        await Promise.all([
-          fetchTournament(id, { authMode, user }),
-          fetchEntries(id, { authMode, user }),
-          fetchTournamentBans(id, { authMode, user }),
-          fetchRoundsForManage(id, { authMode, user }),
-          fetchStandings(id, { authMode }),
-        ]);
-      setTournament(nextTournament);
+      const nextTournament = await fetchTournament(id, { authMode, user });
+      if (
+        requestIdRef.current.tournament !== requestId ||
+        !isCurrentRequestContext(contextKey)
+      ) return null;
+      succeedTournament(nextTournament);
+      resetTournamentRefresh();
       setForm((current) => formFromTournament(nextTournament, current.regulation));
-      setEntries(entryPayload.items || []);
-      setBans(banPayload.items || []);
-      const nextRounds = roundPayload.rounds || [];
-      setRounds(nextRounds);
-      setStandings(standingPayload.items || []);
+      return nextTournament;
+    } catch (loadError) {
+      if (
+        requestIdRef.current.tournament !== requestId ||
+        !isCurrentRequestContext(contextKey)
+      ) return null;
+      const accessDenied = loadError?.status === 401 || loadError?.status === 403;
+      if (accessDenied) {
+        setIsAccessDenied(true);
+        failTournament("大会情報を読み込めませんでした。");
+      } else if (background) {
+        failTournamentRefresh(
+          "操作は完了しましたが、最新の大会情報を再読み込みできませんでした。"
+        );
+      } else {
+        failTournament("大会情報を読み込めませんでした。");
+      }
+      return null;
+    }
+  }, [
+    authMode,
+    failTournament,
+    failTournamentRefresh,
+    id,
+    isCurrentRequestContext,
+    isNew,
+    requestContextKey,
+    resetTournamentRefresh,
+    startTournament,
+    succeedTournament,
+    user,
+  ]);
+
+  const retryTournamentRefresh = useCallback(() => {
+    startTournamentRefresh();
+    return loadTournament({ background: true });
+  }, [loadTournament, startTournamentRefresh]);
+
+  const loadEntries = useCallback(async ({ background = false } = {}) => {
+    const contextKey = requestContextKey;
+    if (isNew || !isCurrentRequestContext(contextKey)) return [];
+    const requestId = requestIdRef.current.entries + 1;
+    requestIdRef.current.entries = requestId;
+    if (!background) startEntries();
+    try {
+      const payload = await fetchEntries(id, { authMode, user });
+      if (
+        requestIdRef.current.entries !== requestId ||
+        !isCurrentRequestContext(contextKey)
+      ) return null;
+      const nextEntries = payload.items || [];
+      succeedEntries(nextEntries);
+      return nextEntries;
+    } catch (_loadError) {
+      if (
+        requestIdRef.current.entries !== requestId ||
+        !isCurrentRequestContext(contextKey)
+      ) return null;
+      failEntries("参加者情報を読み込めませんでした。");
+      return null;
+    }
+  }, [
+    authMode,
+    failEntries,
+    id,
+    isCurrentRequestContext,
+    isNew,
+    requestContextKey,
+    startEntries,
+    succeedEntries,
+    user,
+  ]);
+
+  const loadBans = useCallback(async ({ background = false } = {}) => {
+    const contextKey = requestContextKey;
+    if (isNew || !isCurrentRequestContext(contextKey)) return [];
+    const requestId = requestIdRef.current.bans + 1;
+    requestIdRef.current.bans = requestId;
+    if (!background) startBans();
+    try {
+      const payload = await fetchTournamentBans(id, { authMode, user });
+      if (
+        requestIdRef.current.bans !== requestId ||
+        !isCurrentRequestContext(contextKey)
+      ) return null;
+      const nextBans = payload.items || [];
+      succeedBans(nextBans);
+      return nextBans;
+    } catch (_loadError) {
+      if (
+        requestIdRef.current.bans !== requestId ||
+        !isCurrentRequestContext(contextKey)
+      ) return null;
+      failBans("再エントリー禁止情報を読み込めませんでした。");
+      return null;
+    }
+  }, [
+    authMode,
+    failBans,
+    id,
+    isCurrentRequestContext,
+    isNew,
+    requestContextKey,
+    startBans,
+    succeedBans,
+    user,
+  ]);
+
+  const loadRounds = useCallback(async ({ background = false } = {}) => {
+    const contextKey = requestContextKey;
+    if (isNew || !isCurrentRequestContext(contextKey)) return [];
+    const requestId = requestIdRef.current.rounds + 1;
+    requestIdRef.current.rounds = requestId;
+    if (!background) startRounds();
+    try {
+      const payload = await fetchRoundsForManage(id, { authMode, user });
+      if (
+        requestIdRef.current.rounds !== requestId ||
+        !isCurrentRequestContext(contextKey)
+      ) return null;
+      const nextRounds = payload.rounds || [];
+      succeedRounds(nextRounds);
       if (nextRounds.length) {
         setSelectedRoundNumber((current) =>
           nextRounds.some((round) => Number(round.number) === Number(current))
             ? current
             : nextRounds[nextRounds.length - 1].number
         );
+      } else {
+        setSelectedRoundNumber(null);
       }
       const nextSwissRounds = nextRounds.filter((round) => round.stage !== "top_cut");
       setSelectedStandingRoundNumber((current) =>
@@ -2043,17 +2312,111 @@ export default function TournamentManage({ compact = false }) {
           ? current
           : nextSwissRounds[nextSwissRounds.length - 1]?.number ?? null
       );
-    } catch (loadError) {
-      if (loadError.status === 401 || loadError.status === 403) setIsAccessDenied(true);
-      setError(loadError.message);
-    } finally {
-      setIsLoading(false);
+      return nextRounds;
+    } catch (_loadError) {
+      if (
+        requestIdRef.current.rounds !== requestId ||
+        !isCurrentRequestContext(contextKey)
+      ) return null;
+      failRounds("ラウンド情報を読み込めませんでした。");
+      return null;
     }
-  }, [authMode, id, isNew, user]);
+  }, [
+    authMode,
+    failRounds,
+    id,
+    isCurrentRequestContext,
+    isNew,
+    requestContextKey,
+    startRounds,
+    succeedRounds,
+    user,
+  ]);
+
+  const loadStandings = useCallback(async ({ background = false } = {}) => {
+    const contextKey = requestContextKey;
+    if (isNew || !isCurrentRequestContext(contextKey)) return [];
+    const requestId = requestIdRef.current.standings + 1;
+    requestIdRef.current.standings = requestId;
+    if (!background) startStandings();
+    try {
+      const payload = await fetchStandings(id, { authMode });
+      if (
+        requestIdRef.current.standings !== requestId ||
+        !isCurrentRequestContext(contextKey)
+      ) return null;
+      const nextStandings = payload.items || [];
+      succeedStandings(nextStandings);
+      return nextStandings;
+    } catch (_loadError) {
+      if (
+        requestIdRef.current.standings !== requestId ||
+        !isCurrentRequestContext(contextKey)
+      ) return null;
+      failStandings("順位表を読み込めませんでした。");
+      return null;
+    }
+  }, [
+    authMode,
+    failStandings,
+    id,
+    isCurrentRequestContext,
+    isNew,
+    requestContextKey,
+    startStandings,
+    succeedStandings,
+  ]);
+
+  const loadAll = useCallback(async ({ background = false } = {}) => {
+    if (
+      isNew ||
+      isReady === false ||
+      !isCurrentRequestContext(requestContextKey)
+    ) return;
+    return Promise.all([
+      loadTournament({ background }),
+      loadEntries({ background }),
+      loadBans({ background }),
+      loadRounds({ background }),
+      loadStandings({ background }),
+    ]);
+  }, [
+    isCurrentRequestContext,
+    isNew,
+    isReady,
+    loadBans,
+    loadEntries,
+    loadRounds,
+    loadStandings,
+    loadTournament,
+    requestContextKey,
+  ]);
 
   useEffect(() => {
-    loadAll();
-  }, [loadAll]);
+    setForm(DEFAULT_FORM);
+    setActiveTab("rounds");
+    setSelectedRoundNumber(null);
+    setSelectedStandingRoundNumber(null);
+    setIsSubmitting(false);
+    setMessage("");
+    setError("");
+    setIsAccessDenied(false);
+    setTournamentContextKey(isNew ? requestContextKey : "");
+    setRegulationViolations([]);
+    setRoundRollbackConfirmation(null);
+    resetTournamentRefresh();
+  }, [isNew, requestContextKey, resetTournamentRefresh]);
+
+  useEffect(() => {
+    if (isReady !== false) loadAll();
+    return () => {
+      requestIdRef.current.tournament += 1;
+      requestIdRef.current.entries += 1;
+      requestIdRef.current.bans += 1;
+      requestIdRef.current.rounds += 1;
+      requestIdRef.current.standings += 1;
+    };
+  }, [isReady, loadAll]);
 
   useEffect(() => {
     if (latestRoundNumber != null && selectedRoundNumber == null) {
@@ -2114,19 +2477,32 @@ export default function TournamentManage({ compact = false }) {
   }, []);
 
   const runAction = async (action, successMessage = "") => {
+    const actionContextKey = requestContextKey;
+    if (!isCurrentRequestContext(actionContextKey)) return null;
     setIsSubmitting(true);
     setError("");
     setMessage("");
     try {
-      const result = await action();
+      const result = await action(actionContextKey);
+      if (!isCurrentRequestContext(actionContextKey)) return result;
       const resolvedSuccessMessage =
         typeof successMessage === "function" ? successMessage(result) : successMessage;
-      if (resolvedSuccessMessage) setMessage(resolvedSuccessMessage);
-      await loadAll();
+      const refreshResults = await loadAll({ background: true });
+      if (
+        isCurrentRequestContext(actionContextKey) &&
+        refreshResults?.[0] != null &&
+        resolvedSuccessMessage
+      ) {
+        setMessage(resolvedSuccessMessage);
+      }
+      return result;
     } catch (actionError) {
-      setError(actionError.message);
+      if (isCurrentRequestContext(actionContextKey)) {
+        setError(localizedActionError(actionError));
+      }
+      return null;
     } finally {
-      setIsSubmitting(false);
+      if (isCurrentRequestContext(actionContextKey)) setIsSubmitting(false);
     }
   };
 
@@ -2139,15 +2515,17 @@ export default function TournamentManage({ compact = false }) {
       return;
     }
     if (!event.currentTarget.checkValidity()) return;
-    await runAction(async () => {
+    await runAction(async (actionContextKey) => {
       const payload = payloadFromForm(form);
       if (isNew) {
         const created = await createTournament({ ...payload, authMode, user });
+        if (!isCurrentRequestContext(actionContextKey)) return;
         setMessage("大会を作成しました。");
         navigate(`/tournaments/${created.id}/manage`, { replace: true });
         return;
       }
       const updated = await updateTournament({ id, ...payload, authMode, user });
+      if (!isCurrentRequestContext(actionContextKey)) return;
       setForm((current) => formFromTournament(updated, current.regulation));
       setRegulationViolations(
         (updated.violations || []).map((item) => ({
@@ -2160,7 +2538,13 @@ export default function TournamentManage({ compact = false }) {
   };
 
   const changeStatus = (status) =>
-    runAction(async () => updateTournament({ id, status, authMode, user }), "ステータスを更新しました。");
+    runAction(async (actionContextKey) => {
+      const updated = await updateTournament({ id, status, authMode, user });
+      if (!isCurrentRequestContext(actionContextKey)) return updated;
+      succeedTournament(updated);
+      setForm((current) => formFromTournament(updated, current.regulation));
+      return updated;
+    }, "ステータスを更新しました。");
 
   const cancelTournament = () => {
     if (!window.confirm("大会を中止します。よろしいですか？")) return;
@@ -2169,19 +2553,26 @@ export default function TournamentManage({ compact = false }) {
 
   const removeDraft = () => {
     if (!window.confirm("下書きを削除します。よろしいですか？")) return;
-    runAction(async () => {
+    runAction(async (actionContextKey) => {
       await deleteTournament(id, { authMode, user });
+      if (!isCurrentRequestContext(actionContextKey)) return;
       navigate("/tournaments", { replace: true });
     }, "下書きを削除しました。");
   };
 
   const copyUrl = async () => {
+    const actionContextKey = requestContextKey;
+    if (!isCurrentRequestContext(actionContextKey)) return;
     setError("");
     try {
       await navigator.clipboard.writeText(detailUrl);
-      setMessage("大会URLをコピーしました。");
+      if (isCurrentRequestContext(actionContextKey)) {
+        setMessage("大会URLをコピーしました。");
+      }
     } catch (copyError) {
-      setError("URLをコピーできませんでした。");
+      if (isCurrentRequestContext(actionContextKey)) {
+        setError("URLをコピーできませんでした。");
+      }
     }
   };
 
@@ -2219,6 +2610,8 @@ export default function TournamentManage({ compact = false }) {
     roundId,
     { discardLaterRounds = false, tournamentCompletionConfirmed = false } = {}
   ) => {
+    const actionContextKey = requestContextKey;
+    if (!isCurrentRequestContext(actionContextKey)) return;
     const targetRound = rounds.find((round) => round.id === roundId);
     const latestCompletedRound = rounds
       .filter((round) => round.status === "completed")
@@ -2239,6 +2632,7 @@ export default function TournamentManage({ compact = false }) {
       setError("");
       setMessage("");
       setRoundRollbackConfirmation({
+        contextKey: actionContextKey,
         roundId,
         targetRoundNumber: targetRound.number,
         targetRoundLabel: getRoundLabel(targetRound, rounds),
@@ -2263,12 +2657,14 @@ export default function TournamentManage({ compact = false }) {
     setMessage("");
     try {
       const reopened = await reopenRound(roundId, { authMode, discardLaterRounds, user });
+      if (!isCurrentRequestContext(actionContextKey)) return;
       setRoundRollbackConfirmation(null);
       setMessage(
         `${getRoundLabel(reopened, rounds)}を完了前に戻しました。結果を修正してください。`
       );
-      await loadAll();
+      await loadAll({ background: true });
     } catch (actionError) {
+      if (!isCurrentRequestContext(actionContextKey)) return;
       if (!discardLaterRounds && actionError.code === "later_rounds_exist") {
         const firstDiscardedRoundNumber =
           actionError.firstDiscardedRoundNumber || Number(targetRound?.number || 0) + 1;
@@ -2276,6 +2672,7 @@ export default function TournamentManage({ compact = false }) {
           (round) => Number(round.number) === Number(firstDiscardedRoundNumber)
         );
         setRoundRollbackConfirmation({
+          contextKey: actionContextKey,
           roundId,
           targetRoundNumber: targetRound?.number,
           targetRoundLabel: targetRound ? getRoundLabel(targetRound, rounds) : "対象ラウンド",
@@ -2286,15 +2683,18 @@ export default function TournamentManage({ compact = false }) {
           releasesTournamentCompletion: form.status === "completed",
         });
       } else {
-        setError(actionError.message);
+        setError(localizedActionError(actionError, "ラウンドを完了前に戻せませんでした。"));
       }
     } finally {
-      setIsSubmitting(false);
+      if (isCurrentRequestContext(actionContextKey)) setIsSubmitting(false);
     }
   };
 
   const confirmRoundRollback = () => {
-    if (!roundRollbackConfirmation) return;
+    if (
+      !roundRollbackConfirmation ||
+      !isCurrentRequestContext(roundRollbackConfirmation.contextKey)
+    ) return;
     reopenCompletedRound(roundRollbackConfirmation.roundId, {
       discardLaterRounds: roundRollbackConfirmation.firstDiscardedRoundNumber != null,
       tournamentCompletionConfirmed: roundRollbackConfirmation.releasesTournamentCompletion,
@@ -2428,52 +2828,96 @@ export default function TournamentManage({ compact = false }) {
     );
 
   const addCoOrganizer = (userId) =>
-    runAction(async () => {
+    runAction(async (actionContextKey) => {
       const updated = await addTournamentCoOrganizer({
         tournamentId: id,
         userId,
         authMode,
         user,
       });
-      setTournament(updated);
+      if (!isCurrentRequestContext(actionContextKey)) return;
+      succeedTournament(updated);
     }, "共同運営者を追加しました。");
 
   const removeCoOrganizer = (userId) =>
-    runAction(async () => {
+    runAction(async (actionContextKey) => {
       const updated = await removeTournamentCoOrganizer({
         tournamentId: id,
         userId,
         authMode,
         user,
       });
-      setTournament(updated);
+      if (!isCurrentRequestContext(actionContextKey)) return;
+      succeedTournament(updated);
     }, "共同運営者を削除しました。");
 
   const canAccess = isNew ? permissions.canCreate : permissions.canManage;
+  const tournamentContextMatches = tournamentContextKey === requestContextKey;
+  const displayedTournamentStatus =
+    isReady === false || !tournamentContextMatches
+      ? ASYNC_STATUS.LOADING
+      : tournamentStatus;
+  const displayedAccessDenied = tournamentContextMatches && isAccessDenied;
 
-  if (!isNew && !tournament && !isAccessDenied && (isLoading || !error)) {
-    return <main className={compact ? "tournament-page compact" : "tournament-page"}>読み込み中...</main>;
-  }
-
-  if (!isNew && !tournament && error && !isAccessDenied) {
+  if (isReady === false) {
     return (
       <main className={compact ? "tournament-page compact" : "tournament-page"}>
         <Link to="/tournaments" className="tournament-back-link">
           大会一覧へ
         </Link>
-        <div className="tournament-alert">{error}</div>
+        <TournamentAsyncState
+          status={ASYNC_STATUS.LOADING}
+          loadingMessage="認証情報を確認中..."
+        />
       </main>
     );
   }
 
-  if (!canAccess || isAccessDenied) {
+  if (!tournamentContextMatches) {
+    return (
+      <main className={compact ? "tournament-page compact" : "tournament-page"}>
+        <Link to="/tournaments" className="tournament-back-link">
+          大会一覧へ
+        </Link>
+        <TournamentAsyncState
+          status={ASYNC_STATUS.LOADING}
+          loadingMessage={isNew ? "大会作成画面を準備中..." : "大会情報を読み込み中..."}
+        />
+      </main>
+    );
+  }
+
+  if (
+    !isNew &&
+    displayedTournamentStatus !== ASYNC_STATUS.SUCCESS &&
+    !displayedAccessDenied
+  ) {
+    return (
+      <main className={compact ? "tournament-page compact" : "tournament-page"}>
+        <Link to="/tournaments" className="tournament-back-link">
+          大会一覧へ
+        </Link>
+        <TournamentAsyncState
+          status={displayedTournamentStatus}
+          error={tournamentError}
+          idleMessage="大会情報はまだ読み込まれていません。"
+          loadingMessage="大会情報を読み込み中..."
+          emptyMessage="管理する大会が見つかりません。"
+          errorMessage="大会情報を読み込めませんでした。"
+          onRetry={loadTournament}
+        />
+      </main>
+    );
+  }
+
+  if (!canAccess || displayedAccessDenied) {
     return (
       <main className={compact ? "tournament-page compact" : "tournament-page"}>
         <Link to="/tournaments" className="tournament-back-link">
           大会一覧へ
         </Link>
         <div className="tournament-alert">
-          {!isNew || isAccessDenied
+          {!isNew || displayedAccessDenied
             ? "この大会を管理する権限がありません。"
             : "主催者または管理者のみ利用できます。"}
         </div>
@@ -2481,7 +2925,34 @@ export default function TournamentManage({ compact = false }) {
     );
   }
 
-  const hasRounds = rounds.length > 0;
+  const entriesReady = [ASYNC_STATUS.EMPTY, ASYNC_STATUS.SUCCESS].includes(entriesStatus);
+  const roundsReady = [ASYNC_STATUS.EMPTY, ASYNC_STATUS.SUCCESS].includes(roundsStatus);
+  const tournamentRefreshPending = [ASYNC_STATUS.LOADING, ASYNC_STATUS.ERROR].includes(
+    tournamentRefreshStatus
+  );
+  const lifecycleDataReady = entriesReady && roundsReady && !tournamentRefreshPending;
+  const lifecycleDataHasError =
+    entriesStatus === ASYNC_STATUS.ERROR ||
+    roundsStatus === ASYNC_STATUS.ERROR ||
+    tournamentRefreshStatus === ASYNC_STATUS.ERROR;
+  const lifecycleDataMessage = lifecycleDataReady
+    ? ""
+    : tournamentRefreshStatus === ASYNC_STATUS.LOADING
+      ? "最新の大会情報を再読み込み中のため、大会状態の変更・中止・削除はできません。"
+      : tournamentRefreshStatus === ASYNC_STATUS.ERROR
+      ? "最新の大会情報を確認できないため、大会状態の変更・中止・削除はできません。大会情報を再試行してください。"
+      : lifecycleDataHasError
+      ? "参加者またはラウンド情報を確認できないため、大会状態の変更・中止・削除はできません。表示中のエラーから再試行してください。"
+      : "参加者とラウンド情報を読み込み中のため、大会状態の変更・中止・削除はできません。";
+  const lifecycleActionDescriptionId = lifecycleDataReady
+    ? undefined
+    : "tournament-lifecycle-data-status";
+  const hasRounds = !isNew && roundsStatus !== ASYNC_STATUS.EMPTY;
+  const roundSettingsLockMessage = !hasRounds
+    ? ""
+    : roundsReady
+      ? "ラウンド生成後は変更できません"
+      : "ラウンド情報を確認できないため変更できません";
 
   return (
     <main className={compact ? "tournament-page compact" : "tournament-page"}>
@@ -2506,44 +2977,95 @@ export default function TournamentManage({ compact = false }) {
         ) : null}
       </div>
 
-      {isLoading ? <div className="tournament-muted">読み込み中...</div> : null}
       {message ? <div className="tournament-success">{message}</div> : null}
       {error ? <div className="tournament-alert">{error}</div> : null}
+      {[ASYNC_STATUS.LOADING, ASYNC_STATUS.ERROR].includes(tournamentRefreshStatus) ? (
+        <TournamentAsyncState
+          status={tournamentRefreshStatus}
+          error={tournamentRefreshError}
+          loadingMessage="大会情報を再読み込み中..."
+          errorMessage="操作は完了しましたが、最新の大会情報を再読み込みできませんでした。"
+          onRetry={retryTournamentRefresh}
+        />
+      ) : null}
 
       {!isNew ? (
         <>
-          <div className="next-action-band">
-            <strong>次にやること:</strong>{" "}
-            {nextActionText(
-              form,
-              rounds,
-              pairingEntriesForRound(entries, rounds.length + 1).length
-            )}
-          </div>
+          {entriesReady && roundsReady ? (
+            <div className="next-action-band">
+              <strong>次にやること:</strong>{" "}
+              {nextActionText(
+                form,
+                rounds,
+                pairingEntriesForRound(entries, rounds.length + 1).length
+              )}
+            </div>
+          ) : (
+            <div className="next-action-band">
+              <strong>次にやること:</strong> 参加者とラウンド情報の読み込み後に表示します。
+            </div>
+          )}
+          {!lifecycleDataReady ? (
+            <p
+              id="tournament-lifecycle-data-status"
+              className={lifecycleDataHasError ? "tournament-alert" : "tournament-muted"}
+              role="status"
+            >
+              {lifecycleDataMessage}
+            </p>
+          ) : null}
           <div className="status-action-row">
-            <button type="button" disabled={isSubmitting || form.status !== "draft"} onClick={() => changeStatus("registration")}>
+            <button
+              type="button"
+              disabled={isSubmitting || !lifecycleDataReady || form.status !== "draft"}
+              aria-describedby={lifecycleActionDescriptionId}
+              title={!lifecycleDataReady ? lifecycleDataMessage : undefined}
+              onClick={() => changeStatus("registration")}
+            >
               受付開始
             </button>
             <button
               type="button"
-              disabled={isSubmitting || form.status !== "registration"}
+              disabled={isSubmitting || !lifecycleDataReady || form.status !== "registration"}
+              aria-describedby={lifecycleActionDescriptionId}
+              title={!lifecycleDataReady ? lifecycleDataMessage : undefined}
               onClick={() => changeStatus("in_progress")}
             >
               進行開始
             </button>
-            <button type="button" disabled={isSubmitting || form.status !== "in_progress"} onClick={() => changeStatus("completed")}>
+            <button
+              type="button"
+              disabled={isSubmitting || !lifecycleDataReady || form.status !== "in_progress"}
+              aria-describedby={lifecycleActionDescriptionId}
+              title={!lifecycleDataReady ? lifecycleDataMessage : undefined}
+              onClick={() => changeStatus("completed")}
+            >
               完了
             </button>
             <button
               type="button"
               className="danger-button"
-              disabled={isSubmitting || form.status === "completed" || form.status === "cancelled"}
+              disabled={
+                isSubmitting ||
+                !lifecycleDataReady ||
+                form.status === "completed" ||
+                form.status === "cancelled"
+              }
+              aria-describedby={lifecycleActionDescriptionId}
+              title={!lifecycleDataReady ? lifecycleDataMessage : undefined}
               onClick={cancelTournament}
             >
               中止
             </button>
             {form.status === "draft" && permissions.canDelete ? (
-              <button type="button" className="danger-button" disabled={isSubmitting} onClick={removeDraft}>
+              <button
+                type="button"
+                className="danger-button"
+                disabled={isSubmitting || !lifecycleDataReady}
+                aria-describedby={lifecycleActionDescriptionId}
+                title={!lifecycleDataReady ? lifecycleDataMessage : undefined}
+                onClick={removeDraft}
+              >
                 下書きを削除
               </button>
             ) : null}
@@ -2560,11 +3082,22 @@ export default function TournamentManage({ compact = false }) {
 
       {(isNew || activeTab === "info") && (
         <>
+          {!isNew && !roundsReady ? (
+            <TournamentAsyncState
+              status={roundsStatus}
+              error={roundsError}
+              idleMessage="ラウンド情報はまだ読み込まれていません。"
+              loadingMessage="ラウンド情報を読み込み中です。形式と回戦設定は確認後に変更できます。"
+              errorMessage="ラウンド情報を読み込めませんでした。形式と回戦設定は変更できません。"
+              onRetry={loadRounds}
+            />
+          ) : null}
           <InfoPanel
             entries={entries}
             form={form}
             formatParticipantName={formatParticipantName}
             hasRounds={hasRounds}
+            roundSettingsLockMessage={roundSettingsLockMessage}
             isNew={isNew}
             isSubmitting={isSubmitting}
             onSave={saveTournament}
@@ -2589,58 +3122,120 @@ export default function TournamentManage({ compact = false }) {
       )}
 
       {!isNew && activeTab === "rounds" ? (
-        <RoundManagePanel
-          entries={entries}
-          formatParticipantName={formatParticipantName}
-          form={form}
-          isSubmitting={isSubmitting}
-          onFinishRound={finishRound}
-          onGenerateRound={generateRound}
-          onReportScore={reportScore}
-          onReopenRound={reopenCompletedRound}
-          onRepairRound={repairRound}
-          onSaveAnnouncement={saveAnnouncement}
-          onSavePairings={savePairings}
-          onStartTimer={startTimer}
-          rounds={rounds}
-          selectedRoundNumber={selectedRoundNumber}
-          setSelectedRoundNumber={setSelectedRoundNumber}
-        />
+        <TournamentAsyncState
+          status={readyOrEmptyStatus(roundsStatus)}
+          error={roundsError}
+          idleMessage="ラウンド情報はまだ読み込まれていません。"
+          loadingMessage="ラウンド情報を読み込み中..."
+          errorMessage="ラウンド情報を読み込めませんでした。"
+          onRetry={loadRounds}
+        >
+          <TournamentAsyncState
+            status={readyOrEmptyStatus(entriesStatus)}
+            error={entriesError}
+            idleMessage="参加者情報はまだ読み込まれていません。"
+            loadingMessage="参加者情報を読み込み中..."
+            errorMessage="ラウンド運営に必要な参加者情報を読み込めませんでした。"
+            onRetry={loadEntries}
+          >
+            <RoundManagePanel
+              entries={entries}
+              formatParticipantName={formatParticipantName}
+              form={form}
+              isSubmitting={isSubmitting}
+              onFinishRound={finishRound}
+              onGenerateRound={generateRound}
+              onReportScore={reportScore}
+              onReopenRound={reopenCompletedRound}
+              onRepairRound={repairRound}
+              onSaveAnnouncement={saveAnnouncement}
+              onSavePairings={savePairings}
+              onStartTimer={startTimer}
+              rounds={rounds}
+              selectedRoundNumber={selectedRoundNumber}
+              setSelectedRoundNumber={setSelectedRoundNumber}
+            />
+          </TournamentAsyncState>
+        </TournamentAsyncState>
       ) : null}
 
       {!isNew && activeTab === "participants" ? (
-        <ParticipantsPanel
-          bans={bans}
-          compact={compact}
-          entries={entries}
-          formatParticipantName={formatParticipantName}
-          form={form}
-          isSubmitting={isSubmitting}
-          onApprove={approvePendingEntry}
-          onCreateManual={createManual}
-          onDeckLockChange={changeDecklistLock}
-          onDeckRegister={deckRegister}
-          onKick={kickParticipant}
-          onPromoteWaitlist={promoteWaitlist}
-          onReject={rejectPendingEntry}
-          onStatusChange={changeEntryStatus}
-          onUnban={unbanParticipant}
-          rounds={rounds}
-        />
+        <TournamentAsyncState
+          status={readyOrEmptyStatus(entriesStatus)}
+          error={entriesError}
+          idleMessage="参加者情報はまだ読み込まれていません。"
+          loadingMessage="参加者情報を読み込み中..."
+          errorMessage="参加者情報を読み込めませんでした。"
+          onRetry={loadEntries}
+        >
+          <ParticipantsPanel
+            bans={bans}
+            bansStatus={bansStatus}
+            bansError={bansError}
+            compact={compact}
+            entries={entries}
+            formatParticipantName={formatParticipantName}
+            form={form}
+            isSubmitting={isSubmitting}
+            onApprove={approvePendingEntry}
+            onCreateManual={createManual}
+            onDeckLockChange={changeDecklistLock}
+            onDeckRegister={deckRegister}
+            onKick={kickParticipant}
+            onPromoteWaitlist={promoteWaitlist}
+            onReject={rejectPendingEntry}
+            onRetryBans={loadBans}
+            onStatusChange={changeEntryStatus}
+            onUnban={unbanParticipant}
+            rounds={rounds}
+            roundsStatus={roundsStatus}
+            roundsError={roundsError}
+            onRetryRounds={loadRounds}
+          />
+        </TournamentAsyncState>
       ) : null}
 
       {!isNew && activeTab === "standings" ? (
-        <StandingsPanel
-          entries={entries}
-          formatParticipantName={formatParticipantName}
-          rounds={rounds}
-          selectedRoundNumber={selectedStandingRoundNumber}
-          setSelectedRoundNumber={setSelectedStandingRoundNumber}
-          standings={standings}
-        />
+        <TournamentAsyncState
+          status={readyOrEmptyStatus(roundsStatus)}
+          error={roundsError}
+          idleMessage="ラウンド情報はまだ読み込まれていません。"
+          loadingMessage="順位計算に必要なラウンド情報を読み込み中..."
+          errorMessage="順位計算に必要なラウンド情報を読み込めませんでした。"
+          onRetry={loadRounds}
+        >
+          <TournamentAsyncState
+            status={readyOrEmptyStatus(entriesStatus)}
+            error={entriesError}
+            idleMessage="参加者情報はまだ読み込まれていません。"
+            loadingMessage="順位計算に必要な参加者情報を読み込み中..."
+            errorMessage="順位計算に必要な参加者情報を読み込めませんでした。"
+            onRetry={loadEntries}
+          >
+            <TournamentAsyncState
+              status={standingsStatus}
+              error={standingsError}
+              idleMessage="順位表はまだ読み込まれていません。"
+              loadingMessage="順位表を読み込み中..."
+              emptyMessage="順位データはまだありません。"
+              errorMessage="順位表を読み込めませんでした。"
+              onRetry={loadStandings}
+            >
+              <StandingsPanel
+                entries={entries}
+                formatParticipantName={formatParticipantName}
+                rounds={rounds}
+                selectedRoundNumber={selectedStandingRoundNumber}
+                setSelectedRoundNumber={setSelectedStandingRoundNumber}
+                standings={standings}
+              />
+            </TournamentAsyncState>
+          </TournamentAsyncState>
+        </TournamentAsyncState>
       ) : null}
 
-      {roundRollbackConfirmation ? (
+      {roundRollbackConfirmation &&
+      isCurrentRequestContext(roundRollbackConfirmation.contextKey) ? (
         <RoundRollbackConfirmDialog
           firstDiscardedRoundLabel={roundRollbackConfirmation.firstDiscardedRoundLabel}
           isSubmitting={isSubmitting}

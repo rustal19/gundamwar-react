@@ -1,7 +1,8 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
 import TournamentManage from "./TournamentManage";
-import { updateMyEntry } from "../services/tournaments";
+import * as tournamentService from "../services/tournaments";
+import * as userService from "../services/users";
 import { FORMAT_PRESETS } from "../data/formats";
 
 const STORAGE_KEY = "gundamwar.tournaments.v1";
@@ -145,6 +146,26 @@ function renderManage() {
       <Routes>
         <Route path="/tournaments/:id/manage" element={<TournamentManage />} />
       </Routes>
+    </MemoryRouter>
+  );
+}
+
+function SwitchableManageRoute() {
+  const navigate = useNavigate();
+  return (
+    <>
+      <button type="button" onClick={() => navigate("/tournaments/t-next/manage")}>大会を切り替える</button>
+      <Routes>
+        <Route path="/tournaments/:id/manage" element={<TournamentManage />} />
+      </Routes>
+    </>
+  );
+}
+
+function renderSwitchableManage() {
+  return render(
+    <MemoryRouter initialEntries={["/tournaments/t-ui/manage"]}>
+      <SwitchableManageRoute />
     </MemoryRouter>
   );
 }
@@ -492,6 +513,273 @@ test("一般参加者には権限エラーだけを表示して管理操作を�
   expect(screen.queryByRole("button", { name: "次ラウンド生成" })).not.toBeInTheDocument();
 });
 
+test("大会情報の取得失敗は権限エラーや空状態にせず再試行できる", async () => {
+  seedStore();
+  const fetchTournamentSpy = jest
+    .spyOn(tournamentService, "fetchTournament")
+    .mockRejectedValueOnce(new Error("Failed to fetch"));
+
+  renderManage();
+
+  expect(await screen.findByText("大会情報を読み込めませんでした。")).toBeInTheDocument();
+  expect(screen.queryByText("この大会を管理する権限がありません。")).not.toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "UI大会" })).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "再試行" }));
+  expect(await screen.findByRole("heading", { name: "UI大会" })).toBeInTheDocument();
+  expect(fetchTournamentSpy).toHaveBeenCalledTimes(2);
+});
+
+test("認証情報の復元中は管理データを取得しない", async () => {
+  mockAuthState = {
+    authMode: "mock",
+    isOrganizer: true,
+    isReady: false,
+    user: { ...mockOrganizerUser },
+  };
+  seedStore();
+  const fetchTournamentSpy = jest.spyOn(tournamentService, "fetchTournament");
+
+  renderManage();
+
+  expect(screen.getByText("認証情報を確認中...")).toBeInTheDocument();
+  expect(fetchTournamentSpy).not.toHaveBeenCalled();
+});
+
+test("主要管理データの読込中は大会状態変更と削除を無効にして理由を表示する", async () => {
+  let resolveEntries;
+  jest.spyOn(tournamentService, "fetchEntries").mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveEntries = resolve;
+      })
+  );
+  seedStore({ tournament: { status: "draft" } });
+
+  renderManage();
+  expect(await screen.findByRole("heading", { name: "UI大会" })).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      "参加者とラウンド情報を読み込み中のため、大会状態の変更・中止・削除はできません。"
+    )
+  ).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "受付開始" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "中止" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "下書きを削除" })).toBeDisabled();
+
+  await act(async () => {
+    resolveEntries({ items: [] });
+  });
+
+  await waitFor(() => expect(screen.getByRole("button", { name: "受付開始" })).toBeEnabled());
+  expect(screen.getByRole("button", { name: "中止" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "下書きを削除" })).toBeEnabled();
+});
+
+test("操作後の大会再取得失敗でも管理画面を保持して再試行できる", async () => {
+  seedStore({ tournament: { status: "draft" } });
+  const storedTournament = JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0];
+  const fetchTournamentSpy = jest
+    .spyOn(tournamentService, "fetchTournament")
+    .mockResolvedValueOnce(storedTournament)
+    .mockRejectedValueOnce(new Error("Failed to fetch"))
+    .mockResolvedValueOnce({ ...storedTournament, status: "registration" });
+
+  renderManage();
+  const startRegistrationButton = await screen.findByRole("button", { name: "受付開始" });
+  await waitFor(() => expect(startRegistrationButton).toBeEnabled());
+  fireEvent.click(startRegistrationButton);
+
+  expect(
+    await screen.findByText(
+      "操作は完了しましたが、最新の大会情報を再読み込みできませんでした。"
+    )
+  ).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "UI大会" })).toBeInTheDocument();
+  expect(screen.queryByText("ステータスを更新しました。")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "進行開始" })).toBeDisabled();
+
+  fireEvent.click(screen.getByRole("button", { name: "再試行" }));
+
+  await waitFor(() =>
+    expect(
+      screen.queryByText(
+        "操作は完了しましたが、最新の大会情報を再読み込みできませんでした。"
+      )
+    ).not.toBeInTheDocument()
+  );
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "進行開始" })).toBeEnabled()
+  );
+  expect(fetchTournamentSpy).toHaveBeenCalledTimes(3);
+});
+
+test("大会状態変更の英語通信エラーを日本語で表示する", async () => {
+  seedStore({ tournament: { status: "draft" } });
+  jest
+    .spyOn(tournamentService, "updateTournament")
+    .mockRejectedValueOnce(new Error("Failed to fetch"));
+
+  renderManage();
+  const startRegistrationButton = await screen.findByRole("button", { name: "受付開始" });
+  await waitFor(() => expect(startRegistrationButton).toBeEnabled());
+  fireEvent.click(startRegistrationButton);
+
+  expect(
+    await screen.findByText("操作に失敗しました。もう一度お試しください。")
+  ).toBeInTheDocument();
+  expect(screen.queryByText("Failed to fetch")).not.toBeInTheDocument();
+});
+
+test("大会URL切替前の遅い応答で切替後の管理画面を上書きしない", async () => {
+  seedStore();
+  const storedTournament = JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0];
+  let resolveOldTournament;
+  jest.spyOn(tournamentService, "fetchTournament").mockImplementation((tournamentId) => {
+    if (tournamentId === "t-ui") {
+      return new Promise((resolve) => {
+        resolveOldTournament = resolve;
+      });
+    }
+    return Promise.resolve({
+      ...storedTournament,
+      id: "t-next",
+      title: "切替後の管理大会",
+    });
+  });
+
+  renderSwitchableManage();
+  fireEvent.click(screen.getByRole("button", { name: "大会を切り替える" }));
+
+  expect(await screen.findByRole("heading", { name: "切替後の管理大会" })).toBeInTheDocument();
+
+  await act(async () => {
+    resolveOldTournament({ ...storedTournament, title: "切替前の管理大会" });
+  });
+
+  expect(screen.getByRole("heading", { name: "切替後の管理大会" })).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "切替前の管理大会" })).not.toBeInTheDocument();
+});
+
+test("大会URL切替前の書込完了後に旧大会の再取得を開始しない", async () => {
+  seedStore();
+  const storedTournament = JSON.parse(window.localStorage.getItem(STORAGE_KEY)).tournaments[0];
+  let resolveStatusUpdate;
+  jest.spyOn(tournamentService, "updateTournament").mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveStatusUpdate = resolve;
+      })
+  );
+  const fetchTournamentSpy = jest
+    .spyOn(tournamentService, "fetchTournament")
+    .mockImplementation((tournamentId) =>
+      Promise.resolve(
+        tournamentId === "t-ui"
+          ? storedTournament
+          : { ...storedTournament, id: "t-next", title: "切替後の管理大会" }
+      )
+    );
+
+  renderSwitchableManage();
+  const completeButton = await screen.findByRole("button", { name: "完了" });
+  await waitFor(() => expect(completeButton).toBeEnabled());
+  fireEvent.click(completeButton);
+  fireEvent.click(screen.getByRole("button", { name: "大会を切り替える" }));
+  expect(await screen.findByRole("heading", { name: "切替後の管理大会" })).toBeInTheDocument();
+
+  await act(async () => {
+    resolveStatusUpdate({ ...storedTournament, status: "completed" });
+  });
+
+  expect(screen.getByRole("heading", { name: "切替後の管理大会" })).toBeInTheDocument();
+  expect(screen.queryByText("ステータスを更新しました。")).not.toBeInTheDocument();
+  expect(fetchTournamentSpy.mock.calls.map(([tournamentId]) => tournamentId)).toEqual([
+    "t-ui",
+    "t-next",
+  ]);
+});
+
+test("ラウンド取得だけ失敗しても管理画面を残し、依存操作を隠して再試行できる", async () => {
+  seedStore();
+  const fetchRoundsSpy = jest
+    .spyOn(tournamentService, "fetchRoundsForManage")
+    .mockRejectedValueOnce(new Error("Failed to fetch"));
+
+  renderManage();
+
+  expect(await screen.findByRole("heading", { name: "UI大会" })).toBeInTheDocument();
+  expect(await screen.findByText("ラウンド情報を読み込めませんでした。")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "次ラウンド生成" })).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "大会情報" }));
+  expect(screen.getByLabelText(/形式/)).toBeDisabled();
+  expect(
+    screen.getAllByTitle("ラウンド情報を確認できないため変更できません")
+  ).toHaveLength(4);
+
+  fireEvent.click(screen.getByRole("button", { name: "再試行" }));
+  await waitFor(() => expect(fetchRoundsSpy).toHaveBeenCalledTimes(2));
+  await waitFor(() =>
+    expect(screen.queryByText("ラウンド情報を読み込めませんでした。")).not.toBeInTheDocument()
+  );
+});
+
+test("参加者取得だけ失敗しても大会ヘッダーを残し、参加者0人とは表示しない", async () => {
+  seedStore();
+  jest
+    .spyOn(tournamentService, "fetchEntries")
+    .mockRejectedValueOnce(new Error("Failed to fetch"));
+
+  renderManage();
+
+  expect(await screen.findByRole("heading", { name: "UI大会" })).toBeInTheDocument();
+  expect(
+    await screen.findByText("ラウンド運営に必要な参加者情報を読み込めませんでした。")
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "次ラウンド生成" })).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "参加者" }));
+  expect(await screen.findByText("参加者情報を読み込めませんでした。")).toBeInTheDocument();
+  expect(screen.queryByText("参加者はまだ登録されていません。")).not.toBeInTheDocument();
+});
+
+test("BAN取得失敗は参加者一覧を残して空状態と区別し、依存操作を無効にする", async () => {
+  seedStore();
+  const fetchBansSpy = jest
+    .spyOn(tournamentService, "fetchTournamentBans")
+    .mockRejectedValueOnce(new Error("Failed to fetch"));
+
+  renderManage();
+  fireEvent.click(await screen.findByRole("button", { name: "参加者" }));
+
+  expect(await screen.findByText("再エントリー禁止情報を読み込めませんでした。")).toBeInTheDocument();
+  expect(screen.queryByText("再エントリー禁止中のユーザーはいません。")).not.toBeInTheDocument();
+  expect(screen.getByRole("columnheader", { name: "名前" })).toBeInTheDocument();
+  screen.getAllByRole("button", { name: "チェックイン" }).forEach((button) => {
+    expect(button).toBeDisabled();
+  });
+
+  fireEvent.click(screen.getByRole("button", { name: "再試行" }));
+  await waitFor(() => expect(fetchBansSpy).toHaveBeenCalledTimes(2));
+  expect(await screen.findByText("再エントリー禁止中のユーザーはいません。")).toBeInTheDocument();
+});
+
+test("順位取得だけ失敗しても管理画面を残し、空の順位表を同時表示しない", async () => {
+  seedStore();
+  jest
+    .spyOn(tournamentService, "fetchStandings")
+    .mockRejectedValueOnce(new Error("Failed to fetch"));
+
+  renderManage();
+  fireEvent.click(await screen.findByRole("button", { name: "順位表" }));
+
+  expect(await screen.findByText("順位表を読み込めませんでした。")).toBeInTheDocument();
+  expect(screen.queryByText("順位データはまだありません。")).not.toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "UI大会" })).toBeInTheDocument();
+  expect(screen.queryByRole("columnheader", { name: "順位" })).not.toBeInTheDocument();
+});
+
 test("通常ユーザー権限の共同運営者が管理画面と掲示用導線を利用できる", async () => {
   mockAuthState = {
     authMode: "mock",
@@ -570,6 +858,44 @@ test("作成者がニックネーム検索で共同運営者を追加・削除�
     const store = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
     expect(store.tournaments[0].coOrganizers).toEqual([]);
   });
+});
+
+test("共同運営者検索の入力変更後に古い検索結果を表示しない", async () => {
+  let resolveSearch;
+  jest.spyOn(userService, "fetchUsers").mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveSearch = resolve;
+      })
+  );
+  seedStore({ tournament: { status: "draft", coOrganizers: [] } });
+  renderManage();
+
+  await screen.findByText("UI大会");
+  fireEvent.click(screen.getByRole("button", { name: "大会情報" }));
+  const searchInput = screen.getByLabelText("共同運営者を検索");
+  fireEvent.change(searchInput, { target: { value: "古い検索" } });
+  fireEvent.click(screen.getByRole("button", { name: "検索" }));
+  expect(screen.getByText("ユーザーを検索中...")).toBeInTheDocument();
+
+  fireEvent.change(searchInput, { target: { value: "新しい検索" } });
+  expect(
+    screen.getByText("共同運営者の検索はまだ実行されていません。")
+  ).toBeInTheDocument();
+
+  await act(async () => {
+    resolveSearch({
+      items: [{ id: "stale-user", nickname: "古い検索結果" }],
+      total: 1,
+      page: 1,
+      pageSize: 1,
+    });
+  });
+
+  expect(screen.queryByText("古い検索結果")).not.toBeInTheDocument();
+  expect(
+    screen.getByText("共同運営者の検索はまだ実行されていません。")
+  ).toBeInTheDocument();
 });
 
 test("途中参加の申請を参加者タブで許可できる", async () => {
@@ -920,8 +1246,60 @@ test("参加者が0人なら空状態メッセージを表示する", async () =
 
   fireEvent.click(await screen.findByRole("button", { name: "参加者" }));
 
-  expect(screen.getByText("参加登録されていません")).toBeInTheDocument();
+  expect(screen.getByText("参加者はまだ登録されていません。")).toBeInTheDocument();
   expect(screen.queryByRole("columnheader", { name: "名前" })).not.toBeInTheDocument();
+});
+
+test("未提出フィルターが0件なら参加者表を残さず理由を表示する", async () => {
+  seedStore();
+  const store = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
+  store.entries["t-ui"] = store.entries["t-ui"].map((entry, index) => ({
+    ...entry,
+    deckItems: validDeck(`submitted-${index}`),
+    decklistSubmittedAt: new Date().toISOString(),
+    decklistState: "submitted",
+  }));
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  renderManage();
+
+  fireEvent.click(await screen.findByRole("button", { name: "参加者" }));
+  fireEvent.click(screen.getByRole("checkbox", { name: "未提出のみ" }));
+
+  expect(screen.getByText("デッキリスト未提出の参加者はいません。")).toBeInTheDocument();
+  expect(screen.queryByRole("columnheader", { name: "名前" })).not.toBeInTheDocument();
+});
+
+test("対戦0件のラウンドでは管理表の見出しだけを残さない", async () => {
+  seedStore({
+    rounds: [
+      {
+        id: "round-ui-empty",
+        tournamentId: "t-ui",
+        number: 1,
+        stage: "swiss",
+        status: "in_progress",
+        matches: [],
+      },
+    ],
+  });
+
+  renderManage();
+
+  expect(await screen.findByText("このラウンドには対戦がありません。")).toBeInTheDocument();
+  expect(screen.queryByRole("columnheader", { name: "卓" })).not.toBeInTheDocument();
+});
+
+test("順位0件では順位表の見出しだけを残さない", async () => {
+  seedStore({ rounds: [] });
+  const store = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
+  store.entries["t-ui"] = [];
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  renderManage();
+
+  fireEvent.click(await screen.findByRole("button", { name: "順位表" }));
+
+  expect(await screen.findByText("順位データはまだありません。")).toBeInTheDocument();
+  expect(screen.queryByRole("columnheader", { name: "順位" })).not.toBeInTheDocument();
 });
 
 test("主催者のチェックイン操作は確認ダイアログなしで実行する", async () => {
@@ -1213,7 +1591,7 @@ test("ロック解除後に手動再ロックでき、本人の再提出でも�
   );
   await screen.findByText("デッキリストのロックを解除しました。本人が再提出できます。");
 
-  await updateMyEntry({
+  await tournamentService.updateMyEntry({
     tournamentId: "t-ui",
     deckItems: validDeck("resubmitted"),
     authMode: "mock",

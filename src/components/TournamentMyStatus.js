@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
+import AsyncState from "./AsyncState";
 import { DECKLIST_STATE_LABELS } from "../data/statusLabels";
+import { ASYNC_STATUS } from "../hooks/useAsyncResource";
 import { createTournamentParticipantNameFormatter } from "../utils/tournament/participantDisplayName";
 import {
   getRoundLabel,
@@ -282,6 +284,9 @@ function EntryForm({
   selectedDeckId,
   onSelectedDeckChange,
   savedDecks,
+  savedDecksStatus,
+  savedDecksError,
+  onRetrySavedDecks,
   submittedItems,
   deckViolations,
   onSubmitEntry,
@@ -297,6 +302,27 @@ function EntryForm({
   const selectedSavedDeck = (savedDecks || []).find((deck) => deck.id === selectedDeckId);
   const hasSubmittedItems = Array.isArray(submittedItems) && submittedItems.length > 0;
   const canEnterWithoutDeck = !myEntry && !tournament?.decklistRequired && !hasSubmittedItems;
+  const resolvedSavedDecksStatus =
+    savedDecksStatus || (savedDecks.length > 0 ? ASYNC_STATUS.SUCCESS : ASYNC_STATUS.EMPTY);
+  const savedDeckState = (children) => (
+    <AsyncState
+      status={resolvedSavedDecksStatus}
+      error={savedDecksError}
+      idleMessage="保存済みデッキはまだ読み込まれていません。"
+      loadingMessage="保存済みデッキを読み込み中..."
+      emptyMessage="保存済みデッキはありません。"
+      errorMessage="保存済みデッキを読み込めませんでした。"
+      onRetry={onRetrySavedDecks}
+      className={
+        resolvedSavedDecksStatus === ASYNC_STATUS.ERROR
+          ? "tournament-alert"
+          : "tournament-muted"
+      }
+      retryButtonClassName="tournament-secondary-button"
+    >
+      {children}
+    </AsyncState>
+  );
 
   return (
     <div className="tournament-entry-controls">
@@ -325,24 +351,25 @@ function EntryForm({
             </div>
             <section className="tournament-submit-choice">
               <h4>保存デッキから選択</h4>
-              {savedDecks.length === 0 ? <p className="tournament-muted">保存デッキはありません。</p> : null}
-              <div className="tournament-saved-deck-list">
-                {savedDecks.map((deck) => (
-                  <label key={deck.id} className="tournament-saved-deck-option">
-                    <input
-                      type="radio"
-                      name="submitted-deck"
-                      checked={deckSource === "saved" && selectedDeckId === deck.id}
-                      onChange={() => {
-                        onDeckSourceChange("saved");
-                        onSelectedDeckChange(deck.id);
-                      }}
-                    />
-                    <span>{deck.title}</span>
-                    <DeckCountPreview items={deck.items} />
-                  </label>
-                ))}
-              </div>
+              {savedDeckState(
+                <div className="tournament-saved-deck-list">
+                  {savedDecks.map((deck) => (
+                    <label key={deck.id} className="tournament-saved-deck-option">
+                      <input
+                        type="radio"
+                        name="submitted-deck"
+                        checked={deckSource === "saved" && selectedDeckId === deck.id}
+                        onChange={() => {
+                          onDeckSourceChange("saved");
+                          onSelectedDeckChange(deck.id);
+                        }}
+                      />
+                      <span>{deck.title}</span>
+                      <DeckCountPreview items={deck.items} />
+                    </label>
+                  ))}
+                </div>
+              )}
             </section>
             <section className="tournament-submit-choice">
               <h4>現在のデッキビルダーの内容</h4>
@@ -367,21 +394,25 @@ function EntryForm({
         提出元
         <select value={deckSource} onChange={(event) => onDeckSourceChange(event.target.value)}>
           <option value="current">現在のデッキ</option>
-          <option value="saved">保存デッキ</option>
+          <option value="saved" disabled={resolvedSavedDecksStatus !== ASYNC_STATUS.SUCCESS}>
+            保存デッキ
+          </option>
         </select>
       </label>
       {deckSource === "saved" ? (
-        <label>
-          保存デッキ
-          <select value={selectedDeckId} onChange={(event) => onSelectedDeckChange(event.target.value)}>
-            <option value="">選択してください</option>
-            {savedDecks.map((deck) => (
-              <option key={deck.id} value={deck.id}>
-                {deck.title}
-              </option>
-            ))}
-          </select>
-        </label>
+        savedDeckState(
+          <label>
+            保存デッキ
+            <select value={selectedDeckId} onChange={(event) => onSelectedDeckChange(event.target.value)}>
+              <option value="">選択してください</option>
+              {savedDecks.map((deck) => (
+                <option key={deck.id} value={deck.id}>
+                  {deck.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        )
       ) : null}
       {!hasSubmittedItems && myEntry ? (
         <div className="tournament-validation-alert">
@@ -439,6 +470,9 @@ export default function TournamentMyStatus({
   selectedDeckId,
   onSelectedDeckChange,
   savedDecks,
+  savedDecksStatus,
+  savedDecksError,
+  onRetrySavedDecks,
   submittedItems,
   deckViolations,
   onSubmitEntry,
@@ -497,6 +531,9 @@ export default function TournamentMyStatus({
       selectedDeckId={selectedDeckId}
       onSelectedDeckChange={onSelectedDeckChange}
       savedDecks={savedDecks}
+      savedDecksStatus={savedDecksStatus}
+      savedDecksError={savedDecksError}
+      onRetrySavedDecks={onRetrySavedDecks}
       submittedItems={submittedItems}
       deckViolations={deckViolations}
       onSubmitEntry={onSubmitEntry}
@@ -593,6 +630,9 @@ export default function TournamentMyStatus({
           selectedDeckId={selectedDeckId}
           onSelectedDeckChange={onSelectedDeckChange}
           savedDecks={savedDecks}
+          savedDecksStatus={savedDecksStatus}
+          savedDecksError={savedDecksError}
+          onRetrySavedDecks={onRetrySavedDecks}
           submittedItems={submittedItems}
           deckViolations={deckViolations}
           onSubmitEntry={onSubmitEntry}

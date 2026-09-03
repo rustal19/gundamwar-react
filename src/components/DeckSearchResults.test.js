@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { FORMAT_PRESETS } from "../data/formats";
 import { getFormatSetCodes } from "../utils/searchResults";
@@ -30,6 +30,7 @@ function renderResults(initialEntry, props = {}) {
 
 afterEach(() => {
   global.fetch = originalFetch;
+  jest.restoreAllMocks();
 });
 
 afterAll(() => {
@@ -42,8 +43,32 @@ test("検索前は検索条件の指定を促す", async () => {
   renderResults("/deck");
 
   expect(await screen.findByText("検索条件を指定してください。")).toBeInTheDocument();
-  expect(screen.queryByText("検索結果がありません。")).not.toBeInTheDocument();
+  expect(screen.queryByText("検索条件に一致するカードはありません。")).not.toBeInTheDocument();
+  expect(screen.queryByText("0件 / 1 / 1ページ")).not.toBeInTheDocument();
   expect(global.fetch).not.toHaveBeenCalled();
+});
+
+test("レイアウト・並び順・既定値だけのURLは未実行として扱う", async () => {
+  global.fetch = jest.fn();
+
+  renderResults(
+    "/deck?mobileLayout=ios&sortMethod=cardId&sortOrder=asc&deckRangeType=none&exclude=no"
+  );
+
+  expect(await screen.findByText("検索条件を指定してください。")).toBeInTheDocument();
+  expect(screen.queryByText("0件 / 1 / 1ページ")).not.toBeInTheDocument();
+  expect(global.fetch).not.toHaveBeenCalled();
+});
+
+test("検索中は読込状態だけを表示して件数を表示しない", async () => {
+  global.fetch = jest.fn(() => new Promise(() => {}));
+
+  renderResults("/deck?name=ガンダム");
+
+  expect(await screen.findByText("読み込み中...")).toBeInTheDocument();
+  expect(screen.queryByText("検索条件を指定してください。")).not.toBeInTheDocument();
+  expect(screen.queryByText("検索条件に一致するカードはありません。")).not.toBeInTheDocument();
+  expect(screen.queryByText("0件 / 1 / 1ページ")).not.toBeInTheDocument();
 });
 
 test("検索を実行して0件なら検索結果なしと表示する", async () => {
@@ -56,8 +81,9 @@ test("検索を実行して0件なら検索結果なしと表示する", async (
     "/deck?name=存在しないカード&deckRangeType=classic&deckRangeDetail=2006-01-01"
   );
 
-  expect(await screen.findByText("検索結果がありません。")).toBeInTheDocument();
+  expect(await screen.findByText("検索条件に一致するカードはありません。")).toBeInTheDocument();
   expect(screen.queryByText("検索条件を指定してください。")).not.toBeInTheDocument();
+  expect(screen.getByText("0件 / 1 / 1ページ")).toBeInTheDocument();
 
   const requestBody = JSON.parse(global.fetch.mock.calls[0][1].body);
   expect(requestBody).toMatchObject({
@@ -66,6 +92,40 @@ test("検索を実行して0件なら検索結果なしと表示する", async (
     deckRangeDetail: "2006-01-01",
   });
   expect(requestBody).not.toHaveProperty("formatName");
+});
+
+test("検索失敗を空状態にせず画面内に表示し、再試行できる", async () => {
+  const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+  const alert = jest.spyOn(window, "alert").mockImplementation(() => {});
+  global.fetch = jest
+    .fn()
+    .mockRejectedValueOnce(new Error("network error"))
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        data: [{ cardId: "retry-card", name: "再試行成功カード" }],
+        total: 1,
+        page: 1,
+        pageSize: 20,
+      }),
+    });
+
+  renderResults("/deck?name=再試行");
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "検索結果の読み込みに失敗しました。"
+  );
+  expect(screen.queryByText("検索条件に一致するカードはありません。")).not.toBeInTheDocument();
+  expect(screen.queryByText("0件 / 1 / 1ページ")).not.toBeInTheDocument();
+  expect(alert).not.toHaveBeenCalled();
+
+  fireEvent.click(screen.getByRole("button", { name: "再試行" }));
+
+  expect(await screen.findByText("再試行成功カード")).toBeInTheDocument();
+  expect(screen.getByText("1件 / 1 / 1ページ")).toBeInTheDocument();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  expect(global.fetch).toHaveBeenCalledTimes(2);
+  expect(consoleError).toHaveBeenCalledTimes(1);
 });
 
 test("選択フォーマットの使用可能セットをAPI条件へ反映し旧構築範囲を無効化する", async () => {
