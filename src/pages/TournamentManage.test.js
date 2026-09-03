@@ -257,6 +257,16 @@ test("BO3入力後にラウンドを完了前へ戻して結果を訂正でき�
   expect(screen.getByRole("button", { name: "第1回戦" })).toBeInTheDocument();
   expect(screen.getByText("第1回戦 / 全3回戦")).toBeInTheDocument();
   expect(screen.queryByLabelText("トーナメント表")).not.toBeInTheDocument();
+  const matchTable = screen.getByRole("table");
+  expect(matchTable).toHaveClass("tournament-card-table", "manage-table");
+  const matchCard = within(matchTable).getAllByRole("row")[1];
+  expect(within(matchCard).getAllByRole("cell").map((cell) => cell.dataset.label)).toEqual([
+    "卓",
+    "プレイヤー1",
+    "プレイヤー2",
+    "結果",
+    "入力",
+  ]);
   expect(screen.getByRole("button", { name: "1-1" })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "2-1" }));
 
@@ -371,6 +381,18 @@ test("スイス完了後にSEを生成し、ブラケット決着まで進行で
 
   fireEvent.click(screen.getByRole("button", { name: "順位表" }));
   expect(await screen.findByRole("heading", { name: "スイス順位表" })).toBeInTheDocument();
+  const standingsTable = screen.getByRole("table");
+  expect(standingsTable).toHaveClass("tournament-card-table", "tournament-standings-table");
+  const standingCard = within(standingsTable).getAllByRole("row")[1];
+  expect(within(standingCard).getAllByRole("cell").map((cell) => cell.dataset.label)).toEqual([
+    "順位",
+    "プレイヤー",
+    "勝",
+    "敗",
+    "分",
+    "勝点",
+    "OMW%",
+  ]);
   fireEvent.click(screen.getByRole("button", { name: "ラウンド運営" }));
   expect(await screen.findByRole("button", { name: "SE1回戦" })).toHaveClass("active");
 
@@ -1474,6 +1496,36 @@ test("参加者ごとのデッキリスト状態と主催者の監査記録を�
   const submittedRow = screen.getByText("提出済み選手").closest("tr");
   const lockedRow = screen.getByText("ロック選手").closest("tr");
   const noneLockedRow = screen.getByText("未提出ロック選手").closest("tr");
+  const participantsTable = screen.getByRole("table");
+  expect(participantsTable).toHaveClass("tournament-card-table", "tournament-participants-table");
+  expect(within(participantsTable).getAllByRole("columnheader").map((header) => header.textContent)).toEqual([
+    "#",
+    "名前",
+    "参加状態",
+    "デッキリスト",
+    "記録",
+    "バッジ",
+    "操作",
+  ]);
+  expect(within(lockedRow).getAllByRole("cell").map((cell) => cell.dataset.label)).toEqual([
+    "番号",
+    "名前",
+    "参加状態",
+    "デッキリスト",
+    "記録",
+    "バッジ",
+    "操作",
+  ]);
+  [
+    "閲覧",
+    "デッキ登録",
+    "ロックを解除して再提出可能にする",
+    "チェックイン",
+    "ドロップ",
+    "キック",
+  ].forEach((name) => {
+    expect(within(lockedRow).getByRole("button", { name })).toBeInTheDocument();
+  });
   expect(within(noneRow).getByText("未提出")).toBeInTheDocument();
   expect(within(submittedRow).getByText("提出済み")).toBeInTheDocument();
   expect(within(lockedRow).getByText("ロック中")).toBeInTheDocument();

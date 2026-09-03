@@ -527,7 +527,7 @@ function remainingTime(round, minutes, now) {
 
 function TournamentDeckRows({ items, compact }) {
   return (
-    <table className="tournament-table tournament-decklist-table">
+    <table className="tournament-table tournament-card-table tournament-decklist-table">
       <thead>
         <tr>
           <th>区分</th>
@@ -541,14 +541,14 @@ function TournamentDeckRows({ items, compact }) {
           const card = item.card || {};
           return (
             <tr key={`${item.cardId || card.name}-${item.zone || "main"}-${index}`}>
-              <td>{item.zone === "side" ? "サイド" : "メイン"}</td>
-              <td>{getCardCode(card) || "-"}</td>
-              <td>
+              <td data-label="区分">{item.zone === "side" ? "サイド" : "メイン"}</td>
+              <td data-label="番号">{getCardCode(card) || "-"}</td>
+              <td data-label="カード">
                 <CardHoverPreview card={card} compact={compact}>
                   {card.name || item.cardId}
                 </CardHoverPreview>
               </td>
-              <td className="num">{item.count}</td>
+              <td className="num" data-label="枚数">{item.count}</td>
             </tr>
           );
         })}
@@ -841,8 +841,8 @@ function RoundManagePanel({
             <Bracket rounds={rounds} entries={entries} showResults />
           ) : null}
           {(selectedRound.matches || []).length > 0 ? (
-            <div className="tournament-table-wrap">
-              <table className="tournament-table manage-table">
+            <div className="tournament-table-wrap tournament-card-table-wrap">
+              <table className="tournament-table tournament-card-table manage-table">
               <thead>
                 <tr>
                   <th className="num">卓</th>
@@ -858,14 +858,16 @@ function RoundManagePanel({
                   const isBye = !match.player2EntryId || match.result === "bye";
                   return (
                     <tr key={match.id} className={!isReported ? "unreported-match" : ""}>
-                      <td className="num">{match.tableNo}</td>
-                      <td>{entryName(entries, match.player1EntryId, formatParticipantName)}</td>
-                      <td>
+                      <td className="num" data-label="卓">{match.tableNo}</td>
+                      <td className="tournament-card-title-cell" data-label="プレイヤー1">
+                        {entryName(entries, match.player1EntryId, formatParticipantName)}
+                      </td>
+                      <td data-label="プレイヤー2">
                         {isBye
                           ? "Bye"
                           : entryName(entries, match.player2EntryId, formatParticipantName)}
                       </td>
-                      <td>
+                      <td data-label="結果">
                         {isReported ? (
                           <span className={`score-badge ${match.result === "p2_win" ? "loss" : ""}`}>
                             {scoreLabel(match)}
@@ -874,7 +876,7 @@ function RoundManagePanel({
                           <span className="tournament-muted">未報告</span>
                         )}
                       </td>
-                      <td className="tournament-score-actions">
+                      <td className="tournament-score-actions" data-label="入力">
                         {isBye ? (
                           <span className="tournament-muted">自動</span>
                         ) : selectedRound.status === "completed" || form.status === "completed" ? (
@@ -1346,8 +1348,8 @@ function ParticipantsPanel({
       ) : visibleEntries.length === 0 ? (
         <div className="tournament-empty">デッキリスト未提出の参加者はいません。</div>
       ) : (
-        <div className="tournament-table-wrap">
-          <table className="tournament-table tournament-participants-table">
+        <div className="tournament-table-wrap tournament-card-table-wrap">
+          <table className="tournament-table tournament-card-table tournament-participants-table">
           <thead>
             <tr>
               <th className="num">#</th>
@@ -1372,14 +1374,16 @@ function ParticipantsPanel({
               );
               return (
                 <tr key={entry.id}>
-                  <td className="num">{index + 1}</td>
-                  <td>{formatParticipantName(entry, "-")}</td>
-                  <td>
+                  <td className="num" data-label="番号">{index + 1}</td>
+                  <td className="tournament-card-title-cell" data-label="名前">
+                    {formatParticipantName(entry, "-")}
+                  </td>
+                  <td data-label="参加状態">
                     {entry.isWaitlisted && entry.status !== "dropped"
                       ? `キャンセル待ち（${waitlistPositions.get(entry.id)}番目） / ${ENTRY_STATUS_LABELS[entry.status] || entry.status}`
                       : ENTRY_STATUS_LABELS[entry.status] || entry.status}
                   </td>
-                  <td>
+                  <td data-label="デッキリスト">
                     <div className="tournament-deck-state-cell">
                       <span className={`decklist-state-badge ${entry.decklistState || "unknown"}`}>
                         {DECKLIST_STATE_LABELS[entry.decklistState] || "状態不明"}
@@ -1401,7 +1405,7 @@ function ParticipantsPanel({
                       ) : null}
                     </div>
                   </td>
-                  <td>
+                  <td data-label="記録">
                     <div className="tournament-deck-audit">
                       {entry.deckUpdatedAt ? (
                         <span>
@@ -1416,7 +1420,7 @@ function ParticipantsPanel({
                       {!entry.deckUpdatedAt && !entry.deckUnlockedAt ? <span>-</span> : null}
                     </div>
                   </td>
-                  <td>
+                  <td data-label="バッジ">
                     {entry.user?.id == null ? <span className="mini-badge">ゲスト</span> : null}
                     {entry.isWaitlisted && entry.status !== "dropped" ? (
                       <span className="mini-badge">キャンセル待ち</span>
@@ -1427,7 +1431,7 @@ function ParticipantsPanel({
                       </span>
                     ) : null}
                   </td>
-                  <td className="tournament-row-actions">
+                  <td className="tournament-row-actions" data-label="操作">
                     <button type="button" onClick={() => setSelectedEntryId(entry.id)} disabled={isSubmitting}>
                       閲覧
                     </button>
@@ -2028,8 +2032,8 @@ function StandingsPanel({
             onChange={setSelectedRoundNumber}
           />
           {swissStandings.length > 0 ? (
-            <div className="tournament-table-wrap">
-              <table className="tournament-table">
+            <div className="tournament-table-wrap tournament-card-table-wrap">
+              <table className="tournament-table tournament-card-table tournament-standings-table">
               <thead>
                 <tr>
                   <th className="num">順位</th>
@@ -2046,13 +2050,15 @@ function StandingsPanel({
                   const entry = standing.entry || findEntry(entries, standing.entryId);
                   return (
                     <tr key={standing.entryId}>
-                      <td className="num">{standing.rank}</td>
-                      <td>{formatParticipantName(entry, standing.entryId)}</td>
-                      <td className="num">{standing.wins}</td>
-                      <td className="num">{standing.losses}</td>
-                      <td className="num">{standing.draws}</td>
-                      <td className="num">{standing.points}</td>
-                      <td className="num">
+                      <td className="num" data-label="順位">{standing.rank}</td>
+                      <td className="tournament-card-title-cell" data-label="プレイヤー">
+                        {formatParticipantName(entry, standing.entryId)}
+                      </td>
+                      <td className="num" data-label="勝">{standing.wins}</td>
+                      <td className="num" data-label="敗">{standing.losses}</td>
+                      <td className="num" data-label="分">{standing.draws}</td>
+                      <td className="num" data-label="勝点">{standing.points}</td>
+                      <td className="num" data-label="OMW%">
                         {Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%
                       </td>
                     </tr>

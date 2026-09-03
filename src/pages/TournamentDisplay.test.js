@@ -71,6 +71,21 @@ test("TournamentDisplay はシンプルな掲示用ペアリングを表示す�
   });
   expect(screen.getAllByText("プレイヤー2").length).toBeGreaterThan(0);
   expect(screen.getByRole("tab", { name: "ペアリング" })).toHaveAttribute("aria-selected", "true");
+  const pairingsTable = screen.getByRole("table");
+  expect(pairingsTable).toHaveClass("tournament-display-pairings-table");
+  expect(within(pairingsTable).getAllByRole("columnheader").map((header) => header.textContent)).toEqual([
+    "卓",
+    "プレイヤー1",
+    "プレイヤー2",
+    "結果",
+  ]);
+  const pairingCard = within(pairingsTable).getAllByRole("row")[1];
+  expect(within(pairingCard).getAllByRole("cell").map((cell) => cell.dataset.label)).toEqual([
+    "卓",
+    "プレイヤー1",
+    "プレイヤー2",
+    "結果",
+  ]);
   const timer = screen.getByLabelText("残り時間");
   expect(within(timer).getByText("残り時間")).toBeVisible();
   expect(timer).toHaveTextContent(/残り時間(?:時間切れ|\d{2}:\d{2})/);
@@ -158,6 +173,16 @@ test("トップカットの勝敗をスイス順位表へ加算しない", async
 
   const player1Row = screen.getByRole("row", { name: /プレイヤー1/ });
   const player2Row = screen.getByRole("row", { name: /プレイヤー2/ });
+  expect(screen.getByRole("table")).toHaveClass("tournament-display-standings-table");
+  expect(within(player1Row).getAllByRole("cell").map((cell) => cell.dataset.label)).toEqual([
+    "順位",
+    "プレイヤー",
+    "勝",
+    "敗",
+    "分",
+    "勝点",
+    "OMW%",
+  ]);
   expect(within(player1Row).getAllByRole("cell").map((cell) => cell.textContent)).toEqual([
     "1",
     "プレイヤー1",

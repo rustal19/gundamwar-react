@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import TournamentMyStatus, {
   getMyStatusPhase,
   getRoundCountdown,
@@ -216,6 +216,65 @@ test("ラウンド生成後は対戦履歴を表示する", () => {
   );
 
   expect(screen.getByRole("button", { name: "対戦履歴" })).toBeInTheDocument();
+});
+
+test("対戦履歴は1対戦内にモバイル用ラベルと全情報を保持する", () => {
+  const myEntry = {
+    id: "entry-1",
+    status: "checked_in",
+    user: { id: "player-1", name: "自分" },
+  };
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        tournament: {
+          ...statusProps().tournament,
+          status: "in_progress",
+        },
+        myEntry,
+        entries: [
+          myEntry,
+          {
+            id: "entry-2",
+            status: "checked_in",
+            user: { id: "player-2", name: "対戦相手" },
+          },
+        ],
+        rounds: [
+          {
+            id: "round-1",
+            number: 1,
+            status: "completed",
+            matches: [
+              {
+                id: "match-1",
+                tableNo: 4,
+                player1EntryId: "entry-1",
+                player2EntryId: "entry-2",
+                player1Games: 2,
+                player2Games: 0,
+                result: "p1_win",
+              },
+            ],
+          },
+        ],
+      })}
+    />
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "対戦履歴" }));
+  const historyTable = screen.getByRole("table");
+  const historyCard = within(historyTable).getAllByRole("row")[1];
+  expect(historyTable).toHaveClass("tournament-card-table", "tournament-history-table");
+  expect(within(historyCard).getAllByRole("cell").map((cell) => cell.dataset.label)).toEqual([
+    "ラウンド",
+    "卓番号",
+    "対戦相手",
+    "スコア",
+  ]);
+  expect(historyCard).toHaveTextContent("第1回戦");
+  expect(historyCard).toHaveTextContent("対戦相手");
+  expect(historyCard).toHaveTextContent("2-0");
 });
 
 test("参加者の現在ラウンドにスイス総回戦数を表示する", () => {

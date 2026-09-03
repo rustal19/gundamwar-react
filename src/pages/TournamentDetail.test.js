@@ -466,20 +466,108 @@ test("提出済み枚数を共通表記にし、公開デッキ表に列見出�
   fireEvent.click(await screen.findByRole("button", { name: "参加者" }));
 
   const participantRow = screen.getByRole("row", { name: /公開選手.*提出済み/ });
+  const participantTable = screen.getAllByRole("table")[0];
+  expect(participantTable).toHaveClass("tournament-card-table", "tournament-entries-table");
+  expect(within(participantRow).getAllByRole("cell").map((cell) => cell.dataset.label)).toEqual([
+    "番号",
+    "プレイヤー",
+    "ステータス",
+    "デッキ",
+  ]);
   expect(participantRow).toHaveTextContent("提出済み（メイン3 / サイド1）");
   const deckHeading = screen.getByRole("heading", { name: /公開選手.*のデッキリスト/ });
   const deckSection = deckHeading.closest("section");
   expect(within(deckSection).getByText("メイン3 / サイド1")).toBeInTheDocument();
 
   const deckTable = within(deckSection).getByRole("table");
+  expect(deckTable).toHaveClass("tournament-card-table", "tournament-public-decklist-table");
   expect(
     within(deckTable).getAllByRole("columnheader").map((header) => header.textContent)
   ).toEqual(["区分", "カード番号", "カード名", "枚数"]);
   const mainRow = within(deckTable).getByRole("row", { name: /メイン.*U-123.*メインカード.*3枚/ });
   expect(within(mainRow).getByText("区分:")).toHaveClass("tournament-deck-cell-label");
   expect(within(mainRow).getByText("カード番号:")).toHaveClass("tournament-deck-cell-label");
+  expect(within(mainRow).getByText("カード名:")).toHaveClass("tournament-deck-cell-label");
   expect(within(mainRow).getByText("枚数:")).toHaveClass("tournament-deck-cell-label");
+  expect(within(mainRow).getAllByRole("cell").map((cell) => cell.dataset.label)).toEqual([
+    "区分",
+    "カード番号",
+    "カード名",
+    "枚数",
+  ]);
   expect(container.querySelector(".tournament-page")).toHaveClass("compact");
+});
+
+test("ペアリング・リザルト・順位表は1件内にモバイル用ラベルと全情報を保持する", async () => {
+  const entries = [
+    { id: "entry-1", user: { id: "player-1", name: "カード選手1" }, status: "checked_in" },
+    { id: "entry-2", user: { id: "player-2", name: "カード選手2" }, status: "checked_in" },
+  ];
+  mockTournament = registrationTournament({
+    status: "completed",
+    swissRounds: 1,
+    entries,
+  });
+  fetchRounds.mockResolvedValue({
+    rounds: [
+      {
+        id: "round-card-1",
+        number: 1,
+        stage: "swiss",
+        status: "completed",
+        matches: [
+          {
+            id: "match-card-1",
+            tableNo: 3,
+            player1EntryId: "entry-1",
+            player2EntryId: "entry-2",
+            player1Games: 2,
+            player2Games: 1,
+            result: "p1_win",
+          },
+        ],
+      },
+    ],
+  });
+
+  renderDetail({ compact: true });
+  await screen.findByRole("heading", { name: "提出テスト大会" });
+
+  fireEvent.click(screen.getByRole("button", { name: "ペアリング" }));
+  const pairingsTable = await screen.findByRole("table");
+  expect(pairingsTable).toHaveClass("tournament-card-table", "tournament-pairings-table");
+  const pairingCard = within(pairingsTable).getAllByRole("row")[1];
+  expect(within(pairingCard).getAllByRole("cell").map((cell) => cell.dataset.label)).toEqual([
+    "卓",
+    "プレイヤー1",
+    "プレイヤー2",
+    "結果",
+  ]);
+
+  fireEvent.click(screen.getByRole("button", { name: "リザルト" }));
+  const resultsTable = await screen.findByRole("table");
+  expect(resultsTable).toHaveClass("tournament-card-table", "tournament-results-table");
+  const resultCard = within(resultsTable).getAllByRole("row")[1];
+  expect(within(resultCard).getAllByRole("cell").map((cell) => cell.dataset.label)).toEqual([
+    "卓",
+    "プレイヤー1",
+    "プレイヤー2",
+    "結果",
+  ]);
+
+  fireEvent.click(screen.getByRole("button", { name: "順位表" }));
+  const standingsTable = await screen.findByRole("table");
+  expect(standingsTable).toHaveClass("tournament-card-table", "tournament-standings-table");
+  const standingCard = within(standingsTable).getAllByRole("row")[1];
+  expect(within(standingCard).getAllByRole("cell").map((cell) => cell.dataset.label)).toEqual([
+    "順位",
+    "プレイヤー",
+    "勝",
+    "敗",
+    "分",
+    "勝点",
+    "OMW%",
+  ]);
 });
 
 test("同名参加者は識別表示し、登録ユーザーのプロフィールリンクとゲスト表示を維持する", async () => {

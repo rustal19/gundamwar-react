@@ -243,8 +243,8 @@ function MatchHistory({ rounds, entries, myEntry, formatParticipantName }) {
       </button>
       {open ? (
         rows.length > 0 ? (
-          <div className="tournament-table-wrap">
-            <table className="tournament-table tournament-history-table">
+          <div className="tournament-table-wrap tournament-card-table-wrap">
+            <table className="tournament-table tournament-card-table tournament-history-table">
               <thead>
                 <tr>
                   <th>ラウンド</th>
@@ -256,10 +256,12 @@ function MatchHistory({ rounds, entries, myEntry, formatParticipantName }) {
               <tbody>
                 {rows.map(({ round, match, opponent, result }) => (
                   <tr key={`${round.id}-${match.id}`}>
-                    <td>{getRoundLabel(round, rounds)}</td>
-                    <td>{match.tableNo || "-"}</td>
-                    <td>{opponent}</td>
-                    <td>{result?.label || "未報告"}</td>
+                    <td data-label="ラウンド">{getRoundLabel(round, rounds)}</td>
+                    <td data-label="卓番号">{match.tableNo || "-"}</td>
+                    <td className="tournament-card-title-cell" data-label="対戦相手">
+                      {opponent}
+                    </td>
+                    <td data-label="スコア">{result?.label || "未報告"}</td>
                   </tr>
                 ))}
               </tbody>

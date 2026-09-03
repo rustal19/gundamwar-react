@@ -157,7 +157,7 @@ export default function TournamentDisplay() {
               <Bracket rounds={rounds} entries={entries} />
             ) : (
               <div className="tournament-display-table-wrap">
-                <table className="tournament-display-table">
+                <table className="tournament-display-table tournament-display-pairings-table">
                   <thead>
                     <tr>
                       <th className="num">卓</th>
@@ -172,10 +172,18 @@ export default function TournamentDisplay() {
                       const player2 = match.player2EntryId == null ? null : findEntry(entries, match.player2EntryId);
                       return (
                         <tr key={match.id}>
-                          <td className="tournament-display-table-no num">{match.tableNo || "-"}</td>
-                          <td>{formatParticipantName(player1, "-")}</td>
-                          <td>{formatParticipantName(player2, "Bye")}</td>
-                          <td>{resultLabel(match)}</td>
+                          <td className="tournament-display-table-no num" data-label="卓">
+                            {match.tableNo || "-"}
+                          </td>
+                          <td className="tournament-display-player-one" data-label="プレイヤー1">
+                            {formatParticipantName(player1, "-")}
+                          </td>
+                          <td className="tournament-display-player-two" data-label="プレイヤー2">
+                            {formatParticipantName(player2, "Bye")}
+                          </td>
+                          <td className="tournament-display-result" data-label="結果">
+                            {resultLabel(match)}
+                          </td>
                         </tr>
                       );
                     })}
@@ -193,7 +201,7 @@ export default function TournamentDisplay() {
         <section className="tournament-display-section">
           {swissRounds.length ? (
             <div className="tournament-display-table-wrap">
-              <table className="tournament-display-table">
+              <table className="tournament-display-table tournament-display-standings-table">
                 <thead>
                   <tr>
                     <th className="num">順位</th>
@@ -208,13 +216,27 @@ export default function TournamentDisplay() {
                 <tbody>
                   {standings.map((standing) => (
                     <tr key={standing.entryId}>
-                      <td className="tournament-display-table-no num">{standing.rank}</td>
-                      <td>{formatParticipantName(standing.entry, standing.entryId)}</td>
-                      <td className="num">{standing.wins}</td>
-                      <td className="num">{standing.losses}</td>
-                      <td className="num">{standing.draws}</td>
-                      <td className="num">{standing.points}</td>
-                      <td className="num">{Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%</td>
+                      <td className="tournament-display-table-no num" data-label="順位">
+                        {standing.rank}
+                      </td>
+                      <td className="tournament-display-standing-player" data-label="プレイヤー">
+                        {formatParticipantName(standing.entry, standing.entryId)}
+                      </td>
+                      <td className="num tournament-display-wins" data-label="勝">
+                        {standing.wins}
+                      </td>
+                      <td className="num tournament-display-losses" data-label="敗">
+                        {standing.losses}
+                      </td>
+                      <td className="num tournament-display-draws" data-label="分">
+                        {standing.draws}
+                      </td>
+                      <td className="num tournament-display-points" data-label="勝点">
+                        {standing.points}
+                      </td>
+                      <td className="num tournament-display-omw" data-label="OMW%">
+                        {Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%
+                      </td>
                     </tr>
                   ))}
                 </tbody>
