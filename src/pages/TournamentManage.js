@@ -2080,7 +2080,7 @@ export default function TournamentManage({ compact = false }) {
   const { id } = useParams();
   const isNew = !id;
   const navigate = useNavigate();
-  const { authMode, isReady, user } = useAuth();
+  const { authMode, isAuthenticated, isReady, user } = useAuth();
   const requestContextKey = [
     id || "new",
     authMode || "",
@@ -2928,9 +2928,21 @@ export default function TournamentManage({ compact = false }) {
           大会一覧へ
         </Link>
         <div className="tournament-alert">
-          {!isNew || displayedAccessDenied
-            ? "この大会を管理する権限がありません。"
-            : "主催者または管理者のみ利用できます。"}
+          {/* 未ログインは「権限がない」のではなくログインすれば解決するので、文面と導線を分ける。 */}
+          {!isAuthenticated ? (
+            <>
+              <p>
+                {isNew
+                  ? "大会を作成するにはログインが必要です。"
+                  : "この大会の管理画面を開くにはログインが必要です。"}
+              </p>
+              <Link to="/profile">ログイン画面へ</Link>
+            </>
+          ) : !isNew || displayedAccessDenied ? (
+            "この大会を管理する権限がありません。"
+          ) : (
+            "主催者または管理者のみ利用できます。"
+          )}
         </div>
       </main>
     );

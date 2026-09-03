@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import AdminUsers from "./AdminUsers";
 import { useAuth } from "../context/AuthContext";
 import { fetchUsers, resetUserNickname, updateUserRole } from "../services/users";
@@ -25,10 +26,15 @@ function renderAdmin(authValue = {}) {
   useAuth.mockReturnValue({
     authMode: "mock",
     isAdmin: true,
+    isAuthenticated: true,
     isReady: true,
     ...authValue,
   });
-  return render(<AdminUsers />);
+  return render(
+    <MemoryRouter>
+      <AdminUsers />
+    </MemoryRouter>
+  );
 }
 
 beforeEach(() => {
@@ -93,10 +99,23 @@ test("認証準備中は権限エラーやユーザー取得を開始しない",
   expect(fetchUsers).not.toHaveBeenCalled();
 });
 
+test("未ログインでは権限エラーではなくログイン導線を表示する", () => {
+  renderAdmin({ isAdmin: false, isAuthenticated: false, isReady: true });
+
+  expect(screen.getByRole("link", { name: "ログイン画面へ" })).toBeInTheDocument();
+  expect(
+    screen.queryByText(/このページを表示する権限がありません。/)
+  ).not.toBeInTheDocument();
+  expect(fetchUsers).not.toHaveBeenCalled();
+});
+
 test("管理者でなければ既存の権限制御を維持する", () => {
   renderAdmin({ isAdmin: false, isReady: true });
 
-  expect(screen.getByText("このページを表示する権限がありません。")).toBeInTheDocument();
+  expect(
+    screen.getByText(/このページを表示する権限がありません。/)
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "ログイン画面へ" })).not.toBeInTheDocument();
   expect(fetchUsers).not.toHaveBeenCalled();
 });
 

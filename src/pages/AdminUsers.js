@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import AsyncState from "../components/AsyncState";
 import { useAuth } from "../context/AuthContext";
 import { ASYNC_STATUS, useAsyncResource } from "../hooks/useAsyncResource";
@@ -7,7 +8,7 @@ import { fetchUsers, resetUserNickname, updateUserRole } from "../services/users
 const ROLES = ["user", "organizer", "admin"];
 
 export default function AdminUsers({ compact = false }) {
-  const { authMode, isAdmin, isReady } = useAuth();
+  const { authMode, isAdmin, isAuthenticated, isReady } = useAuth();
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [actionError, setActionError] = useState("");
@@ -127,16 +128,29 @@ export default function AdminUsers({ compact = false }) {
     );
   }
 
+  // 未ログインと「ログイン済みだが admin ではない」を同じ文面にすると、
+  // 前者はログインすれば解決するのに手詰まりに見える。導線を分ける。
   if (!isAdmin) {
     return (
       <main id="search-results-container">
         <div className="search-results-toolbar">
           <div>
             <h1>権限管理</h1>
-            <div className="search-results-summary">admin 権限が必要です。</div>
+            <div className="search-results-summary">
+              {isAuthenticated ? "admin 権限が必要です。" : "ログインが必要です。"}
+            </div>
           </div>
         </div>
-        <div className="results-empty-state">このページを表示する権限がありません。</div>
+        {isAuthenticated ? (
+          <div className="results-empty-state">
+            このページを表示する権限がありません。admin 権限をお持ちの場合は運営者にご確認ください。
+          </div>
+        ) : (
+          <div className="results-empty-state">
+            <p>このページは admin 権限のあるアカウントでログインすると表示できます。</p>
+            <Link to="/profile">ログイン画面へ</Link>
+          </div>
+        )}
       </main>
     );
   }

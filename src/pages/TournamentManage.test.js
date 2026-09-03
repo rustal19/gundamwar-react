@@ -21,7 +21,8 @@ let mockAuthState = {
 let originalFetch;
 
 jest.mock("../context/AuthContext", () => ({
-  useAuth: () => mockAuthState,
+  // 本物の AuthContext は user の有無から isAuthenticated を導出するので、モックも同じにする。
+  useAuth: () => ({ isAuthenticated: Boolean(mockAuthState.user), ...mockAuthState }),
 }));
 
 function seedStore(overrides = {}) {
@@ -531,8 +532,27 @@ test("一般参加者には権限エラーだけを表示して管理操作を�
   renderManage();
 
   expect(await screen.findByText("この大会を管理する権限がありません。")).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "ログイン画面へ" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "受付開始" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "次ラウンド生成" })).not.toBeInTheDocument();
+});
+
+test("未ログインでは権限エラーではなくログイン導線を表示する", async () => {
+  mockAuthState = {
+    authMode: "mock",
+    isOrganizer: false,
+    user: null,
+  };
+  seedStore();
+  renderManage();
+
+  expect(
+    await screen.findByText("この大会の管理画面を開くにはログインが必要です。")
+  ).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "ログイン画面へ" })).toBeInTheDocument();
+  expect(
+    screen.queryByText("この大会を管理する権限がありません。")
+  ).not.toBeInTheDocument();
 });
 
 test("大会情報の取得失敗は権限エラーや空状態にせず再試行できる", async () => {
