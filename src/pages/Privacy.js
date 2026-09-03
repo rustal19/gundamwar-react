@@ -1,14 +1,15 @@
 import React from "react";
 
-// 公開前にユーザー承認が必要なドラフト
+// ⚠ この本文はサイト運営者の最終確認を受けていない。公開前に必ず内容を確認すること。
+// 利用者に見える場所へ「ドラフト」と書くとポリシーとしての効力に疑義が生じるため、
+// 注記は利用者向けには出さず、このコメントで管理する。
 const Privacy = () => {
   return (
     <main className="legal-page" aria-labelledby="privacy-title">
-      <p className="legal-page-draft-note">公開前にユーザー承認が必要なドラフト</p>
       <h1 id="privacy-title">プライバシーポリシー</h1>
       <p>
         このプライバシーポリシーは、個人が非商用で運営する「Gundam War Portal」
-        における情報の取り扱いを説明するドラフトです。本サイトは非公式ファンサイトです。
+        における情報の取り扱いを説明するものです。本サイトは非公式ファンサイトです。
       </p>
 
       <section>

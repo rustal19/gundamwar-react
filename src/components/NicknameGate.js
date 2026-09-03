@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth, validateNickname } from "../context/AuthContext";
 import "./NicknameGate.css";
 
@@ -127,9 +128,15 @@ export function useNicknameGuard() {
   };
 }
 
+// 規約・ポリシーは「同意の前提として読めること」が必要なので、
+// 閉じられないニックネーム登録で塞いではいけない。
+const NICKNAME_GATE_EXEMPT_PATHS = ["/terms", "/privacy"];
+
 export default function NicknameGate() {
   const { isAuthenticated, user } = useAuth();
-  const shouldOpen = Boolean(isAuthenticated && !user?.nickname);
+  const location = useLocation();
+  const isExemptPath = NICKNAME_GATE_EXEMPT_PATHS.includes(location.pathname);
+  const shouldOpen = Boolean(isAuthenticated && !user?.nickname && !isExemptPath);
 
   return <NicknameModal open={shouldOpen} allowCancel={false} />;
 }

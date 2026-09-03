@@ -65,9 +65,3 @@
   margin: var(--gw-space-xs) 0 0;
 }
 
-.legal-page-draft-note {
-  background: var(--gw-warning-soft);
-  border: 1px solid var(--gw-warning-border);
-  color: var(--gw-warning-text);
-  padding: var(--gw-space-xs) var(--gw-space-sm);
-}
