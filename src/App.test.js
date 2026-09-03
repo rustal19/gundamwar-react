@@ -122,21 +122,33 @@ test("/search renders the search form and collapsed sidebar", () => {
 });
 
 test.each([1280, 375])(
-  "%ipxの検索フォームは見出しと検索操作を詳細条件より先に表示する",
+  "%ipxの検索フォームは先頭と最下部の両方から検索を実行できる",
   (viewportWidth) => {
     setViewportWidth(viewportWidth);
     const path = viewportWidth === 375 ? "/search?mobileLayout=ios" : "/search";
     const { container } = renderApp(path);
     const form = container.querySelector("#card-search-form");
     const header = form.firstElementChild;
+    const footer = form.lastElementChild;
     const heading = within(form).getByRole("heading", { level: 1, name: "カード検索" });
-    const submit = within(form).getByRole("button", { name: "検索" });
+    const headerSubmit = within(header).getByRole("button", { name: "検索" });
+    const footerSubmit = within(footer).getByRole("button", { name: "検索" });
+    const footerReset = within(footer).getByRole("button", { name: "リセット" });
     const firstInput = container.querySelector("#name");
 
     expect(header).toHaveClass("search-form-header");
+    expect(footer).toHaveClass("search-form-footer");
     expect(header).toContainElement(heading);
-    expect(header).toContainElement(submit);
-    expect(submit.compareDocumentPosition(firstInput) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(header).toContainElement(headerSubmit);
+    expect(footer).toContainElement(footerSubmit);
+    expect(footerSubmit).toHaveAttribute("type", "submit");
+    expect(footerReset).toHaveAttribute("type", "reset");
+    expect(
+      headerSubmit.compareDocumentPosition(firstInput) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      firstInput.compareDocumentPosition(footerSubmit) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   }
 );
 
@@ -166,7 +178,9 @@ test("検索結果から条件を保持してフォームへ戻り、細かい�
   expect(screen.getByText("MD")).toBeInTheDocument();
 
   fireEvent.change(nameInput, { target: { value: "ガンダムX" } });
-  fireEvent.click(screen.getByRole("button", { name: "検索" }));
+  fireEvent.click(
+    within(container.querySelector(".search-form-header")).getByRole("button", { name: "検索" })
+  );
 
   expect(await screen.findByRole("heading", { level: 1, name: "検索結果" })).toBeInTheDocument();
   let searchRequests;
@@ -192,7 +206,9 @@ test("375pxでは検索後にフォームを畳み、結果と条件要約を先
   const { container } = renderApp("/search?mobileLayout=ios");
 
   fireEvent.change(screen.getByLabelText("カード名"), { target: { value: "シャア" } });
-  fireEvent.click(screen.getByRole("button", { name: "検索" }));
+  fireEvent.click(
+    within(container.querySelector(".search-form-footer")).getByRole("button", { name: "検索" })
+  );
 
   expect(await screen.findByRole("heading", { level: 1, name: "検索結果" })).toBeInTheDocument();
   expect(container.querySelector(".app-shell")).toHaveClass("app-shell-mobile");

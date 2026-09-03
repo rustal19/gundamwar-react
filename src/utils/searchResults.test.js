@@ -36,6 +36,35 @@ test("検索条件要約は既定値と表示制御値を除き、選択肢を�
   ]);
 });
 
+test.each([
+  ["classic", "クラシック"],
+  ["rising", "ライジング"],
+  ["tensaku", "添削杯"],
+])("旧形式の構築範囲 %s を日本語化する", (deckRangeType, expectedLabel) => {
+  const summary = buildSearchCriteriaSummary({
+    deckRangeType,
+    deckRangeDetail: "2006-01-01",
+  });
+
+  expect(summary).toEqual([
+    { key: "deckRangeType", label: "構築範囲", value: expectedLabel },
+    { key: "deckRangeDetail", label: "収録日の上限", value: "2006年1月1日まで" },
+  ]);
+  expect(JSON.stringify(summary)).not.toContain(deckRangeType);
+});
+
+test("フォーマット名がある場合は旧形式の構築範囲と日付を重複表示しない", () => {
+  expect(
+    buildSearchCriteriaSummary({
+      formatName: "関西クラシック",
+      deckRangeType: "classic",
+      deckRangeDetail: "2006-01-01",
+    })
+  ).toEqual([
+    { key: "formatName", label: "構築範囲", value: "関西クラシック" },
+  ]);
+});
+
 describe("getCardFormatStatus", () => {
   test("文字列の禁止カードIDに数値のcardIdを確実に一致させる", () => {
     expect(

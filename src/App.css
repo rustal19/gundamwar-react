@@ -63,6 +63,13 @@
   border-color: var(--gw-secondary-border);
 }
 
+.search-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  border-top: var(--gw-border-width) solid var(--gw-border-strong);
+  padding-top: var(--gw-space-sm);
+}
+
 .search-hint {
   grid-column: 1 / -1;
   margin: 0;

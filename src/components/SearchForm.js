@@ -353,19 +353,22 @@ const SearchForm = ({ onSearch, compact = false }) => {
 
   const selectedFormat = FORMAT_PRESETS.find(({ name }) => name === formValues.formatName) || null;
   const rangeGroup = deriveSearchFormatGroup(formValues.formatName);
+  const renderSearchActions = (placement) => (
+    <div className={`search-form-primary-actions search-form-${placement}-actions`}>
+      <button type="submit" className="search">
+        <span className="owl-sprite-16-black icon-search"></span>検索
+      </button>
+      <button type="reset" className="reset" onClick={handleReset}>
+        <span className="owl-sprite-16-black icon-delete"></span>リセット
+      </button>
+    </div>
+  );
 
   return (
     <form id="card-search-form" onSubmit={handleSubmit} className="grid-form">
       <header className="search-form-header">
         <h1>カード検索</h1>
-        <div className="search-form-primary-actions">
-          <button type="submit" className="search">
-            <span className="owl-sprite-16-black icon-search"></span>検索
-          </button>
-          <button type="reset" className="reset" onClick={handleReset}>
-            <span className="owl-sprite-16-black icon-delete"></span>リセット
-          </button>
-        </div>
+        {renderSearchActions("header")}
         {!hasSearchCriteria(formValues) ? (
           <p className="search-hint">検索するには、いずれかの検索条件を入力してください。</p>
         ) : null}
@@ -854,6 +857,10 @@ const SearchForm = ({ onSearch, compact = false }) => {
           ))}
         </select>
       </div>
+
+      <footer className="search-form-footer" aria-label="検索フォームの操作">
+        {renderSearchActions("footer")}
+      </footer>
 
     </form>
   );

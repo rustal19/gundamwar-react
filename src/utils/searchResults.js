@@ -191,6 +191,22 @@ function formatRange(minimum, maximum) {
   return "";
 }
 
+const DECK_RANGE_TYPE_LABELS = {
+  tensaku: "添削杯",
+  classic: "クラシック",
+  rising: "ライジング",
+};
+
+function formatDeckRangeDate(value) {
+  if (!hasSummaryValue(value)) return "";
+
+  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return String(value);
+
+  const [, year, month, day] = match;
+  return `${year}年${Number(month)}月${Number(day)}日まで`;
+}
+
 // URLに保存された検索条件を、結果画面で読み直せる日本語の要約へ変換する。
 export function buildSearchCriteriaSummary(params = {}) {
   const summary = [];
@@ -243,11 +259,19 @@ export function buildSearchCriteriaSummary(params = {}) {
   if (params.traits_logic === "or") add("traits_logic", "特徴の一致", "いずれかを含む");
   add("exclusivePilotText", "専用", params.exclusivePilotText);
 
-  add("formatName", "構築範囲", params.formatName);
-  if (hasSummaryValue(params.deckRangeType) && params.deckRangeType !== "none") {
-    add("deckRangeType", "構築範囲", params.deckRangeType);
+  if (hasSummaryValue(params.formatName)) {
+    // 現行URLではフォーマット名が権威値。旧URL用の内部値と重複表示しない。
+    add("formatName", "構築範囲", params.formatName);
+  } else {
+    if (hasSummaryValue(params.deckRangeType) && params.deckRangeType !== "none") {
+      add(
+        "deckRangeType",
+        "構築範囲",
+        DECK_RANGE_TYPE_LABELS[params.deckRangeType] || "日付による指定"
+      );
+    }
+    add("deckRangeDetail", "収録日の上限", formatDeckRangeDate(params.deckRangeDetail));
   }
-  add("deckRangeDetail", "構築範囲の詳細", params.deckRangeDetail);
   if (params.exclude === "banned") add("exclude", "禁止制限", "禁止カードを除く");
   if (params.exclude === "restricted") add("exclude", "禁止制限", "制限カードを除く");
 
