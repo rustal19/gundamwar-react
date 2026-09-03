@@ -144,7 +144,7 @@ function localizedActionError(error, fallback = "操作に失敗しました。�
 
 function TournamentDeckRows({ items, compact }) {
   return (
-    <table className="tournament-table tournament-decklist-table tournament-public-decklist-table">
+    <table className="tournament-table tournament-card-table tournament-decklist-table tournament-public-decklist-table">
       <thead>
         <tr>
           <th scope="col">区分</th>
@@ -158,20 +158,21 @@ function TournamentDeckRows({ items, compact }) {
           const card = item.card || {};
           return (
             <tr key={`${item.cardId || card.name}-${item.zone || "main"}-${index}`}>
-              <td className="tournament-public-deck-zone">
+              <td className="tournament-public-deck-zone" data-label="区分">
                 <span className="tournament-deck-cell-label">区分:</span>
                 <span>{item.zone === "side" ? "サイド" : "メイン"}</span>
               </td>
-              <td className="tournament-public-deck-code">
+              <td className="tournament-public-deck-code" data-label="カード番号">
                 <span className="tournament-deck-cell-label">カード番号:</span>
                 <span>{getCardCode(card) || "-"}</span>
               </td>
-              <td className="tournament-public-deck-name">
+              <td className="tournament-public-deck-name" data-label="カード名">
+                <span className="tournament-deck-cell-label">カード名:</span>
                 <CardHoverPreview card={card} compact={compact}>
                   {card.name || item.cardId}
                 </CardHoverPreview>
               </td>
-              <td className="num tournament-public-deck-count">
+              <td className="num tournament-public-deck-count" data-label="枚数">
                 <span className="tournament-deck-cell-label">枚数:</span>
                 <span>{item.count}枚</span>
               </td>
@@ -975,8 +976,8 @@ export default function TournamentDetail({ compact = false }) {
     }
 
     return (
-      <div className="tournament-table-wrap">
-      <table className="tournament-table">
+      <div className="tournament-table-wrap tournament-card-table-wrap">
+      <table className="tournament-table tournament-card-table tournament-entries-table">
         <thead>
           <tr>
             <th className="num">#</th>
@@ -988,14 +989,16 @@ export default function TournamentDetail({ compact = false }) {
         <tbody>
           {entries.map((entry, index) => (
             <tr key={entry.id}>
-              <td className="num">{index + 1}</td>
-              <td><UserNameLink entry={entry} formatParticipantName={formatParticipantName} /></td>
-              <td>
+              <td className="num" data-label="番号">{index + 1}</td>
+              <td className="tournament-card-title-cell" data-label="プレイヤー">
+                <UserNameLink entry={entry} formatParticipantName={formatParticipantName} />
+              </td>
+              <td data-label="ステータス">
                 {entry.isWaitlisted && entry.status !== "dropped"
                   ? `キャンセル待ち（${waitlistPositions.get(entry.id)}番目） / ${ENTRY_STATUS_LABELS[entry.status] || entry.status}`
                   : ENTRY_STATUS_LABELS[entry.status] || entry.status}
               </td>
-              <td>
+              <td data-label="デッキ">
                 {entry.deckItems ? (
                   <>
                     提出済み（{formatDeckItemsCount(entry.deckItems)}）
@@ -1061,8 +1064,8 @@ export default function TournamentDetail({ compact = false }) {
             <Bracket rounds={rounds} entries={entries} showResults={tournament.status === "completed"} />
           ) : null}
             {(selectedPairingRound.matches || []).length > 0 ? (
-              <div className="tournament-table-wrap">
-                <table className="tournament-table">
+              <div className="tournament-table-wrap tournament-card-table-wrap">
+                <table className="tournament-table tournament-card-table tournament-pairings-table">
               <thead>
                 <tr>
                   <th className="num">卓</th>
@@ -1081,12 +1084,12 @@ export default function TournamentDetail({ compact = false }) {
                     );
                   return (
                     <tr key={match.id} className={isMyMatch ? "my-match" : ""}>
-                      <td className="num">{match.tableNo || "-"}</td>
-                      <td>
+                      <td className="num" data-label="卓">{match.tableNo || "-"}</td>
+                      <td className="tournament-card-title-cell" data-label="プレイヤー1">
                         <UserNameLink entry={players.p1} formatParticipantName={formatParticipantName} />
                         {match.player1EntryId === myEntry?.id ? "（あなた）" : ""}
                       </td>
-                      <td>
+                      <td data-label="プレイヤー2">
                         <UserNameLink
                           entry={players.p2}
                           formatParticipantName={formatParticipantName}
@@ -1094,7 +1097,7 @@ export default function TournamentDetail({ compact = false }) {
                         />
                         {match.player2EntryId === myEntry?.id ? "（あなた）" : ""}
                       </td>
-                      <td>{matchScoreLabel(match)}</td>
+                      <td data-label="結果">{matchScoreLabel(match)}</td>
                     </tr>
                   );
                 })}
@@ -1130,8 +1133,8 @@ export default function TournamentDetail({ compact = false }) {
             </h2>
           </div>
             {(selectedResultRound.matches || []).length > 0 ? (
-              <div className="tournament-table-wrap">
-                <table className="tournament-table">
+              <div className="tournament-table-wrap tournament-card-table-wrap">
+                <table className="tournament-table tournament-card-table tournament-results-table">
               <thead>
                 <tr>
                   <th className="num">卓</th>
@@ -1145,18 +1148,18 @@ export default function TournamentDetail({ compact = false }) {
                   const players = buildMatchPlayers(match, entries);
                   return (
                     <tr key={match.id}>
-                      <td className="num">{match.tableNo || "-"}</td>
-                      <td>
+                      <td className="num" data-label="卓">{match.tableNo || "-"}</td>
+                      <td className="tournament-card-title-cell" data-label="プレイヤー1">
                         <UserNameLink entry={players.p1} formatParticipantName={formatParticipantName} />
                       </td>
-                      <td>
+                      <td data-label="プレイヤー2">
                         <UserNameLink
                           entry={players.p2}
                           formatParticipantName={formatParticipantName}
                           fallback="不戦勝"
                         />
                       </td>
-                      <td>{resultLabel(match.result)}</td>
+                      <td data-label="結果">{resultLabel(match.result)}</td>
                     </tr>
                   );
                 })}
@@ -1216,8 +1219,8 @@ export default function TournamentDetail({ compact = false }) {
             onRetry={loadStandings}
           >
             {pointInTimeStandings.length > 0 ? (
-              <div className="tournament-table-wrap">
-                <table className="tournament-table">
+              <div className="tournament-table-wrap tournament-card-table-wrap">
+                <table className="tournament-table tournament-card-table tournament-standings-table">
               <thead>
                 <tr>
                   <th className="num">順位</th>
@@ -1234,19 +1237,19 @@ export default function TournamentDetail({ compact = false }) {
                   const entry = standing.entry || findEntry(entries, standing.entryId);
                   return (
                     <tr key={standing.entryId}>
-                      <td className="num">{standing.rank}</td>
-                      <td>
+                      <td className="num" data-label="順位">{standing.rank}</td>
+                      <td className="tournament-card-title-cell" data-label="プレイヤー">
                         <UserNameLink
                           entry={entry}
                           formatParticipantName={formatParticipantName}
                           fallback={standing.entryId}
                         />
                       </td>
-                      <td className="num">{standing.wins}</td>
-                      <td className="num">{standing.losses}</td>
-                      <td className="num">{standing.draws}</td>
-                      <td className="num">{standing.points}</td>
-                      <td className="num">
+                      <td className="num" data-label="勝">{standing.wins}</td>
+                      <td className="num" data-label="敗">{standing.losses}</td>
+                      <td className="num" data-label="分">{standing.draws}</td>
+                      <td className="num" data-label="勝点">{standing.points}</td>
+                      <td className="num" data-label="OMW%">
                         {Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%
                       </td>
                     </tr>
