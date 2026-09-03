@@ -1003,13 +1003,13 @@ test("次にやることのガイド行とフォーマットプリセット展�
   expect(screen.getByText(/未報告卓が1卓あります。結果を入力してください。/)).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("button", { name: "大会情報" }));
-  const maxCopiesInput = screen.getByLabelText("同名上限");
+  const maxCopiesInput = screen.getByLabelText("同名カードの上限（枚）");
   fireEvent.change(maxCopiesInput, { target: { value: "2" } });
   expect(screen.getByLabelText("フォーマットプリセット")).toHaveValue("その他");
 
   fireEvent.change(screen.getByLabelText("フォーマットプリセット"), { target: { value: "スタンダード" } });
-  expect(screen.getByLabelText("同名上限")).toHaveValue(3);
-  expect(screen.getByLabelText("メイン下限")).toHaveValue(50);
+  expect(screen.getByLabelText("同名カードの上限（枚）")).toHaveValue(3);
+  expect(screen.getByLabelText("メイン下限（枚）")).toHaveValue(50);
 });
 
 test("次ラウンド生成は進行中ラウンドの完了後に有効になる", async () => {

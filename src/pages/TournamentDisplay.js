@@ -112,13 +112,19 @@ export default function TournamentDisplay() {
     <main className="tournament-display-page">
       <header className="tournament-display-header">
         <div>
-          <h1>{tournament?.title || "大会掲示"}</h1>
+          <h1>{tournament?.title || (isLoading ? "読み込み中..." : "大会掲示")}</h1>
+          {/* 未取得・取得失敗を「ラウンド未作成」と書くと、まだ読めていないだけの
+              状態を確定した事実として掲示してしまう。 */}
           <p>
-            {currentRound
-              ? `現在ラウンド: ${getRoundProgressLabel(currentRound, rounds, tournament)}`
-              : tournament && tournament.format !== "single_elim"
-                ? `スイス: ${getSwissRoundSummary(tournament)} / ラウンド未作成`
-                : "ラウンド未作成"}
+            {isLoading
+              ? "読み込み中..."
+              : error
+                ? "大会情報を取得できていません"
+                : currentRound
+                  ? `現在ラウンド: ${getRoundProgressLabel(currentRound, rounds, tournament)}`
+                  : tournament && tournament.format !== "single_elim"
+                    ? `スイス: ${getSwissRoundSummary(tournament)} / ラウンド未作成`
+                    : "ラウンド未作成"}
           </p>
           {currentRound?.stage === "top_cut" && getSwissRoundCount(tournament) ? (
             <p>スイス: {getSwissRoundSummary(tournament)}</p>
@@ -167,6 +173,11 @@ export default function TournamentDisplay() {
           {currentRound ? (
             currentRound.stage === "top_cut" ? (
               <Bracket rounds={rounds} entries={entries} />
+            ) : sortedMatches(currentRound).length === 0 ? (
+              // ラウンドはあるが対戦が0件のとき、見出しだけの表を掲示しない
+              <div className="tournament-display-empty">
+                このラウンドの対戦はまだ作成されていません。
+              </div>
             ) : (
               <div className="tournament-display-table-wrap">
                 <table className="tournament-display-table tournament-display-pairings-table">
@@ -222,7 +233,7 @@ export default function TournamentDisplay() {
                     <th className="num">敗</th>
                     <th className="num">分</th>
                     <th className="num">勝点</th>
-                    <th className="num">OMW%</th>
+                    <th className="num">OMW%（対戦相手勝率）</th>
                   </tr>
                 </thead>
                 <tbody>

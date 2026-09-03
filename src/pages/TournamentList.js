@@ -237,8 +237,8 @@ export default function TournamentList({ compact = false }) {
                 <button type="button" onClick={() => setPage(page - 1)} disabled={page <= 1}>
                   前へ
                 </button>
-                <span>
-                  {page} / {totalPages}
+                <span aria-label="ページ位置">
+                  {page} / 全{totalPages}ページ
                 </span>
                 <button type="button" onClick={() => setPage(page + 1)} disabled={page >= totalPages}>
                   次へ

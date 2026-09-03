@@ -128,10 +128,11 @@ export default function TournamentCard({
             <TournamentIcon size={14} />
             {formatTournamentFormat(tournament)}
           </span>
+          {/* アイコン横の「3 / 16」は、3が参加者数か残席数か読み取れない */}
           <span>
             <UsersIcon size={14} />
-            {tournament.entryCount || 0}
-            {tournament.capacity == null ? "" : ` / ${tournament.capacity}`}
+            参加 {tournament.entryCount || 0}人
+            {tournament.capacity == null ? "" : ` / 定員 ${tournament.capacity}人`}
           </span>
         </div>
       </div>

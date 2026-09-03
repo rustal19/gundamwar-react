@@ -1776,7 +1776,7 @@ function InfoPanel({
             <input value={form.title} onChange={(event) => setField("title", event.target.value)} required />
           </label>
           <label>
-            定員
+            定員（人）
             <input type="number" min="1" value={form.capacity} placeholder="制限なし" onChange={(event) => setField("capacity", event.target.value)} />
           </label>
           <label className="tournament-form-wide">
@@ -1858,7 +1858,7 @@ function InfoPanel({
           {form.format === "swiss" ? (
             <>
               <label title={roundSettingsLockMessage}>
-                スイス回戦数 {hasRounds ? "🔒" : ""}
+                スイス回戦数（回戦） {hasRounds ? "🔒" : ""}
                 <input
                   type="number"
                   min="1"
@@ -1883,7 +1883,7 @@ function InfoPanel({
                 </select>
               </label>
               <label title={roundSettingsLockMessage}>
-                トップカット {hasRounds ? "🔒" : ""}
+                トップカット（人） {hasRounds ? "🔒" : ""}
                 <input
                   type="number"
                   min="2"
@@ -1900,7 +1900,7 @@ function InfoPanel({
             </p>
           )}
           <label>
-            ラウンド制限時間
+            ラウンド制限時間（分）
             <input
               type="number"
               min="1"
@@ -1950,19 +1950,19 @@ function InfoPanel({
               <input value={form.regulation.name} onChange={(event) => setRegulationField("name", event.target.value)} />
             </label>
             <label>
-              メイン下限
+              メイン下限（枚）
               <input type="number" value={form.regulation.mainMin} onChange={(event) => setRegulationField("mainMin", event.target.value)} />
             </label>
             <label>
-              メイン上限
+              メイン上限（枚）
               <input type="number" value={form.regulation.mainMax} onChange={(event) => setRegulationField("mainMax", event.target.value)} />
             </label>
             <label>
-              サイド枚数
+              サイド枚数（枚）
               <input type="number" value={form.regulation.sideSize} onChange={(event) => setRegulationField("sideSize", event.target.value)} />
             </label>
             <label>
-              同名上限
+              同名カードの上限（枚）
               <input type="number" value={form.regulation.maxCopies} onChange={(event) => setRegulationField("maxCopies", event.target.value)} />
             </label>
             <RegulationSetInput
@@ -2066,7 +2066,9 @@ function StandingsPanel({
                   <th className="num">敗</th>
                   <th className="num">分</th>
                   <th className="num">勝点</th>
-                  <th className="num">OMW%</th>
+                  <th className="num" title="対戦相手の平均勝率。同じ勝敗数の中で順位を決めるために使う">
+                    OMW%（対戦相手勝率）
+                  </th>
                 </tr>
               </thead>
               <tbody>

@@ -836,7 +836,7 @@ test("定員到達後もキャンセル待ちとしてエントリーできる",
 
   renderDetail();
 
-  expect(await screen.findByText("1 / 1")).toBeInTheDocument();
+  expect(await screen.findByText("参加 1人 / 定員 1人")).toBeInTheDocument();
   const entryButton = screen.getByRole("button", { name: "エントリー" });
   expect(entryButton).toBeEnabled();
   fireEvent.click(entryButton);
@@ -889,7 +889,7 @@ test("ドロップ済みの本人は大会枠に数えず、キックのみ後�
   });
   renderDetail();
 
-  expect(await screen.findByText("0 / 1")).toBeInTheDocument();
+  expect(await screen.findByText("参加 0人 / 定員 1人")).toBeInTheDocument();
   const entryButton = screen.getByRole("button", { name: "エントリー" });
   expect(entryButton).toBeEnabled();
   fireEvent.click(entryButton);

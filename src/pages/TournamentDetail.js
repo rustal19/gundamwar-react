@@ -935,7 +935,7 @@ export default function TournamentDetail({ compact = false }) {
             <dd>
               {tournament.capacity == null
                 ? "なし"
-                : `${activeEntryCount} / ${tournament.capacity}${waitlistedEntries.length ? `（キャンセル待ち ${waitlistedEntries.length}人）` : ""}`}
+                : `参加 ${activeEntryCount}人 / 定員 ${tournament.capacity}人${waitlistedEntries.length ? `（キャンセル待ち ${waitlistedEntries.length}人）` : ""}`}
             </dd>
           </div>
           <div>
@@ -1229,7 +1229,9 @@ export default function TournamentDetail({ compact = false }) {
                   <th className="num">敗</th>
                   <th className="num">分</th>
                   <th className="num">勝点</th>
-                  <th className="num">OMW%</th>
+                  <th className="num" title="対戦相手の平均勝率。同じ勝敗数の中で順位を決めるために使う">
+                    OMW%（対戦相手勝率）
+                  </th>
                 </tr>
               </thead>
               <tbody>
