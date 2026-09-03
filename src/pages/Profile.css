@@ -47,6 +47,12 @@
   align-items: center;
 }
 
+/* 公開プロフィールは編集フォームがなく子要素が2個しかないため、
+   3列のままだと右端に260〜360pxの空白が残り、名前領域も狭くなる。 */
+.profile-identity.public-profile-identity {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
 .profile-avatar {
   width: 58px;
   height: 58px;

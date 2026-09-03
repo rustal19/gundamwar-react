@@ -39,11 +39,16 @@ function findCurrentTable(rounds, entryId) {
   return match?.tableNo || null;
 }
 
+// 主催しているだけの大会は entry が null で返る。参加大会と同じ「参加予定」
+// などに混ぜると、参加していない大会に参加しているように見えるので分ける。
 function groupMyTournaments(items) {
+  const managedOnly = items.filter(({ entry }) => !entry);
+  const joined = items.filter(({ entry }) => Boolean(entry));
   return {
-    upcoming: items.filter(({ tournament }) => tournament.status === "registration"),
-    active: items.filter(({ tournament }) => tournament.status === "in_progress"),
-    past: items.filter(({ tournament }) => ["completed", "cancelled"].includes(tournament.status)),
+    managed: managedOnly,
+    upcoming: joined.filter(({ tournament }) => tournament.status === "registration"),
+    active: joined.filter(({ tournament }) => tournament.status === "in_progress"),
+    past: joined.filter(({ tournament }) => ["completed", "cancelled"].includes(tournament.status)),
   };
 }
 
@@ -219,19 +224,22 @@ export default function Profile({ compact = false }) {
 
     startPublicDeckLoad();
     try {
-      const firstPage = await fetchPublicDecks({ authMode, page: 1 });
+      // ownerId で絞らないと、公開デッキ全件を総ページ分取得してから
+      // 本人ぶんを抜き出すことになり、件数もページ数も本人と無関係に増える。
+      const ownerId = String(user.id);
+      const firstPage = await fetchPublicDecks({ authMode, page: 1, ownerId });
       const firstItems = Array.isArray(firstPage.items) ? firstPage.items : [];
       const pageSize = Math.max(1, Number(firstPage.pageSize) || 20);
       const total = Math.max(firstItems.length, Number(firstPage.total) || 0);
       const totalPages = Math.max(1, Math.ceil(total / pageSize));
       const remainingPages = await Promise.all(
         Array.from({ length: totalPages - 1 }, (_, index) =>
-          fetchPublicDecks({ authMode, page: index + 2 })
+          fetchPublicDecks({ authMode, page: index + 2, ownerId })
         )
       );
       const publicDecksForUser = [firstPage, ...remainingPages]
         .flatMap((payload) => (Array.isArray(payload.items) ? payload.items : []))
-        .filter((deck) => String(deck.owner?.id || "") === String(user.id));
+        .filter((deck) => String(deck.owner?.id || "") === ownerId);
       if (publicDeckRequestIdRef.current === requestId) {
         succeedPublicDeckLoad(publicDecksForUser);
       }
@@ -438,6 +446,13 @@ export default function Profile({ compact = false }) {
               className="profile-error"
             />
           ) : null}
+          {grouped.managed.length > 0 ? (
+            <TournamentGroup
+              title="主催している大会"
+              items={grouped.managed}
+              emptyText="主催している大会はありません。"
+            />
+          ) : null}
           <TournamentGroup title="参加予定" items={grouped.upcoming} emptyText="参加予定の大会はありません。" />
           <TournamentGroup title="進行中" items={grouped.active} emptyText="進行中の大会はありません。" />
           <TournamentGroup title="過去" items={grouped.past} emptyText="過去の大会はありません。" />
@@ -464,7 +479,13 @@ export default function Profile({ compact = false }) {
                 <Link key={result.tournament.id} to={`/tournaments/${result.tournament.id}`} className="profile-result-row">
                   <div>
                     <strong>{result.tournament.title}</strong>
-                    <span>{result.wins}-{result.losses}-{result.draws}</span>
+                    <span>
+                      {formatRecord({
+                        wins: result.wins,
+                        losses: result.losses,
+                        draws: result.draws,
+                      })}
+                    </span>
                   </div>
                   <span className={result.rank === 1 ? "profile-badge soft" : "profile-badge"}>
                     {result.rank === 1 ? "優勝" : `${result.rank}位`}

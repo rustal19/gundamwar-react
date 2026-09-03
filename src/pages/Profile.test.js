@@ -100,7 +100,7 @@ test("renders my page profile, metrics, tournaments, and results", async () => {
   expect(screen.getByText("未提出・提出してください")).toBeInTheDocument();
   expect(screen.getAllByText("完了大会")).toHaveLength(2);
   expect(screen.getByText("優勝")).toBeInTheDocument();
-  expect(screen.getAllByText("4-0-0")).toHaveLength(2);
+  expect(screen.getAllByText("4勝0敗0分")).toHaveLength(2);
   expect(screen.getByLabelText("公開デッキ数の値")).toHaveTextContent("1");
 });
 
@@ -218,16 +218,16 @@ test("公開デッキだけ取得に失敗しても大会情報を表示し、0�
   expect(screen.queryByText("公開しているデッキはありません。")).not.toBeInTheDocument();
 });
 
-test("公開デッキを全ページ確認して本人の件数を判定する", async () => {
-  const otherDecks = Array.from({ length: 20 }, (_, index) => ({
-    id: `other-${index}`,
+test("公開デッキは ownerId で絞り、複数ページあれば全ページ数える", async () => {
+  const myDecks = Array.from({ length: 20 }, (_, index) => ({
+    id: `mine-${index}`,
     isPublic: true,
-    owner: { id: "other-user" },
+    owner: { id: "u1" },
   }));
   fetchPublicDecks.mockImplementation(({ page }) =>
     Promise.resolve(
       page === 1
-        ? { items: otherDecks, total: 21, page: 1, pageSize: 20 }
+        ? { items: myDecks, total: 21, page: 1, pageSize: 20 }
         : {
             items: [{ id: "mine-page-2", isPublic: true, owner: { id: "u1" } }],
             total: 21,
@@ -240,9 +240,19 @@ test("公開デッキを全ページ確認して本人の件数を判定する",
   renderProfile();
 
   await waitFor(() =>
-    expect(screen.getByLabelText("公開デッキ数の値")).toHaveTextContent("1")
+    expect(screen.getByLabelText("公開デッキ数の値")).toHaveTextContent("21")
   );
-  expect(fetchPublicDecks).toHaveBeenCalledWith({ authMode: "mock", page: 2 });
+  // 全公開デッキではなく本人ぶんだけを取得している
+  expect(fetchPublicDecks).toHaveBeenCalledWith({
+    authMode: "mock",
+    page: 1,
+    ownerId: "u1",
+  });
+  expect(fetchPublicDecks).toHaveBeenCalledWith({
+    authMode: "mock",
+    page: 2,
+    ownerId: "u1",
+  });
   expect(screen.queryByText("公開しているデッキはありません。")).not.toBeInTheDocument();
 });
 

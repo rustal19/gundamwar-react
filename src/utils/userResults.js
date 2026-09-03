@@ -81,6 +81,10 @@ export function computeUserResults(userId, tournamentsWithRounds = [], publicDec
   };
 }
 
+// 「3-2-1」は勝敗分の順序を知っている人にしか読めないので、単位を付ける。
 export function formatRecord(record) {
-  return `${Number(record?.wins || 0)}-${Number(record?.losses || 0)}-${Number(record?.draws || 0)}`;
+  const wins = Number(record?.wins || 0);
+  const losses = Number(record?.losses || 0);
+  const draws = Number(record?.draws || 0);
+  return `${wins}勝${losses}敗${draws}分`;
 }

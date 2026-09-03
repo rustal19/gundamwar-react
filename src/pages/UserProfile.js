@@ -69,13 +69,27 @@ async function fetchApiProfile(userId) {
 }
 
 async function fetchMockProfile(userId, { authMode, currentUser }) {
-  const [deckPayload, tournamentPayload] = await Promise.all([
-    fetchPublicDecks({ authMode, page: 1 }),
+  // 公開デッキは ownerId で直接絞る。全公開デッキの1ページ目から抜き出すと、
+  // 古い実績しかない利用者が「存在しない」ことになり件数も過少になる。
+  const ownerId = toId(userId);
+  const firstDeckPage = await fetchPublicDecks({ authMode, page: 1, ownerId });
+  const deckPageSize = Math.max(1, Number(firstDeckPage.pageSize) || 20);
+  const deckTotal = Math.max(
+    (firstDeckPage.items || []).length,
+    Number(firstDeckPage.total) || 0
+  );
+  const deckPageCount = Math.max(1, Math.ceil(deckTotal / deckPageSize));
+  const [remainingDeckPages, tournamentPayload] = await Promise.all([
+    Promise.all(
+      Array.from({ length: deckPageCount - 1 }, (_, index) =>
+        fetchPublicDecks({ authMode, page: index + 2, ownerId })
+      )
+    ),
     fetchTournaments({ authMode, page: 1 }),
   ]);
-  const publicDecks = (deckPayload.items || []).filter(
-    (deck) => deck.isPublic !== false && toId(deck.owner?.id) === toId(userId)
-  );
+  const publicDecks = [firstDeckPage, ...remainingDeckPages]
+    .flatMap((payload) => (Array.isArray(payload.items) ? payload.items : []))
+    .filter((deck) => deck.isPublic !== false && toId(deck.owner?.id) === ownerId);
   const userFromDeck = publicDecks.find((deck) => deck.owner?.id)?.owner;
   const tournamentItems = await Promise.all(
     (tournamentPayload.items || []).map(async (tournament) => {
@@ -224,7 +238,13 @@ export default function UserProfile({ compact = false }) {
                 <Link key={result.tournament.id} to={`/tournaments/${result.tournament.id}`} className="profile-result-row">
                   <div>
                     <strong>{result.tournament.title}</strong>
-                    <span>{result.wins}-{result.losses}-{result.draws}</span>
+                    <span>
+                      {formatRecord({
+                        wins: result.wins,
+                        losses: result.losses,
+                        draws: result.draws,
+                      })}
+                    </span>
                   </div>
                   <span className={result.rank === 1 ? "profile-badge soft" : "profile-badge"}>
                     {result.rank === 1 ? "優勝" : `${result.rank}位`}

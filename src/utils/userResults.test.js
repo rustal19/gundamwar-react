@@ -43,7 +43,7 @@ describe("computeUserResults", () => {
     expect(output.results).toEqual([
       expect.objectContaining({ rank: 1, wins: 3, losses: 0, draws: 1 }),
     ]);
-    expect(formatRecord(output.metrics.record)).toBe("3-0-1");
+    expect(formatRecord(output.metrics.record)).toBe("3勝0敗1分");
   });
 
   it("falls back to rounds when standings are not supplied", () => {

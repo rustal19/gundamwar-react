@@ -432,6 +432,7 @@ export async function fetchPublicDecks({
   cardId = "",
   playerName = "",
   tournamentName = "",
+  ownerId = "",
   authMode,
 } = {}) {
   const normalizedQuery = String(query || "").trim().toLowerCase();
@@ -439,6 +440,9 @@ export async function fetchPublicDecks({
   const normalizedCardId = String(cardId || "").trim();
   const normalizedPlayerName = String(playerName || "").trim().toLowerCase();
   const normalizedTournamentName = String(tournamentName || "").trim().toLowerCase();
+  // playerName は表示名の部分一致だが ownerId は利用者IDの完全一致。
+  // 「その人の公開デッキが全部で何件か」を数える用途はこちらを使う。
+  const normalizedOwnerId = String(ownerId ?? "").trim();
   const params = new URLSearchParams();
   params.set("page", String(getPage(page)));
   if (normalizedQuery) params.set("query", String(query).trim());
@@ -446,6 +450,7 @@ export async function fetchPublicDecks({
   if (normalizedCardId) params.set("cardId", normalizedCardId);
   if (normalizedPlayerName) params.set("playerName", String(playerName).trim());
   if (normalizedTournamentName) params.set("tournamentName", String(tournamentName).trim());
+  if (normalizedOwnerId) params.set("ownerId", normalizedOwnerId);
 
   if (authMode === "mock") {
     const decks = [...readMockPublicDecks(), ...readMockTournamentDecks()]
@@ -464,6 +469,10 @@ export async function fetchPublicDecks({
         (deck) =>
           !normalizedPlayerName ||
           String(deck.owner?.name || "").toLowerCase().includes(normalizedPlayerName)
+      )
+      .filter(
+        (deck) =>
+          !normalizedOwnerId || String(deck.owner?.id ?? "") === normalizedOwnerId
       )
       .filter(
         (deck) =>
