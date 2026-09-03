@@ -162,6 +162,9 @@ export function formatSearchResultsSummary(total, page, totalPages) {
 function hasSummaryValue(value) {
   if (Array.isArray(value)) return value.length > 0;
   if (typeof value === "string") return value.trim() !== "";
+  // 色やカードタイプは数値へ変換して読むため、壊れたURL(手編集や旧形式の
+  // ブックマーク)では NaN になりうる。要約に「NaN」と出さない。
+  if (typeof value === "number") return Number.isFinite(value);
   return value !== null && value !== undefined && value !== false;
 }
 
@@ -175,6 +178,8 @@ function getOptionLabels(value, options) {
       const option = options.find(({ value: optionValue }) => (
         String(optionValue) === String(itemValue)
       ));
+      // 選択肢に無く、ラベルも無い壊れた値は要約に出さない(NaN対策)
+      if (!option && !itemLabel && !hasSummaryValue(itemValue)) return "";
       return option?.label || itemLabel || String(itemValue ?? "");
     })
     .filter(Boolean)

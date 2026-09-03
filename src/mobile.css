@@ -4,7 +4,9 @@
 .app-shell-mobile {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  /* hidden はスクロールコンテナを作り、中の position: sticky を無効化する。
+     clip は横方向を切るだけでスクロールコンテナを作らない。 */
+  overflow-x: clip;
 }
 
 .app-shell-mobile,
@@ -24,10 +26,15 @@
   border-radius: 0;
   border-left: 0;
   border-right: 0;
-  overflow-x: hidden;
+  /* hidden はスクロールコンテナを作り、中の position: sticky を無効化する。
+     clip は横方向を切るだけでスクロールコンテナを作らない。 */
+  overflow-x: clip;
 }
 
 .app-shell-mobile .search-form-header {
+  /* モバイルは高さ52pxの固定アプリバーが最上部にあるため、
+     top:0 のままだと追従したヘッダーがその裏に隠れる。 */
+  top: var(--gw-mobile-app-bar-height);
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--gw-space-xs);
   padding-bottom: var(--gw-space-xs);

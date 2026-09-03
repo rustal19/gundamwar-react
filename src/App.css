@@ -16,7 +16,16 @@
   min-width: 0;
 }
 
+/* このフォームは全条件を開くと7000pxを超える。上下にボタンを置いても
+   中間地点からは3000px以上スクロールしないと検索できないため、見出しごと
+   追従させて「どの位置からでも検索できる」状態にする。 */
 .search-form-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  /* 追従中に下の入力欄が透けないよう背景を必ず塗る */
+  background: var(--gw-surface);
+  padding-top: var(--gw-space-sm);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
