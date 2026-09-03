@@ -132,18 +132,34 @@ function DeckTypeGroups({ title, items, compact }) {
       {DECK_TYPE_ORDER.map((type) => {
         const groupItems = groups[type] || [];
         if (groupItems.length === 0) return null;
+        const typeLabel = DECK_EXPORT_SECTION_LABELS[type] || type;
         return (
           <div key={type} className="public-deck-type-group">
-            <h3>{DECK_EXPORT_SECTION_LABELS[type] || type}</h3>
-            <div className="public-deck-card-list">
+            <h3>{typeLabel}</h3>
+            <div className="public-deck-card-list" role="table" aria-label={`${typeLabel}カード一覧`}>
+              <div className="public-deck-card-header" role="row">
+                <span role="columnheader">枚数</span>
+                <span role="columnheader">カード番号</span>
+                <span role="columnheader">カード名</span>
+              </div>
               {groupItems.map((item) => {
                 const card = item.card || {};
                 const code = getCardCode(card);
                 return (
-                  <div key={`${item.cardId}-${getDeckItemZone(item)}`} className="public-deck-row">
-                    <span className="public-deck-count">{item.count}</span>
-                    <span className="public-deck-code">{code || "-"}</span>
-                    <span className="public-deck-name">
+                  <div
+                    key={`${item.cardId}-${getDeckItemZone(item)}`}
+                    className="public-deck-row"
+                    role="row"
+                  >
+                    <span className="public-deck-count" role="cell">
+                      <span className="public-deck-cell-label">枚数:</span>
+                      <span>{item.count}枚</span>
+                    </span>
+                    <span className="public-deck-code" role="cell">
+                      <span className="public-deck-cell-label">カード番号:</span>
+                      <span>{code || "-"}</span>
+                    </span>
+                    <span className="public-deck-name" role="cell">
                       <CardHoverPreview card={card} compact={compact}>
                         {card.name || item.cardId}
                       </CardHoverPreview>

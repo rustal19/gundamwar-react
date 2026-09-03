@@ -202,7 +202,7 @@ test("チェックイン開始時刻以降は前日でもボタンを有効化�
 test("デッキ枚数は提出デッキ行だけに表示し、開始前は対戦履歴を表示しない", () => {
   render(<TournamentMyStatus {...statusProps()} />);
 
-  expect(screen.getAllByText("メイン 2 / サイド 1")).toHaveLength(1);
+  expect(screen.getAllByText("メイン2 / サイド1")).toHaveLength(1);
   expect(screen.queryByRole("button", { name: "対戦履歴" })).not.toBeInTheDocument();
 });
 

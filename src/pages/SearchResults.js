@@ -7,6 +7,7 @@ import { ASYNC_STATUS, useAsyncResource } from "../hooks/useAsyncResource";
 import { buildPathWithForcedMobileLayout } from "../utils/deviceLayout";
 import {
   API_SEARCH_URL,
+  formatSearchResultsSummary,
   getCardFormatStatus,
   getFormatSetCodes,
   hasSearchCriteria,
@@ -252,7 +253,9 @@ const SearchResults = ({ compact = false }) => {
         <div className={compact ? "search-results-heading-row" : undefined}>
           <h1>検索結果</h1>
           {hasCompletedSearch ? (
-            <div className="search-results-summary">{`${total}件 / ${page} / ${totalPages}ページ`}</div>
+            <div className="search-results-summary">
+              {formatSearchResultsSummary(total, page, totalPages)}
+            </div>
           ) : null}
           {compact ? viewToggle : null}
         </div>

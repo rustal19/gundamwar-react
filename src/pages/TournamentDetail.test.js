@@ -43,11 +43,11 @@ jest.mock("../services/savedDecks", () => ({
   fetchSavedDecks: jest.fn(),
 }));
 
-function renderDetail() {
+function renderDetail(props = {}) {
   return render(
     <MemoryRouter initialEntries={["/tournaments/t-detail"]}>
       <Routes>
-        <Route path="/tournaments/:id" element={<TournamentDetail />} />
+        <Route path="/tournaments/:id" element={<TournamentDetail {...props} />} />
       </Routes>
     </MemoryRouter>
   );
@@ -424,6 +424,62 @@ test("参加者ステータスを日本語ラベルで表示する", async () =>
   expect(screen.getByText("申請中")).toBeInTheDocument();
   expect(screen.queryByText("checked_in")).not.toBeInTheDocument();
   expect(screen.queryByText("pending")).not.toBeInTheDocument();
+});
+
+test("提出済み枚数を共通表記にし、公開デッキ表に列見出しとモバイルラベルを表示する", async () => {
+  mockTournament = registrationTournament({
+    status: "completed",
+    decklistsPublic: true,
+    entries: [
+      {
+        id: "entry-public",
+        user: { id: "player-public", name: "公開選手" },
+        status: "checked_in",
+        deckItems: [
+          {
+            cardId: "unit-main",
+            count: 3,
+            zone: "main",
+            card: {
+              name: "メインカード",
+              cardNumber1: "U",
+              cardNumber2: "123",
+            },
+          },
+          {
+            cardId: "unit-side",
+            count: 1,
+            zone: "side",
+            card: {
+              name: "サイドカード",
+              cardNumber1: "U",
+              cardNumber2: "456",
+            },
+          },
+        ],
+        decklistSubmittedAt: "2026-08-25T10:00:00.000Z",
+      },
+    ],
+  });
+
+  const { container } = renderDetail({ compact: true });
+  fireEvent.click(await screen.findByRole("button", { name: "参加者" }));
+
+  const participantRow = screen.getByRole("row", { name: /公開選手.*提出済み/ });
+  expect(participantRow).toHaveTextContent("提出済み（メイン3 / サイド1）");
+  const deckHeading = screen.getByRole("heading", { name: /公開選手.*のデッキリスト/ });
+  const deckSection = deckHeading.closest("section");
+  expect(within(deckSection).getByText("メイン3 / サイド1")).toBeInTheDocument();
+
+  const deckTable = within(deckSection).getByRole("table");
+  expect(
+    within(deckTable).getAllByRole("columnheader").map((header) => header.textContent)
+  ).toEqual(["区分", "カード番号", "カード名", "枚数"]);
+  const mainRow = within(deckTable).getByRole("row", { name: /メイン.*U-123.*メインカード.*3枚/ });
+  expect(within(mainRow).getByText("区分:")).toHaveClass("tournament-deck-cell-label");
+  expect(within(mainRow).getByText("カード番号:")).toHaveClass("tournament-deck-cell-label");
+  expect(within(mainRow).getByText("枚数:")).toHaveClass("tournament-deck-cell-label");
+  expect(container.querySelector(".tournament-page")).toHaveClass("compact");
 });
 
 test("同名参加者は識別表示し、登録ユーザーのプロフィールリンクとゲスト表示を維持する", async () => {

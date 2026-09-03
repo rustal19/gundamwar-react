@@ -6,6 +6,7 @@ import { FORMAT_PRESETS } from "../data/formats";
 import { ASYNC_STATUS, useAsyncResource } from "../hooks/useAsyncResource";
 import {
   API_SEARCH_URL,
+  formatSearchResultsSummary,
   getCardFormatStatus,
   getFormatSetCodes,
   hasSearchCriteria,
@@ -257,7 +258,9 @@ const DeckSearchResults = ({ compact = false, formatName }) => {
   }, [handlePageChange, page, totalPages]);
 
   const summary = hasCompletedSearch ? (
-    <div className="search-results-summary">{`${total}件 / ${page} / ${totalPages}ページ`}</div>
+    <div className="search-results-summary">
+      {formatSearchResultsSummary(total, page, totalPages)}
+    </div>
   ) : null;
 
   const viewToggle = (

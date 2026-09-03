@@ -44,7 +44,7 @@ test("検索前は検索条件の指定を促す", async () => {
 
   expect(await screen.findByText("検索条件を指定してください。")).toBeInTheDocument();
   expect(screen.queryByText("検索条件に一致するカードはありません。")).not.toBeInTheDocument();
-  expect(screen.queryByText("0件 / 1 / 1ページ")).not.toBeInTheDocument();
+  expect(screen.queryByText("全0件・1 / 1ページ")).not.toBeInTheDocument();
   expect(global.fetch).not.toHaveBeenCalled();
 });
 
@@ -56,7 +56,7 @@ test("レイアウト・並び順・既定値だけのURLは未実行として�
   );
 
   expect(await screen.findByText("検索条件を指定してください。")).toBeInTheDocument();
-  expect(screen.queryByText("0件 / 1 / 1ページ")).not.toBeInTheDocument();
+  expect(screen.queryByText("全0件・1 / 1ページ")).not.toBeInTheDocument();
   expect(global.fetch).not.toHaveBeenCalled();
 });
 
@@ -68,7 +68,7 @@ test("検索中は読込状態だけを表示して件数を表示しない", as
   expect(await screen.findByText("読み込み中...")).toBeInTheDocument();
   expect(screen.queryByText("検索条件を指定してください。")).not.toBeInTheDocument();
   expect(screen.queryByText("検索条件に一致するカードはありません。")).not.toBeInTheDocument();
-  expect(screen.queryByText("0件 / 1 / 1ページ")).not.toBeInTheDocument();
+  expect(screen.queryByText("全0件・1 / 1ページ")).not.toBeInTheDocument();
 });
 
 test("検索を実行して0件なら検索結果なしと表示する", async () => {
@@ -83,7 +83,7 @@ test("検索を実行して0件なら検索結果なしと表示する", async (
 
   expect(await screen.findByText("検索条件に一致するカードはありません。")).toBeInTheDocument();
   expect(screen.queryByText("検索条件を指定してください。")).not.toBeInTheDocument();
-  expect(screen.getByText("0件 / 1 / 1ページ")).toBeInTheDocument();
+  expect(screen.getByText("全0件・1 / 1ページ")).toBeInTheDocument();
 
   const requestBody = JSON.parse(global.fetch.mock.calls[0][1].body);
   expect(requestBody).toMatchObject({
@@ -116,13 +116,13 @@ test("検索失敗を空状態にせず画面内に表示し、再試行でき�
     "検索結果の読み込みに失敗しました。"
   );
   expect(screen.queryByText("検索条件に一致するカードはありません。")).not.toBeInTheDocument();
-  expect(screen.queryByText("0件 / 1 / 1ページ")).not.toBeInTheDocument();
+  expect(screen.queryByText("全0件・1 / 1ページ")).not.toBeInTheDocument();
   expect(alert).not.toHaveBeenCalled();
 
   fireEvent.click(screen.getByRole("button", { name: "再試行" }));
 
   expect(await screen.findByText("再試行成功カード")).toBeInTheDocument();
-  expect(screen.getByText("1件 / 1 / 1ページ")).toBeInTheDocument();
+  expect(screen.getByText("全1件・1 / 1ページ")).toBeInTheDocument();
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   expect(global.fetch).toHaveBeenCalledTimes(2);
   expect(consoleError).toHaveBeenCalledTimes(1);

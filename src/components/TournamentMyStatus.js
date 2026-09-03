@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import AsyncState from "./AsyncState";
 import { DECKLIST_STATE_LABELS } from "../data/statusLabels";
 import { ASYNC_STATUS } from "../hooks/useAsyncResource";
+import { formatDeckCountSummary, getDeckCounts } from "../utils/deckCounts";
 import { createTournamentParticipantNameFormatter } from "../utils/tournament/participantDisplayName";
 import {
   getRoundLabel,
@@ -76,12 +77,6 @@ export function getRoundCountdown(timerStartedAt, roundTimeMinutes, now = new Da
   };
 }
 
-function countCards(items, zone) {
-  return (Array.isArray(items) ? items : [])
-    .filter((item) => !zone || item.zone === zone)
-    .reduce((sum, item) => sum + Number(item.count || 0), 0);
-}
-
 function latestRound(rounds) {
   const items = Array.isArray(rounds) ? rounds : [];
   return [...items].sort(
@@ -131,9 +126,10 @@ function myResultInfo(match, myEntryId) {
 }
 
 function DeckCountPreview({ items }) {
+  const { mainCount, sideCount } = getDeckCounts(items);
   return (
     <span className="tournament-deck-summary">
-      メイン {countCards(items, "main")} / サイド {countCards(items, "side")}
+      {formatDeckCountSummary(mainCount, sideCount)}
     </span>
   );
 }

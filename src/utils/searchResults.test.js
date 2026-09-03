@@ -1,7 +1,15 @@
 import { FORMAT_PRESETS } from "../data/formats";
-import { getCardFormatStatus, getFormatSetCodes } from "./searchResults";
+import {
+  formatSearchResultsSummary,
+  getCardFormatStatus,
+  getFormatSetCodes,
+} from "./searchResults";
 
 const kansaiGlorious = FORMAT_PRESETS.find(({ name }) => name === "関西グロリアス");
+
+test("検索結果の総件数・現在ページ・総ページ数を明示する", () => {
+  expect(formatSearchResultsSummary(100, 2, 5)).toBe("全100件・2 / 5ページ");
+});
 
 describe("getCardFormatStatus", () => {
   test("文字列の禁止カードIDに数値のcardIdを確実に一致させる", () => {

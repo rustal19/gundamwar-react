@@ -184,6 +184,7 @@
   color: var(--gw-text-muted);
   font-size: var(--gw-font-size-xs);
   text-align: center;
+  white-space: nowrap;
 }
 
 .result-card-image-count {
@@ -199,6 +200,8 @@
   color: var(--gw-on-primary);
   font-weight: 700;
   font-size: var(--gw-font-size-sm);
+  padding-inline: var(--gw-space-2xs);
+  white-space: nowrap;
 }
 
 .result-card-format-badges {
@@ -286,6 +289,42 @@
 .card-sets,
 .card-number {
   overflow-wrap: anywhere;
+}
+
+.card-top,
+.card-costs,
+.card-combat-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--gw-space-2xs) var(--gw-space-xs);
+  min-width: 0;
+}
+
+.card-data-heading,
+.card-data-label {
+  color: var(--gw-text-muted);
+  font-size: var(--gw-font-size-xs);
+}
+
+.card-data-heading {
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.card-data-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--gw-space-3xs);
+  white-space: nowrap;
+}
+
+.card-data-label {
+  font-weight: 700;
+}
+
+.card-data-value {
+  font-weight: 700;
 }
 
 .card-actions {

@@ -140,6 +140,10 @@ export function hasSearchCriteria(params) {
   });
 }
 
+export function formatSearchResultsSummary(total, page, totalPages) {
+  return `全${total}件・${page} / ${totalPages}ページ`;
+}
+
 export function getCardFormatStatus(card, regulation) {
   const cardId = normalizeFormatValue(card?.cardId);
   const bannedCardIds = new Set(normalizeFormatList(regulation?.bannedCards));

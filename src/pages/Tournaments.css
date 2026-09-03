@@ -1262,6 +1262,74 @@
   margin: 0 0 var(--gw-space-2xs);
 }
 
+.tournament-deck-cell-label {
+  display: none;
+  color: var(--gw-text-muted);
+  font-size: var(--gw-font-size-xs);
+  font-weight: 700;
+}
+
+.tournament-page.compact .tournament-public-decklist-table {
+  display: block;
+  min-width: 0;
+}
+
+.tournament-page.compact .tournament-public-decklist-table thead {
+  display: none;
+}
+
+.tournament-page.compact .tournament-public-decklist-table tbody {
+  display: grid;
+  gap: var(--gw-space-xs);
+}
+
+.tournament-page.compact .tournament-public-decklist-table tr {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  grid-template-areas:
+    "zone count"
+    "code code"
+    "name name";
+  gap: var(--gw-space-2xs) var(--gw-space-sm);
+  border: var(--gw-border-width) solid var(--gw-divider);
+  border-radius: var(--gw-radius);
+  background: var(--gw-surface);
+  padding: var(--gw-space-xs);
+}
+
+.tournament-page.compact .tournament-public-decklist-table td {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gw-space-2xs);
+  min-width: 0;
+  border-bottom: 0;
+  padding: 0;
+}
+
+.tournament-page.compact .tournament-public-deck-zone {
+  grid-area: zone;
+}
+
+.tournament-page.compact .tournament-public-deck-code {
+  grid-area: code;
+  overflow-wrap: anywhere;
+}
+
+.tournament-page.compact .tournament-public-deck-name {
+  grid-area: name;
+  overflow-wrap: anywhere;
+}
+
+.tournament-page.compact .tournament-public-deck-count {
+  grid-area: count;
+  justify-content: flex-end;
+}
+
+.tournament-page.compact .tournament-deck-cell-label {
+  display: inline;
+  flex: 0 0 auto;
+}
+
 .tournament-bracket {
   display: grid;
   grid-auto-flow: column;
@@ -1379,6 +1447,7 @@
 
 .tournament-display-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--gw-space-xl);
@@ -1399,11 +1468,24 @@
 }
 
 .tournament-display-timer {
+  display: grid;
+  justify-items: end;
+  gap: var(--gw-space-2xs);
   color: var(--gw-accent);
+  white-space: nowrap;
+}
+
+.tournament-display-timer-label {
+  color: var(--gw-text-muted);
+  font-size: var(--gw-font-size-lg);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.tournament-display-timer-value {
   font-size: var(--gw-font-size-5xl);
   font-weight: 900;
   line-height: 1;
-  white-space: nowrap;
 }
 
 .tournament-display-switch {
