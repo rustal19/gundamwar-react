@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import AsyncState from "../components/AsyncState";
 import SearchResultCard from "../components/SearchResultCard";
 import { FORMAT_PRESETS } from "../data/formats";
+import { ASYNC_STATUS, useAsyncResource } from "../hooks/useAsyncResource";
 import { buildPathWithForcedMobileLayout } from "../utils/deviceLayout";
 import {
   API_SEARCH_URL,
@@ -12,23 +14,42 @@ import {
 } from "../utils/searchResults";
 import "./SearchResults.css";
 
+const INITIAL_SEARCH_RESULTS = {
+  results: [],
+  total: 0,
+  page: 1,
+  pageSize: 50,
+};
+
+const isSearchResultsEmpty = (value) => !value?.results?.length;
+
 const SearchResults = ({ compact = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [results, setResults] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [needsCriteria, setNeedsCriteria] = useState(false);
+  const {
+    status,
+    data: { results, total, page, pageSize },
+    error,
+    start,
+    succeed,
+    fail,
+    reset,
+  } = useAsyncResource(INITIAL_SEARCH_RESULTS, isSearchResultsEmpty);
+  const [retryKey, setRetryKey] = useState(0);
+  const [resourceRequestKey, setResourceRequestKey] = useState("");
   const [viewMode, setViewMode] = useState("detail");
+  const parsedSearchParams = useMemo(
+    () => parseSearchParams(location.search),
+    [location.search]
+  );
+  const hasCriteria = hasSearchCriteria(parsedSearchParams);
+  const currentRequestKey = `${location.search}\u0000${retryKey}`;
   const selectedFormat = useMemo(() => {
-    const formatName = new URLSearchParams(location.search).get("formatName");
+    const formatName = parsedSearchParams.formatName;
     return FORMAT_PRESETS.find(({ name }) => name === formatName) || null;
-  }, [location.search]);
+  }, [parsedSearchParams]);
 
   useEffect(() => {
-    const parsedSearchParams = parseSearchParams(location.search);
     const apiSearchParams = { ...parsedSearchParams };
     delete apiSearchParams.formatName;
     const activeFormat = FORMAT_PRESETS.find(
@@ -43,20 +64,23 @@ const SearchResults = ({ compact = false }) => {
         apiSearchParams.setIncluded = setCodes;
       }
     }
-    setPage(Number(parsedSearchParams.page) || 1);
-    setPageSize(Number(parsedSearchParams.pageSize) || 50);
-    setIsLoaded(false);
-    setNeedsCriteria(false);
+    const requestedPage = Number(parsedSearchParams.page) || 1;
+    const requestedPageSize = Number(parsedSearchParams.pageSize) || 50;
 
-    if (!hasSearchCriteria(parsedSearchParams)) {
-      setResults([]);
-      setTotal(0);
-      setIsLoaded(true);
-      setNeedsCriteria(true);
+    if (!hasCriteria) {
+      reset({
+        results: [],
+        total: 0,
+        page: requestedPage,
+        pageSize: requestedPageSize,
+      });
       return undefined;
     }
 
     const abortController = new AbortController();
+    let isActive = true;
+    setResourceRequestKey(currentRequestKey);
+    start();
 
     const loadResults = async () => {
       try {
@@ -75,22 +99,30 @@ const SearchResults = ({ compact = false }) => {
         }
 
         const data = await response.json();
-        setResults(data.data || []);
-        setTotal(data.total || 0);
-        setPage(data.page || 1);
-        setPageSize(data.pageSize || 50);
+        if (!isActive || abortController.signal.aborted) return;
+        succeed({
+          results: Array.isArray(data.data) ? data.data : [],
+          total: data.total || 0,
+          page: data.page || 1,
+          pageSize: data.pageSize || requestedPageSize,
+        });
       } catch (error) {
-        if (error.name === "AbortError") return;
+        if (!isActive || abortController.signal.aborted || error.name === "AbortError") return;
         console.error("Search API error:", error);
-        window.alert(`Failed to load search results: ${error.message}`);
-      } finally {
-        setIsLoaded(true);
+        fail("検索結果の読み込みに失敗しました。");
       }
     };
 
     loadResults();
-    return () => abortController.abort();
-  }, [location.search]);
+    return () => {
+      isActive = false;
+      abortController.abort();
+    };
+  }, [currentRequestKey, fail, hasCriteria, parsedSearchParams, reset, start, succeed]);
+
+  const handleRetry = useCallback(() => {
+    setRetryKey((current) => current + 1);
+  }, []);
 
   const handlePageChange = useCallback(
     (nextPage) => {
@@ -103,6 +135,14 @@ const SearchResults = ({ compact = false }) => {
   );
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize || 1));
+  const displayStatus = !hasCriteria
+    ? ASYNC_STATUS.IDLE
+    : status === ASYNC_STATUS.IDLE || resourceRequestKey !== currentRequestKey
+      ? ASYNC_STATUS.LOADING
+      : status;
+  const hasCompletedSearch =
+    hasCriteria &&
+    (displayStatus === ASYNC_STATUS.EMPTY || displayStatus === ASYNC_STATUS.SUCCESS);
 
   const viewToggle = (
     <div className="search-results-view-toggle" aria-label="検索結果の表示切替">
@@ -202,7 +242,7 @@ const SearchResults = ({ compact = false }) => {
 
   // デスクトップでは検索条件が無いときフォームを表示するため、結果パネルは出さない
   // (フォームと結果を排他表示。本番と同じ挙動)。モバイルは従来どおり縦積み。
-  if (!compact && !hasSearchCriteria(parseSearchParams(location.search))) {
+  if (!compact && !hasCriteria) {
     return null;
   }
 
@@ -211,7 +251,9 @@ const SearchResults = ({ compact = false }) => {
       <div className="search-results-toolbar">
         <div className={compact ? "search-results-heading-row" : undefined}>
           <h1>検索結果</h1>
-          <div className="search-results-summary">{`${total}件 / ${page} / ${totalPages}ページ`}</div>
+          {hasCompletedSearch ? (
+            <div className="search-results-summary">{`${total}件 / ${page} / ${totalPages}ページ`}</div>
+          ) : null}
           {compact ? viewToggle : null}
         </div>
         {!compact && (
@@ -233,15 +275,20 @@ const SearchResults = ({ compact = false }) => {
         )}
       </div>
 
-      {!needsCriteria ? pagination : null}
+      {hasCompletedSearch ? pagination : null}
 
-      {!isLoaded ? (
-        <div className="results-empty-state">読み込み中...</div>
-      ) : needsCriteria ? (
-        <div className="results-empty-state">検索条件を指定してください。</div>
-      ) : results.length === 0 ? (
-        <div className="results-empty-state">検索結果がありません。</div>
-      ) : (
+      <AsyncState
+        status={displayStatus}
+        error={error}
+        idleMessage="検索条件を指定してください。"
+        emptyMessage={
+          total > 0
+            ? "指定したページに表示できるカードはありません。検索条件またはページを変更してください。"
+            : "検索条件に一致するカードはありません。"
+        }
+        errorMessage="検索結果の読み込みに失敗しました。"
+        onRetry={handleRetry}
+      >
         <div className={viewMode === "image" ? "results-list results-image-grid" : "results-list"}>
           {results.map((card) => {
             const formatStatus = selectedFormat
@@ -260,9 +307,9 @@ const SearchResults = ({ compact = false }) => {
             );
           })}
         </div>
-      )}
+      </AsyncState>
 
-      {!needsCriteria ? pagination : null}
+      {hasCompletedSearch ? pagination : null}
     </div>
   );
 };

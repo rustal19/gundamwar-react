@@ -1,36 +1,69 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import AsyncState from "../components/AsyncState";
 import { useAuth } from "../context/AuthContext";
+import { ASYNC_STATUS, useAsyncResource } from "../hooks/useAsyncResource";
 import { fetchUsers, resetUserNickname, updateUserRole } from "../services/users";
 
 const ROLES = ["user", "organizer", "admin"];
 
 export default function AdminUsers({ compact = false }) {
-  const { authMode, isAdmin } = useAuth();
+  const { authMode, isAdmin, isReady } = useAuth();
   const [query, setQuery] = useState("");
-  const [users, setUsers] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [submittedQuery, setSubmittedQuery] = useState("");
+  const [actionError, setActionError] = useState("");
+  const usersRequestIdRef = useRef(0);
+  const {
+    status: usersStatus,
+    data: users,
+    error: usersError,
+    start: startUsersLoad,
+    succeed: succeedUsersLoad,
+    update: updateUsers,
+    fail: failUsersLoad,
+    reset: resetUsersLoad,
+  } = useAsyncResource([]);
 
   const loadUsers = useCallback(
     async (nextQuery = "") => {
-      if (!isAdmin) return;
-      setIsLoading(true);
-      setError("");
+      if (isReady === false || !isAdmin) return;
+
+      const requestId = usersRequestIdRef.current + 1;
+      usersRequestIdRef.current = requestId;
+      setSubmittedQuery(nextQuery);
+      setActionError("");
+      startUsersLoad();
       try {
         const payload = await fetchUsers({ query: nextQuery, authMode });
-        setUsers(Array.isArray(payload.items) ? payload.items : []);
-      } catch (loadError) {
-        setError(loadError.message);
-      } finally {
-        setIsLoading(false);
+        if (usersRequestIdRef.current === requestId) {
+          succeedUsersLoad(Array.isArray(payload.items) ? payload.items : []);
+        }
+      } catch {
+        if (usersRequestIdRef.current === requestId) {
+          failUsersLoad("ユーザー情報を取得できませんでした。時間をおいて再試行してください。");
+        }
       }
     },
-    [authMode, isAdmin]
+    [
+      authMode,
+      failUsersLoad,
+      isAdmin,
+      isReady,
+      startUsersLoad,
+      succeedUsersLoad,
+    ]
   );
 
   useEffect(() => {
+    if (isReady === false || !isAdmin) {
+      usersRequestIdRef.current += 1;
+      resetUsersLoad();
+      return;
+    }
     loadUsers("");
-  }, [loadUsers]);
+    return () => {
+      usersRequestIdRef.current += 1;
+    };
+  }, [isAdmin, isReady, loadUsers, resetUsersLoad]);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -38,32 +71,61 @@ export default function AdminUsers({ compact = false }) {
   };
 
   const handleRoleChange = async (userId, role) => {
-    setError("");
+    const requestId = usersRequestIdRef.current;
+    setActionError("");
     try {
       const updatedUser = await updateUserRole({ userId, role, authMode });
-      setUsers((currentUsers) =>
-        currentUsers.map((user) => (user.id === updatedUser.id ? updatedUser : user))
-      );
-    } catch (updateError) {
-      setError(updateError.message);
+      if (usersRequestIdRef.current === requestId) {
+        updateUsers((currentUsers) =>
+          currentUsers.map((user) =>
+            user.id === updatedUser.id ? { ...user, role: updatedUser.role } : user
+          )
+        );
+      }
+    } catch {
+      if (usersRequestIdRef.current === requestId) {
+        setActionError("ユーザーのロールを変更できませんでした。もう一度お試しください。");
+      }
     }
   };
 
   const handleNicknameReset = async (userId) => {
     if (!window.confirm("このユーザーのニックネームをリセットしますか？")) return;
 
-    setError("");
+    const requestId = usersRequestIdRef.current;
+    setActionError("");
     try {
       const updatedUser = await resetUserNickname({ userId, authMode });
-      setUsers((currentUsers) =>
-        currentUsers.map((user) =>
-          user.id === updatedUser.id ? { ...user, ...updatedUser, nickname: "" } : user
-        )
-      );
-    } catch (resetError) {
-      setError(resetError.message);
+      if (usersRequestIdRef.current === requestId) {
+        updateUsers((currentUsers) =>
+          currentUsers.map((user) =>
+            user.id === updatedUser.id ? { ...user, nickname: "" } : user
+          )
+        );
+      }
+    } catch {
+      if (usersRequestIdRef.current === requestId) {
+        setActionError("ニックネームをリセットできませんでした。もう一度お試しください。");
+      }
     }
   };
+
+  if (isReady === false) {
+    return (
+      <main id="search-results-container">
+        <div className="search-results-toolbar">
+          <div>
+            <h1>権限管理</h1>
+            <div className="search-results-summary">admin 権限を確認しています。</div>
+          </div>
+        </div>
+        <AsyncState
+          status={ASYNC_STATUS.LOADING}
+          loadingMessage="認証情報を読み込み中..."
+        />
+      </main>
+    );
+  }
 
   if (!isAdmin) {
     return (
@@ -95,18 +157,33 @@ export default function AdminUsers({ compact = false }) {
           onChange={(event) => setQuery(event.target.value)}
           placeholder="名前・メール・ID・ロールで検索"
         />
-        <button className="results-link-button primary" type="submit" disabled={isLoading}>
+        <button
+          className="results-link-button primary"
+          type="submit"
+          disabled={usersStatus === ASYNC_STATUS.LOADING}
+        >
           検索
         </button>
       </form>
 
-      {error ? <div className="results-empty-state">{error}</div> : null}
+      {actionError ? (
+        <div className="results-empty-state" role="alert">
+          {actionError}
+        </div>
+      ) : null}
 
-      {isLoading ? (
-        <div className="results-empty-state">読み込み中...</div>
-      ) : users.length === 0 ? (
-        <div className="results-empty-state">ユーザーが見つかりません。</div>
-      ) : (
+      <AsyncState
+        status={usersStatus}
+        error={usersError}
+        idleMessage="ユーザー情報はまだ取得されていません。"
+        loadingMessage="ユーザー情報を読み込み中..."
+        emptyMessage={
+          submittedQuery.trim()
+            ? "検索条件に一致するユーザーはいません。"
+            : "登録されているユーザーはいません。"
+        }
+        onRetry={() => loadUsers(submittedQuery)}
+      >
         <div className="results-list">
           {users.map((user) => (
             <div className="card-item result-card" key={user.id}>
@@ -142,7 +219,7 @@ export default function AdminUsers({ compact = false }) {
             </div>
           ))}
         </div>
-      )}
+      </AsyncState>
     </main>
   );
 }

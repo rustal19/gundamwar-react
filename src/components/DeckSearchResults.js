@@ -1,36 +1,43 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import AsyncState from "./AsyncState";
 import SearchResultCard from "./SearchResultCard";
 import { FORMAT_PRESETS } from "../data/formats";
+import { ASYNC_STATUS, useAsyncResource } from "../hooks/useAsyncResource";
 import {
   API_SEARCH_URL,
   getCardFormatStatus,
   getFormatSetCodes,
+  hasSearchCriteria,
   parseSearchParams,
 } from "../utils/searchResults";
 import "../pages/SearchResults.css";
 
 const DEFAULT_SAMPLE_PAGE_SIZE = 20;
-const NON_FILTER_KEYS = new Set(["page", "pageSize"]);
+const INITIAL_SEARCH_RESULTS = {
+  results: [],
+  total: 0,
+  page: 1,
+  pageSize: DEFAULT_SAMPLE_PAGE_SIZE,
+};
 
-function hasMeaningfulFilters(searchParams) {
-  return Object.entries(searchParams).some(([key, value]) => {
-    if (NON_FILTER_KEYS.has(key)) return false;
-    if (Array.isArray(value)) return value.length > 0;
-    return value !== undefined && value !== null && value !== "";
-  });
-}
+const isSearchResultsEmpty = (value) => !value?.results?.length;
 
 const DeckSearchResults = ({ compact = false, formatName }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const resultsViewportRef = useRef(null);
-  const [results, setResults] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(DEFAULT_SAMPLE_PAGE_SIZE);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const {
+    status,
+    data: { results, total, page, pageSize },
+    error,
+    start,
+    succeed,
+    fail,
+    reset,
+  } = useAsyncResource(INITIAL_SEARCH_RESULTS, isSearchResultsEmpty);
+  const [retryKey, setRetryKey] = useState(0);
+  const [resourceRequestKey, setResourceRequestKey] = useState("");
   const [viewMode, setViewMode] = useState("detail");
   const isFormatControlled = formatName !== undefined;
   const selectedFormat = useMemo(() => {
@@ -39,7 +46,7 @@ const DeckSearchResults = ({ compact = false, formatName }) => {
     return FORMAT_PRESETS.find(({ name }) => name === activeFormatName) || null;
   }, [formatName, isFormatControlled, location.search]);
 
-  useEffect(() => {
+  const searchRequest = useMemo(() => {
     const parsedSearchParams = parseSearchParams(location.search);
     const apiSearchParams = { ...parsedSearchParams };
     const criteriaSearchParams = { ...parsedSearchParams };
@@ -70,24 +77,42 @@ const DeckSearchResults = ({ compact = false, formatName }) => {
     if (selectedFormat && apiSearchParams.pageSize === undefined) {
       apiSearchParams.pageSize = requestedPageSize;
     }
-    const useSampleOnly = !hasMeaningfulFilters(criteriaSearchParams);
+    const shouldSearch = hasSearchCriteria(criteriaSearchParams);
 
-    if (useSampleOnly) {
-      setResults([]);
-      setTotal(0);
-      setPage(1);
-      setPageSize(requestedPageSize);
-      setHasSearched(false);
-      setIsLoaded(true);
+    return {
+      apiSearchParams,
+      requestedPage,
+      requestedPageSize,
+      shouldSearch,
+    };
+  }, [isFormatControlled, location.search, selectedFormat]);
+  const currentRequestKey = useMemo(
+    () => `${JSON.stringify(searchRequest)}\u0000${retryKey}`,
+    [retryKey, searchRequest]
+  );
+
+  useEffect(() => {
+    const {
+      apiSearchParams,
+      requestedPage,
+      requestedPageSize,
+      shouldSearch,
+    } = searchRequest;
+
+    if (!shouldSearch) {
+      reset({
+        results: [],
+        total: 0,
+        page: 1,
+        pageSize: requestedPageSize,
+      });
       return undefined;
     }
 
-    setHasSearched(true);
-    setPage(requestedPage);
-    setPageSize(requestedPageSize);
-    setIsLoaded(false);
-
     const abortController = new AbortController();
+    let isActive = true;
+    setResourceRequestKey(currentRequestKey);
+    start();
 
     const loadResults = async () => {
       try {
@@ -106,25 +131,30 @@ const DeckSearchResults = ({ compact = false, formatName }) => {
         }
 
         const data = await response.json();
-        setResults(data.data || []);
-        setTotal(data.total || 0);
-        setPage(data.page || 1);
-        setPageSize(data.pageSize || requestedPageSize);
+        if (!isActive || abortController.signal.aborted) return;
+        succeed({
+          results: Array.isArray(data.data) ? data.data : [],
+          total: data.total || 0,
+          page: data.page || 1,
+          pageSize: data.pageSize || requestedPageSize,
+        });
       } catch (error) {
-        if (error.name === "AbortError") return;
+        if (!isActive || abortController.signal.aborted || error.name === "AbortError") return;
         console.error("Deck search API error:", error);
-        setResults([]);
-        setTotal(0);
-        setPage(requestedPage);
-        setPageSize(requestedPageSize);
-      } finally {
-        setIsLoaded(true);
+        fail("検索結果の読み込みに失敗しました。");
       }
     };
 
     loadResults();
-    return () => abortController.abort();
-  }, [isFormatControlled, location.search, selectedFormat]);
+    return () => {
+      isActive = false;
+      abortController.abort();
+    };
+  }, [currentRequestKey, fail, reset, searchRequest, start, succeed]);
+
+  const handleRetry = useCallback(() => {
+    setRetryKey((current) => current + 1);
+  }, []);
 
   useEffect(() => {
     resultsViewportRef.current?.scrollTo({ top: 0, behavior: "auto" });
@@ -140,6 +170,14 @@ const DeckSearchResults = ({ compact = false, formatName }) => {
   );
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize || 1));
+  const displayStatus = !searchRequest.shouldSearch
+    ? ASYNC_STATUS.IDLE
+    : status === ASYNC_STATUS.IDLE || resourceRequestKey !== currentRequestKey
+      ? ASYNC_STATUS.LOADING
+      : status;
+  const hasCompletedSearch =
+    searchRequest.shouldSearch &&
+    (displayStatus === ASYNC_STATUS.EMPTY || displayStatus === ASYNC_STATUS.SUCCESS);
 
   const pagination = useMemo(() => {
     if (totalPages <= 1) return null;
@@ -218,9 +256,9 @@ const DeckSearchResults = ({ compact = false, formatName }) => {
     return <div className="pagination pagination-inline">{buttons}</div>;
   }, [handlePageChange, page, totalPages]);
 
-  const summary = (
+  const summary = hasCompletedSearch ? (
     <div className="search-results-summary">{`${total}件 / ${page} / ${totalPages}ページ`}</div>
-  );
+  ) : null;
 
   const viewToggle = (
     <div className="search-results-view-toggle" aria-label="検索結果の表示切替">
@@ -253,27 +291,34 @@ const DeckSearchResults = ({ compact = false, formatName }) => {
             {viewToggle}
           </div>
 
-          <div className="deck-search-results-controls">{pagination}</div>
+          <div className="deck-search-results-controls">
+            {hasCompletedSearch ? pagination : null}
+          </div>
         </div>
       ) : (
         <div className="deck-panel-header">
           <h2>検索結果</h2>
           <div className="deck-search-results-header-tools">
             {summary}
-            {pagination}
+            {hasCompletedSearch ? pagination : null}
             {viewToggle}
           </div>
         </div>
       )}
 
       <div ref={resultsViewportRef} className="deck-search-results-viewport">
-        {!isLoaded ? (
-          <div className="results-empty-state">読み込み中...</div>
-        ) : !hasSearched ? (
-          <div className="results-empty-state">検索条件を指定してください。</div>
-        ) : results.length === 0 ? (
-          <div className="results-empty-state">検索結果がありません。</div>
-        ) : (
+        <AsyncState
+          status={displayStatus}
+          error={error}
+          idleMessage="検索条件を指定してください。"
+          emptyMessage={
+            total > 0
+              ? "指定したページに表示できるカードはありません。検索条件またはページを変更してください。"
+              : "検索条件に一致するカードはありません。"
+          }
+          errorMessage="検索結果の読み込みに失敗しました。"
+          onRetry={handleRetry}
+        >
           <div className={viewMode === "image" ? "results-list results-image-grid" : "results-list"}>
             {results.map((card) => {
               const formatStatus = selectedFormat
@@ -290,7 +335,7 @@ const DeckSearchResults = ({ compact = false, formatName }) => {
               );
             })}
           </div>
-        )}
+        </AsyncState>
       </div>
     </section>
   );

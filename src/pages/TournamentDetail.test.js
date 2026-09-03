@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
 import TournamentDetail, { formatCardCountRange } from "./TournamentDetail";
 import {
   checkInMyEntry,
@@ -10,6 +10,7 @@ import {
   getTournamentPermissions,
   updateMyEntry,
 } from "../services/tournaments";
+import { fetchSavedDecks } from "../services/savedDecks";
 
 let mockAuthState = {
   authMode: "mock",
@@ -38,12 +39,36 @@ jest.mock("../services/tournaments", () => ({
   getTournamentPermissions: jest.fn(),
 }));
 
+jest.mock("../services/savedDecks", () => ({
+  fetchSavedDecks: jest.fn(),
+}));
+
 function renderDetail() {
   return render(
     <MemoryRouter initialEntries={["/tournaments/t-detail"]}>
       <Routes>
         <Route path="/tournaments/:id" element={<TournamentDetail />} />
       </Routes>
+    </MemoryRouter>
+  );
+}
+
+function SwitchableDetailRoute() {
+  const navigate = useNavigate();
+  return (
+    <>
+      <button type="button" onClick={() => navigate("/tournaments/t-next")}>大会を切り替える</button>
+      <Routes>
+        <Route path="/tournaments/:id" element={<TournamentDetail />} />
+      </Routes>
+    </>
+  );
+}
+
+function renderSwitchableDetail() {
+  return render(
+    <MemoryRouter initialEntries={["/tournaments/t-detail"]}>
+      <SwitchableDetailRoute />
     </MemoryRouter>
   );
 }
@@ -147,6 +172,7 @@ beforeEach(() => {
   updateMyEntry.mockReset().mockResolvedValue({});
   fetchRounds.mockReset().mockResolvedValue({ rounds: [] });
   fetchStandings.mockReset().mockResolvedValue({ items: [] });
+  fetchSavedDecks.mockReset().mockResolvedValue([]);
   getTournamentPermissions.mockReset().mockImplementation((tournament, viewer) => {
     const viewerId = viewer?.id == null ? "" : String(viewer.id);
     const canManage = Boolean(
@@ -164,6 +190,145 @@ beforeEach(() => {
 test("レギュレーション枚数は同値を単一表記、異なる値を範囲表記にする", () => {
   expect(formatCardCountRange(50, 50)).toBe("50枚");
   expect(formatCardCountRange(50, 60)).toBe("50 - 60枚");
+});
+
+test("ラウンド取得だけ失敗しても大会情報を表示し、空状態と区別して再試行できる", async () => {
+  fetchRounds.mockRejectedValueOnce(new Error("Failed to fetch"));
+
+  renderDetail();
+
+  expect(await screen.findByRole("heading", { name: "参加者表示テスト大会" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "ペアリング" }));
+
+  expect(await screen.findByText("ペアリングを読み込めませんでした。")).toBeInTheDocument();
+  expect(screen.queryByText("ペアリングはまだ作成されていません。")).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "再試行" }));
+
+  expect(await screen.findByText("ペアリングはまだ作成されていません。")).toBeInTheDocument();
+  expect(screen.queryByText("ペアリングを読み込めませんでした。")).not.toBeInTheDocument();
+  expect(fetchRounds).toHaveBeenCalledTimes(2);
+});
+
+test("順位取得だけ失敗しても大会情報を残し、順位0件を同時表示しない", async () => {
+  fetchStandings.mockRejectedValueOnce(new Error("Failed to fetch"));
+
+  renderDetail();
+
+  expect(await screen.findByRole("heading", { name: "参加者表示テスト大会" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "順位表" }));
+
+  expect(await screen.findByText("順位表を読み込めませんでした。")).toBeInTheDocument();
+  expect(screen.queryByText("順位データはまだありません。")).not.toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "参加者表示テスト大会" })).toBeInTheDocument();
+});
+
+test("大会URL切替前の遅い応答で切替後の大会を上書きしない", async () => {
+  let resolveOldTournament;
+  fetchTournament.mockImplementation((tournamentId) => {
+    if (tournamentId === "t-detail") {
+      return new Promise((resolve) => {
+        resolveOldTournament = resolve;
+      });
+    }
+    return Promise.resolve(
+      registrationTournament({ id: "t-next", title: "切替後の大会" })
+    );
+  });
+
+  renderSwitchableDetail();
+  fireEvent.click(screen.getByRole("button", { name: "大会を切り替える" }));
+
+  expect(await screen.findByRole("heading", { name: "切替後の大会" })).toBeInTheDocument();
+
+  await act(async () => {
+    resolveOldTournament(registrationTournament({ title: "切替前の大会" }));
+  });
+
+  expect(screen.getByRole("heading", { name: "切替後の大会" })).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "切替前の大会" })).not.toBeInTheDocument();
+});
+
+test("大会URL切替前の書込完了後に旧大会の再取得を開始しない", async () => {
+  mockAuthState = {
+    authMode: "mock",
+    isAuthenticated: true,
+    user: { id: "player-1", name: "テストユーザー" },
+  };
+  let resolveEntry;
+  createEntry.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveEntry = resolve;
+      })
+  );
+  fetchTournament.mockImplementation((tournamentId) =>
+    Promise.resolve(
+      registrationTournament({
+        id: tournamentId,
+        title: tournamentId === "t-detail" ? "切替前の大会" : "切替後の大会",
+      })
+    )
+  );
+
+  renderSwitchableDetail();
+  fireEvent.click(await screen.findByRole("button", { name: "エントリー" }));
+  fireEvent.click(screen.getByRole("button", { name: "大会を切り替える" }));
+  expect(await screen.findByRole("heading", { name: "切替後の大会" })).toBeInTheDocument();
+
+  await act(async () => {
+    resolveEntry({ id: "old-entry" });
+  });
+
+  expect(screen.getByRole("heading", { name: "切替後の大会" })).toBeInTheDocument();
+  expect(screen.queryByText("エントリーしました。")).not.toBeInTheDocument();
+  expect(fetchTournament.mock.calls.map(([tournamentId]) => tournamentId)).toEqual([
+    "t-detail",
+    "t-next",
+  ]);
+});
+
+test("参加者0人では見出しだけの表を残さず理由を表示する", async () => {
+  mockTournament = registrationTournament({ entries: [] });
+
+  renderDetail();
+
+  fireEvent.click(await screen.findByRole("button", { name: "参加者" }));
+
+  expect(screen.getByText("参加者はまだ登録されていません。")).toBeInTheDocument();
+  expect(screen.queryByRole("columnheader", { name: "プレイヤー" })).not.toBeInTheDocument();
+});
+
+test("対戦0件のラウンドでは見出しだけの表を残さない", async () => {
+  fetchRounds.mockResolvedValue({
+    rounds: [{ id: "round-empty", number: 1, stage: "swiss", status: "in_progress", matches: [] }],
+  });
+
+  renderDetail();
+
+  fireEvent.click(await screen.findByRole("button", { name: "ペアリング" }));
+  expect(await screen.findByText("このラウンドには対戦がありません。")).toBeInTheDocument();
+  expect(screen.queryByRole("columnheader", { name: "卓" })).not.toBeInTheDocument();
+});
+
+test("保存済みデッキ取得失敗をデッキ0件と区別して再試行できる", async () => {
+  mockAuthState = {
+    authMode: "mock",
+    isAuthenticated: true,
+    user: { id: "player-saved-deck", name: "保存デッキ利用者" },
+  };
+  mockTournament = registrationTournament({ entries: [] });
+  fetchSavedDecks.mockRejectedValueOnce(new Error("Failed to fetch"));
+
+  renderDetail();
+
+  fireEvent.click(await screen.findByRole("button", { name: "デッキを選ぶ" }));
+  expect(await screen.findByText("保存済みデッキを読み込めませんでした。")).toBeInTheDocument();
+  expect(screen.queryByText("保存済みデッキはありません。")).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "再試行" }));
+  await waitFor(() => expect(fetchSavedDecks).toHaveBeenCalledTimes(2));
+  expect(await screen.findByText("保存済みデッキはありません。")).toBeInTheDocument();
 });
 
 test("大会情報のレギュレーションにデッキ枚数を表示し同名上限は表示しない", async () => {
@@ -436,6 +601,70 @@ test("任意大会ではデッキなしでエントリーし未提出として�
   );
   expect(await screen.findByText("エントリーしました。")).toBeInTheDocument();
   expect(screen.queryByText("デッキリストを提出しました。")).not.toBeInTheDocument();
+});
+
+test("エントリー成功後の再取得失敗では成功表示と二重操作を止めて再試行できる", async () => {
+  mockAuthState = {
+    authMode: "mock",
+    isAuthenticated: true,
+    user: { id: "player-1", name: "テストユーザー" },
+  };
+  mockTournament = registrationTournament();
+  const entry = {
+    id: "entry-mine",
+    user: mockAuthState.user,
+    status: "registered",
+    decklistState: "none",
+    deckItems: null,
+    decklistSubmittedAt: null,
+    deckLockedAt: null,
+  };
+  fetchTournament
+    .mockResolvedValueOnce(mockTournament)
+    .mockRejectedValueOnce(new Error("Failed to fetch"))
+    .mockResolvedValueOnce({ ...mockTournament, entries: [entry], myEntry: entry });
+
+  renderDetail();
+  fireEvent.click(await screen.findByRole("button", { name: "エントリー" }));
+
+  expect(
+    await screen.findByText(
+      "操作は完了しましたが、最新の参加状態を確認できませんでした。"
+    )
+  ).toBeInTheDocument();
+  expect(screen.queryByText("エントリーしました。")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "エントリー" })).toBeDisabled();
+  expect(createEntry).toHaveBeenCalledTimes(1);
+
+  fireEvent.click(screen.getByRole("button", { name: "再試行" }));
+
+  expect(await screen.findByText("エントリーしました。")).toBeInTheDocument();
+  expect(
+    screen.queryByText(
+      "操作は完了しましたが、最新の参加状態を確認できませんでした。"
+    )
+  ).not.toBeInTheDocument();
+  expect(createEntry).toHaveBeenCalledTimes(1);
+});
+
+test("エントリー操作の英語通信エラーを日本語で表示する", async () => {
+  mockAuthState = {
+    authMode: "mock",
+    isAuthenticated: true,
+    user: { id: "player-1", name: "テストユーザー" },
+  };
+  mockTournament = registrationTournament();
+  createEntry.mockRejectedValueOnce(new Error("Failed to fetch"));
+
+  renderDetail();
+  fireEvent.click(await screen.findByRole("button", { name: "エントリー" }));
+
+  expect(
+    await screen.findByText(
+      "エントリー情報を更新できませんでした。もう一度お試しください。"
+    )
+  ).toBeInTheDocument();
+  expect(screen.queryByText("Failed to fetch")).not.toBeInTheDocument();
 });
 
 test("定員到達後もキャンセル待ちとしてエントリーできる", async () => {

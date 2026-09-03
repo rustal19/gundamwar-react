@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useDeck } from "../context/DeckContext";
 import { fetchSavedDecks } from "../services/savedDecks";
+import AsyncState from "../components/AsyncState";
 import Bracket from "../components/Bracket";
 import CardHoverPreview from "../components/CardHoverPreview";
 import RoundTabs from "../components/RoundTabs";
@@ -33,6 +34,7 @@ import {
   getSwissRoundSummary,
 } from "../utils/tournament/swiss";
 import { computeStandings } from "../utils/tournament/standings";
+import { ASYNC_STATUS, useAsyncResource } from "../hooks/useAsyncResource";
 import NotFound from "./NotFound";
 import "./Tournaments.css";
 
@@ -124,6 +126,22 @@ function matchScoreLabel(match) {
   return `${match.player1Games} - ${match.player2Games}（${resultLabel(match.result)}）`;
 }
 
+function TournamentAsyncState({ status, ...props }) {
+  return (
+    <AsyncState
+      status={status}
+      className={status === ASYNC_STATUS.ERROR ? "tournament-alert" : "tournament-empty"}
+      retryButtonClassName="tournament-secondary-button"
+      {...props}
+    />
+  );
+}
+
+function localizedActionError(error, fallback = "操作に失敗しました。もう一度お試しください。") {
+  const message = typeof error?.message === "string" ? error.message.trim() : "";
+  return /[\u3040-\u30ff\u3400-\u9fff]/.test(message) ? message : fallback;
+}
+
 function TournamentDeckRows({ items, compact }) {
   return (
     <table className="tournament-table tournament-decklist-table">
@@ -150,54 +168,262 @@ function TournamentDeckRows({ items, compact }) {
 
 export default function TournamentDetail({ compact = false }) {
   const { id } = useParams();
-  const { authMode, isAuthenticated, user } = useAuth();
+  const { authMode, isAuthenticated, isReady, user } = useAuth();
+  const requestContextKey = [
+    id || "",
+    authMode || "",
+    user?.id || "",
+    user?.role || "",
+    isAuthenticated ? "authenticated" : "anonymous",
+    isReady === false ? "pending" : "ready",
+  ].join("::");
+  const currentRequestContextRef = useRef(requestContextKey);
+  currentRequestContextRef.current = requestContextKey;
+  const isCurrentRequestContext = useCallback(
+    (contextKey) => currentRequestContextRef.current === contextKey,
+    []
+  );
   const currentDeck = useDeck();
   const [activeTab, setActiveTab] = useState("overview");
-  const [tournament, setTournament] = useState(null);
-  const [rounds, setRounds] = useState([]);
-  const [standings, setStandings] = useState([]);
   const [pairingRoundNumber, setPairingRoundNumber] = useState(null);
   const [resultRoundNumber, setResultRoundNumber] = useState(null);
   const [standingRoundNumber, setStandingRoundNumber] = useState(null);
-  const [savedDecks, setSavedDecks] = useState([]);
   const [deckSource, setDeckSource] = useState("current");
   const [selectedDeckId, setSelectedDeckId] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [isTournamentNotFound, setIsTournamentNotFound] = useState(false);
+  const [tournamentContextKey, setTournamentContextKey] = useState("");
+  const [pendingMutationRefresh, setPendingMutationRefresh] = useState(null);
+  const requestIdRef = useRef({ tournament: 0, rounds: 0, standings: 0, savedDecks: 0 });
+  const {
+    status: tournamentStatus,
+    data: tournament,
+    error: tournamentError,
+    start: startTournament,
+    succeed: succeedTournament,
+    fail: failTournament,
+  } = useAsyncResource(null);
+  const {
+    status: roundsStatus,
+    data: rounds,
+    error: roundsError,
+    start: startRounds,
+    succeed: succeedRounds,
+    fail: failRounds,
+  } = useAsyncResource([]);
+  const {
+    status: standingsStatus,
+    data: standings,
+    error: standingsError,
+    start: startStandings,
+    succeed: succeedStandings,
+    fail: failStandings,
+  } = useAsyncResource([]);
+  const {
+    status: savedDecksStatus,
+    data: savedDecks,
+    error: savedDecksError,
+    start: startSavedDecks,
+    succeed: succeedSavedDecks,
+    fail: failSavedDecks,
+    reset: resetSavedDecks,
+  } = useAsyncResource([]);
+  const {
+    status: mutationRefreshStatus,
+    error: mutationRefreshError,
+    start: startMutationRefresh,
+    succeed: succeedMutationRefresh,
+    fail: failMutationRefresh,
+    reset: resetMutationRefresh,
+  } = useAsyncResource(null, () => false);
 
-  const loadTournament = useCallback(async () => {
-    const nextTournament = await fetchTournament(id, { authMode, user });
-    setTournament(nextTournament);
-    return nextTournament;
-  }, [authMode, id, user]);
+  const loadTournament = useCallback(async ({ background = false, rethrow = false } = {}) => {
+    const contextKey = requestContextKey;
+    if (!isCurrentRequestContext(contextKey)) return null;
+    const requestId = requestIdRef.current.tournament + 1;
+    requestIdRef.current.tournament = requestId;
+    setTournamentContextKey(contextKey);
+    if (!background) startTournament();
+    setIsTournamentNotFound(false);
+    try {
+      const nextTournament = await fetchTournament(id, { authMode, user });
+      if (
+        requestIdRef.current.tournament !== requestId ||
+        !isCurrentRequestContext(contextKey)
+      ) return null;
+      succeedTournament(nextTournament);
+      return nextTournament;
+    } catch (loadError) {
+      if (
+        requestIdRef.current.tournament !== requestId ||
+        !isCurrentRequestContext(contextKey)
+      ) return null;
+      const notFound = loadError?.code === "not_found" || loadError?.status === 404;
+      if (!background) {
+        setIsTournamentNotFound(notFound);
+        failTournament(notFound ? "大会が見つかりません。" : "大会情報を読み込めませんでした。");
+      }
+      if (rethrow) throw loadError;
+      return null;
+    }
+  }, [
+    authMode,
+    failTournament,
+    id,
+    isCurrentRequestContext,
+    requestContextKey,
+    startTournament,
+    succeedTournament,
+    user,
+  ]);
+
+  const loadRounds = useCallback(async ({ background = false, rethrow = false } = {}) => {
+    const contextKey = requestContextKey;
+    if (!isCurrentRequestContext(contextKey)) return null;
+    const requestId = requestIdRef.current.rounds + 1;
+    requestIdRef.current.rounds = requestId;
+    if (!background) startRounds();
+    try {
+      const payload = await fetchRounds(id, { authMode, user });
+      if (
+        requestIdRef.current.rounds !== requestId ||
+        !isCurrentRequestContext(contextKey)
+      ) return null;
+      const nextRounds = payload.rounds || [];
+      succeedRounds(nextRounds);
+      return nextRounds;
+    } catch (loadError) {
+      if (
+        requestIdRef.current.rounds !== requestId ||
+        !isCurrentRequestContext(contextKey)
+      ) return null;
+      if (!background) failRounds("ペアリングを読み込めませんでした。");
+      if (rethrow) throw loadError;
+      return null;
+    }
+  }, [
+    authMode,
+    failRounds,
+    id,
+    isCurrentRequestContext,
+    requestContextKey,
+    startRounds,
+    succeedRounds,
+    user,
+  ]);
+
+  const loadStandings = useCallback(async ({ background = false, rethrow = false } = {}) => {
+    const contextKey = requestContextKey;
+    if (!isCurrentRequestContext(contextKey)) return null;
+    const requestId = requestIdRef.current.standings + 1;
+    requestIdRef.current.standings = requestId;
+    if (!background) startStandings();
+    try {
+      const payload = await fetchStandings(id, { authMode });
+      if (
+        requestIdRef.current.standings !== requestId ||
+        !isCurrentRequestContext(contextKey)
+      ) return null;
+      const nextStandings = payload.items || payload.standings || [];
+      succeedStandings(nextStandings);
+      return nextStandings;
+    } catch (loadError) {
+      if (
+        requestIdRef.current.standings !== requestId ||
+        !isCurrentRequestContext(contextKey)
+      ) return null;
+      if (!background) failStandings("順位表を読み込めませんでした。");
+      if (rethrow) throw loadError;
+      return null;
+    }
+  }, [
+    authMode,
+    failStandings,
+    id,
+    isCurrentRequestContext,
+    requestContextKey,
+    startStandings,
+    succeedStandings,
+  ]);
 
   const loadAll = useCallback(async ({ silent = false } = {}) => {
-    if (!silent) setIsLoading(true);
-    setError("");
+    if (isReady === false || !isCurrentRequestContext(requestContextKey)) return null;
+    return Promise.all([
+      loadTournament({ background: silent }),
+      loadRounds({ background: silent }),
+      loadStandings({ background: silent }),
+    ]);
+  }, [
+    isCurrentRequestContext,
+    isReady,
+    loadRounds,
+    loadStandings,
+    loadTournament,
+    requestContextKey,
+  ]);
+
+  const loadSavedDecks = useCallback(async () => {
+    const contextKey = requestContextKey;
+    if (!isCurrentRequestContext(contextKey)) return;
+    const requestId = requestIdRef.current.savedDecks + 1;
+    requestIdRef.current.savedDecks = requestId;
+    startSavedDecks();
     try {
-      const [nextTournament, nextRounds, nextStandings] = await Promise.all([
-        fetchTournament(id, { authMode, user }),
-        fetchRounds(id, { authMode, user }),
-        fetchStandings(id, { authMode }),
-      ]);
-      setTournament(nextTournament);
-      setRounds(nextRounds.rounds || []);
-      setStandings(nextStandings.items || nextStandings.standings || []);
-    } catch (loadError) {
-      setError(loadError.code === "not_found" || loadError.status === 404 ? "大会が見つかりません。" : loadError.message);
-    } finally {
-      if (!silent) setIsLoading(false);
+      const decks = await fetchSavedDecks({ authMode, user });
+      if (
+        requestIdRef.current.savedDecks !== requestId ||
+        !isCurrentRequestContext(contextKey)
+      ) return;
+      succeedSavedDecks(decks || []);
+    } catch (_loadError) {
+      if (
+        requestIdRef.current.savedDecks !== requestId ||
+        !isCurrentRequestContext(contextKey)
+      ) return;
+      failSavedDecks("保存済みデッキを読み込めませんでした。");
     }
-  }, [authMode, id, user]);
+  }, [
+    authMode,
+    failSavedDecks,
+    isCurrentRequestContext,
+    requestContextKey,
+    startSavedDecks,
+    succeedSavedDecks,
+    user,
+  ]);
 
   useEffect(() => {
-    loadAll();
-  }, [loadAll]);
+    setActiveTab("overview");
+    setPairingRoundNumber(null);
+    setResultRoundNumber(null);
+    setStandingRoundNumber(null);
+    setDeckSource("current");
+    setSelectedDeckId("");
+    setIsSubmitting(false);
+    setMessage("");
+    setError("");
+    setIsTournamentNotFound(false);
+    setTournamentContextKey("");
+    setPendingMutationRefresh(null);
+    resetMutationRefresh();
+  }, [requestContextKey, resetMutationRefresh]);
 
   useEffect(() => {
-    if (tournament?.status !== "in_progress") return undefined;
+    if (isReady !== false) loadAll();
+    return () => {
+      requestIdRef.current.tournament += 1;
+      requestIdRef.current.rounds += 1;
+      requestIdRef.current.standings += 1;
+    };
+  }, [isReady, loadAll]);
+
+  useEffect(() => {
+    if (
+      tournamentContextKey !== requestContextKey ||
+      tournament?.status !== "in_progress"
+    ) return undefined;
 
     let intervalId = null;
     const refresh = () => {
@@ -230,25 +456,19 @@ export default function TournamentDetail({ compact = false }) {
       stop();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [loadAll, tournament?.status]);
+  }, [loadAll, requestContextKey, tournament?.status, tournamentContextKey]);
 
   useEffect(() => {
-    if (!isAuthenticated || !user) {
-      setSavedDecks([]);
+    if (isReady === false || !isAuthenticated || !user) {
+      requestIdRef.current.savedDecks += 1;
+      resetSavedDecks();
       return;
     }
-    let cancelled = false;
-    fetchSavedDecks({ authMode, user })
-      .then((decks) => {
-        if (!cancelled) setSavedDecks(decks);
-      })
-      .catch(() => {
-        if (!cancelled) setSavedDecks([]);
-      });
+    loadSavedDecks();
     return () => {
-      cancelled = true;
+      requestIdRef.current.savedDecks += 1;
     };
-  }, [authMode, isAuthenticated, user]);
+  }, [isAuthenticated, isReady, loadSavedDecks, resetSavedDecks, user]);
 
   const entries = useMemo(() => tournament?.entries || [], [tournament?.entries]);
   const permissions = useMemo(
@@ -390,110 +610,234 @@ export default function TournamentDetail({ compact = false }) {
       entry: findEntry(entries, standing.entryId),
     }));
   }, [entries, rounds.length, selectedStandingRound, standings, swissRounds]);
+  const standingsDisplayStatus =
+    standingsStatus === ASYNC_STATUS.EMPTY && pointInTimeStandings.length
+      ? ASYNC_STATUS.SUCCESS
+      : standingsStatus;
+  const entryMutationStateUnconfirmed = [
+    ASYNC_STATUS.LOADING,
+    ASYNC_STATUS.ERROR,
+  ].includes(mutationRefreshStatus);
 
   const submitDisabled =
     isSubmitting ||
+    entryMutationStateUnconfirmed ||
     !isAuthenticated ||
     (deckViolations.length > 0 && !canEnterWithoutDeck) ||
     (!canRegister && !canUpdateDeck);
 
+  const refreshAfterMutation = async ({
+    contextKey,
+    includeStandings = false,
+    successMessage,
+  }) => {
+    if (!isCurrentRequestContext(contextKey)) return false;
+    const pendingRefresh = { contextKey, includeStandings, successMessage };
+    setPendingMutationRefresh(pendingRefresh);
+    startMutationRefresh();
+    setMessage("");
+    setError("");
+    try {
+      const refreshedTournament = await loadTournament({ background: true, rethrow: true });
+      if (refreshedTournament == null) throw new Error("stale tournament refresh");
+      if (includeStandings) {
+        const refreshedStandings = await loadStandings({ background: true, rethrow: true });
+        if (refreshedStandings == null) throw new Error("stale standings refresh");
+      }
+      if (!isCurrentRequestContext(contextKey)) return false;
+      succeedMutationRefresh({ contextKey, refreshed: true });
+      setPendingMutationRefresh(null);
+      setMessage(successMessage);
+      return true;
+    } catch (_refreshError) {
+      if (isCurrentRequestContext(contextKey)) {
+        setMessage("");
+        setError("");
+        failMutationRefresh(
+          "操作は完了しましたが、最新の参加状態を確認できませんでした。"
+        );
+      }
+      return false;
+    }
+  };
+
+  const retryMutationRefresh = () => {
+    if (
+      !pendingMutationRefresh ||
+      !isCurrentRequestContext(pendingMutationRefresh.contextKey)
+    ) return;
+    return refreshAfterMutation(pendingMutationRefresh);
+  };
+
   const submitEntry = async () => {
     if (deckViolations.length > 0 && !canEnterWithoutDeck) return;
     if (myEntry && !canUpdateDeck) return;
+    const actionContextKey = requestContextKey;
+    if (!isCurrentRequestContext(actionContextKey)) return;
     setIsSubmitting(true);
     setError("");
     setMessage("");
+    setPendingMutationRefresh(null);
+    resetMutationRefresh();
     try {
+      let successMessage = "";
       if (myEntry) {
         await updateMyEntry({ tournamentId: id, deckItems: submittedItems, authMode, user });
-        setMessage("デッキリストを提出しました。");
+        successMessage = "デッキリストを提出しました。";
       } else {
         const deckItems = submittedItems.length > 0 ? submittedItems : null;
         const createdEntry = await createEntry({ tournamentId: id, deckItems, authMode, user });
-        setMessage(
+        successMessage =
           createdEntry?.isWaitlisted
             ? "キャンセル待ちとしてエントリーしました。繰り上げには当日のチェックインが必要です。"
             : deckItems
               ? "エントリーし、デッキリストを提出しました。"
-              : "エントリーしました。"
+              : "エントリーしました。";
+      }
+      if (!isCurrentRequestContext(actionContextKey)) return;
+      await refreshAfterMutation({
+        contextKey: actionContextKey,
+        includeStandings: true,
+        successMessage,
+      });
+    } catch (submitError) {
+      if (isCurrentRequestContext(actionContextKey)) {
+        setError(
+          localizedActionError(
+            submitError,
+            "エントリー情報を更新できませんでした。もう一度お試しください。"
+          )
         );
       }
-      await loadTournament();
-      const nextStandings = await fetchStandings(id, { authMode });
-      setStandings(nextStandings.items || nextStandings.standings || []);
-    } catch (submitError) {
-      setError(submitError.message);
     } finally {
-      setIsSubmitting(false);
+      if (isCurrentRequestContext(actionContextKey)) setIsSubmitting(false);
     }
   };
 
   const requestLateEntry = async () => {
+    const actionContextKey = requestContextKey;
+    if (!isCurrentRequestContext(actionContextKey)) return;
     setIsSubmitting(true);
     setError("");
     setMessage("");
+    setPendingMutationRefresh(null);
+    resetMutationRefresh();
     try {
       await createEntry({ tournamentId: id, deckItems: null, authMode, user });
-      setMessage("参加申請を送信しました。");
-      await loadTournament();
-      const nextStandings = await fetchStandings(id, { authMode });
-      setStandings(nextStandings.items || nextStandings.standings || []);
+      if (!isCurrentRequestContext(actionContextKey)) return;
+      await refreshAfterMutation({
+        contextKey: actionContextKey,
+        includeStandings: true,
+        successMessage: "参加申請を送信しました。",
+      });
     } catch (submitError) {
-      setError(submitError.message);
+      if (isCurrentRequestContext(actionContextKey)) {
+        setError(
+          localizedActionError(
+            submitError,
+            "参加申請を送信できませんでした。もう一度お試しください。"
+          )
+        );
+      }
     } finally {
-      setIsSubmitting(false);
+      if (isCurrentRequestContext(actionContextKey)) setIsSubmitting(false);
     }
   };
 
   const cancelEntry = async () => {
+    const actionContextKey = requestContextKey;
+    if (!isCurrentRequestContext(actionContextKey)) return;
     setIsSubmitting(true);
     setError("");
     setMessage("");
+    setPendingMutationRefresh(null);
+    resetMutationRefresh();
     try {
       await deleteMyEntry(id, { authMode, user });
-      setMessage("エントリーを取り消しました。");
-      await loadTournament();
+      if (!isCurrentRequestContext(actionContextKey)) return;
+      await refreshAfterMutation({
+        contextKey: actionContextKey,
+        successMessage: "エントリーを取り消しました。",
+      });
     } catch (cancelError) {
-      setError(cancelError.message);
+      if (isCurrentRequestContext(actionContextKey)) {
+        setError(
+          localizedActionError(
+            cancelError,
+            "エントリーを取り消せませんでした。もう一度お試しください。"
+          )
+        );
+      }
     } finally {
-      setIsSubmitting(false);
+      if (isCurrentRequestContext(actionContextKey)) setIsSubmitting(false);
     }
   };
 
   const checkInEntry = async () => {
+    const actionContextKey = requestContextKey;
+    if (!isCurrentRequestContext(actionContextKey)) return;
     setIsSubmitting(true);
     setError("");
     setMessage("");
+    setPendingMutationRefresh(null);
+    resetMutationRefresh();
     try {
       await checkInMyEntry({ tournamentId: id, authMode, user });
-      setMessage(
-        myEntry?.isWaitlisted
+      if (!isCurrentRequestContext(actionContextKey)) return;
+      await refreshAfterMutation({
+        contextKey: actionContextKey,
+        successMessage: myEntry?.isWaitlisted
           ? "チェックインしました。主催者によるキャンセル待ちの繰り上げをお待ちください。"
-          : "チェックインしました。"
-      );
-      await loadTournament();
+          : "チェックインしました。",
+      });
     } catch (checkInError) {
-      setError(checkInError.message);
+      if (isCurrentRequestContext(actionContextKey)) {
+        setError(
+          localizedActionError(
+            checkInError,
+            "チェックインできませんでした。もう一度お試しください。"
+          )
+        );
+      }
     } finally {
-      setIsSubmitting(false);
+      if (isCurrentRequestContext(actionContextKey)) setIsSubmitting(false);
     }
   };
 
-  if (isLoading && !tournament) {
-    return <main className="tournament-page">読み込み中...</main>;
-  }
+  const tournamentContextMatches = tournamentContextKey === requestContextKey;
+  const displayedTournamentStatus =
+    isReady === false || !tournamentContextMatches
+      ? ASYNC_STATUS.LOADING
+      : tournamentStatus;
 
-  if (!tournament && /not found|見つかりません/i.test(error || "")) {
+  if (
+    displayedTournamentStatus === ASYNC_STATUS.ERROR &&
+    isTournamentNotFound
+  ) {
     return <NotFound />;
   }
 
-  if (!tournament) {
+  if (displayedTournamentStatus !== ASYNC_STATUS.SUCCESS) {
     return (
-      <main className="tournament-page">
+      <main className={compact ? "tournament-page compact" : "tournament-page"}>
         <Link to="/tournaments" className="tournament-back-link">
           大会一覧へ
         </Link>
-        <div className="tournament-alert">{error || "大会が見つかりません。"}</div>
+        <AsyncState
+          status={displayedTournamentStatus}
+          error={tournamentError}
+          idleMessage="大会情報はまだ読み込まれていません。"
+          loadingMessage={isReady === false ? "認証情報を確認中..." : "大会情報を読み込み中..."}
+          emptyMessage="大会情報が見つかりません。"
+          errorMessage="大会情報を読み込めませんでした。"
+          onRetry={loadTournament}
+          className={
+            displayedTournamentStatus === ASYNC_STATUS.ERROR
+              ? "tournament-alert"
+              : "tournament-empty"
+          }
+          retryButtonClassName="tournament-secondary-button"
+        />
       </main>
     );
   }
@@ -608,8 +952,13 @@ export default function TournamentDetail({ compact = false }) {
     </div>
   );
 
-  const renderEntries = () => (
-    <div className="tournament-table-wrap">
+  const renderEntries = () => {
+    if (entries.length === 0) {
+      return <div className="tournament-empty">参加者はまだ登録されていません。</div>;
+    }
+
+    return (
+      <div className="tournament-table-wrap">
       <table className="tournament-table">
         <thead>
           <tr>
@@ -667,15 +1016,24 @@ export default function TournamentDetail({ compact = false }) {
             ))}
         </div>
       ) : null}
-    </div>
-  );
+      </div>
+    );
+  };
 
   const renderRounds = () => (
-    <div className="tournament-rounds">
-      {rounds.length === 0 ? <div className="tournament-empty">ペアリングはまだありません。</div> : null}
-      <RoundTabs rounds={rounds} selectedRoundNumber={pairingRoundNumber} onChange={setPairingRoundNumber} />
-      {selectedPairingRound ? (
-        <section className="tournament-round">
+    <TournamentAsyncState
+      status={roundsStatus}
+      error={roundsError}
+      idleMessage="ペアリングはまだ読み込まれていません。"
+      loadingMessage="ペアリングを読み込み中..."
+      emptyMessage="ペアリングはまだ作成されていません。"
+      errorMessage="ペアリングを読み込めませんでした。"
+      onRetry={loadRounds}
+    >
+      <div className="tournament-rounds">
+        <RoundTabs rounds={rounds} selectedRoundNumber={pairingRoundNumber} onChange={setPairingRoundNumber} />
+        {selectedPairingRound ? (
+          <section className="tournament-round">
           <div className="tournament-round-header">
             <h2>
               {getRoundProgressLabel(selectedPairingRound, rounds, tournament)} / {selectedPairingRound.stage === "top_cut" ? "トップカット" : "スイス"}
@@ -685,8 +1043,9 @@ export default function TournamentDetail({ compact = false }) {
           {selectedPairingRound.stage === "top_cut" ? (
             <Bracket rounds={rounds} entries={entries} showResults={tournament.status === "completed"} />
           ) : null}
-          <div className="tournament-table-wrap">
-            <table className="tournament-table">
+            {(selectedPairingRound.matches || []).length > 0 ? (
+              <div className="tournament-table-wrap">
+                <table className="tournament-table">
               <thead>
                 <tr>
                   <th className="num">卓</th>
@@ -723,25 +1082,39 @@ export default function TournamentDetail({ compact = false }) {
                   );
                 })}
               </tbody>
-            </table>
-          </div>
-        </section>
-      ) : null}
-    </div>
+                </table>
+              </div>
+            ) : (
+              <div className="tournament-empty">このラウンドには対戦がありません。</div>
+            )}
+          </section>
+        ) : null}
+      </div>
+    </TournamentAsyncState>
   );
 
   const renderResults = () => (
-    <div className="tournament-rounds">
-      <RoundTabs rounds={rounds} selectedRoundNumber={resultRoundNumber} onChange={setResultRoundNumber} />
-      {selectedResultRound ? (
-        <section className="tournament-round">
+    <TournamentAsyncState
+      status={roundsStatus}
+      error={roundsError}
+      idleMessage="リザルトはまだ読み込まれていません。"
+      loadingMessage="リザルトを読み込み中..."
+      emptyMessage="表示できるリザルトはまだありません。"
+      errorMessage="リザルトを読み込めませんでした。"
+      onRetry={loadRounds}
+    >
+      <div className="tournament-rounds">
+        <RoundTabs rounds={rounds} selectedRoundNumber={resultRoundNumber} onChange={setResultRoundNumber} />
+        {selectedResultRound ? (
+          <section className="tournament-round">
           <div className="tournament-round-header">
             <h2>
               {getRoundProgressLabel(selectedResultRound, rounds, tournament)} / {selectedResultRound.stage === "top_cut" ? "トップカット" : "スイス"}
             </h2>
           </div>
-          <div className="tournament-table-wrap">
-            <table className="tournament-table">
+            {(selectedResultRound.matches || []).length > 0 ? (
+              <div className="tournament-table-wrap">
+                <table className="tournament-table">
               <thead>
                 <tr>
                   <th className="num">卓</th>
@@ -771,18 +1144,32 @@ export default function TournamentDetail({ compact = false }) {
                   );
                 })}
               </tbody>
-            </table>
-          </div>
-        </section>
-      ) : (
-        <div className="tournament-empty">リザルトはまだありません。</div>
-      )}
-    </div>
+                </table>
+              </div>
+            ) : (
+              <div className="tournament-empty">このラウンドには対戦結果がありません。</div>
+            )}
+          </section>
+        ) : (
+          <div className="tournament-empty">表示するラウンドを選択してください。</div>
+        )}
+      </div>
+    </TournamentAsyncState>
   );
 
   const renderStandings = () => (
     <div className="tournament-rounds">
-      {topCutRounds.length ? (
+      {[ASYNC_STATUS.IDLE, ASYNC_STATUS.LOADING, ASYNC_STATUS.ERROR].includes(roundsStatus) ? (
+        <TournamentAsyncState
+          status={roundsStatus}
+          error={roundsError}
+          idleMessage="ラウンド情報はまだ読み込まれていません。"
+          loadingMessage="ラウンド情報を読み込み中..."
+          errorMessage="ラウンド情報を読み込めませんでした。"
+          onRetry={loadRounds}
+        />
+      ) : null}
+      {roundsStatus === ASYNC_STATUS.SUCCESS && topCutRounds.length ? (
         <section>
           <h2>トップカット</h2>
           <Bracket
@@ -792,16 +1179,28 @@ export default function TournamentDetail({ compact = false }) {
           />
         </section>
       ) : null}
-      {swissRounds.length > 0 || topCutRounds.length === 0 ? (
+      {roundsStatus !== ASYNC_STATUS.SUCCESS || swissRounds.length > 0 || topCutRounds.length === 0 ? (
         <section>
           {topCutRounds.length ? <h2>スイス順位表</h2> : null}
-          <RoundTabs
-            rounds={swissRounds}
-            selectedRoundNumber={standingRoundNumber}
-            onChange={setStandingRoundNumber}
-          />
-          <div className="tournament-table-wrap">
-            <table className="tournament-table">
+          {roundsStatus === ASYNC_STATUS.SUCCESS ? (
+            <RoundTabs
+              rounds={swissRounds}
+              selectedRoundNumber={standingRoundNumber}
+              onChange={setStandingRoundNumber}
+            />
+          ) : null}
+          <TournamentAsyncState
+            status={standingsDisplayStatus}
+            error={standingsError}
+            idleMessage="順位表はまだ読み込まれていません。"
+            loadingMessage="順位表を読み込み中..."
+            emptyMessage="順位データはまだありません。"
+            errorMessage="順位表を読み込めませんでした。"
+            onRetry={loadStandings}
+          >
+            {pointInTimeStandings.length > 0 ? (
+              <div className="tournament-table-wrap">
+                <table className="tournament-table">
               <thead>
                 <tr>
                   <th className="num">順位</th>
@@ -837,8 +1236,12 @@ export default function TournamentDetail({ compact = false }) {
                   );
                 })}
               </tbody>
-            </table>
-          </div>
+                </table>
+              </div>
+            ) : (
+              <div className="tournament-empty">順位データはまだありません。</div>
+            )}
+          </TournamentAsyncState>
         </section>
       ) : null}
     </div>
@@ -851,6 +1254,11 @@ export default function TournamentDetail({ compact = false }) {
     if (activeTab === "standings") return renderStandings();
     return renderOverview();
   };
+  const myStatusNeedsRounds = ["in_progress", "completed"].includes(tournament.status);
+  const canRenderMyStatus =
+    !myStatusNeedsRounds ||
+    roundsStatus === ASYNC_STATUS.EMPTY ||
+    roundsStatus === ASYNC_STATUS.SUCCESS;
 
   return (
     <main className={compact ? "tournament-page compact" : "tournament-page"}>
@@ -897,31 +1305,55 @@ export default function TournamentDetail({ compact = false }) {
         </section>
       ) : null}
 
-      <TournamentMyStatus
-        tournament={tournament}
-        myEntry={myEntry}
-        entries={entries}
-        rounds={rounds}
-        isAuthenticated={isAuthenticated}
-        canRegister={canRegister}
-        canUpdateDeck={canUpdateDeck}
-        canLateEntry={canLateEntry}
-        canCancel={canCancel}
-        deckSource={deckSource}
-        onDeckSourceChange={setDeckSource}
-        selectedDeckId={selectedDeckId}
-        onSelectedDeckChange={setSelectedDeckId}
-        savedDecks={savedDecks}
-        submittedItems={submittedItems}
-        deckViolations={deckViolations}
-        onSubmitEntry={submitEntry}
-        onRequestLateEntry={requestLateEntry}
-        onCancelEntry={cancelEntry}
-        onCheckIn={checkInEntry}
-        submitDisabled={submitDisabled}
-        isSubmitting={isSubmitting}
-        formatParticipantName={formatParticipantName}
-      />
+      {[ASYNC_STATUS.LOADING, ASYNC_STATUS.ERROR].includes(mutationRefreshStatus) ? (
+        <TournamentAsyncState
+          status={mutationRefreshStatus}
+          error={mutationRefreshError}
+          loadingMessage="最新の参加状態を確認中..."
+          errorMessage="操作は完了しましたが、最新の参加状態を確認できませんでした。"
+          onRetry={retryMutationRefresh}
+        />
+      ) : null}
+
+      {canRenderMyStatus ? (
+        <TournamentMyStatus
+          tournament={tournament}
+          myEntry={myEntry}
+          entries={entries}
+          rounds={rounds}
+          isAuthenticated={isAuthenticated}
+          canRegister={canRegister}
+          canUpdateDeck={canUpdateDeck}
+          canLateEntry={canLateEntry}
+          canCancel={canCancel}
+          deckSource={deckSource}
+          onDeckSourceChange={setDeckSource}
+          selectedDeckId={selectedDeckId}
+          onSelectedDeckChange={setSelectedDeckId}
+          savedDecks={savedDecks}
+          savedDecksStatus={savedDecksStatus}
+          savedDecksError={savedDecksError}
+          onRetrySavedDecks={loadSavedDecks}
+          submittedItems={submittedItems}
+          deckViolations={deckViolations}
+          onSubmitEntry={submitEntry}
+          onRequestLateEntry={requestLateEntry}
+          onCancelEntry={cancelEntry}
+          onCheckIn={checkInEntry}
+          submitDisabled={submitDisabled}
+          isSubmitting={isSubmitting || entryMutationStateUnconfirmed}
+          formatParticipantName={formatParticipantName}
+        />
+      ) : (
+        <TournamentAsyncState
+          status={roundsStatus}
+          error={roundsError}
+          idleMessage="マイステータスはラウンド情報の読み込み後に表示します。"
+          loadingMessage="マイステータスを読み込み中..."
+          errorMessage="マイステータスに必要なラウンド情報を読み込めませんでした。"
+          onRetry={loadRounds}
+        />
+      )}
 
       {message ? <div className="tournament-success">{message}</div> : null}
       {error ? <div className="tournament-alert">{error}</div> : null}
