@@ -1767,6 +1767,12 @@
   line-height: 1;
 }
 
+/* タブが1つしか意味を持たない大会では、タブ列の代わりに見出しを出す */
+.tournament-display-section-title {
+  margin: 0;
+  font-size: var(--gw-font-size-lg);
+}
+
 .tournament-display-switch {
   display: inline-flex;
   gap: var(--gw-space-2xs);

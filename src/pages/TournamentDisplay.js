@@ -90,6 +90,14 @@ export default function TournamentDisplay() {
     () => rounds.filter((round) => round.stage !== "top_cut"),
     [rounds]
   );
+  // スイスのラウンドが無い(=トーナメント表だけの)大会では、順位表タブも
+  // 同じトーナメント表を出すことになる。違う操作名で同じ結果を返さないよう
+  // 順位表タブ自体を出さない。
+  const isBracketOnly =
+    swissRounds.length === 0 && rounds.some((round) => round.stage === "top_cut");
+  useEffect(() => {
+    if (isBracketOnly) setActiveView("pairings");
+  }, [isBracketOnly]);
   const standings = useMemo(() => {
     const matches = swissRounds
       .filter((round) => !currentRound || Number(round.number) <= Number(currentRound.number))
@@ -124,26 +132,30 @@ export default function TournamentDisplay() {
         ) : null}
       </header>
 
-      <div className="tournament-display-switch" role="tablist" aria-label="掲示内容">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeView === "pairings"}
-          className={activeView === "pairings" ? "active" : ""}
-          onClick={() => setActiveView("pairings")}
-        >
-          ペアリング
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeView === "standings"}
-          className={activeView === "standings" ? "active" : ""}
-          onClick={() => setActiveView("standings")}
-        >
-          順位表
-        </button>
-      </div>
+      {isBracketOnly ? (
+        <h2 className="tournament-display-section-title">トーナメント表</h2>
+      ) : (
+        <div className="tournament-display-switch" role="tablist" aria-label="掲示内容">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeView === "pairings"}
+            className={activeView === "pairings" ? "active" : ""}
+            onClick={() => setActiveView("pairings")}
+          >
+            ペアリング
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeView === "standings"}
+            className={activeView === "standings" ? "active" : ""}
+            onClick={() => setActiveView("standings")}
+          >
+            順位表
+          </button>
+        </div>
+      )}
 
       <p className="tournament-display-note">この画面は5秒ごとに自動更新されます。</p>
 

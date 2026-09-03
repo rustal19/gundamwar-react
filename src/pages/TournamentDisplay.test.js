@@ -120,8 +120,12 @@ test("トップカット進行中はSE内連番とブラケットを表示する
   expect(within(bracket).getByRole("heading", { name: "SE1回戦" })).toBeInTheDocument();
   expect(within(bracket).getByText("プレイヤー1")).toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole("tab", { name: "順位表" }));
-  expect(screen.getByLabelText("トーナメント表")).toBeInTheDocument();
+  // 順位表タブもトーナメント表を出すだけになるため、タブ自体を出さない
+  expect(screen.queryByRole("tab", { name: "順位表" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("tab", { name: "ペアリング" })).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: "トーナメント表" })
+  ).toBeInTheDocument();
 });
 
 test("トップカットの勝敗をスイス順位表へ加算しない", async () => {

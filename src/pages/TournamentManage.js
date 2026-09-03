@@ -1852,42 +1852,53 @@ function InfoPanel({
               <option value="single_elim">シングルエリミネーション</option>
             </select>
           </label>
-          <label title={roundSettingsLockMessage}>
-            スイス回戦数 {hasRounds ? "🔒" : ""}
-            <input
-              type="number"
-              min="1"
-              aria-label="スイス回戦数"
-              value={form.swissRounds}
-              placeholder="自動"
-              disabled={hasRounds}
-              onChange={(event) => setField("swissRounds", event.target.value)}
-            />
-            <span className="tournament-muted">未入力の場合、参加人数から初戦生成時に確定します。</span>
-          </label>
-          <label title={roundSettingsLockMessage}>
-            終了条件 {hasRounds ? "🔒" : ""}
-            <select
-              aria-label="終了条件"
-              value={form.swissEndCondition}
-              disabled={hasRounds}
-              onChange={(event) => setField("swissEndCondition", event.target.value)}
-            >
-              <option value={SWISS_END_CONDITION_FIXED_ROUNDS}>規定回戦数で終了</option>
-              <option value={SWISS_END_CONDITION_UNDEFEATED}>全勝者が1人以下になったら終了</option>
-            </select>
-          </label>
-          <label title={roundSettingsLockMessage}>
-            トップカット {hasRounds ? "🔒" : ""}
-            <input
-              type="number"
-              min="2"
-              value={form.topCutSize}
-              placeholder="なし"
-              disabled={hasRounds}
-              onChange={(event) => setField("topCutSize", event.target.value)}
-            />
-          </label>
+          {/* スイス回戦数・終了条件・トップカットはスイスにしか効かない。
+              シングルエリミネーションでも編集できると、どの値が使われるのか
+              分からなくなるので、形式に応じて出し分ける。 */}
+          {form.format === "swiss" ? (
+            <>
+              <label title={roundSettingsLockMessage}>
+                スイス回戦数 {hasRounds ? "🔒" : ""}
+                <input
+                  type="number"
+                  min="1"
+                  aria-label="スイス回戦数"
+                  value={form.swissRounds}
+                  placeholder="自動"
+                  disabled={hasRounds}
+                  onChange={(event) => setField("swissRounds", event.target.value)}
+                />
+                <span className="tournament-muted">未入力の場合、参加人数から初戦生成時に確定します。</span>
+              </label>
+              <label title={roundSettingsLockMessage}>
+                終了条件 {hasRounds ? "🔒" : ""}
+                <select
+                  aria-label="終了条件"
+                  value={form.swissEndCondition}
+                  disabled={hasRounds}
+                  onChange={(event) => setField("swissEndCondition", event.target.value)}
+                >
+                  <option value={SWISS_END_CONDITION_FIXED_ROUNDS}>規定回戦数で終了</option>
+                  <option value={SWISS_END_CONDITION_UNDEFEATED}>全勝者が1人以下になったら終了</option>
+                </select>
+              </label>
+              <label title={roundSettingsLockMessage}>
+                トップカット {hasRounds ? "🔒" : ""}
+                <input
+                  type="number"
+                  min="2"
+                  value={form.topCutSize}
+                  placeholder="なし"
+                  disabled={hasRounds}
+                  onChange={(event) => setField("topCutSize", event.target.value)}
+                />
+              </label>
+            </>
+          ) : (
+            <p className="tournament-muted">
+              シングルエリミネーションでは、スイス回戦数・終了条件・トップカットは使いません。
+            </p>
+          )}
           <label>
             ラウンド制限時間
             <input
