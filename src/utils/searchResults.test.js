@@ -1,5 +1,6 @@
 import { FORMAT_PRESETS } from "../data/formats";
 import {
+  buildSearchCriteriaSummary,
   formatSearchResultsSummary,
   getCardFormatStatus,
   getFormatSetCodes,
@@ -9,6 +10,30 @@ const kansaiGlorious = FORMAT_PRESETS.find(({ name }) => name === "関西グロ�
 
 test("検索結果の総件数・現在ページ・総ページ数を明示する", () => {
   expect(formatSearchResultsSummary(100, 2, 5)).toBe("全100件・2 / 5ページ");
+});
+
+test("検索条件要約は既定値と表示制御値を除き、選択肢を日本語化する", () => {
+  expect(
+    buildSearchCriteriaSummary({
+      name: "シャア",
+      cardType: [1, 2],
+      colorInclude: [4],
+      includeAltStats: true,
+      traits_logic: "and",
+      unitFeatureExtra: ["mobileDoll"],
+      setIncluded: ["12th"],
+      page: 2,
+      pageSize: 20,
+      sortMethod: "発行順",
+      mobileLayout: "ios",
+    })
+  ).toEqual([
+    { key: "name", label: "カード名", value: "シャア" },
+    { key: "cardType", label: "カードタイプ", value: "UNIT、CHARACTER" },
+    { key: "colorInclude", label: "含む色", value: "赤" },
+    { key: "unitFeatureExtra", label: "UNIT追加特徴", value: "MD" },
+    { key: "setIncluded", label: "収録弾", value: "宿命の螺旋" },
+  ]);
 });
 
 describe("getCardFormatStatus", () => {

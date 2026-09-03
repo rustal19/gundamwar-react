@@ -94,7 +94,7 @@ const INITIAL_STATE = {
   traits_logic: "and",
 
   // 専用機指定
-  exclusivePilotText: [],
+  exclusivePilotText: "",
 
   // 構築範囲
   deckRangeType: "none",
@@ -127,6 +127,42 @@ const CHECKBOX_ARRAY_NAMES = [
   "otherFeature", "setIncluded",
 ];
 
+// react-select は value に選択肢オブジェクトを必要とするため、URLの文字列配列を
+// フォームへ戻す際に対応する選択肢へ復元する。
+const SELECT_OPTIONS_BY_NAME = {
+  unitFeatureExtra: UNIT_EXTRA_OPTIONS,
+  charFeatureExtra: CHARACTER_EXTRA_OPTIONS,
+  setFeatureExtraBB: SET_EXTRA_OPTIONS_BB,
+  setFeatureExtraST: SET_EXTRA_OPTIONS_ST,
+  setFeatureExtraDB: SET_EXTRA_OPTIONS_DB,
+  setFeatureExtraEX: SET_EXTRA_OPTIONS_EX,
+};
+
+const restoreMultiSelectValue = (key, value) => {
+  let parsedValues;
+  try {
+    const parsed = JSON.parse(value);
+    parsedValues = Array.isArray(parsed) ? parsed : [parsed];
+  } catch (error) {
+    parsedValues = [value];
+  }
+
+  const options = SELECT_OPTIONS_BY_NAME[key];
+  if (!options) {
+    return parsedValues.map((item) => String(item));
+  }
+
+  return parsedValues
+    .map((item) => {
+      const itemValue = typeof item === "object" && item !== null ? item.value : item;
+      const itemLabel = typeof item === "object" && item !== null ? item.label : "";
+      return options.find(({ value: optionValue }) => (
+        String(optionValue) === String(itemValue)
+      )) || { value: itemValue, label: itemLabel || String(itemValue) };
+    })
+    .filter(({ value }) => value !== null && value !== undefined && value !== "");
+};
+
 const SearchForm = ({ onSearch, compact = false }) => {
   const [formValues, setFormValues] = useState(INITIAL_STATE);
   const navigate = useNavigate();
@@ -144,12 +180,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
     const newState = { ...INITIAL_STATE };
     for (const [key, value] of params.entries()) {
       if (MULTI_SELECT_KEYS.includes(key)) {
-        try {
-          // 1つだけ値がある場合、JSON 文字列と仮定してパースする
-          newState[key] = JSON.parse(value);
-        } catch (e) {
-          newState[key] = [];
-        }
+        newState[key] = restoreMultiSelectValue(key, value);
       } else if (typeof INITIAL_STATE[key] === "boolean") {
         newState[key] = value === "true";
       } else {
@@ -262,7 +293,7 @@ const SearchForm = ({ onSearch, compact = false }) => {
       onSearch({ params, queryString });
       return;
     }
-    navigate(`/search?${queryString}`);
+    navigate(`/search?${queryString}`, { state: null });
   };
 
   // リセット処理
@@ -273,7 +304,10 @@ const SearchForm = ({ onSearch, compact = false }) => {
       return;
     }
     // クエリパラメータを含まない URL に置き換える（強制モバイル指定のみ保持）
-    navigate(buildPathWithForcedMobileLayout("/search", location.search), { replace: true });
+    navigate(buildPathWithForcedMobileLayout("/search", location.search), {
+      replace: true,
+      state: null,
+    });
   };
 
   // compact 時はアコーディオン（details）で包み、デスクトップではそのまま並べる
@@ -321,7 +355,22 @@ const SearchForm = ({ onSearch, compact = false }) => {
   const rangeGroup = deriveSearchFormatGroup(formValues.formatName);
 
   return (
-    <form onSubmit={handleSubmit} className="grid-form">
+    <form id="card-search-form" onSubmit={handleSubmit} className="grid-form">
+      <header className="search-form-header">
+        <h1>カード検索</h1>
+        <div className="search-form-primary-actions">
+          <button type="submit" className="search">
+            <span className="owl-sprite-16-black icon-search"></span>検索
+          </button>
+          <button type="reset" className="reset" onClick={handleReset}>
+            <span className="owl-sprite-16-black icon-delete"></span>リセット
+          </button>
+        </div>
+        {!hasSearchCriteria(formValues) ? (
+          <p className="search-hint">検索するには、いずれかの検索条件を入力してください。</p>
+        ) : null}
+      </header>
+
       {/* カード名検索 */}
       <div className="form-row">
         <label className="form-th" htmlFor="name">カード名</label>
@@ -806,23 +855,6 @@ const SearchForm = ({ onSearch, compact = false }) => {
         </select>
       </div>
 
-      {/* 送信／リセット ボタン */}
-      <div className="form-row">
-        <label></label>{" "}
-        <div className="button-cell">
-          <div className="button-group">
-            <button type="submit" className="search">
-              <span className="owl-sprite-16-black icon-search"></span>検索
-            </button>
-            <button type="reset" className="reset" onClick={handleReset}>
-              <span className="owl-sprite-16-black icon-delete"></span>リセット
-            </button>
-          </div>
-          {!hasSearchCriteria(formValues) ? (
-            <p className="search-hint">検索するには、いずれかの検索条件を入力してください。</p>
-          ) : null}
-        </div>
-      </div>
     </form>
   );
 };

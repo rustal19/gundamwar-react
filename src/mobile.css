@@ -27,6 +27,28 @@
   overflow-x: hidden;
 }
 
+.app-shell-mobile .search-form-header {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--gw-space-xs);
+  padding-bottom: var(--gw-space-xs);
+}
+
+.app-shell-mobile .search-form-header h1 {
+  font-size: var(--gw-font-size-lg);
+}
+
+.app-shell-mobile .search-form-primary-actions {
+  gap: var(--gw-space-2xs);
+}
+
+.app-shell-mobile .search-form-primary-actions button {
+  padding: var(--gw-space-xs) var(--gw-space-sm);
+}
+
+.app-shell-mobile .search-hint {
+  font-size: var(--gw-font-size-xs);
+}
+
 .app-shell-mobile .search-accordion {
   display: block;
   border: 1px solid var(--gw-secondary-border-soft);
@@ -712,6 +734,33 @@
 
 .app-shell-mobile .search-results-summary {
   font-size: var(--gw-font-size-xs);
+}
+
+.app-shell-mobile .search-criteria-panel {
+  width: 100%;
+  max-width: 100%;
+  gap: var(--gw-space-xs);
+  margin-bottom: var(--gw-space-xs);
+  padding: var(--gw-space-xs);
+}
+
+.app-shell-mobile .search-criteria-panel-heading {
+  flex-wrap: wrap;
+  gap: var(--gw-space-2xs);
+}
+
+.app-shell-mobile .search-criteria-panel-heading h2 {
+  font-size: var(--gw-font-size-sm);
+}
+
+.app-shell-mobile .search-criteria-chip {
+  max-width: 100%;
+  font-size: var(--gw-font-size-xs);
+}
+
+.app-shell-mobile .search-criteria-edit-link {
+  padding: var(--gw-space-xs) var(--gw-space-sm);
+  font-size: var(--gw-font-size-sm);
 }
 
 .app-shell-mobile .deck-action-button,

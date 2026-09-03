@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, useNavigate } from "react-router-dom";
 import SearchResults from "./SearchResults";
 
@@ -46,6 +46,36 @@ test("検索中は読込状態だけを表示して件数を表示しない", as
   expect(screen.queryByText("検索条件を指定してください。")).not.toBeInTheDocument();
   expect(screen.queryByText("検索条件に一致するカードはありません。")).not.toBeInTheDocument();
   expect(screen.queryByText("全0件・1 / 1ページ")).not.toBeInTheDocument();
+});
+
+test("適用中の検索条件を日本語で要約し、条件を保持した編集リンクを表示する", async () => {
+  global.fetch = jest.fn(() => new Promise(() => {}));
+  const query = new URLSearchParams({
+    name: "ガンダム",
+    name_forward: "true",
+    cardType: JSON.stringify(["1", "3"]),
+    colorInclude: JSON.stringify([1, 4]),
+    spCostMin: "2",
+    spCostMax: "5",
+    unitFeatureExtra: JSON.stringify(["mobileDoll"]),
+    page: "3",
+    pageSize: "20",
+    mobileLayout: "ios",
+  });
+
+  renderResults(`/search?${query.toString()}`, { compact: true });
+
+  const criteria = await screen.findByRole("region", { name: "現在の検索条件" });
+  expect(within(criteria).getByText("カード名: ガンダム（前方一致）")).toBeVisible();
+  expect(within(criteria).getByText("カードタイプ: UNIT、COMMAND")).toBeVisible();
+  expect(within(criteria).getByText("含む色: 青、赤")).toBeVisible();
+  expect(within(criteria).getByText("指定国力: 2〜5")).toBeVisible();
+  expect(within(criteria).getByText("UNIT追加特徴: MD")).toBeVisible();
+  expect(criteria).not.toHaveTextContent("pageSize");
+  expect(criteria).not.toHaveTextContent("mobileLayout");
+
+  const editLink = within(criteria).getByRole("link", { name: "検索に戻る" });
+  expect(editLink.getAttribute("href")).toContain(query.toString());
 });
 
 test("検索を実行して0件なら条件に一致するカードがないことを表示する", async () => {

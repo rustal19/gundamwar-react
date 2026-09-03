@@ -1,8 +1,10 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import App from "./App";
+import { API_SEARCH_URL } from "./utils/searchResults";
 
 const MOCK_USER_KEY = "gundamwar.auth.mockUser.v1";
+const originalFetch = global.fetch;
 
 jest.mock("./services/tournaments", () => ({
   __esModule: true,
@@ -37,17 +39,25 @@ function setMockUser(role) {
   );
 }
 
+function setViewportWidth(width) {
+  Object.defineProperty(window, "innerWidth", {
+    configurable: true,
+    writable: true,
+    value: width,
+  });
+}
+
 beforeEach(() => {
   window.localStorage.clear();
   Object.defineProperty(HTMLElement.prototype, "scrollTo", {
     configurable: true,
     value: jest.fn(),
   });
-  Object.defineProperty(window, "innerWidth", {
-    configurable: true,
-    writable: true,
-    value: 1280,
-  });
+  setViewportWidth(1280);
+});
+
+afterEach(() => {
+  global.fetch = originalFetch;
 });
 
 test("home renders the portal brand and desktop sidebar links", () => {
@@ -105,9 +115,92 @@ test("mobile menu keeps aria state in sync and closes from the backdrop or navig
 test("/search renders the search form and collapsed sidebar", () => {
   const { container } = renderApp("/search");
 
+  expect(screen.getByRole("heading", { level: 1, name: "カード検索" })).toBeInTheDocument();
   expect(container.querySelector("#name")).toBeInTheDocument();
   expect(container.querySelector(".gw-sidebar")).toHaveClass("gw-sidebar-collapsed");
   expect(container.querySelector('a[href="/search"]')).toHaveAttribute("title");
+});
+
+test.each([1280, 375])(
+  "%ipxの検索フォームは見出しと検索操作を詳細条件より先に表示する",
+  (viewportWidth) => {
+    setViewportWidth(viewportWidth);
+    const path = viewportWidth === 375 ? "/search?mobileLayout=ios" : "/search";
+    const { container } = renderApp(path);
+    const form = container.querySelector("#card-search-form");
+    const header = form.firstElementChild;
+    const heading = within(form).getByRole("heading", { level: 1, name: "カード検索" });
+    const submit = within(form).getByRole("button", { name: "検索" });
+    const firstInput = container.querySelector("#name");
+
+    expect(header).toHaveClass("search-form-header");
+    expect(header).toContainElement(heading);
+    expect(header).toContainElement(submit);
+    expect(submit.compareDocumentPosition(firstInput) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  }
+);
+
+test("検索結果から条件を保持してフォームへ戻り、細かい選択条件も再編集できる", async () => {
+  const query = new URLSearchParams({
+    name: "ガンダム",
+    name_forward: "true",
+    cardType: JSON.stringify(["1"]),
+    unitFeatureExtra: JSON.stringify(["mobileDoll"]),
+    page: "2",
+    pageSize: "20",
+  });
+  global.fetch = jest.fn(() => new Promise(() => {}));
+
+  const { container } = renderApp(`/search?${query.toString()}`);
+  const editLink = await screen.findByRole("link", { name: "検索に戻る" });
+
+  expect(editLink.getAttribute("href")).toContain(query.toString());
+  fireEvent.click(editLink);
+
+  const nameInput = await screen.findByLabelText("カード名");
+  expect(screen.getByRole("heading", { level: 1, name: "カード検索" })).toBeInTheDocument();
+  expect(nameInput).toHaveValue("ガンダム");
+  expect(container.querySelector('#box_name_forward')).toBeChecked();
+  expect(container.querySelector('input[name="cardType"][value="1"]')).toBeChecked();
+  expect(container.querySelector('select[name="pageSize"]')).toHaveValue("20");
+  expect(screen.getByText("MD")).toBeInTheDocument();
+
+  fireEvent.change(nameInput, { target: { value: "ガンダムX" } });
+  fireEvent.click(screen.getByRole("button", { name: "検索" }));
+
+  expect(await screen.findByRole("heading", { level: 1, name: "検索結果" })).toBeInTheDocument();
+  let searchRequests;
+  await waitFor(() => {
+    searchRequests = global.fetch.mock.calls.filter(([url]) => url === API_SEARCH_URL);
+    expect(searchRequests).toHaveLength(2);
+  });
+  const lastRequest = searchRequests[searchRequests.length - 1];
+  const requestBody = JSON.parse(lastRequest[1].body);
+  expect(requestBody).toMatchObject({
+    name: "ガンダムX",
+    name_forward: true,
+    cardType: [1],
+    unitFeatureExtra: ["mobileDoll"],
+    page: 1,
+    pageSize: 20,
+  });
+});
+
+test("375pxでは検索後にフォームを畳み、結果と条件要約を先頭に表示する", async () => {
+  setViewportWidth(375);
+  global.fetch = jest.fn(() => new Promise(() => {}));
+  const { container } = renderApp("/search?mobileLayout=ios");
+
+  fireEvent.change(screen.getByLabelText("カード名"), { target: { value: "シャア" } });
+  fireEvent.click(screen.getByRole("button", { name: "検索" }));
+
+  expect(await screen.findByRole("heading", { level: 1, name: "検索結果" })).toBeInTheDocument();
+  expect(container.querySelector(".app-shell")).toHaveClass("app-shell-mobile");
+  expect(container.querySelector("#card-search-form")).not.toBeInTheDocument();
+  expect(container.querySelector("#search-results-container")).toBeInTheDocument();
+  expect(screen.getByRole("region", { name: "現在の検索条件" })).toHaveTextContent(
+    "カード名: シャア"
+  );
 });
 
 test("/deck collapses the sidebar after navigation without blocking a later manual expansion", () => {
