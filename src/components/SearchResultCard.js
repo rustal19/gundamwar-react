@@ -3,12 +3,48 @@ import CardImage from "./CardImage";
 import CardImagePreviewDialog from "./CardImagePreviewDialog";
 import { useDeck } from "../context/DeckContext";
 import { getCardCode } from "../utils/cardImages";
+import { formatDeckCountSummary } from "../utils/deckCounts";
 import {
   buildBackgroundStyle,
   buildEnvironmentLabel,
   getCardColorNames,
   splitCommaText,
 } from "../utils/searchResults";
+
+function hasDisplayValue(value) {
+  return value !== null && value !== undefined && value !== "";
+}
+
+function formatCardValue(value) {
+  return hasDisplayValue(value) ? String(value) : "-";
+}
+
+function formatCombatValue(primary, secondary) {
+  const primaryText = formatCardValue(primary);
+  return hasDisplayValue(secondary)
+    ? `${primaryText} / ${String(secondary)}`
+    : primaryText;
+}
+
+function CombatStats({ melee1, melee2, shooting1, shooting2, defense1, defense2 }) {
+  const stats = [
+    ["格闘", formatCombatValue(melee1, melee2)],
+    ["射撃", formatCombatValue(shooting1, shooting2)],
+    ["防御", formatCombatValue(defense1, defense2)],
+  ];
+
+  return (
+    <div className="card-combat-stats">
+      <span className="card-data-heading">戦闘修正</span>
+      {stats.map(([label, value]) => (
+        <span key={label} className="card-data-item">
+          <span className="card-data-label">{label}</span>
+          <span className="card-data-value">{value}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
 
 const SearchResultCard = ({
   card,
@@ -30,10 +66,22 @@ const SearchResultCard = ({
   const cardCode = getCardCode(card);
   const { primaryName, secondaryName } = getCardColorNames(card);
   const modelName = [card.modelNumber1, card.modelNumber2].filter(Boolean).join(" / ");
+  const primarySpecifiedCost = [primaryName, card.spPowerCost1]
+    .filter(hasDisplayValue)
+    .join(" ");
+  const secondarySpecifiedCost = [secondaryName, card.spPowerCost2]
+    .filter(hasDisplayValue)
+    .join(" ");
+  const specifiedCost = [primarySpecifiedCost, secondarySpecifiedCost]
+    .filter(Boolean)
+    .join(" / ") || "-";
   const imagePreviewLabel = card?.name
     ? `${card.name} の画像を拡大表示`
     : "カード画像を拡大表示";
-  const hasStatus = card.melee1 || card.shooting1 || card.defense1;
+  const hasStatus = [card.melee1, card.shooting1, card.defense1].some(hasDisplayValue);
+  const hasAltStatus = [card.altMelee1, card.altShooting1, card.altDefense1].some(
+    hasDisplayValue
+  );
   const formatBadges = [
     formatStatus?.isBanned
       ? { key: "banned", label: "禁止", className: "banned" }
@@ -75,14 +123,14 @@ const SearchResultCard = ({
 
   const statusBlock = hasStatus ? (
     <div className={compactDetailLayout ? "card-status result-card-status-inline" : "card-status"}>
-      <div>
-        <strong>
-          [{card.melee1 ?? ""}
-          {card.melee2 ? ` / ${card.melee2}` : ""}] [{card.shooting1 ?? ""}
-          {card.shooting2 ? ` / ${card.shooting2}` : ""}] [{card.defense1 ?? ""}
-          {card.defense2 ? ` / ${card.defense2}` : ""}]
-        </strong>
-      </div>
+      <CombatStats
+        melee1={card.melee1}
+        melee2={card.melee2}
+        shooting1={card.shooting1}
+        shooting2={card.shooting2}
+        defense1={card.defense1}
+        defense2={card.defense2}
+      />
       <div className="card-environment">{buildEnvironmentLabel(card)}</div>
     </div>
   ) : null;
@@ -94,7 +142,7 @@ const SearchResultCard = ({
         <CardImage card={card} />
         {renderFormatBadges(true)}
         {showDeckActions && deckCount > 0 ? (
-          <span className="result-card-image-count">{deckCount}</span>
+          <span className="result-card-image-count">{`合計${deckCount}枚`}</span>
         ) : null}
       </div>
     );
@@ -136,7 +184,9 @@ const SearchResultCard = ({
               </div>
             ) : null}
             {showDeckActions && deckCount > 0 ? (
-              <div className="result-card-image-meta">{`M ${mainCount} / S ${sideCount}`}</div>
+              <div className="result-card-image-meta">
+                {formatDeckCountSummary(mainCount, sideCount)}
+              </div>
             ) : null}
           </div>
         </article>
@@ -181,12 +231,21 @@ const SearchResultCard = ({
           <div className={compactDetailLayout ? "result-card-compact-summary" : ""}>
             <div className="card-top">
               <strong>{card.card_type_name}</strong>
-              {" | "}
-              {primaryName} {card.spPowerCost1}
-              {secondaryName
-                ? ` / ${secondaryName} ${card.spPowerCost2}`
-                : ""}
-              {` - ${card.totalCost || "-"} - ${card.resourceCost || "-"}`}
+              <span className="card-costs">
+                <span className="card-data-heading">国力</span>
+                <span className="card-data-item">
+                  <span className="card-data-label">指定</span>
+                  <span className="card-data-value">{specifiedCost}</span>
+                </span>
+                <span className="card-data-item">
+                  <span className="card-data-label">合計</span>
+                  <span className="card-data-value">{formatCardValue(card.totalCost)}</span>
+                </span>
+                <span className="card-data-item">
+                  <span className="card-data-label">資源</span>
+                  <span className="card-data-value">{formatCardValue(card.resourceCost)}</span>
+                </span>
+              </span>
             </div>
             <div className="card-model-name">
               <strong>
@@ -242,14 +301,16 @@ const SearchResultCard = ({
                 {card.text_alt}
               </div>
             ) : null}
-            {card.altMelee1 || card.altShooting1 || card.altDefense1 ? (
+            {hasAltStatus ? (
               <div className="card-status">
-                <div>
-                  [{card.altMelee1 ?? ""}
-                  {card.altMelee2 ? ` / ${card.altMelee2}` : ""}] [{card.altShooting1 ?? ""}
-                  {card.altShooting2 ? ` / ${card.altShooting2}` : ""}] [{card.altDefense1 ?? ""}
-                  {card.altDefense2 ? ` / ${card.altDefense2}` : ""}]
-                </div>
+                <CombatStats
+                  melee1={card.altMelee1}
+                  melee2={card.altMelee2}
+                  shooting1={card.altShooting1}
+                  shooting2={card.altShooting2}
+                  defense1={card.altDefense1}
+                  defense2={card.altDefense2}
+                />
                 <div className="card-environment">{buildEnvironmentLabel(card)}</div>
               </div>
             ) : null}
@@ -272,7 +333,10 @@ const SearchResultCard = ({
 
         <div className="card-footer-grid">
           <div className="card-sets">{`収録弾: ${(card.sets || []).join(" / ")}`}</div>
-          <div className="card-number">{cardCode}</div>
+          <div className="card-number card-data-item">
+            <span className="card-data-label">カード番号</span>
+            <span className="card-data-value">{cardCode || "-"}</span>
+          </div>
         </div>
       </div>
       </article>

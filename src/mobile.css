@@ -579,8 +579,20 @@
 }
 
 .app-shell-mobile .public-deck-row {
-  grid-template-columns: 2rem 4.2rem minmax(0, 1fr);
+  grid-template-columns: max-content minmax(0, 1fr);
   gap: var(--gw-space-xs);
+}
+
+.app-shell-mobile .public-deck-card-header {
+  display: none;
+}
+
+.app-shell-mobile .public-deck-name {
+  grid-column: 1 / -1;
+}
+
+.app-shell-mobile .public-deck-cell-label {
+  display: inline;
 }
 
 /* SearchResults mobile rules */
@@ -732,6 +744,10 @@
 .app-shell-mobile .results-image-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--gw-space-xs);
+}
+
+.app-shell-mobile .result-card-image-meta {
+  font-size: var(--gw-font-size-2xs);
 }
 
 .app-shell-mobile .result-card {

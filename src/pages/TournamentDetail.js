@@ -27,6 +27,7 @@ import {
 } from "../data/statusLabels";
 import { FORMAT_PRESETS } from "../data/formats";
 import { defaultRegulation, validateDeck } from "../utils/deckValidation";
+import { formatDeckCountSummary, getDeckCounts } from "../utils/deckCounts";
 import { createTournamentParticipantNameFormatter } from "../utils/tournament/participantDisplayName";
 import { getRoundProgressLabel } from "../utils/tournament/roundLabel";
 import {
@@ -80,10 +81,9 @@ export function formatCardCountRange(min, max) {
   return Number(min) === Number(max) ? `${min}枚` : `${min} - ${max}枚`;
 }
 
-function countCards(items, zone) {
-  return (Array.isArray(items) ? items : [])
-    .filter((item) => !zone || item.zone === zone)
-    .reduce((sum, item) => sum + Number(item.count || 0), 0);
+function formatDeckItemsCount(items) {
+  const { mainCount, sideCount } = getDeckCounts(items);
+  return formatDeckCountSummary(mainCount, sideCount);
 }
 
 function findEntry(entries, entryId) {
@@ -144,20 +144,37 @@ function localizedActionError(error, fallback = "操作に失敗しました。�
 
 function TournamentDeckRows({ items, compact }) {
   return (
-    <table className="tournament-table tournament-decklist-table">
+    <table className="tournament-table tournament-decklist-table tournament-public-decklist-table">
+      <thead>
+        <tr>
+          <th scope="col">区分</th>
+          <th scope="col">カード番号</th>
+          <th scope="col">カード名</th>
+          <th scope="col" className="num">枚数</th>
+        </tr>
+      </thead>
       <tbody>
         {(items || []).map((item, index) => {
           const card = item.card || {};
           return (
             <tr key={`${item.cardId || card.name}-${item.zone || "main"}-${index}`}>
-              <td>{item.zone === "side" ? "サイド" : "メイン"}</td>
-              <td>{getCardCode(card) || "-"}</td>
-              <td>
+              <td className="tournament-public-deck-zone">
+                <span className="tournament-deck-cell-label">区分:</span>
+                <span>{item.zone === "side" ? "サイド" : "メイン"}</span>
+              </td>
+              <td className="tournament-public-deck-code">
+                <span className="tournament-deck-cell-label">カード番号:</span>
+                <span>{getCardCode(card) || "-"}</span>
+              </td>
+              <td className="tournament-public-deck-name">
                 <CardHoverPreview card={card} compact={compact}>
                   {card.name || item.cardId}
                 </CardHoverPreview>
               </td>
-              <td className="num">{item.count}</td>
+              <td className="num tournament-public-deck-count">
+                <span className="tournament-deck-cell-label">枚数:</span>
+                <span>{item.count}枚</span>
+              </td>
             </tr>
           );
         })}
@@ -981,7 +998,7 @@ export default function TournamentDetail({ compact = false }) {
               <td>
                 {entry.deckItems ? (
                   <>
-                    提出済み ({countCards(entry.deckItems, "main")} / {countCards(entry.deckItems, "side")})
+                    提出済み（{formatDeckItemsCount(entry.deckItems)}）
                     {decklistsVisible ? (
                       <>
                         {" "}
@@ -1009,7 +1026,7 @@ export default function TournamentDetail({ compact = false }) {
                   <UserNameLink entry={entry} formatParticipantName={formatParticipantName} /> のデッキリスト
                 </h3>
                 <div className="tournament-deck-summary">
-                  メイン {countCards(entry.deckItems, "main")} / サイド {countCards(entry.deckItems, "side")}
+                  {formatDeckItemsCount(entry.deckItems)}
                 </div>
                 <TournamentDeckRows items={entry.deckItems} compact={compact} />
               </section>

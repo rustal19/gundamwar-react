@@ -52,6 +52,7 @@ import {
   TOURNAMENT_STATUS_LABELS,
 } from "../data/statusLabels";
 import { buildDeckExport, groupDeckItemsByType } from "../utils/deckExport";
+import { formatDeckCountSummary, getDeckCounts } from "../utils/deckCounts";
 import { FORMAT_PRESETS, OTHER_FORMAT_NAME } from "../data/formats";
 import { createTournamentParticipantNameFormatter } from "../utils/tournament/participantDisplayName";
 import {
@@ -277,6 +278,11 @@ function countCards(items, zone) {
   return (Array.isArray(items) ? items : [])
     .filter((item) => !zone || item.zone === zone)
     .reduce((sum, item) => sum + Number(item.count || 0), 0);
+}
+
+function formatDeckItemsCount(items) {
+  const { mainCount, sideCount } = getDeckCounts(items);
+  return formatDeckCountSummary(mainCount, sideCount);
 }
 
 function splitDeckItems(items) {
@@ -1496,8 +1502,7 @@ function ParticipantsPanel({
           {selectedEntry.deckItems?.length ? (
             <>
               <div className="tournament-deck-summary">
-                提出済み (メイン {countCards(selectedEntry.deckItems, "main")} / サイド{" "}
-                {countCards(selectedEntry.deckItems, "side")})
+                提出済み（{formatDeckItemsCount(selectedEntry.deckItems)}）
               </div>
               <div className="tournament-output-actions">
                 <button type="button" onClick={downloadDeckImage} disabled={!previewBlob || isPreviewRendering}>

@@ -71,6 +71,9 @@ test("TournamentDisplay はシンプルな掲示用ペアリングを表示す�
   });
   expect(screen.getAllByText("プレイヤー2").length).toBeGreaterThan(0);
   expect(screen.getByRole("tab", { name: "ペアリング" })).toHaveAttribute("aria-selected", "true");
+  const timer = screen.getByLabelText("残り時間");
+  expect(within(timer).getByText("残り時間")).toBeVisible();
+  expect(timer).toHaveTextContent(/残り時間(?:時間切れ|\d{2}:\d{2})/);
 });
 
 test("トップカット進行中はSE内連番とブラケットを表示する", async () => {

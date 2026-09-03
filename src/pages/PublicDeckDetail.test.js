@@ -25,11 +25,11 @@ jest.mock("../services/publicDecks", () => ({
   setDeckPublication: jest.fn(),
 }));
 
-function renderDetail(initialEntry = "/decks/saved:deck-1") {
+function renderDetail(initialEntry = "/decks/saved:deck-1", props = {}) {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
-        <Route path="/decks/:id" element={<PublicDeckDetail />} />
+        <Route path="/decks/:id" element={<PublicDeckDetail {...props} />} />
       </Routes>
     </MemoryRouter>
   );
@@ -106,6 +106,44 @@ test("大会デッキに提出者・開催日・大会名・順位・参加人�
   expect(within(meta).getByText("メイン50 / サイド0")).toBeInTheDocument();
   expect(screen.getAllByText("メイン50 / サイド0")).toHaveLength(1);
   expect(screen.getByRole("button", { name: "このデッキをコピー" })).toBeInTheDocument();
+});
+
+test("デッキ行に列見出しを置き、コンパクト表示では枚数とカード番号の行内ラベルを持つ", async () => {
+  fetchPublicDeck.mockResolvedValue({
+    id: "saved:labels",
+    sourceType: "saved",
+    sourceId: "labels",
+    title: "列ラベル確認デッキ",
+    items: [
+      {
+        cardId: "unit-1",
+        count: 3,
+        zone: "main",
+        card: {
+          cardId: "unit-1",
+          name: "ラベル確認カード",
+          card_type_name: "UNIT",
+          cardNumber1: "U",
+          cardNumber2: "123",
+        },
+      },
+    ],
+  });
+
+  const { container } = renderDetail("/decks/saved:labels", { compact: true });
+
+  expect(await screen.findByRole("heading", { name: "列ラベル確認デッキ" })).toBeInTheDocument();
+  const cardTable = screen.getByRole("table", { name: "UNITカード一覧" });
+  expect(
+    within(cardTable).getAllByRole("columnheader").map((header) => header.textContent)
+  ).toEqual(["枚数", "カード番号", "カード名"]);
+  const cardRow = within(cardTable).getAllByRole("row")[1];
+  expect(within(cardRow).getByText("枚数:")).toHaveClass("public-deck-cell-label");
+  expect(within(cardRow).getByText("カード番号:")).toHaveClass("public-deck-cell-label");
+  expect(within(cardRow).getByText("3枚")).toBeInTheDocument();
+  expect(within(cardRow).getByText("U-123")).toBeInTheDocument();
+  expect(within(cardRow).getByText("ラベル確認カード")).toBeInTheDocument();
+  expect(container.querySelector(".public-deck-detail")).toHaveClass("compact");
 });
 
 test("保存デッキには旧データの大会参照が残っていても大会情報を表示しない", async () => {

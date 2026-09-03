@@ -118,7 +118,8 @@ export default function TournamentDisplay() {
         </div>
         {timerText ? (
           <div className="tournament-display-timer" aria-label="残り時間">
-            {timerText}
+            <span className="tournament-display-timer-label">残り時間</span>
+            <span className="tournament-display-timer-value">{timerText}</span>
           </div>
         ) : null}
       </header>
