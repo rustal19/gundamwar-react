@@ -572,3 +572,20 @@
     justify-content: flex-start;
   }
 }
+
+/* 権限管理: 検索欄の常設ラベルと、行単位の処理中・完了表示 */
+.admin-user-search-field {
+  display: grid;
+  gap: var(--gw-space-3xs);
+  min-width: 0;
+}
+
+.admin-user-search-field > span {
+  color: var(--gw-text-muted);
+  font-size: var(--gw-font-size-xs);
+}
+
+.admin-user-row-status {
+  color: var(--gw-text-muted);
+  font-size: var(--gw-font-size-xs);
+}

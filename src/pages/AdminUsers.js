@@ -5,13 +5,23 @@ import { useAuth } from "../context/AuthContext";
 import { ASYNC_STATUS, useAsyncResource } from "../hooks/useAsyncResource";
 import { fetchUsers, resetUserNickname, updateUserRole } from "../services/users";
 
-const ROLES = ["user", "organizer", "admin"];
+// 内部値をそのまま出すと、何ができる権限なのか読み取れない。
+const ROLES = [
+  { value: "user", label: "一般ユーザー" },
+  { value: "organizer", label: "主催者(大会を作成・運営できる)" },
+  { value: "admin", label: "管理者(権限管理ができる)" },
+];
 
 export default function AdminUsers({ compact = false }) {
   const { authMode, isAdmin, isAuthenticated, isReady } = useAuth();
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [actionError, setActionError] = useState("");
+  // 処理中・完了を操作ごとに持つ。同じ操作の連打は止めたいが、
+  // 権限変更中にニックネームリセットを行う操作は塞がない。
+  const [pendingRoleUserId, setPendingRoleUserId] = useState("");
+  const [pendingNicknameUserId, setPendingNicknameUserId] = useState("");
+  const [doneMessageByUserId, setDoneMessageByUserId] = useState({});
   const usersRequestIdRef = useRef(0);
   const {
     status: usersStatus,
@@ -74,6 +84,8 @@ export default function AdminUsers({ compact = false }) {
   const handleRoleChange = async (userId, role) => {
     const requestId = usersRequestIdRef.current;
     setActionError("");
+    setPendingRoleUserId(userId);
+    setDoneMessageByUserId((current) => ({ ...current, [userId]: "" }));
     try {
       const updatedUser = await updateUserRole({ userId, role, authMode });
       if (usersRequestIdRef.current === requestId) {
@@ -82,11 +94,14 @@ export default function AdminUsers({ compact = false }) {
             user.id === updatedUser.id ? { ...user, role: updatedUser.role } : user
           )
         );
+        setDoneMessageByUserId((current) => ({ ...current, [userId]: "権限を変更しました。" }));
       }
     } catch {
       if (usersRequestIdRef.current === requestId) {
         setActionError("ユーザーのロールを変更できませんでした。もう一度お試しください。");
       }
+    } finally {
+      if (usersRequestIdRef.current === requestId) setPendingRoleUserId("");
     }
   };
 
@@ -95,6 +110,8 @@ export default function AdminUsers({ compact = false }) {
 
     const requestId = usersRequestIdRef.current;
     setActionError("");
+    setPendingNicknameUserId(userId);
+    setDoneMessageByUserId((current) => ({ ...current, [userId]: "" }));
     try {
       const updatedUser = await resetUserNickname({ userId, authMode });
       if (usersRequestIdRef.current === requestId) {
@@ -103,11 +120,17 @@ export default function AdminUsers({ compact = false }) {
             user.id === updatedUser.id ? { ...user, nickname: "" } : user
           )
         );
+        setDoneMessageByUserId((current) => ({
+          ...current,
+          [userId]: "ニックネームをリセットしました。",
+        }));
       }
     } catch {
       if (usersRequestIdRef.current === requestId) {
         setActionError("ニックネームをリセットできませんでした。もう一度お試しください。");
       }
+    } finally {
+      if (usersRequestIdRef.current === requestId) setPendingNicknameUserId("");
     }
   };
 
@@ -165,12 +188,16 @@ export default function AdminUsers({ compact = false }) {
       </div>
 
       <form className="search-results-toolbar-actions" onSubmit={handleSubmit}>
-        <input
-          aria-label="ユーザー検索"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="名前・メール・ID・ロールで検索"
-        />
+        {/* プレースホルダーだけだと入力を始めた時点で目的が消える */}
+        <label className="admin-user-search-field" htmlFor="admin-user-search">
+          <span>ユーザー検索</span>
+          <input
+            id="admin-user-search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="名前・メール・ID・権限で検索"
+          />
+        </label>
         <button
           className="results-link-button primary"
           type="submit"
@@ -205,18 +232,22 @@ export default function AdminUsers({ compact = false }) {
                 <div className="result-card-header">
                   <div>
                     <strong className="card-model-name">{user.name}</strong>
-                    <div className="card-text">{user.email || user.id}</div>
+                    {/* メールが無いとIDが同じ位置に裸で出て、何の文字列か分からない */}
+                    <div className="card-text">
+                      {user.email ? `メール: ${user.email}` : `ユーザーID: ${user.id}`}
+                    </div>
                     <div className="card-text">ニックネーム: {user.nickname || "未設定"}</div>
                   </div>
                   <label className="card-actions">
-                    <span className="search-results-summary">role</span>
+                    <span className="search-results-summary">権限</span>
                     <select
                       value={user.role}
+                      disabled={pendingRoleUserId === user.id}
                       onChange={(event) => handleRoleChange(user.id, event.target.value)}
                     >
-                      {ROLES.map((role) => (
-                        <option key={role} value={role}>
-                          {role}
+                      {ROLES.map(({ value, label }) => (
+                        <option key={value} value={value}>
+                          {label}
                         </option>
                       ))}
                     </select>
@@ -224,10 +255,16 @@ export default function AdminUsers({ compact = false }) {
                   <button
                     type="button"
                     className="results-link-button"
+                    disabled={pendingNicknameUserId === user.id}
                     onClick={() => handleNicknameReset(user.id)}
                   >
                     ニックネームをリセット
                   </button>
+                  <span className="admin-user-row-status" aria-live="polite">
+                    {pendingRoleUserId === user.id || pendingNicknameUserId === user.id
+                      ? "変更を反映中..."
+                      : doneMessageByUserId[user.id] || ""}
+                  </span>
                 </div>
               </div>
             </div>

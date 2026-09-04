@@ -124,7 +124,7 @@ test("ロール更新エラーは取得済み一覧を消さずに日本語で�
   renderAdmin();
   expect(await screen.findByText("Alice")).toBeInTheDocument();
 
-  fireEvent.change(screen.getByRole("combobox", { name: "role" }), {
+  fireEvent.change(screen.getByRole("combobox", { name: "権限" }), {
     target: { value: "organizer" },
   });
 
@@ -139,11 +139,11 @@ test("ロール変更とニックネームリセット後も一覧の成功状�
   renderAdmin();
   expect(await screen.findByText("Alice")).toBeInTheDocument();
 
-  fireEvent.change(screen.getByRole("combobox", { name: "role" }), {
+  fireEvent.change(screen.getByRole("combobox", { name: "権限" }), {
     target: { value: "organizer" },
   });
   await waitFor(() =>
-    expect(screen.getByRole("combobox", { name: "role" })).toHaveValue("organizer")
+    expect(screen.getByRole("combobox", { name: "権限" })).toHaveValue("organizer")
   );
 
   fireEvent.click(screen.getByRole("button", { name: "ニックネームをリセット" }));
@@ -163,7 +163,7 @@ test("検索開始前の更新応答が新しい検索結果を上書きしな�
   renderAdmin();
   expect(await screen.findByText("Alice")).toBeInTheDocument();
 
-  fireEvent.change(screen.getByRole("combobox", { name: "role" }), {
+  fireEvent.change(screen.getByRole("combobox", { name: "権限" }), {
     target: { value: "organizer" },
   });
 
@@ -198,7 +198,7 @@ test("同時に完了したロール変更とニックネームリセットを�
   renderAdmin();
   expect(await screen.findByText("Alice")).toBeInTheDocument();
 
-  fireEvent.change(screen.getByRole("combobox", { name: "role" }), {
+  fireEvent.change(screen.getByRole("combobox", { name: "権限" }), {
     target: { value: "organizer" },
   });
   fireEvent.click(screen.getByRole("button", { name: "ニックネームをリセット" }));
@@ -210,7 +210,7 @@ test("同時に完了したロール変更とニックネームリセットを�
     resolveNicknameReset({ ...alice, nickname: "" });
   });
 
-  expect(screen.getByRole("combobox", { name: "role" })).toHaveValue("organizer");
+  expect(screen.getByRole("combobox", { name: "権限" })).toHaveValue("organizer");
   expect(screen.getByText("ニックネーム: 未設定")).toBeInTheDocument();
 });
 
@@ -230,7 +230,7 @@ test("同時更新が逆順に完了しても変更済みの別フィールド�
   renderAdmin();
   expect(await screen.findByText("Alice")).toBeInTheDocument();
 
-  fireEvent.change(screen.getByRole("combobox", { name: "role" }), {
+  fireEvent.change(screen.getByRole("combobox", { name: "権限" }), {
     target: { value: "organizer" },
   });
   fireEvent.click(screen.getByRole("button", { name: "ニックネームをリセット" }));
@@ -242,6 +242,6 @@ test("同時更新が逆順に完了しても変更済みの別フィールド�
     resolveRoleUpdate({ ...alice, role: "organizer" });
   });
 
-  expect(screen.getByRole("combobox", { name: "role" })).toHaveValue("organizer");
+  expect(screen.getByRole("combobox", { name: "権限" })).toHaveValue("organizer");
   expect(screen.getByText("ニックネーム: 未設定")).toBeInTheDocument();
 });

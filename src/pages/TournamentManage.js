@@ -904,7 +904,7 @@ function RoundManagePanel({
                                 });
                               }}
                             >
-                              ...
+                              任意スコア
                             </button>
                             {editingMatchId === match.id ? (
                               <span className="custom-score-input">
@@ -1335,12 +1335,23 @@ function ParticipantsPanel({
           value={manualName}
           onChange={(event) => setManualName(event.target.value)}
         />
-        <textarea
-          aria-label="任意デッキ"
-          placeholder="任意デッキ: カード名,枚数,main または side"
-          value={manualDeckText}
-          onChange={(event) => setManualDeckText(event.target.value)}
-        />
+        {/* プレースホルダーだけだと入力を始めた時点で記法が読めなくなる */}
+        <label className="manual-entry-deck-field" htmlFor="manual-entry-deck">
+          <span>デッキリスト(任意)</span>
+          <textarea
+            id="manual-entry-deck"
+            aria-label="任意デッキ"
+            aria-describedby="manual-entry-deck-help"
+            value={manualDeckText}
+            onChange={(event) => setManualDeckText(event.target.value)}
+          />
+          <span id="manual-entry-deck-help" className="tournament-muted">
+            1行に1枚ずつ「カード名,枚数,main」または「カード名,枚数,side」。
+            main はメインデッキ、side はサイドボードです。
+            <br />
+            例: ガンダム,3,main
+          </span>
+        </label>
         <button
           type="button"
           disabled={isSubmitting || !manualName.trim()}
@@ -1367,8 +1378,8 @@ function ParticipantsPanel({
               <th>名前</th>
               <th>参加状態</th>
               <th>デッキリスト</th>
-              <th>記録</th>
-              <th>バッジ</th>
+              <th>デッキ操作の履歴</th>
+              <th>参加区分</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -1416,7 +1427,7 @@ function ParticipantsPanel({
                       ) : null}
                     </div>
                   </td>
-                  <td data-label="記録">
+                  <td data-label="デッキ操作の履歴">
                     <div className="tournament-deck-audit">
                       {entry.deckUpdatedAt ? (
                         <span>
@@ -1431,7 +1442,7 @@ function ParticipantsPanel({
                       {!entry.deckUpdatedAt && !entry.deckUnlockedAt ? <span>-</span> : null}
                     </div>
                   </td>
-                  <td data-label="バッジ">
+                  <td data-label="参加区分">
                     {entry.user?.id == null ? <span className="mini-badge">ゲスト</span> : null}
                     {entry.isWaitlisted && entry.status !== "dropped" ? (
                       <span className="mini-badge">キャンセル待ち</span>
@@ -1793,8 +1804,10 @@ function InfoPanel({
               />
               大会一覧に掲載する
             </label>
+            {/* 「ローカル大会」は同じ画面の「オンライン大会」(開催方式)と紛らわしい。
+                ここは公開範囲の設定なので、公開範囲の言葉で書く。 */}
             <p id="tournament-listing-description" className="tournament-muted">
-              オフにするとローカル大会になり、大会一覧とホームの新着には表示されません。大会URLを知っている人だけが詳細を開き、通常どおり参加登録できます。
+              オフにするとURL限定公開(一覧に非掲載)になり、大会一覧とホームの新着には表示されません。大会URLを知っている人だけが詳細を開き、通常どおり参加登録できます。開催方式(オンライン/会場)とは別の設定です。
             </p>
           </div>
         </div>

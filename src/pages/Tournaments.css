@@ -134,9 +134,12 @@
   background: var(--gw-primary-soft);
 }
 
+/* 先頭ボタンを主要操作として青く塗る。ただし確認ダイアログの先頭は
+   破壊操作(削除・破棄)なので、青塗り+赤文字という矛盾した見た目になる。
+   確認ダイアログは対象外にする。 */
 .tournament-filter button.active,
 .tournament-tabs button.active,
-.tournament-entry-actions button:first-child,
+.tournament-entry-actions:not(.tournament-confirm-actions) button:first-child,
 .tournament-create-link {
   border-color: var(--gw-primary);
   background: var(--gw-primary);
@@ -1060,8 +1063,10 @@
   opacity: 0.5;
 }
 
+/* 破壊操作は、どこに置かれても主要操作の塗りを継承しない */
 .danger-button {
   border-color: var(--gw-danger) !important;
+  background: var(--gw-surface) !important;
   color: var(--gw-danger) !important;
 }
 

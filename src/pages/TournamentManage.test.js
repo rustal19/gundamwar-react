@@ -332,7 +332,7 @@ test("SEラウンドはSE内連番で表示し、引き分けスコアを入力�
   expect(await screen.findByRole("button", { name: "SE1回戦" })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "1-1" })).not.toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole("button", { name: "..." }));
+  fireEvent.click(screen.getByRole("button", { name: "任意スコア" }));
   const player1Games = screen.getByLabelText("プレイヤー1ゲーム数");
   const player2Games = screen.getByLabelText("プレイヤー2ゲーム数");
   const saveButton = screen.getByRole("button", { name: "保存" });
@@ -1141,7 +1141,7 @@ test("大会作成フォームは既定で一覧掲載になり、説明を確�
   const listingCheckbox = screen.getByRole("checkbox", { name: "大会一覧に掲載する" });
   expect(listingCheckbox).toBeChecked();
   expect(listingCheckbox).toHaveAccessibleDescription(
-    "オフにするとローカル大会になり、大会一覧とホームの新着には表示されません。大会URLを知っている人だけが詳細を開き、通常どおり参加登録できます。"
+    "オフにするとURL限定公開(一覧に非掲載)になり、大会一覧とホームの新着には表示されません。大会URLを知っている人だけが詳細を開き、通常どおり参加登録できます。開催方式(オンライン/会場)とは別の設定です。"
   );
 
   fireEvent.change(screen.getByLabelText("タイトル"), { target: { value: "非掲載テスト大会" } });
@@ -1523,8 +1523,8 @@ test("参加者ごとのデッキリスト状態と主催者の監査記録を�
     "名前",
     "参加状態",
     "デッキリスト",
-    "記録",
-    "バッジ",
+    "デッキ操作の履歴",
+    "参加区分",
     "操作",
   ]);
   expect(within(lockedRow).getAllByRole("cell").map((cell) => cell.dataset.label)).toEqual([
@@ -1532,8 +1532,8 @@ test("参加者ごとのデッキリスト状態と主催者の監査記録を�
     "名前",
     "参加状態",
     "デッキリスト",
-    "記録",
-    "バッジ",
+    "デッキ操作の履歴",
+    "参加区分",
     "操作",
   ]);
   [
