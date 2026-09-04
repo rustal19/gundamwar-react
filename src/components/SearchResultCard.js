@@ -171,7 +171,7 @@ const SearchResultCard = ({
                   onClick={() => addCard(card, 1, "main")}
                   aria-label={label ? `${label} をメインデッキに追加` : "メインデッキに追加"}
                 >
-                  メイン
+                  ＋メイン
                 </button>
                 <button
                   className="deck-action-button"
@@ -179,13 +179,15 @@ const SearchResultCard = ({
                   onClick={() => addCard(card, 1, "side")}
                   aria-label={label ? `${label} をサイドボードに追加` : "サイドボードに追加"}
                 >
-                  サイド
+                  ＋サイド
                 </button>
               </div>
             ) : null}
-            {showDeckActions && deckCount > 0 ? (
-              <div className="result-card-image-meta">
-                {formatDeckCountSummary(mainCount, sideCount)}
+            {/* 0枚のときも出す。モバイルは検索ペインでデッキ側が隠れるため、
+                この行が変わることだけが「追加できた」という手応えになる。 */}
+            {showDeckActions ? (
+              <div className="result-card-image-meta" aria-live="polite">
+                このデッキに {formatDeckCountSummary(mainCount, sideCount)}
               </div>
             ) : null}
           </div>
@@ -264,7 +266,7 @@ const SearchResultCard = ({
                 onClick={() => addCard(card, 1, "main")}
                 aria-label={`${card.name || "card"} をメインデッキに追加`}
               >
-                メイン
+                ＋メイン
               </button>
               <button
                 className="deck-action-button"
@@ -272,8 +274,13 @@ const SearchResultCard = ({
                 onClick={() => addCard(card, 1, "side")}
                 aria-label={`${card.name || "card"} をサイドボードに追加`}
               >
-                サイド
+                ＋サイド
               </button>
+              {/* 詳細表示にはこれまで枚数表示が一切なく、押しても何も
+                  変わらないように見えていた。 */}
+              <span className="result-card-add-count" aria-live="polite">
+                このデッキに {formatDeckCountSummary(mainCount, sideCount)}
+              </span>
             </div>
           ) : null}
         </div>

@@ -248,11 +248,15 @@ const CompactDeckSearchForm = ({ onSearch, formatName, onFormatChange }) => {
   };
 
   const handleReset = () => {
-    setFormValues(initialState);
-    onFormatChange?.("");
+    // フォーマットは検索条件であると同時に、保存・適合判定・公開に使う
+    // 「デッキの属性」でもある。検索条件のリセットで消すと、検索を消したつもりの
+    // 操作がデッキの意味まで変えてしまうため、フォーマットだけは残す。
+    const resetValues = { ...initialState, formatName: selectedFormatName };
+    setFormValues(resetValues);
     const query = new URLSearchParams();
     preserveForcedMobileLayoutInParams(query, location.search);
-    dispatchSearch({ params: initialState, queryString: query.toString() });
+    if (selectedFormatName) query.set("formatName", selectedFormatName);
+    dispatchSearch({ params: resetValues, queryString: query.toString() });
   };
 
   return (
@@ -291,9 +295,12 @@ const CompactDeckSearchForm = ({ onSearch, formatName, onFormatChange }) => {
         />
 
         <label className="compact-inline-field compact-search-field-range">
-          <span className="compact-inline-label">フォーマット</span>
+          {/* この選択はデッキ自身のフォーマットでもある(検索範囲だけでなく
+              保存・適合判定・公開に使われる)ので、名前でそれを示す。 */}
+          <span className="compact-inline-label">デッキのフォーマット</span>
           <select
-            aria-label="フォーマット"
+            aria-label="デッキのフォーマット"
+            title="検索範囲と、このデッキの適合判定・公開条件の両方に使われます"
             value={selectedFormatName}
             onChange={(event) => handleFormatChange(event.target.value)}
           >

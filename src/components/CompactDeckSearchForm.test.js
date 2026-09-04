@@ -35,7 +35,7 @@ function LocationSearch() {
 test("共通フォーマットプリセットを指定なしとともに表示する", () => {
   renderForm();
 
-  const select = screen.getByLabelText("フォーマット");
+  const select = screen.getByLabelText("デッキのフォーマット");
   const optionValues = Array.from(select.options, (option) => option.value);
 
   expect(optionValues[0]).toBe("");
@@ -53,7 +53,7 @@ test("URLのフォーマットを復元して検索条件へ含める", async ()
   );
 
   await waitFor(() => {
-    expect(screen.getByLabelText("フォーマット")).toHaveValue(formatName);
+    expect(screen.getByLabelText("デッキのフォーマット")).toHaveValue(formatName);
   });
 
   fireEvent.click(screen.getByRole("button", { name: "検索" }));
@@ -89,12 +89,12 @@ test("controlled選択を通知し、未送信の入力を保ったまま検索�
   fireEvent.change(screen.getByLabelText("カード名"), {
     target: { value: "未送信のカード名" },
   });
-  fireEvent.change(screen.getByLabelText("フォーマット"), {
+  fireEvent.change(screen.getByLabelText("デッキのフォーマット"), {
     target: { value: "関西ライジング" },
   });
 
   expect(onFormatChange).toHaveBeenCalledWith("関西ライジング");
-  expect(screen.getByLabelText("フォーマット")).toHaveValue("関西ライジング");
+  expect(screen.getByLabelText("デッキのフォーマット")).toHaveValue("関西ライジング");
   await waitFor(() => {
     expect(
       new URLSearchParams(screen.getByTestId("location-search").textContent).get("formatName")
@@ -109,7 +109,7 @@ test("controlled選択を通知し、未送信の入力を保ったまま検索�
   });
 });
 
-test("未知の保存フォーマットを維持し、リセットで選択を解除する", () => {
+test("未知の保存フォーマットを維持し、リセットしてもデッキのフォーマットは消さない", () => {
   const onFormatChange = jest.fn();
   const onSearch = jest.fn();
   render(
@@ -122,16 +122,34 @@ test("未知の保存フォーマットを維持し、リセットで選択を�
     </MemoryRouter>
   );
 
-  expect(screen.getByLabelText("フォーマット")).toHaveValue("旧大会フォーマット");
+  expect(screen.getByLabelText("デッキのフォーマット")).toHaveValue("旧大会フォーマット");
   expect(screen.getByRole("option", { name: "旧大会フォーマット" })).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("button", { name: "リセット" }));
 
-  expect(onFormatChange).toHaveBeenLastCalledWith("");
-  expect(screen.getByLabelText("フォーマット")).toHaveValue("");
+  // フォーマットは保存・適合判定・公開に使うデッキの属性なので、
+  // 検索条件のリセットでは変更しない
+  expect(onFormatChange).not.toHaveBeenCalled();
+  expect(screen.getByLabelText("デッキのフォーマット")).toHaveValue("旧大会フォーマット");
   const payload = onSearch.mock.calls[0][0];
   const query = new URLSearchParams(payload.queryString);
-  expect(payload.params.formatName).toBe("");
-  expect(query.has("formatName")).toBe(false);
+  expect(payload.params.formatName).toBe("旧大会フォーマット");
+  expect(query.get("formatName")).toBe("旧大会フォーマット");
   expect(query.get("mobileLayout")).toBe("ios");
+});
+
+test("リセットは検索条件だけを消す", () => {
+  const onSearch = jest.fn();
+  render(
+    <MemoryRouter initialEntries={["/deck"]}>
+      <ControlledForm initialFormatName="関西クラシック" onSearch={onSearch} />
+    </MemoryRouter>
+  );
+
+  fireEvent.change(screen.getByLabelText("カード名"), { target: { value: "ガンダム" } });
+  fireEvent.click(screen.getByRole("button", { name: "リセット" }));
+
+  const payload = onSearch.mock.calls[onSearch.mock.calls.length - 1][0];
+  expect(payload.params.name).toBe("");
+  expect(payload.params.formatName).toBe("関西クラシック");
 });

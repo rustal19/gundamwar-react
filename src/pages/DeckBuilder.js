@@ -609,7 +609,8 @@ const DeckBuilder = ({ compact = false }) => {
                     className={deckViewMode === "detail" ? "active" : ""}
                     onClick={() => setDeckViewMode("detail")}
                   >
-                    2列
+                    {/* 375pxではCSSが1列にするため「2列」は操作名と結果が一致しない */}
+                    詳細
                   </button>
                   <button
                     type="button"

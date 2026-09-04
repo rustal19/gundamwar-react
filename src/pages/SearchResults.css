@@ -523,6 +523,14 @@
   padding: var(--gw-space-2xs) var(--gw-space-xs);
 }
 
+/* 追加ボタンの下に「このデッキに メイン1枚 / サイド0枚」を1行で置く。
+   2列グリッドの3つ目の要素なので、明示的に全幅へ広げる。 */
+.result-card-add-count {
+  grid-column: 1 / -1;
+  color: var(--gw-text-muted);
+  font-size: var(--gw-font-size-xs);
+}
+
 @media (max-width: 900px) {
   .deck-search-results-header-tools {
     grid-template-columns: 1fr;
