@@ -1368,13 +1368,16 @@ export default function TournamentDetail({ compact = false }) {
       role="region"
       aria-label="大会のお知らせとマイステータス"
     >
+      {/* アナウンスは主催者が「見せるため」に出すもの(会場変更・開始時刻変更など)。
+          畳んだままだと参加者が気づけないので既定で開いておく。畳めはする。 */}
       {announcementPanel ? (
         <details
           key={`announcement-${requestContextKey}`}
           className="tournament-mobile-disclosure announcement"
           aria-label="大会アナウンス"
+          open
         >
-          <summary>アナウンス — 内容を確認</summary>
+          <summary>アナウンス</summary>
           <div className="tournament-mobile-disclosure-body">{announcementPanel}</div>
         </details>
       ) : null}

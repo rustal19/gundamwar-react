@@ -214,7 +214,12 @@ test("モバイルでは案内と参加操作を縮約し、タブと内容を�
   const tabPanel = screen.getByRole("region", { name: "大会詳細内容" });
   const myStatusSummary = within(myStatusDisclosure).getByText(/エントリー・デッキ提出/);
 
-  expect(announcementDisclosure).not.toHaveAttribute("open");
+  // アナウンスは主催者が見せるために出すもの(会場変更など)なので既定で開く。
+  // マイステータスは縦に長いので畳んでおく。
+  expect(announcementDisclosure).toHaveAttribute("open");
+  expect(
+    within(announcementDisclosure).getByText("受付で参加賞を受け取ってください。")
+  ).toBeVisible();
   expect(myStatusDisclosure).not.toHaveAttribute("open");
   expect(myStatusSummary).toBeVisible();
   /* DOMの縦順と隣接関係そのものが、このレイアウト回帰テストの対象。 */
