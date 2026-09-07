@@ -1455,7 +1455,7 @@ function ParticipantsPanel({
                   </td>
                   <td className="tournament-row-actions" data-label="操作">
                     <button type="button" onClick={() => setSelectedEntryId(entry.id)} disabled={isSubmitting}>
-                      閲覧
+                      デッキリストを見る
                     </button>
                     {!decklistChangesBlocked ? (
                       <button type="button" onClick={() => onDeckRegister(entry.id)} disabled={isSubmitting}>

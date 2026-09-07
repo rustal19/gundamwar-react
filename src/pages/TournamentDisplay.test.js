@@ -185,7 +185,7 @@ test("トップカットの勝敗をスイス順位表へ加算しない", async
     "敗",
     "分",
     "勝点",
-    "OMW%",
+    "OMW%（対戦相手勝率）",
   ]);
   expect(within(player1Row).getAllByRole("cell").map((cell) => cell.textContent)).toEqual([
     "1",

@@ -202,7 +202,7 @@ export default function TournamentDisplay() {
                             {formatParticipantName(player1, "-")}
                           </td>
                           <td className="tournament-display-player-two" data-label="プレイヤー2">
-                            {formatParticipantName(player2, "Bye")}
+                            {formatParticipantName(player2, "不戦勝")}
                           </td>
                           <td className="tournament-display-result" data-label="結果">
                             {resultLabel(match)}
@@ -257,7 +257,7 @@ export default function TournamentDisplay() {
                       <td className="num tournament-display-points" data-label="勝点">
                         {standing.points}
                       </td>
-                      <td className="num tournament-display-omw" data-label="OMW%">
+                      <td className="num tournament-display-omw" data-label="OMW%（対戦相手勝率）">
                         {Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%
                       </td>
                     </tr>

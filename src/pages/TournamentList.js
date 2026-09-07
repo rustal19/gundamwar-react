@@ -173,12 +173,20 @@ export default function TournamentList({ compact = false }) {
                 className={view === VIEW_MINE ? "active" : ""}
                 aria-pressed={view === VIEW_MINE}
                 disabled={!canViewMyTournaments}
-                title={!canViewMyTournaments ? "ログイン後に利用できます" : undefined}
+                aria-describedby={
+                  !canViewMyTournaments ? "tournament-view-login-note" : undefined
+                }
                 onClick={() => setView(VIEW_MINE)}
               >
                 自分の大会
               </button>
             </div>
+            {/* title 属性はタッチ端末で読めないため、無効な理由を常設で出す */}
+            {!canViewMyTournaments ? (
+              <span id="tournament-view-login-note" className="tournament-filter-label">
+                「自分の大会」はログイン後に使えます
+              </span>
+            ) : null}
           </div>
           <div className="tournament-filter-group">
             <span className="tournament-filter-label" id="tournament-status-label">

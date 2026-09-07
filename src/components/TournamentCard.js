@@ -5,14 +5,9 @@ import { TOURNAMENT_STATUS_LABELS } from "../data/statusLabels";
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 
-const STATUS_LABELS = {
-  ...TOURNAMENT_STATUS_LABELS,
-  registration: "受付中",
-  in_progress: "進行中",
-  completed: "終了",
-  cancelled: "中止",
-  draft: "下書き",
-};
+// 以前ここで completed を「終了」に上書きしており、同じ状態が一覧のフィルターでは
+// 「完了」、カードでは「終了」と表示されていた。共通ラベルに一本化する。
+const STATUS_LABELS = TOURNAMENT_STATUS_LABELS;
 
 const FORMAT_LABELS = {
   swiss: "スイスドロー",
