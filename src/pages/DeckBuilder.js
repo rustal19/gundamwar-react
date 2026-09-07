@@ -581,6 +581,7 @@ const DeckBuilder = ({ compact = false }) => {
                 isPublishing={Boolean(publishingDeckId)}
                 publishingDeckId={publishingDeckId}
                 className="deck-builder-publication-panel"
+                compactUnsaved={compact}
               />
               {!isAuthenticated ? (
                 <p className="deck-panel-note">保存と読み込みはログイン後に利用できます。</p>

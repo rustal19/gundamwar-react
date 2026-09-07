@@ -26,6 +26,7 @@ export default function DeckPublicationPanel({
   isPublishing = false,
   publishingDeckId = "",
   className = "",
+  compactUnsaved = false,
 }) {
   const [publicationDescription, setPublicationDescription] = useState(
     deck?.description || ""
@@ -134,6 +135,20 @@ export default function DeckPublicationPanel({
     isPublishing && String(publishingDeckId) === String(deck?.id || "");
 
   if (!deck) {
+    if (compactUnsaved) {
+      return (
+        <section
+          className={`${panelClassName} is-unsaved is-compact-unsaved`}
+          aria-label="デッキ公開設定"
+        >
+          <div className="deck-publication-header">
+            <strong>未保存</strong>
+            <span>保存後に公開できます</span>
+          </div>
+        </section>
+      );
+    }
+
     return (
       <section className={`${panelClassName} is-unsaved`} aria-label="デッキ公開設定">
         <div className="deck-publication-header">

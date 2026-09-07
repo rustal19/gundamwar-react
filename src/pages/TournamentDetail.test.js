@@ -192,6 +192,80 @@ test("レギュレーション枚数は同値を単一表記、異なる値を�
   expect(formatCardCountRange(50, 60)).toBe("50 - 60枚");
 });
 
+test("モバイルでは案内と参加操作を縮約し、タブと内容を隣接させる", async () => {
+  mockAuthState = {
+    authMode: "mock",
+    isAuthenticated: true,
+    user: { id: "player-mobile", name: "モバイル利用者" },
+  };
+  mockTournament = registrationTournament({
+    announcement: "受付で参加賞を受け取ってください。",
+  });
+
+  renderDetail({ compact: true });
+  await screen.findByRole("heading", { name: "提出テスト大会" });
+
+  const priorityStack = screen.getByRole("region", {
+    name: "大会のお知らせとマイステータス",
+  });
+  const announcementDisclosure = screen.getByLabelText("大会アナウンス");
+  const myStatusDisclosure = screen.getByLabelText("マイステータス操作");
+  const tabs = screen.getByLabelText("大会詳細");
+  const tabPanel = screen.getByRole("region", { name: "大会詳細内容" });
+  const myStatusSummary = within(myStatusDisclosure).getByText(/エントリー・デッキ提出/);
+
+  expect(announcementDisclosure).not.toHaveAttribute("open");
+  expect(myStatusDisclosure).not.toHaveAttribute("open");
+  expect(myStatusSummary).toBeVisible();
+  /* DOMの縦順と隣接関係そのものが、このレイアウト回帰テストの対象。 */
+  /* eslint-disable testing-library/no-node-access */
+  expect(
+    priorityStack.compareDocumentPosition(tabs) & window.Node.DOCUMENT_POSITION_FOLLOWING
+  ).toBeTruthy();
+  expect(tabs.nextElementSibling).toBe(tabPanel);
+  /* eslint-enable testing-library/no-node-access */
+
+  fireEvent.click(myStatusSummary);
+  expect(myStatusDisclosure).toHaveAttribute("open");
+  expect(screen.getByRole("button", { name: "エントリー" })).toBeInTheDocument();
+
+  const scrollIntoView = jest.fn();
+  tabPanel.scrollIntoView = scrollIntoView;
+  fireEvent.click(screen.getByRole("button", { name: "参加者" }));
+
+  expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "auto", block: "start" });
+  expect(within(tabPanel).getByText("参加者はまだ登録されていません。")).toBeInTheDocument();
+});
+
+test("デスクトップでは案内とマイステータスの既存表示順を維持する", async () => {
+  mockAuthState = {
+    authMode: "mock",
+    isAuthenticated: true,
+    user: { id: "player-desktop", name: "デスクトップ利用者" },
+  };
+  mockTournament = registrationTournament({ announcement: "大会からのお知らせです。" });
+
+  renderDetail();
+  await screen.findByRole("heading", { name: "提出テスト大会" });
+
+  expect(
+    screen.queryByRole("region", { name: "大会のお知らせとマイステータス" })
+  ).not.toBeInTheDocument();
+  /* DOMの既存順を直接確認するため、対象sectionを可視文言から取得する。 */
+  /* eslint-disable testing-library/no-node-access */
+  const announcement = screen.getByText("大会からのお知らせです。").closest("section");
+  const myStatus = screen.getByText("マイステータス").closest("section");
+  const tabs = screen.getByLabelText("大会詳細");
+  expect(
+    announcement.compareDocumentPosition(myStatus) & window.Node.DOCUMENT_POSITION_FOLLOWING
+  ).toBeTruthy();
+  expect(
+    myStatus.compareDocumentPosition(tabs) & window.Node.DOCUMENT_POSITION_FOLLOWING
+  ).toBeTruthy();
+  /* eslint-enable testing-library/no-node-access */
+  expect(screen.getByRole("button", { name: "エントリー" })).toBeInTheDocument();
+});
+
 test("ラウンド取得だけ失敗しても大会情報を表示し、空状態と区別して再試行できる", async () => {
   fetchRounds.mockRejectedValueOnce(new Error("Failed to fetch"));
 

@@ -445,6 +445,56 @@
   margin: var(--gw-space-2xs) 0 0;
 }
 
+.tournament-mobile-priority-stack {
+  display: grid;
+  gap: var(--gw-space-xs);
+  margin-top: var(--gw-space-sm);
+  min-width: 0;
+}
+
+.tournament-mobile-disclosure {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: var(--gw-border-width) solid var(--gw-border);
+  border-radius: var(--gw-radius);
+  background: var(--gw-surface);
+  box-shadow: var(--gw-shadow-card);
+  box-sizing: border-box;
+}
+
+.tournament-mobile-disclosure.announcement {
+  border-color: var(--gw-primary);
+  background: var(--gw-primary-soft);
+}
+
+.tournament-mobile-disclosure > summary {
+  min-width: 0;
+  padding: var(--gw-space-xs) var(--gw-space-sm);
+  color: var(--gw-primary-strong);
+  cursor: pointer;
+  font-size: var(--gw-font-size-sm);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.tournament-mobile-disclosure > summary::marker {
+  color: var(--gw-primary);
+}
+
+.tournament-mobile-disclosure-body {
+  min-width: 0;
+  border-top: var(--gw-border-width) solid var(--gw-divider);
+}
+
+.tournament-mobile-disclosure-body > .tournament-announcement-band,
+.tournament-mobile-disclosure-body > .tournament-my-status-band {
+  margin-top: 0;
+  border: 0;
+  box-shadow: none;
+}
+
 .tournament-my-status-band {
   display: flex;
   flex-wrap: wrap;
@@ -879,6 +929,10 @@
 
 .tournament-tab-panel {
   margin-top: var(--gw-space-xs);
+}
+
+.tournament-page.compact .tournament-tab-panel {
+  scroll-margin-top: calc(var(--gw-mobile-app-bar-height) + var(--gw-space-xs));
 }
 
 .tournament-section-grid {
