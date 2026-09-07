@@ -225,6 +225,7 @@ export default function PublicDeckDetail({ compact = false }) {
   const [isModerating, setIsModerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [loadError, setLoadError] = useState(null);
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     let isActive = true;
@@ -249,7 +250,7 @@ export default function PublicDeckDetail({ compact = false }) {
     return () => {
       isActive = false;
     };
-  }, [authMode, id]);
+  }, [authMode, id, reloadToken]);
 
   const mainItems = useMemo(
     () => (deck?.items || []).filter((item) => getDeckItemZone(item) === "main"),
@@ -335,7 +336,19 @@ export default function PublicDeckDetail({ compact = false }) {
       {!isLoaded ? (
         <div className="results-empty-state">読み込み中...</div>
       ) : errorMessage ? (
-        <div className="results-empty-state">{errorMessage}</div>
+        // サービス層のエラーは英語のこともあるため、画面には日本語の説明を出し、
+        // 元のメッセージは補足として添える。再試行できる導線も置く。
+        <div className="results-empty-state" role="alert">
+          <p>デッキを読み込めませんでした。</p>
+          <p className="public-deck-error-detail">{errorMessage}</p>
+          <button
+            type="button"
+            className="results-link-button"
+            onClick={() => setReloadToken((current) => current + 1)}
+          >
+            再試行
+          </button>
+        </div>
       ) : deck ? (
         <>
           <DeckMeta deck={deck} mainCount={mainCount} sideCount={sideCount} />

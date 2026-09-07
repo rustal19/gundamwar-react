@@ -634,3 +634,16 @@
     display: inline;
   }
 }
+
+
+/* 色を判定できなかったデッキ。灰色の点だけだと「無色」とも読める */
+.public-deck-colors-unknown {
+  color: var(--gw-text-muted);
+  font-size: var(--gw-font-size-xs);
+}
+
+/* 読み込み失敗時に添える元のメッセージ(英語のこともある) */
+.public-deck-error-detail {
+  color: var(--gw-text-muted);
+  font-size: var(--gw-font-size-sm);
+}

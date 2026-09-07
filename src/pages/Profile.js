@@ -19,11 +19,18 @@ function initialsFor(user) {
   return source ? source.slice(0, 2).toUpperCase() : "GW";
 }
 
+// 今年の予定は月日で足りるが、過去の大会は年をまたぐため年がないと
+// いつの大会か分からない。年が違うときだけ年を出す。
 function formatDate(value) {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleDateString("ja-JP", { month: "2-digit", day: "2-digit" });
+  const isThisYear = date.getFullYear() === new Date().getFullYear();
+  return date.toLocaleDateString("ja-JP", {
+    ...(isThisYear ? {} : { year: "numeric" }),
+    month: "2-digit",
+    day: "2-digit",
+  });
 }
 
 function findCurrentTable(rounds, entryId) {

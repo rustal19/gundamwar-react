@@ -31,7 +31,13 @@ function formatDate(value) {
 
 function DeckColorDots({ items }) {
   const colors = getDeckColors(items);
-  const displayColors = colors.length > 0 ? colors : [{ name: "不明", value: "#d8d8d8" }];
+  const isUnknown = colors.length === 0;
+  const displayColors = isUnknown ? [{ name: "不明", value: "#d8d8d8" }] : colors;
+
+  // 色を判定できなかったときは、灰色の点だけでは「無色」とも読めてしまう。
+  if (isUnknown) {
+    return <span className="public-deck-colors-unknown">色不明</span>;
+  }
 
   return (
     <span
