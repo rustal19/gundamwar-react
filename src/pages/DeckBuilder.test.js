@@ -86,10 +86,10 @@ function createValidSavedDeckItems() {
   }));
 }
 
-function renderDeckBuilder() {
+function renderDeckBuilder(props = {}) {
   return render(
     <MemoryRouter initialEntries={["/deck"]}>
-      <DeckBuilder />
+      <DeckBuilder {...props} />
     </MemoryRouter>
   );
 }
@@ -157,6 +157,26 @@ test("未保存デッキは保存後に公開できることを表示する", ()
     within(publicationPanel).getByText("デッキを保存してから公開できます。")
   ).toBeInTheDocument();
   expect(within(publicationPanel).getByRole("button", { name: "公開する" })).toBeDisabled();
+});
+
+test("モバイルの未保存公開設定は1行へ縮約し、直後にメインデッキを置く", () => {
+  mockAuthState = { isAuthenticated: true };
+  renderDeckBuilder({ compact: true });
+
+  const publicationPanel = screen.getByRole("region", { name: "デッキ公開設定" });
+  expect(publicationPanel).toHaveClass("is-unsaved", "is-compact-unsaved");
+  expect(within(publicationPanel).getByText("未保存")).toBeInTheDocument();
+  expect(within(publicationPanel).getByText("保存後に公開できます")).toBeInTheDocument();
+  expect(within(publicationPanel).queryByRole("button")).not.toBeInTheDocument();
+
+  const mainDeckHeading = screen.getByRole("heading", { name: "メインデッキ", level: 2 });
+  /* DOMの縦順と隣接関係そのものが、このレイアウト回帰テストの対象。 */
+  /* eslint-disable testing-library/no-node-access */
+  const sidebarTools = publicationPanel.closest(".deck-sidebar-tools");
+  const currentPanel = mainDeckHeading.closest(".deck-current-panel");
+  expect(sidebarTools.nextElementSibling).toBe(currentPanel);
+  /* eslint-enable testing-library/no-node-access */
+  expect(currentPanel).toContainElement(mainDeckHeading);
 });
 
 test("保存済みデッキは構築画面から公開でき、公開後に詳細リンクを表示する", async () => {

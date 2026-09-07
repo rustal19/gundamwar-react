@@ -215,6 +215,7 @@ export default function TournamentDetail({ compact = false }) {
   const [tournamentContextKey, setTournamentContextKey] = useState("");
   const [pendingMutationRefresh, setPendingMutationRefresh] = useState(null);
   const requestIdRef = useRef({ tournament: 0, rounds: 0, standings: 0, savedDecks: 0 });
+  const tabPanelRef = useRef(null);
   const {
     status: tournamentStatus,
     data: tournament,
@@ -1292,6 +1293,117 @@ export default function TournamentDetail({ compact = false }) {
     !myStatusNeedsRounds ||
     roundsStatus === ASYNC_STATUS.EMPTY ||
     roundsStatus === ASYNC_STATUS.SUCCESS;
+  const announcementPanel = tournament.announcement ? (
+    <section className="tournament-announcement-band">
+      <MegaphoneIcon title="アナウンス" />
+      <div>
+        <p className="tournament-eyebrow">アナウンス</p>
+        <p>{tournament.announcement}</p>
+      </div>
+    </section>
+  ) : null;
+  const mutationRefreshPanel = [ASYNC_STATUS.LOADING, ASYNC_STATUS.ERROR].includes(
+    mutationRefreshStatus
+  ) ? (
+    <TournamentAsyncState
+      status={mutationRefreshStatus}
+      error={mutationRefreshError}
+      loadingMessage="最新の参加状態を確認中..."
+      errorMessage="操作は完了しましたが、最新の参加状態を確認できませんでした。"
+      onRetry={retryMutationRefresh}
+    />
+  ) : null;
+  const myStatusPanel = canRenderMyStatus ? (
+    <TournamentMyStatus
+      tournament={tournament}
+      myEntry={myEntry}
+      entries={entries}
+      rounds={rounds}
+      isAuthenticated={isAuthenticated}
+      canRegister={canRegister}
+      canUpdateDeck={canUpdateDeck}
+      canLateEntry={canLateEntry}
+      canCancel={canCancel}
+      deckSource={deckSource}
+      onDeckSourceChange={setDeckSource}
+      selectedDeckId={selectedDeckId}
+      onSelectedDeckChange={setSelectedDeckId}
+      savedDecks={savedDecks}
+      savedDecksStatus={savedDecksStatus}
+      savedDecksError={savedDecksError}
+      onRetrySavedDecks={loadSavedDecks}
+      submittedItems={submittedItems}
+      currentDeckItems={currentDeck.items || []}
+      deckViolations={deckViolations}
+      onSubmitEntry={submitEntry}
+      onRequestLateEntry={requestLateEntry}
+      onCancelEntry={cancelEntry}
+      onCheckIn={checkInEntry}
+      submitDisabled={submitDisabled}
+      isSubmitting={isSubmitting || entryMutationStateUnconfirmed}
+      formatParticipantName={formatParticipantName}
+    />
+  ) : (
+    <TournamentAsyncState
+      status={roundsStatus}
+      error={roundsError}
+      idleMessage="マイステータスはラウンド情報の読み込み後に表示します。"
+      loadingMessage="マイステータスを読み込み中..."
+      errorMessage="マイステータスに必要なラウンド情報を読み込めませんでした。"
+      onRetry={loadRounds}
+    />
+  );
+  const myStatusSummaryLabel = !isAuthenticated
+    ? "マイステータス — ログインしてエントリー"
+    : !myEntry && canRegister
+      ? "マイステータス — エントリー・デッキ提出"
+      : !myEntry && canLateEntry
+        ? "マイステータス — 途中参加を申請"
+        : canUpdateDeck
+          ? "マイステータス — デッキ提出・参加状況"
+          : "マイステータス — 参加状況を確認";
+  const priorityPanels = compact ? (
+    <div
+      className="tournament-mobile-priority-stack"
+      role="region"
+      aria-label="大会のお知らせとマイステータス"
+    >
+      {announcementPanel ? (
+        <details
+          key={`announcement-${requestContextKey}`}
+          className="tournament-mobile-disclosure announcement"
+          aria-label="大会アナウンス"
+        >
+          <summary>アナウンス — 内容を確認</summary>
+          <div className="tournament-mobile-disclosure-body">{announcementPanel}</div>
+        </details>
+      ) : null}
+      <details
+        key={`my-status-${requestContextKey}`}
+        className="tournament-mobile-disclosure my-status"
+        aria-label="マイステータス操作"
+      >
+        <summary>{myStatusSummaryLabel}</summary>
+        <div className="tournament-mobile-disclosure-body">
+          {mutationRefreshPanel}
+          {myStatusPanel}
+        </div>
+      </details>
+    </div>
+  ) : (
+    <>
+      {announcementPanel}
+      {mutationRefreshPanel}
+      {myStatusPanel}
+    </>
+  );
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    if (compact) {
+      tabPanelRef.current?.scrollIntoView?.({ behavior: "auto", block: "start" });
+    }
+  };
 
   return (
     <main className={compact ? "tournament-page compact" : "tournament-page"}>
@@ -1329,66 +1441,7 @@ export default function TournamentDetail({ compact = false }) {
         </div>
       ) : null}
 
-      {tournament.announcement ? (
-        <section className="tournament-announcement-band">
-          <MegaphoneIcon title="アナウンス" />
-          <div>
-            <p className="tournament-eyebrow">アナウンス</p>
-            <p>{tournament.announcement}</p>
-          </div>
-        </section>
-      ) : null}
-
-      {[ASYNC_STATUS.LOADING, ASYNC_STATUS.ERROR].includes(mutationRefreshStatus) ? (
-        <TournamentAsyncState
-          status={mutationRefreshStatus}
-          error={mutationRefreshError}
-          loadingMessage="最新の参加状態を確認中..."
-          errorMessage="操作は完了しましたが、最新の参加状態を確認できませんでした。"
-          onRetry={retryMutationRefresh}
-        />
-      ) : null}
-
-      {canRenderMyStatus ? (
-        <TournamentMyStatus
-          tournament={tournament}
-          myEntry={myEntry}
-          entries={entries}
-          rounds={rounds}
-          isAuthenticated={isAuthenticated}
-          canRegister={canRegister}
-          canUpdateDeck={canUpdateDeck}
-          canLateEntry={canLateEntry}
-          canCancel={canCancel}
-          deckSource={deckSource}
-          onDeckSourceChange={setDeckSource}
-          selectedDeckId={selectedDeckId}
-          onSelectedDeckChange={setSelectedDeckId}
-          savedDecks={savedDecks}
-          savedDecksStatus={savedDecksStatus}
-          savedDecksError={savedDecksError}
-          onRetrySavedDecks={loadSavedDecks}
-          submittedItems={submittedItems}
-          currentDeckItems={currentDeck.items || []}
-          deckViolations={deckViolations}
-          onSubmitEntry={submitEntry}
-          onRequestLateEntry={requestLateEntry}
-          onCancelEntry={cancelEntry}
-          onCheckIn={checkInEntry}
-          submitDisabled={submitDisabled}
-          isSubmitting={isSubmitting || entryMutationStateUnconfirmed}
-          formatParticipantName={formatParticipantName}
-        />
-      ) : (
-        <TournamentAsyncState
-          status={roundsStatus}
-          error={roundsError}
-          idleMessage="マイステータスはラウンド情報の読み込み後に表示します。"
-          loadingMessage="マイステータスを読み込み中..."
-          errorMessage="マイステータスに必要なラウンド情報を読み込めませんでした。"
-          onRetry={loadRounds}
-        />
-      )}
+      {priorityPanels}
 
       {message ? <div className="tournament-success">{message}</div> : null}
       {error ? <div className="tournament-alert">{error}</div> : null}
@@ -1399,13 +1452,19 @@ export default function TournamentDetail({ compact = false }) {
             key={tab.id}
             type="button"
             className={activeTab === tab.id ? "active" : ""}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => handleTabChange(tab.id)}
           >
             {tab.label}
           </button>
         ))}
       </div>
-      <section className="tournament-tab-panel">{renderActiveTab()}</section>
+      <section
+        ref={tabPanelRef}
+        className="tournament-tab-panel"
+        aria-label="大会詳細内容"
+      >
+        {renderActiveTab()}
+      </section>
     </main>
   );
 }
