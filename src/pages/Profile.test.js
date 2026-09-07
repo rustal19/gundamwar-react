@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Profile from "./Profile";
 import { useAuth, validateNickname } from "../context/AuthContext";
@@ -93,12 +93,22 @@ test("renders my page profile, metrics, tournaments, and results", async () => {
   renderProfile();
 
   expect(screen.getByRole("heading", { name: "テスト太郎" })).toBeInTheDocument();
+  expect(screen.getByText("Google アカウント名:")).toBeInTheDocument();
   expect(screen.getByText("Google Name")).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "公開ページを見る" })).toHaveAttribute("href", "/users/u1");
 
   expect(await screen.findByText("受付中大会")).toBeInTheDocument();
+  const upcomingLink = screen.getByRole("link", { name: /受付中大会/ });
+  expect(upcomingLink).toHaveAttribute("href", "/tournaments/t1");
+  expect(within(upcomingLink).getByText("詳細を見る →")).toHaveClass("profile-row-link-cue");
   expect(screen.getByText("未提出・提出してください")).toBeInTheDocument();
   expect(screen.getAllByText("完了大会")).toHaveLength(2);
+  const completedLinks = screen.getAllByRole("link", { name: /完了大会/ });
+  expect(completedLinks).toHaveLength(2);
+  completedLinks.forEach((link) => {
+    expect(link).toHaveAttribute("href", "/tournaments/t2");
+    expect(within(link).getByText("詳細を見る →")).toHaveClass("profile-row-link-cue");
+  });
   expect(screen.getByText("優勝")).toBeInTheDocument();
   expect(screen.getAllByText("4勝0敗0分")).toHaveLength(2);
   expect(screen.getByLabelText("公開デッキ数の値")).toHaveTextContent("1");

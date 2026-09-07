@@ -4,11 +4,10 @@ import { fetchPublicDeck, setDeckPublication } from "../services/publicDecks";
 import PublicDeckDetail from "./PublicDeckDetail";
 
 const mockUseAuth = jest.fn();
-
-jest.mock("../components/CardHoverPreview", () => ({ children }) => children);
+const mockUseDeckPreview = jest.fn();
 
 jest.mock("../hooks/useDeckPreview", () => ({
-  useDeckPreview: () => ({ previewUrl: "", isRendering: false, errorMessage: "" }),
+  useDeckPreview: (options) => mockUseDeckPreview(options),
 }));
 
 jest.mock("../context/AuthContext", () => ({
@@ -38,6 +37,7 @@ function renderDetail(initialEntry = "/decks/saved:deck-1", props = {}) {
 beforeEach(() => {
   jest.clearAllMocks();
   mockUseAuth.mockReturnValue({ authMode: "mock", isAdmin: false, user: null });
+  mockUseDeckPreview.mockReturnValue({ previewUrl: "", isRendering: false, errorMessage: "" });
   window.confirm = jest.fn(() => true);
 });
 
@@ -105,6 +105,12 @@ test("大会デッキに提出者・開催日・大会名・順位・参加人�
   expect(within(meta).getByText("枚数", { selector: "dt" })).toBeInTheDocument();
   expect(within(meta).getByText("メイン50枚 / サイド0枚")).toBeInTheDocument();
   expect(screen.getAllByText("メイン50枚 / サイド0枚")).toHaveLength(1);
+  const cardPreviewButton = screen.getByRole("button", { name: "メインカード" });
+  expect(cardPreviewButton).toHaveClass("card-hover-preview-trigger");
+  fireEvent.focus(cardPreviewButton);
+  expect(screen.getByRole("img", { name: "メインカード", hidden: true })).toBeInTheDocument();
+  fireEvent.blur(cardPreviewButton);
+  expect(screen.queryByRole("img", { name: "メインカード", hidden: true })).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "このデッキをコピー" })).toBeInTheDocument();
 });
 
@@ -142,8 +148,37 @@ test("デッキ行に列見出しを置き、コンパクト表示では枚数�
   expect(within(cardRow).getByText("カード番号:")).toHaveClass("public-deck-cell-label");
   expect(within(cardRow).getByText("3枚")).toBeInTheDocument();
   expect(within(cardRow).getByText("U-123")).toBeInTheDocument();
-  expect(within(cardRow).getByText("ラベル確認カード")).toBeInTheDocument();
+  const cardPreviewButton = within(cardRow).getByRole("button", { name: "ラベル確認カード" });
+  expect(cardPreviewButton).toHaveClass("card-hover-preview-trigger");
+  fireEvent.click(cardPreviewButton);
+  expect(screen.getByRole("dialog", { name: "ラベル確認カード の画像" })).toBeInTheDocument();
   expect(container.querySelector(".public-deck-detail")).toHaveClass("compact");
+});
+
+test("デッキ画像に原寸表示の可視案内とリンクを表示する", async () => {
+  const previewUrl = "data:image/png;base64,deck-preview";
+  mockUseDeckPreview.mockReturnValue({ previewUrl, isRendering: false, errorMessage: "" });
+  fetchPublicDeck.mockResolvedValue({
+    id: "saved:preview",
+    sourceType: "saved",
+    sourceId: "preview",
+    title: "画像確認デッキ",
+    items: [],
+  });
+
+  renderDetail("/decks/saved:preview");
+
+  expect(await screen.findByRole("heading", { name: "画像確認デッキ" })).toBeInTheDocument();
+  expect(screen.getByText("画像を選択すると原寸で表示します。")).toHaveClass(
+    "public-deck-preview-help"
+  );
+  const previewLink = screen.getByRole("link", { name: "デッキ画像を原寸表示" });
+  expect(previewLink).toHaveClass("public-deck-preview-frame");
+  expect(previewLink).toHaveAttribute("href", previewUrl);
+  expect(previewLink).toHaveAttribute("target", "_blank");
+  expect(within(previewLink).getByRole("img", { name: "画像確認デッキ のデッキ画像" })).toHaveClass(
+    "public-deck-preview-image"
+  );
 });
 
 test("保存デッキには旧データの大会参照が残っていても大会情報を表示しない", async () => {

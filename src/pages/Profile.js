@@ -94,6 +94,7 @@ function TournamentGroup({ title, items, emptyText }) {
                     <span className="profile-badge deck-locked">ロック中・修正は主催者へ</span>
                   ) : null}
                   {tableNo ? <span className="profile-badge soft">卓 {tableNo}</span> : null}
+                  <span className="profile-row-link-cue" aria-hidden="true">詳細を見る →</span>
                 </div>
               </Link>
             );
@@ -359,7 +360,10 @@ export default function Profile({ compact = false }) {
         <div className="profile-avatar" aria-hidden="true">{initialsFor(user)}</div>
         <div className="profile-identity-main">
           <h1>{displayName(user)}</h1>
-          <p className="profile-google-name">{user?.name || "-"}</p>
+          <p className="profile-google-name">
+            <span className="profile-google-name-label">Google アカウント名:</span>
+            <span>{user?.name || "-"}</span>
+          </p>
           <Link to={`/users/${user.id}`} className="profile-public-link">公開ページを見る</Link>
         </div>
         <form className="profile-form profile-nickname-form" onSubmit={handleSubmit}>
@@ -487,9 +491,12 @@ export default function Profile({ compact = false }) {
                       })}
                     </span>
                   </div>
-                  <span className={result.rank === 1 ? "profile-badge soft" : "profile-badge"}>
-                    {result.rank === 1 ? "優勝" : `${result.rank}位`}
-                  </span>
+                  <div className="profile-row-meta">
+                    <span className={result.rank === 1 ? "profile-badge soft" : "profile-badge"}>
+                      {result.rank === 1 ? "優勝" : `${result.rank}位`}
+                    </span>
+                    <span className="profile-row-link-cue" aria-hidden="true">詳細を見る →</span>
+                  </div>
                 </Link>
               ))}
             </div>

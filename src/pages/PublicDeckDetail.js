@@ -190,19 +190,22 @@ function DeckPreviewSection({ deck, mainItems, sideItems, mainCount, sideCount }
         <h2>デッキ画像</h2>
       </div>
       {previewUrl ? (
-        <a
-          className="public-deck-preview-frame"
-          href={previewUrl}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="デッキ画像を原寸表示"
-        >
-          <img
-            className="public-deck-preview-image"
-            src={previewUrl}
-            alt={`${deck.title} のデッキ画像`}
-          />
-        </a>
+        <>
+          <p className="public-deck-preview-help">画像を選択すると原寸で表示します。</p>
+          <a
+            className="public-deck-preview-frame"
+            href={previewUrl}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="デッキ画像を原寸表示"
+          >
+            <img
+              className="public-deck-preview-image"
+              src={previewUrl}
+              alt={`${deck.title} のデッキ画像`}
+            />
+          </a>
+        </>
       ) : (
         <div className="results-empty-state">
           {isRendering ? "読み込み中..." : errorMessage || "デッキ画像を表示できませんでした。"}
