@@ -647,3 +647,10 @@
   color: var(--gw-text-muted);
   font-size: var(--gw-font-size-sm);
 }
+
+
+/* 投稿者コメントであることが分かるよう見出しを付けた説明欄 */
+.public-deck-description-section h2 {
+  margin: var(--gw-space-lg) 0 var(--gw-space-2xs);
+  font-size: var(--gw-font-size-md);
+}

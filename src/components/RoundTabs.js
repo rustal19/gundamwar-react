@@ -34,6 +34,7 @@ export default function RoundTabs({ rounds, selectedRoundNumber, onChange, class
         >
           {round.isCurrent ? <span className="round-tab-dot" aria-hidden="true" /> : null}
           {getRoundLabel(round, items)}
+          {round.isCurrent ? <span className="round-tab-current-label">(進行中)</span> : null}
         </button>
       ))}
     </div>

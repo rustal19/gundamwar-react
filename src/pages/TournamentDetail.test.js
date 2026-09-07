@@ -566,7 +566,7 @@ test("ペアリング・リザルト・順位表は1件内にモバイル用ラ�
     "敗",
     "分",
     "勝点",
-    "OMW%",
+    "OMW%（対戦相手勝率）",
   ]);
 });
 
@@ -671,14 +671,14 @@ test("SEはブラケットとSE内連番で表示し、順位表はスイス結�
   renderDetail();
 
   fireEvent.click(await screen.findByRole("button", { name: "ペアリング" }));
-  expect(await screen.findByRole("button", { name: "決勝トーナメント2回戦" })).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: new RegExp("^決勝トーナメント2回戦") })).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "決勝トーナメント2回戦 / トップカット" })).toBeInTheDocument();
   expect(screen.getByText("0 - 2（P2勝利）")).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("button", { name: "順位表" }));
   expect(await screen.findByRole("heading", { name: "スイス順位表" })).toBeInTheDocument();
   const roundTabs = screen.getByLabelText("ラウンド切替");
-  expect(within(roundTabs).getByRole("button", { name: "第1回戦" })).toBeInTheDocument();
+  expect(within(roundTabs).getByRole("button", { name: new RegExp("^第1回戦") })).toBeInTheDocument();
   expect(within(roundTabs).queryByRole("button", { name: /SE/ })).not.toBeInTheDocument();
 
   const player1Row = within(screen.getByRole("table")).getByRole("row", { name: /選手1/ });

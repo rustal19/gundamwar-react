@@ -352,7 +352,12 @@ export default function PublicDeckDetail({ compact = false }) {
       ) : deck ? (
         <>
           <DeckMeta deck={deck} mainCount={mainCount} sideCount={sideCount} />
-          {deck.description ? <p className="public-deck-description">{deck.description}</p> : null}
+          {deck.description ? (
+            <section className="public-deck-description-section">
+              <h2>デッキ説明</h2>
+              <p className="public-deck-description">{deck.description}</p>
+            </section>
+          ) : null}
           <DeckTypeGroups title="メインデッキ" items={mainItems} compact={compact} />
           <DeckTypeGroups title="サイドボード" items={sideItems} compact={compact} />
           <DeckPreviewSection

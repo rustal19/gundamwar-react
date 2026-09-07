@@ -255,7 +255,7 @@ test("BO3入力後にラウンドを完了前へ戻して結果を訂正でき�
   renderManage();
 
   expect(await screen.findByText("UI大会")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "第1回戦" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: new RegExp("^第1回戦") })).toBeInTheDocument();
   expect(screen.getByText("第1回戦 / 全3回戦")).toBeInTheDocument();
   expect(screen.queryByLabelText("トーナメント表")).not.toBeInTheDocument();
   const matchTable = screen.getByRole("table");
@@ -329,7 +329,7 @@ test("SEラウンドはSE内連番で表示し、引き分けスコアを入力�
   });
   renderManage();
 
-  expect(await screen.findByRole("button", { name: "決勝トーナメント1回戦" })).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: new RegExp("^決勝トーナメント1回戦") })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "1-1" })).not.toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("button", { name: "任意スコア" }));
@@ -376,7 +376,7 @@ test("スイス完了後にSEを生成し、ブラケット決着まで進行で
   fireEvent.click(screen.getByRole("button", { name: "次ラウンド生成" }));
   await screen.findByText("次ラウンドを生成しました。");
 
-  fireEvent.click(await screen.findByRole("button", { name: "決勝トーナメント1回戦" }));
+  fireEvent.click(await screen.findByRole("button", { name: new RegExp("^決勝トーナメント1回戦") }));
   expect(screen.getByLabelText("トーナメント表")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "1-1" })).not.toBeInTheDocument();
 
@@ -392,10 +392,10 @@ test("スイス完了後にSEを生成し、ブラケット決着まで進行で
     "敗",
     "分",
     "勝点",
-    "OMW%",
+    "OMW%（対戦相手勝率）",
   ]);
   fireEvent.click(screen.getByRole("button", { name: "ラウンド運営" }));
-  expect(await screen.findByRole("button", { name: "決勝トーナメント1回戦" })).toHaveClass("active");
+  expect(await screen.findByRole("button", { name: new RegExp("^決勝トーナメント1回戦") })).toHaveClass("active");
 
   fireEvent.click(screen.getByRole("button", { name: "0-2" }));
   await screen.findByText(
@@ -421,7 +421,7 @@ test("後続ラウンドは専用確認ダイアログで明示してから結�
   const nativeConfirm = jest.spyOn(window, "confirm");
   renderManage();
 
-  fireEvent.click(await screen.findByRole("button", { name: "第1回戦" }));
+  fireEvent.click(await screen.findByRole("button", { name: new RegExp("^第1回戦") }));
   fireEvent.click(screen.getByRole("button", { name: "結果を修正" }));
 
   let dialog = await screen.findByRole("dialog", { name: "後続ラウンド破棄の確認" });
@@ -463,7 +463,7 @@ test("直前より前の完了ラウンドは理由を示して巻き戻し操�
   });
   renderManage();
 
-  fireEvent.click(await screen.findByRole("button", { name: "第1回戦" }));
+  fireEvent.click(await screen.findByRole("button", { name: new RegExp("^第1回戦") }));
   const reopenButton = screen.getByRole("button", { name: "結果を修正" });
   expect(reopenButton).toBeDisabled();
   expect(reopenButton).toHaveAttribute(

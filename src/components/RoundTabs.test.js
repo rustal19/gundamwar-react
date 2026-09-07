@@ -15,12 +15,12 @@ test("SEラウンドはSE内連番で表示し、選択値には全体のラウ�
     <RoundTabs rounds={rounds} selectedRoundNumber={3} onChange={onChange} />
   );
 
-  expect(screen.getByRole("button", { name: "第1回戦" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "第2回戦" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "決勝トーナメント1回戦" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "決勝トーナメント2回戦" })).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "第3回戦" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: new RegExp("^第1回戦") })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: new RegExp("^第2回戦") })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: new RegExp("^決勝トーナメント1回戦") })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: new RegExp("^決勝トーナメント2回戦") })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: new RegExp("^第3回戦") })).not.toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole("button", { name: "決勝トーナメント2回戦" }));
+  fireEvent.click(screen.getByRole("button", { name: new RegExp("^決勝トーナメント2回戦") }));
   expect(onChange).toHaveBeenCalledWith(4);
 });

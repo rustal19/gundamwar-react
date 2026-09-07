@@ -1876,3 +1876,10 @@
   margin: var(--gw-space-md) 0 var(--gw-space-2xs);
   font-size: var(--gw-font-size-md);
 }
+
+
+/* 進行中の点だけでは意味が読めないので語を併記する */
+.round-tab-current-label {
+  margin-left: var(--gw-space-3xs);
+  font-size: var(--gw-font-size-xs);
+}

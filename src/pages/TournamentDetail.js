@@ -1262,7 +1262,7 @@ export default function TournamentDetail({ compact = false }) {
                       <td className="num" data-label="敗">{standing.losses}</td>
                       <td className="num" data-label="分">{standing.draws}</td>
                       <td className="num" data-label="勝点">{standing.points}</td>
-                      <td className="num" data-label="OMW%">
+                      <td className="num" data-label="OMW%（対戦相手勝率）">
                         {Math.round(Number(standing.omwPercent || 0) * 1000) / 10}%
                       </td>
                     </tr>
