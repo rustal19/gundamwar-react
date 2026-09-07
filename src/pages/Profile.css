@@ -71,10 +71,25 @@
   gap: var(--gw-space-2xs);
 }
 
+.profile-identity-main h1,
+.profile-google-name span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .profile-google-name {
   margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--gw-space-2xs);
+  flex-wrap: wrap;
   color: var(--gw-text-muted);
   font-size: var(--gw-font-size-xs);
+}
+
+.profile-google-name-label {
+  color: var(--gw-text);
+  font-weight: 700;
 }
 
 .profile-public-link {
@@ -178,18 +193,40 @@
   color: inherit;
   text-decoration: none;
   border-bottom: 1px solid var(--gw-secondary-border-soft);
-  padding: var(--gw-space-sm) 0;
+  padding: var(--gw-space-sm);
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: var(--gw-space-md);
 }
 
+.profile-tournament-row:hover,
+.profile-tournament-row:focus-visible,
+.profile-result-row:hover,
+.profile-result-row:focus-visible {
+  background: var(--gw-primary-soft);
+}
+
+.profile-tournament-row > div:first-child,
+.profile-result-row > div:first-child {
+  min-width: 0;
+}
+
 .profile-tournament-row strong,
 .profile-result-row strong {
   display: block;
-  color: var(--gw-text-strong);
+  color: var(--gw-primary);
   font-size: var(--gw-font-size-md);
+  text-decoration: underline;
+  text-underline-offset: var(--gw-space-3xs);
+  overflow-wrap: anywhere;
+}
+
+.profile-tournament-row:hover strong,
+.profile-tournament-row:focus-visible strong,
+.profile-result-row:hover strong,
+.profile-result-row:focus-visible strong {
+  color: var(--gw-primary-strong);
 }
 
 .profile-tournament-row span,
@@ -200,9 +237,27 @@
 
 .profile-row-meta {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: var(--gw-space-xs);
   flex-wrap: wrap;
+}
+
+.profile-tournament-row .profile-row-link-cue,
+.profile-result-row .profile-row-link-cue {
+  color: var(--gw-primary);
+  font-size: var(--gw-font-size-xs);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: var(--gw-space-3xs);
+  white-space: nowrap;
+}
+
+.profile-tournament-row:hover .profile-row-link-cue,
+.profile-tournament-row:focus-visible .profile-row-link-cue,
+.profile-result-row:hover .profile-row-link-cue,
+.profile-result-row:focus-visible .profile-row-link-cue {
+  color: var(--gw-primary-strong);
 }
 
 .profile-badge {

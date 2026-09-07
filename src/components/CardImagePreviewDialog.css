@@ -12,6 +12,7 @@
 .card-image-preview-dialog {
   width: min(460px, calc(100vw - 2rem));
   max-height: calc(100vh - 2rem);
+  box-sizing: border-box;
   display: grid;
   gap: var(--gw-space-sm);
   padding: var(--gw-space-md);

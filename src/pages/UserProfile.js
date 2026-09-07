@@ -222,9 +222,14 @@ export default function UserProfile({ compact = false }) {
                       <DeckColorDots items={deck.items} />
                       {deck.title}
                     </strong>
-                    <span>{formatDate(deck.publishedAt || deck.updatedAt)}</span>
+                    <span>
+                      {deck.publishedAt ? "公開日" : "更新日"}: {formatDate(deck.publishedAt || deck.updatedAt)}
+                    </span>
                   </div>
-                  {deck.format ? <span className="public-deck-format-badge">{deck.format}</span> : null}
+                  <div className="profile-row-meta">
+                    {deck.format ? <span className="public-deck-format-badge">{deck.format}</span> : null}
+                    <span className="profile-row-link-cue" aria-hidden="true">詳細を見る →</span>
+                  </div>
                 </Link>
               ))}
             </div>
@@ -246,9 +251,12 @@ export default function UserProfile({ compact = false }) {
                       })}
                     </span>
                   </div>
-                  <span className={result.rank === 1 ? "profile-badge soft" : "profile-badge"}>
-                    {result.rank === 1 ? "優勝" : `${result.rank}位`}
-                  </span>
+                  <div className="profile-row-meta">
+                    <span className={result.rank === 1 ? "profile-badge soft" : "profile-badge"}>
+                      {result.rank === 1 ? "優勝" : `${result.rank}位`}
+                    </span>
+                    <span className="profile-row-link-cue" aria-hidden="true">詳細を見る →</span>
+                  </div>
                 </Link>
               ))}
             </div>
