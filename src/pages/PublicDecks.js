@@ -286,7 +286,7 @@ export default function PublicDecks({ compact = false }) {
       <button type="button" onClick={() => navigateToPage(page - 1)} disabled={page <= 1}>
         前へ
       </button>
-      <span>{`${page} / ${totalPages}`}</span>
+      <span aria-label="ページ位置">{`${page} / 全${totalPages}ページ`}</span>
       <button type="button" onClick={() => navigateToPage(page + 1)} disabled={page >= totalPages}>
         次へ
       </button>

@@ -389,7 +389,7 @@ test("20件を超える公開デッキは条件を維持したまま次ページ
     }))
   );
   await waitFor(() => expect(screen.getAllByRole("article")).toHaveLength(20));
-  expect(screen.getAllByText("1 / 2")).toHaveLength(2);
+  expect(screen.getAllByText("1 / 全2ページ")).toHaveLength(2);
 
   fireEvent.click(screen.getAllByRole("button", { name: "次へ" })[0]);
 
@@ -404,7 +404,7 @@ test("20件を超える公開デッキは条件を維持したまま次ページ
     }))
   );
   await waitFor(() => expect(screen.getAllByRole("article")).toHaveLength(5));
-  expect(screen.getAllByText("2 / 2")).toHaveLength(2);
+  expect(screen.getAllByText("2 / 全2ページ")).toHaveLength(2);
   expect(screen.getByRole("link", { name: "公開デッキ25" })).toHaveAttribute(
     "href",
     "/decks/saved:deck-25"
