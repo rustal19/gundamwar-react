@@ -1869,3 +1869,10 @@
     display: none;
   }
 }
+
+
+/* ブラケット直下の表が「選択ラウンドの卓割り」であることを示す小見出し */
+.tournament-round-subheading {
+  margin: var(--gw-space-md) 0 var(--gw-space-2xs);
+  font-size: var(--gw-font-size-md);
+}

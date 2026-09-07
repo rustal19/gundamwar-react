@@ -2258,7 +2258,7 @@ export async function reportMatchResult({
     (result === "draw" ||
       (hasBothGameCounts && Number(player1Games) === Number(player2Games)))
   ) {
-    throw new Error("SEラウンドでは引き分けにできません。勝者が決まる結果を入力してください。");
+    throw new Error("決勝トーナメントでは引き分けにできません。勝者が決まる結果を入力してください。");
   }
 
   if (authMode === "mock") {
@@ -2290,7 +2290,7 @@ export async function reportMatchResult({
 
     const isTopCutRound = found.round.stage === "top_cut" || stage === "top_cut";
     if (isTopCutRound && result === "draw") {
-      throw new Error("SEラウンドでは引き分けにできません。勝者が決まる結果を入力してください。");
+      throw new Error("決勝トーナメントでは引き分けにできません。勝者が決まる結果を入力してください。");
     }
     const isBye = found.match.player2EntryId == null || found.match.result === "bye" || result === "bye";
     const nextResult =
@@ -2298,7 +2298,7 @@ export async function reportMatchResult({
         ? null
         : deriveResultFromGames({ player1Games, player2Games, result, isBye });
     if (isTopCutRound && nextResult === "draw") {
-      throw new Error("SEラウンドでは引き分けにできません。勝者が決まる結果を入力してください。");
+      throw new Error("決勝トーナメントでは引き分けにできません。勝者が決まる結果を入力してください。");
     }
     const oldWinner = winnerEntryId(found.match);
     const nextWinner = nextResult ? winnerEntryId(found.match, nextResult) : null;

@@ -114,10 +114,10 @@ test("トップカット進行中はSE内連番とブラケットを表示する
 
   renderDisplay();
 
-  expect(await screen.findByText("現在ラウンド: SE1回戦")).toBeInTheDocument();
+  expect(await screen.findByText("現在ラウンド: 決勝トーナメント1回戦")).toBeInTheDocument();
   expect(screen.getByText("スイス: 全4回戦")).toBeInTheDocument();
   const bracket = screen.getByLabelText("トーナメント表");
-  expect(within(bracket).getByRole("heading", { name: "SE1回戦" })).toBeInTheDocument();
+  expect(within(bracket).getByRole("heading", { name: "決勝トーナメント1回戦" })).toBeInTheDocument();
   expect(within(bracket).getByText("プレイヤー1")).toBeInTheDocument();
 
   // 順位表タブもトーナメント表を出すだけになるため、タブ自体を出さない
@@ -172,7 +172,7 @@ test("トップカットの勝敗をスイス順位表へ加算しない", async
   });
 
   renderDisplay();
-  await screen.findByText("現在ラウンド: SE1回戦");
+  await screen.findByText("現在ラウンド: 決勝トーナメント1回戦");
   fireEvent.click(screen.getByRole("tab", { name: "順位表" }));
 
   const player1Row = screen.getByRole("row", { name: /プレイヤー1/ });

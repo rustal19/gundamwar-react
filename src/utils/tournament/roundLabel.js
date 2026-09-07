@@ -24,8 +24,10 @@ export function getRoundLabel(round, rounds = []) {
   if (!round || round.number == null) return "ラウンド";
   if (round.stage !== "top_cut") return `第${round.number}回戦`;
 
+  // 「SE」はシングルエリミネーションの略だが、不慣れな主催者・参加者には
+  // 意味が通らない。上位者だけで行う決勝トーナメントであることを言葉で出す。
   const stageNumber = topCutRoundNumber(round, rounds);
-  return stageNumber == null ? "SE回戦" : `SE${stageNumber}回戦`;
+  return stageNumber == null ? "決勝トーナメント" : `決勝トーナメント${stageNumber}回戦`;
 }
 
 export function getRoundProgressLabel(round, rounds = [], tournament = {}) {

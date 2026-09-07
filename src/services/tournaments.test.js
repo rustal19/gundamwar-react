@@ -2094,7 +2094,7 @@ describe("tournaments service mock mode", () => {
     const round = await createNextRound("t1", { authMode: "mock" });
     const matchId = round.matches[0].id;
     const drawError =
-      "SEラウンドでは引き分けにできません。勝者が決まる結果を入力してください。";
+      "決勝トーナメントでは引き分けにできません。勝者が決まる結果を入力してください。";
 
     await expect(
       reportMatchResult({ matchId, result: "draw", authMode: "mock" })
@@ -2118,7 +2118,7 @@ describe("tournaments service mock mode", () => {
   it("rejects top-cut draws before sending an API request", async () => {
     global.fetch = jest.fn();
     const drawError =
-      "SEラウンドでは引き分けにできません。勝者が決まる結果を入力してください。";
+      "決勝トーナメントでは引き分けにできません。勝者が決まる結果を入力してください。";
 
     await expect(
       reportMatchResult({

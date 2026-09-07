@@ -29,7 +29,7 @@ import { FORMAT_PRESETS } from "../data/formats";
 import { defaultRegulation, validateDeck } from "../utils/deckValidation";
 import { formatDeckCountSummary, getDeckCounts } from "../utils/deckCounts";
 import { createTournamentParticipantNameFormatter } from "../utils/tournament/participantDisplayName";
-import { getRoundProgressLabel } from "../utils/tournament/roundLabel";
+import { getRoundLabel, getRoundProgressLabel } from "../utils/tournament/roundLabel";
 import {
   getSwissEndConditionLabel,
   getSwissRoundSummary,
@@ -1061,7 +1061,14 @@ export default function TournamentDetail({ compact = false }) {
             <span>{ROUND_STATUS_LABELS[selectedPairingRound.status] || selectedPairingRound.status}</span>
           </div>
           {selectedPairingRound.stage === "top_cut" ? (
-            <Bracket rounds={rounds} entries={entries} showResults={tournament.status === "completed"} />
+            <>
+              <Bracket rounds={rounds} entries={entries} showResults={tournament.status === "completed"} />
+              {/* 直下の表はブラケット全体ではなく「選択したラウンドだけ」を
+                  卓番号つきで並べたもの。役割を書かないと別の対戦に見える。 */}
+              <h3 className="tournament-round-subheading">
+                {getRoundLabel(selectedPairingRound, rounds)}の卓割り
+              </h3>
+            </>
           ) : null}
             {(selectedPairingRound.matches || []).length > 0 ? (
               <div className="tournament-table-wrap tournament-card-table-wrap">
@@ -1159,7 +1166,9 @@ export default function TournamentDetail({ compact = false }) {
                           fallback="不戦勝"
                         />
                       </td>
-                      <td data-label="結果">{resultLabel(match.result)}</td>
+                      {/* ペアリングタブと同じ情報量にする。結果確認の画面で
+                          ゲームスコアが失われるのは本末転倒。 */}
+                      <td data-label="結果">{matchScoreLabel(match)}</td>
                     </tr>
                   );
                 })}
@@ -1167,7 +1176,9 @@ export default function TournamentDetail({ compact = false }) {
                 </table>
               </div>
             ) : (
-              <div className="tournament-empty">このラウンドには対戦結果がありません。</div>
+              <div className="tournament-empty">
+                このラウンドの対戦はまだ作成されていません。
+              </div>
             )}
           </section>
         ) : (
@@ -1289,7 +1300,8 @@ export default function TournamentDetail({ compact = false }) {
       </Link>
       <div className="tournament-detail-header">
         <div>
-          <p className="tournament-eyebrow">{STATUS_LABELS[tournament.status] || tournament.status}</p>
+          {/* ステータスは右側のバッジに1か所だけ出す。
+              ここにも同じ語を置くと、情報が増えないまま縦領域を使う。 */}
           <h1>{tournament.title}</h1>
           <p>開催地 {formatVenue(tournament)} / 開始 {formatDateTime(tournament.startsAt)}</p>
           <p>{tournament.description || "説明はありません。"}</p>

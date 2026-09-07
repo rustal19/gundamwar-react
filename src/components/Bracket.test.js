@@ -59,14 +59,14 @@ const rounds = [
 test("確定済みSEラウンドは大会進行中でもスコアを表示する", () => {
   render(<Bracket rounds={rounds} entries={entries} />);
 
-  expect(screen.getByRole("heading", { name: "SE1回戦" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "SE2回戦" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "決勝トーナメント1回戦" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "決勝トーナメント2回戦" })).toBeInTheDocument();
   expect(screen.getByText("2 - 1（P1勝利）")).toBeInTheDocument();
   expect(screen.getByText("0 - 2（P2勝利）")).toBeInTheDocument();
   expect(screen.queryByText("未報告")).not.toBeInTheDocument();
 
-  expect(screen.getByLabelText("SE1回戦")).not.toHaveClass("final");
-  expect(screen.getByLabelText("SE2回戦")).toHaveClass("final");
+  expect(screen.getByLabelText("決勝トーナメント1回戦")).not.toHaveClass("final");
+  expect(screen.getByLabelText("決勝トーナメント2回戦")).toHaveClass("final");
 });
 
 test("showResults指定時は進行中ラウンドの未報告状態も表示する", () => {
@@ -84,7 +84,7 @@ test("ブラケットでは同名参加者だけを短い識別子で区別す�
 
   render(<Bracket rounds={rounds} entries={duplicateEntries} />);
 
-  const firstRound = screen.getByLabelText("SE1回戦");
+  const firstRound = screen.getByLabelText("決勝トーナメント1回戦");
   const duplicateLabels = within(firstRound).getAllByText(/^同名選手 #[0-9a-z]{4,}$/);
   expect(duplicateLabels).toHaveLength(2);
   expect(duplicateLabels[0].textContent).not.toBe(duplicateLabels[1].textContent);

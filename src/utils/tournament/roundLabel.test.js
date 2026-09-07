@@ -18,10 +18,10 @@ describe("getRoundLabel", () => {
 
   it("numbers top-cut rounds from one independently of the global number", () => {
     expect(getRoundLabel(rounds.find((round) => round.id === "top-cut-1"), rounds)).toBe(
-      "SE1回戦"
+      "決勝トーナメント1回戦"
     );
     expect(getRoundLabel(rounds.find((round) => round.id === "top-cut-2"), rounds)).toBe(
-      "SE2回戦"
+      "決勝トーナメント2回戦"
     );
   });
 
@@ -45,7 +45,7 @@ describe("getRoundLabel", () => {
         rounds,
         tournament
       )
-    ).toBe("SE1回戦");
+    ).toBe("決勝トーナメント1回戦");
   });
 
   it("projects the next top-cut label from tournament settings", () => {
@@ -55,7 +55,7 @@ describe("getRoundLabel", () => {
         swissRounds: 4,
         topCutSize: 8,
       })
-    ).toBe("SE1回戦");
-    expect(getRoundLabelForNumber(1, [], { format: "single_elim" })).toBe("SE1回戦");
+    ).toBe("決勝トーナメント1回戦");
+    expect(getRoundLabelForNumber(1, [], { format: "single_elim" })).toBe("決勝トーナメント1回戦");
   });
 });

@@ -671,8 +671,8 @@ test("SEはブラケットとSE内連番で表示し、順位表はスイス結�
   renderDetail();
 
   fireEvent.click(await screen.findByRole("button", { name: "ペアリング" }));
-  expect(await screen.findByRole("button", { name: "SE2回戦" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "SE2回戦 / トップカット" })).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: "決勝トーナメント2回戦" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "決勝トーナメント2回戦 / トップカット" })).toBeInTheDocument();
   expect(screen.getByText("0 - 2（P2勝利）")).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("button", { name: "順位表" }));

@@ -329,7 +329,7 @@ test("SEラウンドはSE内連番で表示し、引き分けスコアを入力�
   });
   renderManage();
 
-  expect(await screen.findByRole("button", { name: "SE1回戦" })).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: "決勝トーナメント1回戦" })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "1-1" })).not.toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("button", { name: "任意スコア" }));
@@ -376,7 +376,7 @@ test("スイス完了後にSEを生成し、ブラケット決着まで進行で
   fireEvent.click(screen.getByRole("button", { name: "次ラウンド生成" }));
   await screen.findByText("次ラウンドを生成しました。");
 
-  fireEvent.click(await screen.findByRole("button", { name: "SE1回戦" }));
+  fireEvent.click(await screen.findByRole("button", { name: "決勝トーナメント1回戦" }));
   expect(screen.getByLabelText("トーナメント表")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "1-1" })).not.toBeInTheDocument();
 
@@ -395,7 +395,7 @@ test("スイス完了後にSEを生成し、ブラケット決着まで進行で
     "OMW%",
   ]);
   fireEvent.click(screen.getByRole("button", { name: "ラウンド運営" }));
-  expect(await screen.findByRole("button", { name: "SE1回戦" })).toHaveClass("active");
+  expect(await screen.findByRole("button", { name: "決勝トーナメント1回戦" })).toHaveClass("active");
 
   fireEvent.click(screen.getByRole("button", { name: "0-2" }));
   await screen.findByText(
