@@ -1,4 +1,4 @@
-import { computeStandings } from "../utils/tournament/standings";
+import { compareEntryIds, computeStandings } from "../utils/tournament/standings";
 import { getRoundLabel } from "../utils/tournament/roundLabel";
 import { buildBracket, nextRoundPairs } from "../utils/tournament/singleElimination";
 import {

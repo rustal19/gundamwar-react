@@ -2458,13 +2458,14 @@ export default function TournamentManage({ compact = false }) {
   }, [isNew, requestContextKey, resetTournamentRefresh]);
 
   useEffect(() => {
+    const requestIds = requestIdRef.current;
     if (isReady !== false) loadAll();
     return () => {
-      requestIdRef.current.tournament += 1;
-      requestIdRef.current.entries += 1;
-      requestIdRef.current.bans += 1;
-      requestIdRef.current.rounds += 1;
-      requestIdRef.current.standings += 1;
+      requestIds.tournament += 1;
+      requestIds.entries += 1;
+      requestIds.bans += 1;
+      requestIds.rounds += 1;
+      requestIds.standings += 1;
     };
   }, [isReady, loadAll]);
 

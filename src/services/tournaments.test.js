@@ -1259,6 +1259,31 @@ describe("tournaments service mock mode", () => {
     });
   });
 
+  it("uses the numeric entry id as a deterministic tie-breaker for equal standings", async () => {
+    setRegistrationTournament({ status: "in_progress" });
+    const store = readStore();
+    store.entries.t1 = [10, 2].map((number) => ({
+      id: `entry-${number}`,
+      tournamentId: "t1",
+      user: { id: `player-${number}`, name: `Player ${number}` },
+      status: "checked_in",
+      joinedAtRound: 1,
+      createdAt: "2026-01-01T00:00:00.000Z",
+    }));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const standings = await fetchStandings("t1", { authMode: "mock" });
+
+    expect(standings.items.map((standing) => standing.entryId)).toEqual([
+      "entry-2",
+      "entry-10",
+    ]);
+    expect(standings.items.map(({ points, omwPercent }) => ({ points, omwPercent }))).toEqual([
+      { points: 0, omwPercent: 0 },
+      { points: 0, omwPercent: 0 },
+    ]);
+  });
+
   it("does not expose submitted decklists through standings", async () => {
     setRegistrationTournament({ status: "in_progress" });
     const store = readStore();
@@ -2021,6 +2046,42 @@ describe("tournaments service mock mode", () => {
     expect(
       entries.filter((entry) => entry.status === "checked_in" && !entry.isWaitlisted)
     ).toHaveLength(3);
+  });
+
+  it("uses the numeric entry id as a deterministic tie-breaker for simultaneous waitlist entries", async () => {
+    setRegistrationTournament({ status: "in_progress", capacity: 2 });
+    const store = readStore();
+    const createdAt = "2026-01-01T00:00:00.000Z";
+    store.entries.t1 = [
+      {
+        id: "admitted-1",
+        tournamentId: "t1",
+        user: { id: "user-admitted-1", name: "参加者" },
+        status: "checked_in",
+        isWaitlisted: false,
+        joinedAtRound: 1,
+        createdAt,
+      },
+      ...[10, 2].map((number) => ({
+        id: `wait-${number}`,
+        tournamentId: "t1",
+        user: { id: `user-wait-${number}`, name: `待機${number}` },
+        status: "checked_in",
+        isWaitlisted: true,
+        joinedAtRound: 1,
+        createdAt,
+      })),
+    ];
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+
+    const promoted = await promoteWaitlistedEntries({
+      tournamentId: "t1",
+      authMode: "mock",
+      user: organizer,
+    });
+
+    expect(promoted.promotedEntries.map((entry) => entry.id)).toEqual(["wait-2"]);
+    expect(promoted.remainingWaitlistCount).toBe(1);
   });
 
   it.each([0, 1])(
