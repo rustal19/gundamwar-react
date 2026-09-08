@@ -353,6 +353,80 @@ test("エントリー済みで提出デッキが空なら更新を無効化し�
   ).toBeInTheDocument();
 });
 
+test("任意大会へデッキなしで参加した直後は未提出を正常状態として案内する", () => {
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        tournament: { ...statusProps().tournament, decklistRequired: false },
+        myEntry: { ...entry, decklistState: "none", deckLockedAt: null },
+        deckSource: "current",
+        currentDeckItems: [],
+        submittedItems: [],
+        deckViolations: [{ code: "main_count", message: "メインデッキが不足しています。" }],
+        submitDisabled: true,
+      })}
+    />
+  );
+
+  expect(
+    screen.getByText(
+      "デッキリストは未提出です。提出は任意です。提出する場合は完成したデッキを選択できます。"
+    )
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText("デッキリストの提出は任意です。提出する場合は完成したデッキを選択してください。")
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByText("提出するデッキがありません。完成したデッキを選択してください。")
+  ).not.toBeInTheDocument();
+  expect(screen.queryByText("メインデッキが不足しています。")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "提出を更新" })).toBeDisabled();
+});
+
+test("任意大会の参加後も選択済みの未完成デッキは検証警告を表示する", () => {
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        tournament: { ...statusProps().tournament, decklistRequired: false },
+        myEntry: { ...entry, decklistState: "none", deckLockedAt: null },
+        submittedItems: [{ id: "basic-g", zone: "main", count: 1 }],
+        deckViolations: [{ code: "main_count", message: "メインデッキが不足しています。" }],
+        submitDisabled: true,
+      })}
+    />
+  );
+
+  expect(screen.getByText("デッキリストを提出できません。")).toBeInTheDocument();
+  expect(screen.getByText("メインデッキが不足しています。")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "提出を更新" })).toBeDisabled();
+});
+
+test("任意大会の参加後も選択済みの未完成保存デッキは検証警告を表示する", () => {
+  const incompleteDeck = {
+    id: "incomplete-saved",
+    title: "未完成保存デッキ",
+    items: [{ id: "basic-g", zone: "main", count: 1 }],
+  };
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        tournament: { ...statusProps().tournament, decklistRequired: false },
+        myEntry: { ...entry, decklistState: "none", deckLockedAt: null },
+        deckSource: "saved",
+        selectedDeckId: incompleteDeck.id,
+        savedDecks: [incompleteDeck],
+        submittedItems: incompleteDeck.items,
+        deckViolations: [{ code: "main_count", message: "メインデッキが不足しています。" }],
+        submitDisabled: true,
+      })}
+    />
+  );
+
+  expect(screen.getByText("デッキリストを提出できません。")).toBeInTheDocument();
+  expect(screen.getByText("メインデッキが不足しています。")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "提出を更新" })).toBeDisabled();
+});
+
 test("任意大会の未エントリー状態では初期currentが空ならそのまま参加できる", () => {
   render(
     <TournamentMyStatus

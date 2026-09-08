@@ -149,6 +149,35 @@ test("大会ごとにデッキリストの4状態を表示する", async () => {
   expect(screen.getByText("公開中・差し替え不可")).toBeInTheDocument();
 });
 
+test("任意大会の未提出は提出必須と誤解させない", async () => {
+  fetchMyTournaments.mockResolvedValue({
+    items: [
+      {
+        tournament: {
+          id: "optional-none",
+          title: "任意提出大会",
+          status: "registration",
+          startsAt: "2026-08-10T10:00:00.000Z",
+          decklistRequired: false,
+        },
+        entry: {
+          id: "optional-entry",
+          user: { id: "u1" },
+          status: "registered",
+          decklistState: "none",
+          deckLockedAt: null,
+        },
+      },
+    ],
+  });
+
+  renderProfile();
+
+  expect(await screen.findByText("任意提出大会")).toBeInTheDocument();
+  expect(screen.getByText("未提出・提出は任意")).toBeInTheDocument();
+  expect(screen.queryByText("未提出・提出してください")).not.toBeInTheDocument();
+});
+
 test("saves nickname from the my page form", async () => {
   const updateProfile = jest.fn().mockResolvedValue({});
   renderProfile({ updateProfile });
