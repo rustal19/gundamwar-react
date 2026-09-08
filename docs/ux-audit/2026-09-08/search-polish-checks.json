@@ -1,0 +1,142 @@
+[
+  {
+    "width": 390,
+    "scrollWidth": 390,
+    "formBackground": "rgb(233, 240, 233)",
+    "headerBackground": "rgb(233, 240, 233)",
+    "headerPosition": "sticky",
+    "footerTopBorder": "0px",
+    "rowBottomBorder": "1px",
+    "buttons": [
+      {
+        "text": "検索",
+        "height": 44
+      },
+      {
+        "text": "リセット",
+        "height": 44
+      },
+      {
+        "text": "検索",
+        "height": 44
+      },
+      {
+        "text": "リセット",
+        "height": 44
+      }
+    ],
+    "stickyTop": 52
+  },
+  {
+    "width": 768,
+    "scrollWidth": 768,
+    "formBackground": "rgb(233, 240, 233)",
+    "headerBackground": "rgb(233, 240, 233)",
+    "headerPosition": "sticky",
+    "footerTopBorder": "0px",
+    "rowBottomBorder": "1px",
+    "buttons": [
+      {
+        "text": "検索",
+        "height": 44
+      },
+      {
+        "text": "リセット",
+        "height": 44
+      },
+      {
+        "text": "検索",
+        "height": 44
+      },
+      {
+        "text": "リセット",
+        "height": 44
+      }
+    ],
+    "stickyTop": 52
+  },
+  {
+    "width": 1100,
+    "scrollWidth": 1100,
+    "formBackground": "rgb(233, 240, 233)",
+    "headerBackground": "rgb(233, 240, 233)",
+    "headerPosition": "sticky",
+    "footerTopBorder": "0px",
+    "rowBottomBorder": "1px",
+    "buttons": [
+      {
+        "text": "検索",
+        "height": 44
+      },
+      {
+        "text": "リセット",
+        "height": 44
+      },
+      {
+        "text": "検索",
+        "height": 44
+      },
+      {
+        "text": "リセット",
+        "height": 44
+      }
+    ],
+    "stickyTop": 52
+  },
+  {
+    "width": 1101,
+    "scrollWidth": 1101,
+    "formBackground": "rgb(233, 240, 233)",
+    "headerBackground": "rgb(233, 240, 233)",
+    "headerPosition": "sticky",
+    "footerTopBorder": "0px",
+    "rowBottomBorder": "1px",
+    "buttons": [
+      {
+        "text": "検索",
+        "height": 37
+      },
+      {
+        "text": "リセット",
+        "height": 37
+      },
+      {
+        "text": "検索",
+        "height": 37
+      },
+      {
+        "text": "リセット",
+        "height": 37
+      }
+    ],
+    "stickyTop": 0
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1440,
+    "formBackground": "rgb(233, 240, 233)",
+    "headerBackground": "rgb(233, 240, 233)",
+    "headerPosition": "sticky",
+    "footerTopBorder": "0px",
+    "rowBottomBorder": "1px",
+    "buttons": [
+      {
+        "text": "検索",
+        "height": 37
+      },
+      {
+        "text": "リセット",
+        "height": 37
+      },
+      {
+        "text": "検索",
+        "height": 37
+      },
+      {
+        "text": "リセット",
+        "height": 37
+      }
+    ],
+    "stickyTop": 0
+  }
+]

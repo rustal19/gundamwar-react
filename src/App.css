@@ -24,7 +24,7 @@
   top: 0;
   z-index: 5;
   /* 追従中に下の入力欄が透けないよう背景を必ず塗る */
-  background: var(--gw-surface);
+  background: var(--gw-primary-soft);
   padding-top: var(--gw-space-sm);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -77,6 +77,11 @@
   justify-content: flex-end;
   border-top: var(--gw-border-width) solid var(--gw-border-strong);
   padding-top: var(--gw-space-sm);
+}
+
+/* 表示件数の行にある下線を使い、操作欄との区切りを二重にしない。 */
+.grid-form > .form-row + .search-form-footer {
+  border-top: 0;
 }
 
 .search-hint {
