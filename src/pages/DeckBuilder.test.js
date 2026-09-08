@@ -159,6 +159,25 @@ test("未保存デッキは保存後に公開できることを表示する", ()
   expect(within(publicationPanel).getByRole("button", { name: "公開する" })).toBeDisabled();
 });
 
+test.each([false, true])("未ログイン・空デッキでもデッキ側でフォーマットを選べる compact=%s", (compact) => {
+  mockDeckState = {
+    ...mockDeckState,
+    items: [],
+    mainItems: [],
+    sideItems: [],
+    mainCount: 0,
+    sideCount: 0,
+  };
+  renderDeckBuilder({ compact });
+
+  const panel = screen.getByRole("region", { name: "フォーマット・禁止制限" });
+  const select = within(panel).getByLabelText("構築するデッキのフォーマット");
+  expect(select).toBeEnabled();
+  fireEvent.change(select, { target: { value: "関西クラシック" } });
+  expect(screen.getByTestId("compact-format-name")).toHaveTextContent("関西クラシック");
+  expect(screen.getByTestId("results-format-name")).toHaveTextContent("関西クラシック");
+});
+
 test("モバイルの未保存公開設定は1行へ縮約し、直後にメインデッキを置く", () => {
   mockAuthState = { isAuthenticated: true };
   renderDeckBuilder({ compact: true });
@@ -288,6 +307,15 @@ test("フォーマット未選択の保存済みデッキは公開できない�
 
 test("保存済み内容がレギュレーション違反なら理由を事前表示して公開を無効にする", () => {
   mockAuthState = { isAuthenticated: true };
+  const currentItems = createValidSavedDeckItems();
+  mockDeckState = {
+    ...mockDeckState,
+    items: currentItems,
+    mainItems: currentItems,
+    sideItems: [],
+    mainCount: 50,
+    sideCount: 0,
+  };
   const violatingItems = createValidSavedDeckItems();
   violatingItems[0] = {
     ...violatingItems[0],
@@ -313,6 +341,9 @@ test("保存済み内容がレギュレーション違反なら理由を事前�
   loadFirstSavedDeck();
 
   const publicationPanel = screen.getByRole("region", { name: "デッキ公開設定" });
+  const formatPanel = screen.getByRole("region", { name: "フォーマット・禁止制限" });
+  expect(within(formatPanel).getByText("現在のデッキに違反はありません。")).toBeInTheDocument();
+  expect(within(publicationPanel).queryByLabelText("フォーマット")).not.toBeInTheDocument();
   expect(
     within(publicationPanel).getByText(
       "「関西クラシック」のレギュレーションに適合していないため公開できません。"

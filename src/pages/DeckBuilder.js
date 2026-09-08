@@ -7,15 +7,14 @@ import BasicGAddDialog from "../components/BasicGAddDialog";
 import DeckExportDialog from "../components/DeckExportDialog";
 import DeckLoadDialog from "../components/DeckLoadDialog";
 import DeckPublicationPanel from "../components/DeckPublicationPanel";
+import DeckFormatPanel from "../components/DeckFormatPanel";
 import DeckSaveDialog from "../components/DeckSaveDialog";
 import { useAuth } from "../context/AuthContext";
 import { useDeck } from "../context/DeckContext";
 import { useSavedDecks } from "../hooks/useSavedDecks";
-import { FORMAT_PRESETS } from "../data/formats";
 import { getCardCode, getCardTypeLabel } from "../utils/cardImages";
 import { createBasicGCard } from "../utils/basicG";
 import { trackEvent } from "../utils/analytics";
-import { validateDeck } from "../utils/deckValidation";
 import {
   buildDeckCostLabel,
   buildDeckExport,
@@ -100,18 +99,6 @@ const DeckBuilder = ({ compact = false }) => {
     () => savedDecks.find((deck) => deck.id === selectedDeckId) || null,
     [savedDecks, selectedDeckId]
   );
-  const selectedFormat = useMemo(
-    () => FORMAT_PRESETS.find(({ name }) => name === selectedFormatName) || null,
-    [selectedFormatName]
-  );
-  const deckViolations = useMemo(
-    () =>
-      selectedFormat && items.length > 0
-        ? validateDeck(items, selectedFormat.regulation)
-        : [],
-    [items, selectedFormat]
-  );
-
   // モバイルでは「デッキ」「検索」ペインをタブで切り替える
   const deckLayoutClassName = compact
     ? `deck-layout deck-layout-mobile-pane-${mobileActivePane}`
@@ -570,6 +557,11 @@ const DeckBuilder = ({ compact = false }) => {
               </div>
 
               {selectedDeck ? <p className="deck-panel-note">{`保存先: ${selectedDeck.title}`}</p> : null}
+              <DeckFormatPanel
+                formatName={selectedFormatName}
+                onFormatChange={handleFormatChange}
+                items={items}
+              />
               <DeckPublicationPanel
                 deck={selectedDeck}
                 formatValue={selectedFormatName}
@@ -582,6 +574,7 @@ const DeckBuilder = ({ compact = false }) => {
                 publishingDeckId={publishingDeckId}
                 className="deck-builder-publication-panel"
                 compactUnsaved={compact}
+                hideFormatSelection
               />
               {!isAuthenticated ? (
                 <p className="deck-panel-note">保存と読み込みはログイン後に利用できます。</p>
@@ -635,30 +628,6 @@ const DeckBuilder = ({ compact = false }) => {
                   {`メイン ${mainCount}/${DECK_ZONE_LIMITS.main} ・ サイド ${sideCount}/${DECK_ZONE_LIMITS.side}`}
                 </strong>
               </div>
-
-              {selectedFormat && items.length > 0 ? (
-                <div
-                  className={
-                    deckViolations.length > 0
-                      ? "deck-format-validation has-violations"
-                      : "deck-format-validation"
-                  }
-                  aria-live="polite"
-                >
-                  <strong>{selectedFormat.name}</strong>
-                  {deckViolations.length === 0 ? (
-                    <span>フォーマット条件を満たしています。</span>
-                  ) : (
-                    <ul>
-                      {deckViolations.map((violation, index) => (
-                        <li key={`${violation.code}-${violation.cardName || index}`}>
-                          {violation.message}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ) : null}
 
               <div className="deck-cards-panel">
                 {renderDeckZone(

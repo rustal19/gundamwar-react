@@ -27,6 +27,7 @@ export default function DeckPublicationPanel({
   publishingDeckId = "",
   className = "",
   compactUnsaved = false,
+  hideFormatSelection = false,
 }) {
   const [publicationDescription, setPublicationDescription] = useState(
     deck?.description || ""
@@ -193,7 +194,7 @@ export default function DeckPublicationPanel({
         aria-label="デッキの説明"
         rows={3}
       />
-      <label className="deck-publication-format">
+      {!hideFormatSelection ? <label className="deck-publication-format">
         フォーマット
         <select
           value={publicationFormat}
@@ -213,7 +214,7 @@ export default function DeckPublicationPanel({
             </option>
           ))}
         </select>
-      </label>
+      </label> : null}
       {!normalizedPublicationFormat ? (
         <p className="deck-publication-message has-error" role="status">
           {`公開するには${preflightError?.message || "フォーマットを選択してください。"}`}
@@ -227,17 +228,20 @@ export default function DeckPublicationPanel({
       {preflightViolations.length > 0 ? (
         <div className="deck-publication-message has-error" role="status">
           <p>{preflightError.summary}</p>
-          <ul>
-            {preflightViolations.map((violation, index) => (
-              <li
-                key={`${violation.code || "violation"}-${
-                  violation.cardName || index
-                }-${index}`}
-              >
-                {violation.message}
-              </li>
-            ))}
-          </ul>
+          <details className="deck-publication-validation-details">
+            <summary>{`違反の詳細（${preflightViolations.length}件）`}</summary>
+            <ul>
+              {preflightViolations.map((violation, index) => (
+                <li
+                  key={`${violation.code || "violation"}-${
+                    violation.cardName || index
+                  }-${index}`}
+                >
+                  {violation.message}
+                </li>
+              ))}
+            </ul>
+          </details>
         </div>
       ) : null}
       <div className="deck-publication-actions">
