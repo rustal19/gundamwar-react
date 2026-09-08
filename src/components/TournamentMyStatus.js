@@ -301,7 +301,9 @@ function EntryForm({
   const selectedSavedDeck = (savedDecks || []).find((deck) => deck.id === selectedDeckId);
   const hasSubmittedItems = Array.isArray(submittedItems) && submittedItems.length > 0;
   const canSelectNoDeck = !myEntry && !tournament?.decklistRequired;
-  const canEnterWithoutDeck = canSelectNoDeck && deckSource === "none";
+  const canEnterWithoutDeck =
+    canSelectNoDeck &&
+    (deckSource === "none" || (deckSource === "current" && !hasSubmittedItems));
   const resolvedSavedDecksStatus =
     savedDecksStatus || (savedDecks.length > 0 ? ASYNC_STATUS.SUCCESS : ASYNC_STATUS.EMPTY);
   const savedDeckState = (children) => (

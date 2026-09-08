@@ -353,6 +353,24 @@ test("エントリー済みで提出デッキが空なら更新を無効化し�
   ).toBeInTheDocument();
 });
 
+test("任意大会の未エントリー状態では初期currentが空ならそのまま参加できる", () => {
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        tournament: { ...statusProps().tournament, decklistRequired: false },
+        myEntry: null,
+        currentDeckItems: [],
+        submittedItems: [],
+        deckViolations: [{ code: "main_count", message: "メインデッキが不足しています。" }],
+      })}
+    />
+  );
+
+  expect(screen.getByRole("button", { name: "エントリー" })).toBeEnabled();
+  expect(screen.getByText("デッキリストを添付せずにエントリーします。")).toBeInTheDocument();
+  expect(screen.queryByText("デッキリストを提出できません。")).not.toBeInTheDocument();
+});
+
 test("任意大会の未エントリー状態では明示的にデッキなしを選択できる", () => {
   const onDeckSourceChange = jest.fn();
   render(
@@ -367,6 +385,7 @@ test("任意大会の未エントリー状態では明示的にデッキなし�
         deckSource: "none",
         onDeckSourceChange,
         submittedItems: [],
+        currentDeckItems: [{ id: "basic-g", zone: "main", count: 1 }],
         deckViolations: [{ code: "main_count", message: "メインデッキが不足しています。" }],
       })}
     />
@@ -391,6 +410,26 @@ test("任意大会でも未完成デッキ選択中はデッキなし参加と�
         myEntry: null,
         currentDeckItems: [{ id: "basic-g", zone: "main", count: 1 }],
         submittedItems: [{ id: "basic-g", zone: "main", count: 1 }],
+        deckViolations: [{ code: "main_count", message: "メインデッキが不足しています。" }],
+        submitDisabled: true,
+      })}
+    />
+  );
+
+  expect(screen.getByRole("button", { name: "エントリー" })).toBeDisabled();
+  expect(screen.getByText("デッキリストを提出できません。")).toBeInTheDocument();
+  expect(screen.queryByText("デッキリストを添付せずにエントリーします。")).not.toBeInTheDocument();
+});
+
+test("任意大会でも保存デッキ未選択はデッキなし参加として扱わない", () => {
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        tournament: { ...statusProps().tournament, decklistRequired: false },
+        myEntry: null,
+        deckSource: "saved",
+        selectedDeckId: "",
+        submittedItems: [],
         deckViolations: [{ code: "main_count", message: "メインデッキが不足しています。" }],
         submitDisabled: true,
       })}

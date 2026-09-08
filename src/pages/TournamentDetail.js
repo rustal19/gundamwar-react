@@ -573,7 +573,9 @@ export default function TournamentDetail({ compact = false }) {
     return validateDeck(submittedItems, regulation);
   }, [regulation, submittedItems]);
   const canEnterWithoutDeck = Boolean(
-    deckSource === "none" && !myEntry && !tournament?.decklistRequired
+    !myEntry &&
+      !tournament?.decklistRequired &&
+      (deckSource === "none" || (deckSource === "current" && submittedItems.length === 0))
   );
 
   const canRegister = Boolean(

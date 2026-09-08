@@ -53,11 +53,6 @@ function renderDetail(props = {}) {
   );
 }
 
-async function selectNoDeck() {
-  fireEvent.click(await screen.findByRole("button", { name: "デッキを選ぶ" }));
-  fireEvent.click(screen.getByRole("button", { name: "デッキを添付せずに参加する" }));
-}
-
 function SwitchableDetailRoute() {
   const navigate = useNavigate();
   return (
@@ -356,7 +351,6 @@ test("大会URL切替前の書込完了後に旧大会の再取得を開始し�
   );
 
   renderSwitchableDetail();
-  await selectNoDeck();
   fireEvent.click(await screen.findByRole("button", { name: "エントリー" }));
   fireEvent.click(screen.getByRole("button", { name: "大会を切り替える" }));
   expect(await screen.findByRole("heading", { name: "切替後の大会" })).toBeInTheDocument();
@@ -801,7 +795,6 @@ test("非掲載大会はURLから詳細を開けることを示し、通常ど�
     user: mockAuthState.user,
   });
 
-  await selectNoDeck();
   const entryButton = screen.getByRole("button", { name: "エントリー" });
   expect(entryButton).toBeEnabled();
   fireEvent.click(entryButton);
@@ -824,8 +817,7 @@ test("任意大会ではデッキなしでエントリーし未提出として�
   mockTournament = registrationTournament();
 
   renderDetail();
-  await selectNoDeck();
-  fireEvent.click(screen.getByRole("button", { name: "エントリー" }));
+  fireEvent.click(await screen.findByRole("button", { name: "エントリー" }));
 
   expect(createEntry).toHaveBeenCalledWith(
     expect.objectContaining({ tournamentId: "t-detail", deckItems: null })
@@ -874,6 +866,30 @@ test.each([
   expect(savedOneCardDeck.items).toHaveLength(1);
 });
 
+test("任意大会でも保存デッキ未選択ではエントリーできない", async () => {
+  mockAuthState = {
+    authMode: "mock",
+    isAuthenticated: true,
+    user: { id: "player-1", name: "テストユーザー" },
+  };
+  mockTournament = registrationTournament();
+  fetchSavedDecks.mockResolvedValueOnce([
+    { id: "saved-deck", title: "保存デッキ", items: validDeck() },
+  ]);
+
+  renderDetail();
+  await waitFor(() =>
+    expect(screen.getByRole("option", { name: "保存デッキ" })).toBeEnabled()
+  );
+  fireEvent.change(screen.getByRole("combobox", { name: "提出元" }), {
+    target: { value: "saved" },
+  });
+
+  expect(screen.getByRole("button", { name: "エントリー" })).toBeDisabled();
+  expect(screen.getByText("デッキリストを提出できません。")).toBeInTheDocument();
+  expect(createEntry).not.toHaveBeenCalled();
+});
+
 test("エントリー成功後の再取得失敗では成功表示と二重操作を止めて再試行できる", async () => {
   mockAuthState = {
     authMode: "mock",
@@ -896,7 +912,6 @@ test("エントリー成功後の再取得失敗では成功表示と二重操�
     .mockResolvedValueOnce({ ...mockTournament, entries: [entry], myEntry: entry });
 
   renderDetail();
-  await selectNoDeck();
   fireEvent.click(await screen.findByRole("button", { name: "エントリー" }));
 
   expect(
@@ -929,7 +944,6 @@ test("エントリー操作の英語通信エラーを日本語で表示する",
   createEntry.mockRejectedValueOnce(new Error("Failed to fetch"));
 
   renderDetail();
-  await selectNoDeck();
   fireEvent.click(await screen.findByRole("button", { name: "エントリー" }));
 
   expect(
@@ -966,7 +980,6 @@ test("定員到達後もキャンセル待ちとしてエントリーできる",
   renderDetail();
 
   expect(await screen.findByText("参加 1人 / 定員 1人")).toBeInTheDocument();
-  await selectNoDeck();
   const entryButton = screen.getByRole("button", { name: "エントリー" });
   expect(entryButton).toBeEnabled();
   fireEvent.click(entryButton);
@@ -1020,7 +1033,6 @@ test("ドロップ済みの本人は大会枠に数えず、キックのみ後�
   renderDetail();
 
   expect(await screen.findByText("参加 0人 / 定員 1人")).toBeInTheDocument();
-  await selectNoDeck();
   const entryButton = screen.getByRole("button", { name: "エントリー" });
   expect(entryButton).toBeEnabled();
   fireEvent.click(entryButton);
