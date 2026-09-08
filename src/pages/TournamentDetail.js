@@ -430,11 +430,12 @@ export default function TournamentDetail({ compact = false }) {
   }, [requestContextKey, resetMutationRefresh]);
 
   useEffect(() => {
+    const requestIds = requestIdRef.current;
     if (isReady !== false) loadAll();
     return () => {
-      requestIdRef.current.tournament += 1;
-      requestIdRef.current.rounds += 1;
-      requestIdRef.current.standings += 1;
+      requestIds.tournament += 1;
+      requestIds.rounds += 1;
+      requestIds.standings += 1;
     };
   }, [isReady, loadAll]);
 
@@ -478,14 +479,15 @@ export default function TournamentDetail({ compact = false }) {
   }, [loadAll, requestContextKey, tournament?.status, tournamentContextKey]);
 
   useEffect(() => {
+    const requestIds = requestIdRef.current;
     if (isReady === false || !isAuthenticated || !user) {
-      requestIdRef.current.savedDecks += 1;
+      requestIds.savedDecks += 1;
       resetSavedDecks();
       return;
     }
     loadSavedDecks();
     return () => {
-      requestIdRef.current.savedDecks += 1;
+      requestIds.savedDecks += 1;
     };
   }, [isAuthenticated, isReady, loadSavedDecks, resetSavedDecks, user]);
 

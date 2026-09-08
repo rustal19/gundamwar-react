@@ -73,7 +73,6 @@ const DeckSearchResults = ({ compact = false, formatName }) => {
       }
     }
 
-    const requestedPage = Number(parsedSearchParams.page) || 1;
     const requestedPageSize = Number(parsedSearchParams.pageSize) || DEFAULT_SAMPLE_PAGE_SIZE;
     if (selectedFormat && apiSearchParams.pageSize === undefined) {
       apiSearchParams.pageSize = requestedPageSize;
@@ -82,7 +81,6 @@ const DeckSearchResults = ({ compact = false, formatName }) => {
 
     return {
       apiSearchParams,
-      requestedPage,
       requestedPageSize,
       shouldSearch,
     };
@@ -95,7 +93,6 @@ const DeckSearchResults = ({ compact = false, formatName }) => {
   useEffect(() => {
     const {
       apiSearchParams,
-      requestedPage,
       requestedPageSize,
       shouldSearch,
     } = searchRequest;
