@@ -557,6 +557,7 @@ export default function TournamentDetail({ compact = false }) {
   );
 
   const submittedItems = useMemo(() => {
+    if (deckSource === "none") return [];
     if (deckSource === "saved") return selectedSavedDeck?.items || [];
     return currentDeck.items || [];
   }, [currentDeck.items, deckSource, selectedSavedDeck]);
@@ -572,7 +573,7 @@ export default function TournamentDetail({ compact = false }) {
     return validateDeck(submittedItems, regulation);
   }, [regulation, submittedItems]);
   const canEnterWithoutDeck = Boolean(
-    !myEntry && !tournament?.decklistRequired && submittedItems.length === 0
+    deckSource === "none" && !myEntry && !tournament?.decklistRequired
   );
 
   const canRegister = Boolean(

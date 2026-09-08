@@ -53,6 +53,11 @@ function renderDetail(props = {}) {
   );
 }
 
+async function selectNoDeck() {
+  fireEvent.click(await screen.findByRole("button", { name: "デッキを選ぶ" }));
+  fireEvent.click(screen.getByRole("button", { name: "デッキを添付せずに参加する" }));
+}
+
 function SwitchableDetailRoute() {
   const navigate = useNavigate();
   return (
@@ -351,6 +356,7 @@ test("大会URL切替前の書込完了後に旧大会の再取得を開始し�
   );
 
   renderSwitchableDetail();
+  await selectNoDeck();
   fireEvent.click(await screen.findByRole("button", { name: "エントリー" }));
   fireEvent.click(screen.getByRole("button", { name: "大会を切り替える" }));
   expect(await screen.findByRole("heading", { name: "切替後の大会" })).toBeInTheDocument();
@@ -795,6 +801,7 @@ test("非掲載大会はURLから詳細を開けることを示し、通常ど�
     user: mockAuthState.user,
   });
 
+  await selectNoDeck();
   const entryButton = screen.getByRole("button", { name: "エントリー" });
   expect(entryButton).toBeEnabled();
   fireEvent.click(entryButton);
@@ -817,13 +824,54 @@ test("任意大会ではデッキなしでエントリーし未提出として�
   mockTournament = registrationTournament();
 
   renderDetail();
-  fireEvent.click(await screen.findByRole("button", { name: "エントリー" }));
+  await selectNoDeck();
+  fireEvent.click(screen.getByRole("button", { name: "エントリー" }));
 
   expect(createEntry).toHaveBeenCalledWith(
     expect.objectContaining({ tournamentId: "t-detail", deckItems: null })
   );
   expect(await screen.findByText("エントリーしました。")).toBeInTheDocument();
   expect(screen.queryByText("デッキリストを提出しました。")).not.toBeInTheDocument();
+});
+
+test.each([
+  ["デスクトップ", false],
+  ["モバイル", true],
+])("%sで未完成の現在・保存デッキを残したままデッキなし参加できる", async (_label, compact) => {
+  mockAuthState = {
+    authMode: "mock",
+    isAuthenticated: true,
+    user: { id: "player-1", name: "テストユーザー" },
+  };
+  const oneCardDeck = [{ cardId: "basic-g", count: 1, zone: "main", card: { id: "basic-g", name: "基本G" } }];
+  const savedOneCardDeck = {
+    id: "saved-one-card",
+    title: "保存した基本Gデッキ",
+    items: oneCardDeck.map((item) => ({ ...item })),
+  };
+  mockDeckItems = oneCardDeck;
+  mockTournament = registrationTournament();
+  fetchSavedDecks.mockResolvedValueOnce([savedOneCardDeck]);
+
+  renderDetail({ compact });
+
+  const entryButton = await screen.findByRole("button", { name: "エントリー" });
+  expect(entryButton).toBeDisabled();
+  expect(screen.getByText("デッキリストを提出できません。")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "デッキを選ぶ" }));
+  expect(await screen.findByText("保存した基本Gデッキ")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "デッキを添付せずに参加する" }));
+
+  expect(screen.getByText("提出デッキ: 添付しない")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "エントリー" })).toBeEnabled();
+  fireEvent.click(screen.getByRole("button", { name: "エントリー" }));
+
+  expect(createEntry).toHaveBeenCalledWith(
+    expect.objectContaining({ tournamentId: "t-detail", deckItems: null })
+  );
+  expect(await screen.findByText("エントリーしました。")).toBeInTheDocument();
+  expect(mockDeckItems).toEqual(oneCardDeck);
+  expect(savedOneCardDeck.items).toHaveLength(1);
 });
 
 test("エントリー成功後の再取得失敗では成功表示と二重操作を止めて再試行できる", async () => {
@@ -848,6 +896,7 @@ test("エントリー成功後の再取得失敗では成功表示と二重操�
     .mockResolvedValueOnce({ ...mockTournament, entries: [entry], myEntry: entry });
 
   renderDetail();
+  await selectNoDeck();
   fireEvent.click(await screen.findByRole("button", { name: "エントリー" }));
 
   expect(
@@ -880,6 +929,7 @@ test("エントリー操作の英語通信エラーを日本語で表示する",
   createEntry.mockRejectedValueOnce(new Error("Failed to fetch"));
 
   renderDetail();
+  await selectNoDeck();
   fireEvent.click(await screen.findByRole("button", { name: "エントリー" }));
 
   expect(
@@ -916,6 +966,7 @@ test("定員到達後もキャンセル待ちとしてエントリーできる",
   renderDetail();
 
   expect(await screen.findByText("参加 1人 / 定員 1人")).toBeInTheDocument();
+  await selectNoDeck();
   const entryButton = screen.getByRole("button", { name: "エントリー" });
   expect(entryButton).toBeEnabled();
   fireEvent.click(entryButton);
@@ -969,6 +1020,7 @@ test("ドロップ済みの本人は大会枠に数えず、キックのみ後�
   renderDetail();
 
   expect(await screen.findByText("参加 0人 / 定員 1人")).toBeInTheDocument();
+  await selectNoDeck();
   const entryButton = screen.getByRole("button", { name: "エントリー" });
   expect(entryButton).toBeEnabled();
   fireEvent.click(entryButton);
