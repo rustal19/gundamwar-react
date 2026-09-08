@@ -92,6 +92,15 @@
   padding-left: var(--gw-space-lg);
 }
 
+.deck-publication-validation-details {
+  margin-top: var(--gw-space-xs);
+}
+
+.deck-publication-validation-details summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
 .deck-builder-publication-panel {
   padding: var(--gw-space-xs);
   gap: var(--gw-space-xs);
