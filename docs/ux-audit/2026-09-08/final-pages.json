@@ -1,0 +1,7141 @@
+{
+  "report": [
+    {
+      "name": "home",
+      "device": "desktop",
+      "file": "final-home-desktop.jpg",
+      "url": "http://127.0.0.1:3100/",
+      "text": "Gundam War Portal\nガンダムウォー非公式ポータル\nホーム\nカード検索\nデッキ構築\n公開デッキ\n大会\n検\n検証プレイヤー\n検索\n大会\n一覧へ\n9月7日\n(月)\nローカルスイス杯\n進行中\n14:28\n東京・秋葉原カードショップ○○\nスイスドロー・スタンダード\n参加 4人 / 定員 32人\n観戦\n9月15日\n(火)\n週末エントリー受付大会\n受付中\n14:28\nオンライン\nスイスドロー・スタンダード\n参加 0人 / 定員 16人\n詳細\n新着公開デッキ\n一覧へ\nデッキ名\nフォーマット\nプレイヤー\n公開日\n決勝参加者1の大会デッキ\nスタンダード\n決勝参加者1\n2026/09/01\n決勝参加者2の大会デッキ\nスタンダード\n決勝参加者2\n2026/09/01\n決勝参加者3の大会デッキ\nスタンダード\n決勝参加者3\n2026/09/01\n決勝参加者4の大会デッキ\nスタンダード\n決勝参加者4\n2026/09/01\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1167,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal\nガンダムウォー非公式ポータル",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 57
+        },
+        {
+          "tag": "A",
+          "text": "ホーム",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "カード検索",
+          "href": "/search",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "デッキ構築",
+          "href": "/deck",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "公開デッキ",
+          "href": "/decks",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会",
+          "href": "/tournaments",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検\n検証プレイヤー",
+          "href": null,
+          "type": "button",
+          "w": 175,
+          "h": 40
+        },
+        {
+          "tag": "INPUT",
+          "text": "カード名で検索",
+          "href": null,
+          "type": "search",
+          "w": 986,
+          "h": 42
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検索",
+          "href": null,
+          "type": "submit",
+          "w": 62,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "一覧へ",
+          "href": "/tournaments",
+          "type": "",
+          "w": 65.703125,
+          "h": 42
+        },
+        {
+          "tag": "A",
+          "text": "ローカルスイス杯",
+          "href": "/tournaments/mock-tournament-1?tab=rounds",
+          "type": "",
+          "w": 100.578125,
+          "h": 21.59375
+        },
+        {
+          "tag": "A",
+          "text": "観戦",
+          "href": "/tournaments/mock-tournament-1?tab=rounds",
+          "type": "",
+          "w": 58,
+          "h": 58
+        },
+        {
+          "tag": "A",
+          "text": "週末エントリー受付大会",
+          "href": "/tournaments/mock-tournament-2",
+          "type": "",
+          "w": 153.890625,
+          "h": 21.59375
+        },
+        {
+          "tag": "A",
+          "text": "詳細",
+          "href": "/tournaments/mock-tournament-2",
+          "type": "",
+          "w": 58,
+          "h": 58
+        },
+        {
+          "tag": "A",
+          "text": "一覧へ",
+          "href": "/decks",
+          "type": "",
+          "w": 65.703125,
+          "h": 42
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者1の大会デッキ",
+          "href": "/decks/entry:completed-entry-1",
+          "type": "",
+          "w": 167.78125,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者1",
+          "href": "/users/mock-finalist-1",
+          "type": "",
+          "w": 75.640625,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者2の大会デッキ",
+          "href": "/decks/entry:completed-entry-2",
+          "type": "",
+          "w": 170.21875,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者2",
+          "href": "/users/mock-finalist-2",
+          "type": "",
+          "w": 77.78125,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者3の大会デッキ",
+          "href": "/decks/entry:completed-entry-3",
+          "type": "",
+          "w": 170.21875,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者3",
+          "href": "/users/mock-finalist-3",
+          "type": "",
+          "w": 77.78125,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者4の大会デッキ",
+          "href": "/decks/entry:completed-entry-4",
+          "type": "",
+          "w": 170.5625,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者4",
+          "href": "/users/mock-finalist-4",
+          "type": "",
+          "w": 78.078125,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "home",
+      "device": "mobile",
+      "file": "final-home-mobile.jpg",
+      "url": "http://127.0.0.1:3100/",
+      "text": "Gundam War Portal\n検索\n大会\n一覧へ\n9月7日\n(月)\nローカルスイス杯\n進行中\n14:28\n東京・秋葉原カードショップ○○\nスイスドロー・スタンダード\n参加 4人 / 定員 32人\n観戦\n9月15日\n(火)\n週末エントリー受付大会\n受付中\n14:28\nオンライン\nスイスドロー・スタンダード\n参加 0人 / 定員 16人\n詳細\n新着公開デッキ\n一覧へ\n決勝参加者1の大会デッキ\nフォーマット:\nスタンダード\nプレイヤー:\n決勝参加者1\n公開日:\n2026/09/01\n決勝参加者2の大会デッキ\nフォーマット:\nスタンダード\nプレイヤー:\n決勝参加者2\n公開日:\n2026/09/01\n決勝参加者3の大会デッキ\nフォーマット:\nスタンダード\nプレイヤー:\n決勝参加者3\n公開日:\n2026/09/01\n決勝参加者4の大会デッキ\nフォーマット:\nスタンダード\nプレイヤー:\n決勝参加者4\n公開日:\n2026/09/01\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 1307,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal",
+          "href": "/",
+          "type": "",
+          "w": 142.859375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "メニューを開く",
+          "href": null,
+          "type": "button",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "tag": "INPUT",
+          "text": "カード名で検索",
+          "href": null,
+          "type": "search",
+          "w": 232,
+          "h": 44
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検索",
+          "href": null,
+          "type": "submit",
+          "w": 62,
+          "h": 44
+        },
+        {
+          "tag": "A",
+          "text": "一覧へ",
+          "href": "/tournaments",
+          "type": "",
+          "w": 65.703125,
+          "h": 44
+        },
+        {
+          "tag": "A",
+          "text": "ローカルスイス杯",
+          "href": "/tournaments/mock-tournament-1?tab=rounds",
+          "type": "",
+          "w": 100.578125,
+          "h": 21.59375
+        },
+        {
+          "tag": "A",
+          "text": "観戦",
+          "href": "/tournaments/mock-tournament-1?tab=rounds",
+          "type": "",
+          "w": 340,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "週末エントリー受付大会",
+          "href": "/tournaments/mock-tournament-2",
+          "type": "",
+          "w": 153.890625,
+          "h": 21.59375
+        },
+        {
+          "tag": "A",
+          "text": "詳細",
+          "href": "/tournaments/mock-tournament-2",
+          "type": "",
+          "w": 340,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "一覧へ",
+          "href": "/decks",
+          "type": "",
+          "w": 65.703125,
+          "h": 44
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者1の大会デッキ",
+          "href": "/decks/entry:completed-entry-1",
+          "type": "",
+          "w": 167.78125,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者1",
+          "href": "/users/mock-finalist-1",
+          "type": "",
+          "w": 75.640625,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者2の大会デッキ",
+          "href": "/decks/entry:completed-entry-2",
+          "type": "",
+          "w": 170.21875,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者2",
+          "href": "/users/mock-finalist-2",
+          "type": "",
+          "w": 77.78125,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者3の大会デッキ",
+          "href": "/decks/entry:completed-entry-3",
+          "type": "",
+          "w": 170.21875,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者3",
+          "href": "/users/mock-finalist-3",
+          "type": "",
+          "w": 77.78125,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者4の大会デッキ",
+          "href": "/decks/entry:completed-entry-4",
+          "type": "",
+          "w": 170.5625,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者4",
+          "href": "/users/mock-finalist-4",
+          "type": "",
+          "w": 78.078125,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "search",
+      "device": "desktop",
+      "file": "final-search-desktop.jpg",
+      "url": "http://127.0.0.1:3100/search",
+      "text": "ホーム\nカード検索\nデッキ構築\n公開デッキ\n大会\n検\n検証プレイヤー\nカード検索\n検索\nリセット\n\n検索するには、いずれかの検索条件を入力してください。\n\nカード名\n前方一致\nカードタイプ\nUNIT\nCHARACTER\nCOMMAND\nOPERATION\nGeneration\nACE\n色\n青\n緑\n黒\n赤\n茶\n白\n紫\n青でない\n緑でない\n黒でない\n赤でない\n茶でない\n白でない\n紫でない\n多色を含んでもよい\n多色を除く\nカード\nテキスト\n国力\n指定なし\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n≦ 指定 ≦\n指定なし\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n指定なし\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n≦ 合計 ≦\n指定なし\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n指定なし\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n≦ 資源 ≦\n指定なし\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\nXも含む\n戦闘修正\n指定なし\n*\n-2\n-1\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n≦ 格闘 ≦\n指定なし\n*\n-2\n-1\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n指定なし\n*\n-2\n-1\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n≦ 射撃 ≦\n指定なし\n*\n-2\n-1\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n指定なし\n*\n-2\n-1\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n≦ 防御 ≦\n指定なし\n*\n-2\n-1\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n変形状態を含める\n地形適正\n宇宙\n地球\nUNIT\n特徴指定\nMS\nMA\nMF\nコンビ\nLサイズ\n艦艇\n追加特徴を選択\nCHARACTER\n特徴指定\n男性\n女性\n大人\n子供\nNT\nCO\nGF\n追加特徴を選択\nその他\n特徴指定\n移動\n回復\n強化\n再生\n支配\n束縛\n対抗\n展開\n破壊\n補強\n兵装\n所属/系統\n特徴の\n一致条件\nすべての特徴を含む\nいずれかの特徴を含む\n専用\n構築範囲\n指定なし\nクラシック\nライジング\nαスタンダード\n添削杯\nその他\n収録弾\nGUNDAM WAR\n撃墜王出撃\n宇宙の記憶\n新しき翼\n永久の絆\n新世紀の鼓動\n革新の波濤\n月下の戦塵\n相剋の軌跡\n刻の末裔\n蒼海の死闘\n宿命の螺旋\n烈火の咆哮\n果てなき運命\n禁忌の胎動\n覇王の紋章\n不敗の流派\n戦慄の兵威\n変革の叛旗\n流転する世界\n放たれた刃\n武神降臨\n栄光の戦史\n宇宙を駆逐する光\n双極の閃光\n戦いという名の対話\n雷鳴の使徒\n絶対戦力\nプロモカード\nBB/EB\nスターター\n特殊ブースター\nその他\n表示件数\n10件\n20件\n50件\n100件\n200件\n検索\nリセット\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1594,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "",
+          "href": "/",
+          "type": "",
+          "w": 47,
+          "h": 57
+        },
+        {
+          "tag": "A",
+          "text": "ホーム",
+          "href": "/",
+          "type": "",
+          "w": 47,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "カード検索",
+          "href": "/search",
+          "type": "",
+          "w": 47,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "デッキ構築",
+          "href": "/deck",
+          "type": "",
+          "w": 47,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "公開デッキ",
+          "href": "/decks",
+          "type": "",
+          "w": 47,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会",
+          "href": "/tournaments",
+          "type": "",
+          "w": 47,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検\n検証プレイヤー",
+          "href": null,
+          "type": "button",
+          "w": 38,
+          "h": 40
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検索",
+          "href": null,
+          "type": "submit",
+          "w": 74,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "リセット",
+          "href": null,
+          "type": "reset",
+          "w": 87.453125,
+          "h": 37
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 353,
+          "h": 25
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "SELECT",
+          "text": "多色を含んでもよい\n多色を除く",
+          "href": null,
+          "type": "select-one",
+          "w": 130,
+          "h": 23
+        },
+        {
+          "tag": "INPUT",
+          "text": "スペース区切りでAND検索",
+          "href": null,
+          "type": "text",
+          "w": 1050,
+          "h": 25
+        },
+        {
+          "tag": "SELECT",
+          "text": "指定なし\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10",
+          "href": null,
+          "type": "select-one",
+          "w": 80,
+          "h": 23
+        },
+        {
+          "tag": "SELECT",
+          "text": "指定なし\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10",
+          "href": null,
+          "type": "select-one",
+          "w": 80,
+          "h": 23
+        },
+        {
+          "tag": "SELECT",
+          "text": "指定なし\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10",
+          "href": null,
+          "type": "select-one",
+          "w": 80,
+          "h": 23
+        },
+        {
+          "tag": "SELECT",
+          "text": "指定なし\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10",
+          "href": null,
+          "type": "select-one",
+          "w": 80,
+          "h": 23
+        },
+        {
+          "tag": "SELECT",
+          "text": "指定なし\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10",
+          "href": null,
+          "type": "select-one",
+          "w": 80,
+          "h": 23
+        },
+        {
+          "tag": "SELECT",
+          "text": "指定なし\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10",
+          "href": null,
+          "type": "select-one",
+          "w": 80,
+          "h": 23
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "SELECT",
+          "text": "指定なし\n*\n-2\n-1\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10",
+          "href": null,
+          "type": "select-one",
+          "w": 80,
+          "h": 23
+        },
+        {
+          "tag": "SELECT",
+          "text": "指定なし\n*\n-2\n-1\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10",
+          "href": null,
+          "type": "select-one",
+          "w": 80,
+          "h": 23
+        },
+        {
+          "tag": "SELECT",
+          "text": "指定なし\n*\n-2\n-1\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10",
+          "href": null,
+          "type": "select-one",
+          "w": 80,
+          "h": 23
+        },
+        {
+          "tag": "SELECT",
+          "text": "指定なし\n*\n-2\n-1\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10",
+          "href": null,
+          "type": "select-one",
+          "w": 80,
+          "h": 23
+        },
+        {
+          "tag": "SELECT",
+          "text": "指定なし\n*\n-2\n-1\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10",
+          "href": null,
+          "type": "select-one",
+          "w": 80,
+          "h": 23
+        },
+        {
+          "tag": "SELECT",
+          "text": "指定なし\n*\n-2\n-1\n0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10",
+          "href": null,
+          "type": "select-one",
+          "w": 80,
+          "h": 23
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 4.390625,
+          "h": 21
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 4.390625,
+          "h": 21
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "スペース区切りでAND検索（例：〇〇系 ジオン）",
+          "href": null,
+          "type": "text",
+          "w": 1050,
+          "h": 25
+        },
+        {
+          "tag": "SELECT",
+          "text": "すべての特徴を含む\nいずれかの特徴を含む",
+          "href": null,
+          "type": "select-one",
+          "w": 1050,
+          "h": 23
+        },
+        {
+          "tag": "INPUT",
+          "text": "パイロット名",
+          "href": null,
+          "type": "text",
+          "w": 1050,
+          "h": 25
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "radio",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "radio",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "radio",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "radio",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "radio",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "radio",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 4.390625,
+          "h": 21
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 4.390625,
+          "h": 21
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 4.390625,
+          "h": 21
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 4.390625,
+          "h": 21
+        },
+        {
+          "tag": "SELECT",
+          "text": "10件\n20件\n50件\n100件\n200件",
+          "href": null,
+          "type": "select-one",
+          "w": 1050,
+          "h": 23
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検索",
+          "href": null,
+          "type": "submit",
+          "w": 74,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "リセット",
+          "href": null,
+          "type": "reset",
+          "w": 87.453125,
+          "h": 37
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "search",
+      "device": "mobile",
+      "file": "final-search-mobile.jpg",
+      "url": "http://127.0.0.1:3100/search",
+      "text": "Gundam War Portal\nカード検索\n検索\nリセット\n\n検索するには、いずれかの検索条件を入力してください。\n\nカード名\n前方一致\n基本条件\nカードタイプ\nUNIT\nCHARACTER\nCOMMAND\nOPERATION\nGeneration\nACE\n色\n青\n青でない\n緑\n緑でない\n黒\n黒でない\n赤\n赤でない\n茶\n茶でない\n白\n白でない\n紫\n紫でない\n多色を含んでもよい\n多色を除く\nカードテキスト\n数値・地形条件\n特徴条件\n収録・構築条件\n表示件数\n10件\n20件\n50件\n100件\n200件\n検索\nリセット\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 1401,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal",
+          "href": "/",
+          "type": "",
+          "w": 142.859375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "メニューを開く",
+          "href": null,
+          "type": "button",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検索",
+          "href": null,
+          "type": "submit",
+          "w": 58,
+          "h": 44
+        },
+        {
+          "tag": "BUTTON",
+          "text": "リセット",
+          "href": null,
+          "type": "reset",
+          "w": 71.453125,
+          "h": 44
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 286,
+          "h": 44
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "SELECT",
+          "text": "多色を含んでもよい\n多色を除く",
+          "href": null,
+          "type": "select-one",
+          "w": 356,
+          "h": 44
+        },
+        {
+          "tag": "INPUT",
+          "text": "スペース区切りでAND検索",
+          "href": null,
+          "type": "text",
+          "w": 356,
+          "h": 44
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 137.609375,
+          "h": 44
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 137.625,
+          "h": 44
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 137.609375,
+          "h": 44
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 137.625,
+          "h": 44
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 137.609375,
+          "h": 44
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 137.625,
+          "h": 44
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 137.609375,
+          "h": 44
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 137.625,
+          "h": 44
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 137.609375,
+          "h": 44
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 137.625,
+          "h": 44
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 137.609375,
+          "h": 44
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 137.625,
+          "h": 44
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 4.390625,
+          "h": 21
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 4.390625,
+          "h": 21
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "スペース区切りでAND検索（例：〇〇系 ジオン）",
+          "href": null,
+          "type": "text",
+          "w": 356,
+          "h": 44
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 356,
+          "h": 44
+        },
+        {
+          "tag": "INPUT",
+          "text": "パイロット名",
+          "href": null,
+          "type": "text",
+          "w": 356,
+          "h": 44
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "radio",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "radio",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "radio",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "radio",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "radio",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "radio",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 4.390625,
+          "h": 21
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 4.390625,
+          "h": 21
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 4.390625,
+          "h": 21
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 4.390625,
+          "h": 21
+        },
+        {
+          "tag": "SELECT",
+          "text": "10件\n20件\n50件\n100件\n200件",
+          "href": null,
+          "type": "select-one",
+          "w": 374,
+          "h": 44
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検索",
+          "href": null,
+          "type": "submit",
+          "w": 185,
+          "h": 44
+        },
+        {
+          "tag": "BUTTON",
+          "text": "リセット",
+          "href": null,
+          "type": "reset",
+          "w": 185,
+          "h": 44
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "builder",
+      "device": "desktop",
+      "file": "final-builder-desktop.jpg",
+      "url": "http://127.0.0.1:3100/deck",
+      "text": "ホーム\nカード検索\nデッキ構築\n公開デッキ\n大会\n検\n検証プレイヤー\n保存\n読み込み\n書き出し\nクリア\n未保存\n公開設定\n\nデッキを保存してから公開できます。\n\n公開する\nメインデッキ\n基本G追加\n詳細\n画像のみ\n\nACE 0 / UNIT 0 / CHARACTER 0 / COMMAND 0 / OPERATION 0 / G 0\n\nメイン 0/50 ・ サイド 0/10\n検索結果からメインデッキに追加すると、ここに表示されます。\nサイドボード\n0 / 10\n検索結果からサイドボードに追加すると、ここに表示されます。\n前方一致\nカードタイプ\n指定なし\nデッキのフォーマット\n指定なし\nスタンダード\n関西クラシック\n関西ライジング\nαスタンダード\n添削杯 第9回(23弾)\n添削杯 第8回(22弾)\n添削杯 第7回(21弾)\n添削杯 第6回(20弾)\n添削杯 第5回(19弾)\n添削杯 第4回(18弾)\n添削杯 第3回(17弾)\n関西リバイバル\n関西スタンダード\n関西グロリアス\nプリミティブ\nエンシェント\nクラシック\nリバイバル\nβスタンダード\nスタンダード(カードランド)\n色\n指定なし\n表示件数\n10件\n20件\n50件\n検索\nリセット\n検索結果\n詳細\n画像のみ\n検索条件を指定してください。\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1135,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "",
+          "href": "/",
+          "type": "",
+          "w": 47,
+          "h": 57
+        },
+        {
+          "tag": "A",
+          "text": "ホーム",
+          "href": "/",
+          "type": "",
+          "w": 47,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "カード検索",
+          "href": "/search",
+          "type": "",
+          "w": 47,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "デッキ構築",
+          "href": "/deck",
+          "type": "",
+          "w": 47,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "公開デッキ",
+          "href": "/decks",
+          "type": "",
+          "w": 47,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会",
+          "href": "/tournaments",
+          "type": "",
+          "w": 47,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検\n検証プレイヤー",
+          "href": null,
+          "type": "button",
+          "w": 38,
+          "h": 40
+        },
+        {
+          "tag": "BUTTON",
+          "text": "保存",
+          "href": null,
+          "type": "submit",
+          "w": 52.37999725341797,
+          "h": 35.89000701904297
+        },
+        {
+          "tag": "BUTTON",
+          "text": "読み込み",
+          "href": null,
+          "type": "submit",
+          "w": 76.47843933105469,
+          "h": 35.89000701904297
+        },
+        {
+          "tag": "BUTTON",
+          "text": "書き出し",
+          "href": null,
+          "type": "submit",
+          "w": 72.11346435546875,
+          "h": 35.89000701904297
+        },
+        {
+          "tag": "BUTTON",
+          "text": "クリア",
+          "href": null,
+          "type": "submit",
+          "w": 55.45672607421875,
+          "h": 35.89000701904297
+        },
+        {
+          "tag": "BUTTON",
+          "text": "公開する",
+          "href": null,
+          "type": "button",
+          "w": 73.79580688476562,
+          "h": 35.8900146484375
+        },
+        {
+          "tag": "BUTTON",
+          "text": "基本G追加",
+          "href": null,
+          "type": "button",
+          "w": 88.86109924316406,
+          "h": 35.88999938964844
+        },
+        {
+          "tag": "BUTTON",
+          "text": "詳細",
+          "href": null,
+          "type": "button",
+          "w": 40.740020751953125,
+          "h": 34.131866455078125
+        },
+        {
+          "tag": "BUTTON",
+          "text": "画像のみ",
+          "href": null,
+          "type": "button",
+          "w": 60.5643310546875,
+          "h": 34.131866455078125
+        },
+        {
+          "tag": "INPUT",
+          "text": "カード名",
+          "href": null,
+          "type": "text",
+          "w": 240.55999755859375,
+          "h": 31.040000915527344
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 14.73187255859375,
+          "h": 14.731876373291016
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 14.73193359375,
+          "h": 31.040000915527344
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 14.73193359375,
+          "h": 31.040000915527344
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 14.73193359375,
+          "h": 31.040008544921875
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 14.73193359375,
+          "h": 31.040008544921875
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 14.73193359375,
+          "h": 31.03997802734375
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 14.73193359375,
+          "h": 31.040008544921875
+        },
+        {
+          "tag": "SELECT",
+          "text": "指定なし\nスタンダード\n関西クラシック\n関西ライジング\nαスタンダード\n添削杯 第9回(23弾)\n添削杯 第8回(22弾)\n添削杯 第7回(21弾)\n添削杯 第6回(20弾)\n添削杯 第5回(19弾)\n添削杯 第4回(18弾)\n添削杯 第3回(17弾)\n関西リバイバル\n関西スタンダード\n関西グロリアス\nプリミティブ\nエンシェント\nクラシック\nリバイバル\nβスタンダード\nスタンダード(カードランド)",
+          "href": null,
+          "type": "select-one",
+          "w": 80.2523193359375,
+          "h": 31.040000915527344
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 14.73187255859375,
+          "h": 31.040008544921875
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 14.73187255859375,
+          "h": 31.039993286132812
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 14.73187255859375,
+          "h": 31.040008544921875
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 14.73187255859375,
+          "h": 31.03997802734375
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 14.73187255859375,
+          "h": 31.040008544921875
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 14.73187255859375,
+          "h": 31.03997802734375
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 14.73187255859375,
+          "h": 31.040008544921875
+        },
+        {
+          "tag": "SELECT",
+          "text": "10件\n20件\n50件",
+          "href": null,
+          "type": "select-one",
+          "w": 77.5999755859375,
+          "h": 31.04000473022461
+        },
+        {
+          "tag": "INPUT",
+          "text": "カードテキスト",
+          "href": null,
+          "type": "text",
+          "w": 643.6557006835938,
+          "h": 31.039993286132812
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検索",
+          "href": null,
+          "type": "submit",
+          "w": 58.199951171875,
+          "h": 31.039993286132812
+        },
+        {
+          "tag": "BUTTON",
+          "text": "リセット",
+          "href": null,
+          "type": "button",
+          "w": 58.2000732421875,
+          "h": 31.039993286132812
+        },
+        {
+          "tag": "BUTTON",
+          "text": "詳細",
+          "href": null,
+          "type": "button",
+          "w": 40.739990234375,
+          "h": 34.13188171386719
+        },
+        {
+          "tag": "BUTTON",
+          "text": "画像のみ",
+          "href": null,
+          "type": "button",
+          "w": 60.56439208984375,
+          "h": 34.13188171386719
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "builder",
+      "device": "mobile",
+      "file": "final-builder-mobile.jpg",
+      "url": "http://127.0.0.1:3100/deck",
+      "text": "Gundam War Portal\nデッキ\n検索\n保存\n読み込み\n書き出し\nクリア\n未保存\n保存後に公開できます\nメインデッキ\n基本G追加\n詳細\n画像のみ\n\nACE 0 / UNIT 0 / CHARACTER 0 / COMMAND 0 / OPERATION 0 / G 0\n\nメイン 0/50 ・ サイド 0/10\n検索結果からメインデッキに追加すると、ここに表示されます。\nサイドボード\n0 / 10\n検索結果からサイドボードに追加すると、ここに表示されます。\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 974,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal",
+          "href": "/",
+          "type": "",
+          "w": 142.859375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "メニューを開く",
+          "href": null,
+          "type": "button",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "tag": "BUTTON",
+          "text": "デッキ",
+          "href": null,
+          "type": "button",
+          "w": 185,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検索",
+          "href": null,
+          "type": "button",
+          "w": 185,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "保存",
+          "href": null,
+          "type": "submit",
+          "w": 79.25,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "読み込み",
+          "href": null,
+          "type": "submit",
+          "w": 79.25,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "書き出し",
+          "href": null,
+          "type": "submit",
+          "w": 79.25,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "クリア",
+          "href": null,
+          "type": "submit",
+          "w": 79.25,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "基本G追加",
+          "href": null,
+          "type": "button",
+          "w": 91.609375,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "詳細",
+          "href": null,
+          "type": "button",
+          "w": 42,
+          "h": 35.1875
+        },
+        {
+          "tag": "BUTTON",
+          "text": "画像のみ",
+          "href": null,
+          "type": "button",
+          "w": 62.4375,
+          "h": 35.1875
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "public-decks",
+      "device": "desktop",
+      "file": "final-public-decks-desktop.jpg",
+      "url": "http://127.0.0.1:3100/decks",
+      "text": "Gundam War Portal\nガンダムウォー非公式ポータル\nホーム\nカード検索\nデッキ構築\n公開デッキ\n大会\n検\n検証プレイヤー\n公開デッキ\n4件 / 新着順\nデッキ作成\nすべて\nスタンダード\nクラシック\nライジング\nαスタンダード\n添削杯\nその他\n決勝参加者1の大会デッキ\n大会デッキ\nスタンダード\n\n説明はありません。\n\n完了済みスタンダード杯\n1位\n参加4人\n決勝参加者1\nメイン50枚 / サイド0枚\n2026/09/01\n決勝参加者2の大会デッキ\n大会デッキ\nスタンダード\n\n説明はありません。\n\n完了済みスタンダード杯\n2位\n参加4人\n決勝参加者2\nメイン50枚 / サイド0枚\n2026/09/01\n決勝参加者3の大会デッキ\n大会デッキ\nスタンダード\n\n説明はありません。\n\n完了済みスタンダード杯\n3位\n参加4人\n決勝参加者3\nメイン50枚 / サイド0枚\n2026/09/01\n決勝参加者4の大会デッキ\n大会デッキ\nスタンダード\n\n説明はありません。\n\n完了済みスタンダード杯\n4位\n参加4人\n決勝参加者4\nメイン50枚 / サイド0枚\n2026/09/01\n詳細な絞り込み条件\nキーワード\nプレイヤー名\n大会名\n\n大会名は大会デッキのみを対象に検索します。保存デッキは大会情報を持たないため対象外です。\n\n採用カード\n採用カードを検索\n採用カードの候補を検索\n追加済みのカードはありません。\n\nカード名で検索し、候補から1枚選択してください。\n\nこの条件で検索して結果へ戻る\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1265,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal\nガンダムウォー非公式ポータル",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 57
+        },
+        {
+          "tag": "A",
+          "text": "ホーム",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "カード検索",
+          "href": "/search",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "デッキ構築",
+          "href": "/deck",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "公開デッキ",
+          "href": "/decks",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会",
+          "href": "/tournaments",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検\n検証プレイヤー",
+          "href": null,
+          "type": "button",
+          "w": 175,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "デッキ作成",
+          "href": "/deck",
+          "type": "",
+          "w": 100.734375,
+          "h": 39
+        },
+        {
+          "tag": "BUTTON",
+          "text": "すべて",
+          "href": null,
+          "type": "button",
+          "w": 65,
+          "h": 39
+        },
+        {
+          "tag": "BUTTON",
+          "text": "スタンダード",
+          "href": null,
+          "type": "button",
+          "w": 98.359375,
+          "h": 39
+        },
+        {
+          "tag": "BUTTON",
+          "text": "クラシック",
+          "href": null,
+          "type": "button",
+          "w": 86.265625,
+          "h": 39
+        },
+        {
+          "tag": "BUTTON",
+          "text": "ライジング",
+          "href": null,
+          "type": "button",
+          "w": 87.65625,
+          "h": 39
+        },
+        {
+          "tag": "BUTTON",
+          "text": "αスタンダード",
+          "href": null,
+          "type": "button",
+          "w": 108.359375,
+          "h": 39
+        },
+        {
+          "tag": "BUTTON",
+          "text": "添削杯",
+          "href": null,
+          "type": "button",
+          "w": 74,
+          "h": 39
+        },
+        {
+          "tag": "BUTTON",
+          "text": "その他",
+          "href": null,
+          "type": "button",
+          "w": 67.625,
+          "h": 39
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者1の大会デッキ",
+          "href": "/decks/entry:completed-entry-1",
+          "type": "",
+          "w": 188.75,
+          "h": 24
+        },
+        {
+          "tag": "A",
+          "text": "完了済みスタンダード杯",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 132.046875,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者1",
+          "href": "/users/mock-finalist-1",
+          "type": "",
+          "w": 77.546875,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者2の大会デッキ",
+          "href": "/decks/entry:completed-entry-2",
+          "type": "",
+          "w": 191.5,
+          "h": 24
+        },
+        {
+          "tag": "A",
+          "text": "完了済みスタンダード杯",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 132.046875,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者2",
+          "href": "/users/mock-finalist-2",
+          "type": "",
+          "w": 77.546875,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者3の大会デッキ",
+          "href": "/decks/entry:completed-entry-3",
+          "type": "",
+          "w": 191.5,
+          "h": 24
+        },
+        {
+          "tag": "A",
+          "text": "完了済みスタンダード杯",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 132.046875,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者3",
+          "href": "/users/mock-finalist-3",
+          "type": "",
+          "w": 77.546875,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者4の大会デッキ",
+          "href": "/decks/entry:completed-entry-4",
+          "type": "",
+          "w": 191.875,
+          "h": 24
+        },
+        {
+          "tag": "A",
+          "text": "完了済みスタンダード杯",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 132.046875,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者4",
+          "href": "/users/mock-finalist-4",
+          "type": "",
+          "w": 77.546875,
+          "h": 19
+        },
+        {
+          "tag": "INPUT",
+          "text": "デッキ名・説明などを検索",
+          "href": null,
+          "type": "search",
+          "w": 370,
+          "h": 37
+        },
+        {
+          "tag": "INPUT",
+          "text": "プレイヤー名を入力",
+          "href": null,
+          "type": "text",
+          "w": 370,
+          "h": 37
+        },
+        {
+          "tag": "INPUT",
+          "text": "大会名を入力",
+          "href": null,
+          "type": "text",
+          "w": 370,
+          "h": 37
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 948.859375,
+          "h": 39
+        },
+        {
+          "tag": "BUTTON",
+          "text": "採用カードの候補を検索",
+          "href": null,
+          "type": "button",
+          "w": 151.140625,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "この条件で検索して結果へ戻る",
+          "href": null,
+          "type": "submit",
+          "w": 230.703125,
+          "h": 39
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "public-decks",
+      "device": "mobile",
+      "file": "final-public-decks-mobile.jpg",
+      "url": "http://127.0.0.1:3100/decks",
+      "text": "Gundam War Portal\n公開デッキ\n4件 / 新着順\nデッキ作成\nすべて\nスタンダード\nクラシック\nライジング\nαスタンダード\n添削杯\nその他\n決勝参加者1の大会デッキ\n大会デッキ\nスタンダード\n\n説明はありません。\n\n完了済みスタンダード杯\n1位\n参加4人\n決勝参加者1\nメイン50枚 / サイド0枚\n2026/09/01\n決勝参加者2の大会デッキ\n大会デッキ\nスタンダード\n\n説明はありません。\n\n完了済みスタンダード杯\n2位\n参加4人\n決勝参加者2\nメイン50枚 / サイド0枚\n2026/09/01\n決勝参加者3の大会デッキ\n大会デッキ\nスタンダード\n\n説明はありません。\n\n完了済みスタンダード杯\n3位\n参加4人\n決勝参加者3\nメイン50枚 / サイド0枚\n2026/09/01\n決勝参加者4の大会デッキ\n大会デッキ\nスタンダード\n\n説明はありません。\n\n完了済みスタンダード杯\n4位\n参加4人\n決勝参加者4\nメイン50枚 / サイド0枚\n2026/09/01\n詳細な絞り込み条件\nキーワード\nプレイヤー名\n大会名\n\n大会名は大会デッキのみを対象に検索します。保存デッキは大会情報を持たないため対象外です。\n\n採用カード\n採用カードを検索\n採用カードの候補を検索\n追加済みのカードはありません。\n\nカード名で検索し、候補から1枚選択してください。\n\nこの条件で検索して結果へ戻る\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 1696,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal",
+          "href": "/",
+          "type": "",
+          "w": 142.859375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "メニューを開く",
+          "href": null,
+          "type": "button",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "tag": "A",
+          "text": "デッキ作成",
+          "href": "/deck",
+          "type": "",
+          "w": 100.734375,
+          "h": 39
+        },
+        {
+          "tag": "BUTTON",
+          "text": "すべて",
+          "href": null,
+          "type": "button",
+          "w": 65,
+          "h": 39
+        },
+        {
+          "tag": "BUTTON",
+          "text": "スタンダード",
+          "href": null,
+          "type": "button",
+          "w": 98.359375,
+          "h": 39
+        },
+        {
+          "tag": "BUTTON",
+          "text": "クラシック",
+          "href": null,
+          "type": "button",
+          "w": 86.265625,
+          "h": 39
+        },
+        {
+          "tag": "BUTTON",
+          "text": "ライジング",
+          "href": null,
+          "type": "button",
+          "w": 87.65625,
+          "h": 39
+        },
+        {
+          "tag": "BUTTON",
+          "text": "αスタンダード",
+          "href": null,
+          "type": "button",
+          "w": 108.359375,
+          "h": 39
+        },
+        {
+          "tag": "BUTTON",
+          "text": "添削杯",
+          "href": null,
+          "type": "button",
+          "w": 74,
+          "h": 39
+        },
+        {
+          "tag": "BUTTON",
+          "text": "その他",
+          "href": null,
+          "type": "button",
+          "w": 67.625,
+          "h": 39
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者1の大会デッキ",
+          "href": "/decks/entry:completed-entry-1",
+          "type": "",
+          "w": 188.75,
+          "h": 24
+        },
+        {
+          "tag": "A",
+          "text": "完了済みスタンダード杯",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 132.046875,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者1",
+          "href": "/users/mock-finalist-1",
+          "type": "",
+          "w": 77.546875,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者2の大会デッキ",
+          "href": "/decks/entry:completed-entry-2",
+          "type": "",
+          "w": 191.5,
+          "h": 24
+        },
+        {
+          "tag": "A",
+          "text": "完了済みスタンダード杯",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 132.046875,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者2",
+          "href": "/users/mock-finalist-2",
+          "type": "",
+          "w": 77.546875,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者3の大会デッキ",
+          "href": "/decks/entry:completed-entry-3",
+          "type": "",
+          "w": 191.5,
+          "h": 24
+        },
+        {
+          "tag": "A",
+          "text": "完了済みスタンダード杯",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 132.046875,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者3",
+          "href": "/users/mock-finalist-3",
+          "type": "",
+          "w": 77.546875,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者4の大会デッキ",
+          "href": "/decks/entry:completed-entry-4",
+          "type": "",
+          "w": 191.875,
+          "h": 24
+        },
+        {
+          "tag": "A",
+          "text": "完了済みスタンダード杯",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 132.046875,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者4",
+          "href": "/users/mock-finalist-4",
+          "type": "",
+          "w": 77.546875,
+          "h": 19
+        },
+        {
+          "tag": "INPUT",
+          "text": "デッキ名・説明などを検索",
+          "href": null,
+          "type": "search",
+          "w": 340,
+          "h": 37
+        },
+        {
+          "tag": "INPUT",
+          "text": "プレイヤー名を入力",
+          "href": null,
+          "type": "text",
+          "w": 340,
+          "h": 37
+        },
+        {
+          "tag": "INPUT",
+          "text": "大会名を入力",
+          "href": null,
+          "type": "text",
+          "w": 340,
+          "h": 37
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 314,
+          "h": 39
+        },
+        {
+          "tag": "BUTTON",
+          "text": "採用カードの候補を検索",
+          "href": null,
+          "type": "button",
+          "w": 151.140625,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "この条件で検索して結果へ戻る",
+          "href": null,
+          "type": "submit",
+          "w": 190.125,
+          "h": 37
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "public-detail",
+      "device": "desktop",
+      "file": "final-public-detail-desktop.jpg",
+      "url": "http://127.0.0.1:3100/decks/entry:completed-entry-1",
+      "text": "Gundam War Portal\nガンダムウォー非公式ポータル\nホーム\nカード検索\nデッキ構築\n公開デッキ\n大会\n検\n検証プレイヤー\n決勝参加者1の大会デッキ\nこのデッキをコピー\n一覧へ\n提出者\n決勝参加者1\nフォーマット\nスタンダード\n開催日\n2026/09/01\n大会名\n完了済みスタンダード杯\n順位\n1位\n参加人数\n4人\n枚数\nメイン50枚 / サイド0枚\nメインデッキ\n50枚\nUNIT\n枚数\nカード番号\nカード名\n3枚\n-\n101010083\n3枚\n-\n107010012\nCHARACTER\n枚数\nカード番号\nカード名\n3枚\n-\n101020126\n3枚\n-\n102020114\n3枚\n-\n103021034\n3枚\n-\n104020075\n3枚\n-\n105023027\n3枚\n-\n106020065\nCOMMAND\n枚数\nカード番号\nカード名\n3枚\n-\n102030045\nOPERATION\n枚数\nカード番号\nカード名\n2枚\n-\n101040070\nGENERATION\n枚数\nカード番号\nカード名\n3枚\n-\n101050019\n3枚\n-\n102050016\n3枚\n-\n103050016\n3枚\n-\n104050016\n3枚\n-\n105050011\n3枚\n-\n106050009\n3枚\n-\n107050008\nサイドボード\n0枚\nデッキ画像\n\n画像を選択すると原寸で表示します。\n\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 2974,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal\nガンダムウォー非公式ポータル",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 57
+        },
+        {
+          "tag": "A",
+          "text": "ホーム",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "カード検索",
+          "href": "/search",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "デッキ構築",
+          "href": "/deck",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "公開デッキ",
+          "href": "/decks",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会",
+          "href": "/tournaments",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検\n検証プレイヤー",
+          "href": null,
+          "type": "button",
+          "w": 175,
+          "h": 40
+        },
+        {
+          "tag": "BUTTON",
+          "text": "このデッキをコピー",
+          "href": null,
+          "type": "button",
+          "w": 137.078125,
+          "h": 39
+        },
+        {
+          "tag": "A",
+          "text": "一覧へ",
+          "href": "/decks",
+          "type": "",
+          "w": 79.0625,
+          "h": 39
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者1",
+          "href": "/users/mock-finalist-1",
+          "type": "",
+          "w": 88.625,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "完了済みスタンダード杯",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 148.390625,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "101010083",
+          "href": null,
+          "type": "button",
+          "w": 72.609375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "107010012",
+          "href": null,
+          "type": "button",
+          "w": 72.3125,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "101020126",
+          "href": null,
+          "type": "button",
+          "w": 72.65625,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "102020114",
+          "href": null,
+          "type": "button",
+          "w": 72.953125,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "103021034",
+          "href": null,
+          "type": "button",
+          "w": 75.390625,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "104020075",
+          "href": null,
+          "type": "button",
+          "w": 77.53125,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "105023027",
+          "href": null,
+          "type": "button",
+          "w": 77.203125,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "106020065",
+          "href": null,
+          "type": "button",
+          "w": 77.59375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "102030045",
+          "href": null,
+          "type": "button",
+          "w": 77.84375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "101040070",
+          "href": null,
+          "type": "button",
+          "w": 75.09375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "101050019",
+          "href": null,
+          "type": "button",
+          "w": 72.65625,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "102050016",
+          "href": null,
+          "type": "button",
+          "w": 75.109375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "103050016",
+          "href": null,
+          "type": "button",
+          "w": 75.109375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "104050016",
+          "href": null,
+          "type": "button",
+          "w": 75.4375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "105050011",
+          "href": null,
+          "type": "button",
+          "w": 72.609375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "106050009",
+          "href": null,
+          "type": "button",
+          "w": 77.59375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "107050008",
+          "href": null,
+          "type": "button",
+          "w": 77.203125,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "デッキ画像を原寸表示",
+          "href": "blob:http://127.0.0.1:3100/b7e672b4-9248-4ca2-8ad3-0af416e94992",
+          "type": "",
+          "w": 1166,
+          "h": 1090.25
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "public-detail",
+      "device": "mobile",
+      "file": "final-public-detail-mobile.jpg",
+      "url": "http://127.0.0.1:3100/decks/entry:completed-entry-1",
+      "text": "Gundam War Portal\n決勝参加者1の大会デッキ\nこのデッキをコピー\n一覧へ\n提出者\n決勝参加者1\nフォーマット\nスタンダード\n開催日\n2026/09/01\n大会名\n完了済みスタンダード杯\n順位\n1位\n参加人数\n4人\n枚数\nメイン50枚 / サイド0枚\nメインデッキ\n50枚\nUNIT\n枚数:\n3枚\nカード番号:\n-\n101010083\n枚数:\n3枚\nカード番号:\n-\n107010012\nCHARACTER\n枚数:\n3枚\nカード番号:\n-\n101020126\n枚数:\n3枚\nカード番号:\n-\n102020114\n枚数:\n3枚\nカード番号:\n-\n103021034\n枚数:\n3枚\nカード番号:\n-\n104020075\n枚数:\n3枚\nカード番号:\n-\n105023027\n枚数:\n3枚\nカード番号:\n-\n106020065\nCOMMAND\n枚数:\n3枚\nカード番号:\n-\n102030045\nOPERATION\n枚数:\n2枚\nカード番号:\n-\n101040070\nGENERATION\n枚数:\n3枚\nカード番号:\n-\n101050019\n枚数:\n3枚\nカード番号:\n-\n102050016\n枚数:\n3枚\nカード番号:\n-\n103050016\n枚数:\n3枚\nカード番号:\n-\n104050016\n枚数:\n3枚\nカード番号:\n-\n105050011\n枚数:\n3枚\nカード番号:\n-\n106050009\n枚数:\n3枚\nカード番号:\n-\n107050008\nサイドボード\n0枚\nデッキ画像\n\n画像を選択すると原寸で表示します。\n\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 2737,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal",
+          "href": "/",
+          "type": "",
+          "w": 142.859375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "メニューを開く",
+          "href": null,
+          "type": "button",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "tag": "BUTTON",
+          "text": "このデッキをコピー",
+          "href": null,
+          "type": "button",
+          "w": 137.078125,
+          "h": 39
+        },
+        {
+          "tag": "A",
+          "text": "一覧へ",
+          "href": "/decks",
+          "type": "",
+          "w": 79.0625,
+          "h": 39
+        },
+        {
+          "tag": "A",
+          "text": "決勝参加者1",
+          "href": "/users/mock-finalist-1",
+          "type": "",
+          "w": 88.625,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "完了済みスタンダード杯",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 148.390625,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "101010083",
+          "href": null,
+          "type": "button",
+          "w": 72.609375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "107010012",
+          "href": null,
+          "type": "button",
+          "w": 72.3125,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "101020126",
+          "href": null,
+          "type": "button",
+          "w": 72.65625,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "102020114",
+          "href": null,
+          "type": "button",
+          "w": 72.953125,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "103021034",
+          "href": null,
+          "type": "button",
+          "w": 75.390625,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "104020075",
+          "href": null,
+          "type": "button",
+          "w": 77.53125,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "105023027",
+          "href": null,
+          "type": "button",
+          "w": 77.203125,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "106020065",
+          "href": null,
+          "type": "button",
+          "w": 77.59375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "102030045",
+          "href": null,
+          "type": "button",
+          "w": 77.84375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "101040070",
+          "href": null,
+          "type": "button",
+          "w": 75.09375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "101050019",
+          "href": null,
+          "type": "button",
+          "w": 72.65625,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "102050016",
+          "href": null,
+          "type": "button",
+          "w": 75.109375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "103050016",
+          "href": null,
+          "type": "button",
+          "w": 75.109375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "104050016",
+          "href": null,
+          "type": "button",
+          "w": 75.4375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "105050011",
+          "href": null,
+          "type": "button",
+          "w": 72.609375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "106050009",
+          "href": null,
+          "type": "button",
+          "w": 77.59375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "107050008",
+          "href": null,
+          "type": "button",
+          "w": 77.203125,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "デッキ画像を原寸表示",
+          "href": "blob:http://127.0.0.1:3100/9d85deb1-dcb7-48aa-8aac-c90a0dbc8e57",
+          "type": "",
+          "w": 372,
+          "h": 349.28125
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "tournaments",
+      "device": "desktop",
+      "file": "final-tournaments-desktop.jpg",
+      "url": "http://127.0.0.1:3100/tournaments",
+      "text": "Gundam War Portal\nガンダムウォー非公式ポータル\nホーム\nカード検索\nデッキ構築\n公開デッキ\n大会\n検\n検証プレイヤー\n\n大会一覧\n\n大会\n表示範囲\nすべて\n自分の大会\nステータス\nすべて\n受付中\n進行中\n完了\n中止\n9月\n15日\n(火)\n週末エントリー受付大会\n受付中\n14:28\nオンライン\nスイスドロー・スタンダード\n参加 0人 / 定員 16人\n詳細\n9月\n7日\n(月)\nローカルスイス杯\n進行中\n14:28\n東京・秋葉原カードショップ○○\nスイスドロー・スタンダード\n参加 4人 / 定員 32人\n観戦\n9月\n1日\n(火)\n完了済みスタンダード杯\n完了\n14:28\n東京・秋葉原カードショップ○○\nスイスドロー・スタンダード\n参加 4人 / 定員 16人\n詳細\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1167,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal\nガンダムウォー非公式ポータル",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 57
+        },
+        {
+          "tag": "A",
+          "text": "ホーム",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "カード検索",
+          "href": "/search",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "デッキ構築",
+          "href": "/deck",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "公開デッキ",
+          "href": "/decks",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会",
+          "href": "/tournaments",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検\n検証プレイヤー",
+          "href": null,
+          "type": "button",
+          "w": 175,
+          "h": 40
+        },
+        {
+          "tag": "BUTTON",
+          "text": "すべて",
+          "href": null,
+          "type": "button",
+          "w": 60.125,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "自分の大会",
+          "href": null,
+          "type": "button",
+          "w": 93.703125,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "すべて",
+          "href": null,
+          "type": "button",
+          "w": 60.125,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "受付中",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "進行中",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "完了",
+          "href": null,
+          "type": "button",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "中止",
+          "href": null,
+          "type": "button",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "A",
+          "text": "週末エントリー受付大会",
+          "href": "/tournaments/mock-tournament-2",
+          "type": "",
+          "w": 153.890625,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "詳細",
+          "href": "/tournaments/mock-tournament-2",
+          "type": "",
+          "w": 98,
+          "h": 58
+        },
+        {
+          "tag": "A",
+          "text": "ローカルスイス杯",
+          "href": "/tournaments/mock-tournament-1?tab=rounds",
+          "type": "",
+          "w": 100.578125,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "観戦",
+          "href": "/tournaments/mock-tournament-1?tab=rounds",
+          "type": "",
+          "w": 98,
+          "h": 58
+        },
+        {
+          "tag": "A",
+          "text": "完了済みスタンダード杯",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 150.90625,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "詳細",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 98,
+          "h": 58
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "tournaments",
+      "device": "mobile",
+      "file": "final-tournaments-mobile.jpg",
+      "url": "http://127.0.0.1:3100/tournaments",
+      "text": "Gundam War Portal\n\n大会一覧\n\n大会\n表示範囲\nすべて\n自分の大会\nステータス\nすべて\n受付中\n進行中\n完了\n中止\n9月\n15日\n(火)\n週末エントリー受付大会\n受付中\n14:28\nオンライン\nスイスドロー・スタンダード\n参加 0人 / 定員 16人\n詳細\n9月\n7日\n(月)\nローカルスイス杯\n進行中\n14:28\n東京・秋葉原カードショップ○○\nスイスドロー・スタンダード\n参加 4人 / 定員 32人\n観戦\n9月\n1日\n(火)\n完了済みスタンダード杯\n完了\n14:28\n東京・秋葉原カードショップ○○\nスイスドロー・スタンダード\n参加 4人 / 定員 16人\n詳細\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 1100,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal",
+          "href": "/",
+          "type": "",
+          "w": 142.859375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "メニューを開く",
+          "href": null,
+          "type": "button",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "tag": "BUTTON",
+          "text": "すべて",
+          "href": null,
+          "type": "button",
+          "w": 60.125,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "自分の大会",
+          "href": null,
+          "type": "button",
+          "w": 93.703125,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "すべて",
+          "href": null,
+          "type": "button",
+          "w": 60.125,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "受付中",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "進行中",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "完了",
+          "href": null,
+          "type": "button",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "中止",
+          "href": null,
+          "type": "button",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "A",
+          "text": "週末エントリー受付大会",
+          "href": "/tournaments/mock-tournament-2",
+          "type": "",
+          "w": 153.890625,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "詳細",
+          "href": "/tournaments/mock-tournament-2",
+          "type": "",
+          "w": 340,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "ローカルスイス杯",
+          "href": "/tournaments/mock-tournament-1?tab=rounds",
+          "type": "",
+          "w": 100.578125,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "観戦",
+          "href": "/tournaments/mock-tournament-1?tab=rounds",
+          "type": "",
+          "w": 340,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "完了済みスタンダード杯",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 150.90625,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "詳細",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 340,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "registration",
+      "device": "desktop",
+      "file": "final-registration-desktop.jpg",
+      "url": "http://127.0.0.1:3100/tournaments/mock-tournament-2",
+      "text": "Gundam War Portal\nガンダムウォー非公式ポータル\nホーム\nカード検索\nデッキ構築\n公開デッキ\n大会\n検\n検証プレイヤー\n大会一覧へ\n週末エントリー受付大会\n\n開催地 オンライン / 開始 2026/09/15 14:28\n\n週末開催予定のエントリー受付中大会です。\n\n受付中\n\nマイステータス\n\nエントリー\n\nデッキ提出は任意です。\n\n提出デッキ: 現在のデッキビルダー\nメイン0枚 / サイド0枚\nデッキを選ぶ\n\n締切までは何度でも差し替えできます。\n\nデッキリストを添付せずにエントリーします。\n\nエントリー\n概要\n参加者\nペアリング\n順位表\n大会情報\n主催者\nローカル主催者\n共同運営者\nなし\n形式\nスイス\nスイス回戦数\n自動（初戦生成時に確定）\n終了条件\n規定回戦数で終了\n開催地\nオンライン\n開始\n2026/09/15 14:28\n受付締切\n2026/09/14 14:28\nチェックイン開始\n開催日当日\n定員\n参加 0人 / 定員 16人\nデッキリスト\n任意\nレギュレーション\n名称\nスタンダード\nメイン\n50枚\nサイド\n10枚\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1167,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal\nガンダムウォー非公式ポータル",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 57
+        },
+        {
+          "tag": "A",
+          "text": "ホーム",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "カード検索",
+          "href": "/search",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "デッキ構築",
+          "href": "/deck",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "公開デッキ",
+          "href": "/decks",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会",
+          "href": "/tournaments",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検\n検証プレイヤー",
+          "href": null,
+          "type": "button",
+          "w": 175,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "大会一覧へ",
+          "href": "/tournaments",
+          "type": "",
+          "w": 77.0625,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "デッキを選ぶ",
+          "href": null,
+          "type": "button",
+          "w": 921.109375,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "エントリー",
+          "href": null,
+          "type": "button",
+          "w": 76.65625,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "概要",
+          "href": null,
+          "type": "button",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "参加者",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "ペアリング",
+          "href": null,
+          "type": "button",
+          "w": 81.21875,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "順位表",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "A",
+          "text": "ローカル主催者",
+          "href": "/users/organizer-1",
+          "type": "",
+          "w": 94.84375,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "registration",
+      "device": "mobile",
+      "file": "final-registration-mobile.jpg",
+      "url": "http://127.0.0.1:3100/tournaments/mock-tournament-2",
+      "text": "Gundam War Portal\n大会一覧へ\n週末エントリー受付大会\n\n開催地 オンライン / 開始 2026/09/15 14:28\n\n週末開催予定のエントリー受付中大会です。\n\n受付中\nマイステータス — エントリー・デッキ提出\n概要\n参加者\nペアリング\n順位表\n大会情報\n主催者\nローカル主催者\n共同運営者\nなし\n形式\nスイス\nスイス回戦数\n自動（初戦生成時に確定）\n終了条件\n規定回戦数で終了\n開催地\nオンライン\n開始\n2026/09/15 14:28\n受付締切\n2026/09/14 14:28\nチェックイン開始\n開催日当日\n定員\n参加 0人 / 定員 16人\nデッキリスト\n任意\nレギュレーション\n名称\nスタンダード\nメイン\n50枚\nサイド\n10枚\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 1114,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal",
+          "href": "/",
+          "type": "",
+          "w": 142.859375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "メニューを開く",
+          "href": null,
+          "type": "button",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "tag": "A",
+          "text": "大会一覧へ",
+          "href": "/tournaments",
+          "type": "",
+          "w": 77.0625,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "href": null,
+          "type": "button",
+          "w": 223.140625,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "href": null,
+          "type": "button",
+          "w": 76.65625,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "概要",
+          "href": null,
+          "type": "button",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "参加者",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "ペアリング",
+          "href": null,
+          "type": "button",
+          "w": 81.21875,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "順位表",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "A",
+          "text": "ローカル主催者",
+          "href": "/users/organizer-1",
+          "type": "",
+          "w": 94.84375,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "in-progress",
+      "device": "desktop",
+      "file": "final-in-progress-desktop.jpg",
+      "url": "http://127.0.0.1:3100/tournaments/mock-tournament-1",
+      "text": "Gundam War Portal\nガンダムウォー非公式ポータル\nホーム\nカード検索\nデッキ構築\n公開デッキ\n大会\n検\n検証プレイヤー\n大会一覧へ\nローカルスイス杯\n\n開催地 東京・秋葉原カードショップ○○ / 開始 2026/09/07 14:28\n\nローカル開発用のモック大会です。\n\n進行中\n\nマイステータス\n\n途中参加申請\n\n進行中の大会です。承認されると次のラウンドから参加できます。\n\n参加申請\n概要\n参加者\nペアリング\n順位表\n大会情報\n主催者\nローカル主催者\n共同運営者\n共同運営者\n形式\nスイス\nスイス回戦数\n全3回戦\n終了条件\n規定回戦数で終了\n開催地\n東京・秋葉原カードショップ○○\n開始\n2026/09/07 14:28\n受付締切\n2026/09/06 14:28\nチェックイン開始\n開催日当日\n定員\n参加 4人 / 定員 32人\nデッキリスト\n必須\nレギュレーション\n名称\nスタンダード\nメイン\n50枚\nサイド\n10枚\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1167,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal\nガンダムウォー非公式ポータル",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 57
+        },
+        {
+          "tag": "A",
+          "text": "ホーム",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "カード検索",
+          "href": "/search",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "デッキ構築",
+          "href": "/deck",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "公開デッキ",
+          "href": "/decks",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会",
+          "href": "/tournaments",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検\n検証プレイヤー",
+          "href": null,
+          "type": "button",
+          "w": 175,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "大会一覧へ",
+          "href": "/tournaments",
+          "type": "",
+          "w": 77.0625,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "参加申請",
+          "href": null,
+          "type": "button",
+          "w": 82,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "概要",
+          "href": null,
+          "type": "button",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "参加者",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "ペアリング",
+          "href": null,
+          "type": "button",
+          "w": 81.21875,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "順位表",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "A",
+          "text": "ローカル主催者",
+          "href": "/users/organizer-1",
+          "type": "",
+          "w": 94.84375,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "共同運営者",
+          "href": "/users/co-organizer-1",
+          "type": "",
+          "w": 80,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "in-progress",
+      "device": "mobile",
+      "file": "final-in-progress-mobile.jpg",
+      "url": "http://127.0.0.1:3100/tournaments/mock-tournament-1",
+      "text": "Gundam War Portal\n大会一覧へ\nローカルスイス杯\n\n開催地 東京・秋葉原カードショップ○○ / 開始 2026/09/07 14:28\n\nローカル開発用のモック大会です。\n\n進行中\nマイステータス — 途中参加を申請\n概要\n参加者\nペアリング\n順位表\n大会情報\n主催者\nローカル主催者\n共同運営者\n共同運営者\n形式\nスイス\nスイス回戦数\n全3回戦\n終了条件\n規定回戦数で終了\n開催地\n東京・秋葉原カードショップ○○\n開始\n2026/09/07 14:28\n受付締切\n2026/09/06 14:28\nチェックイン開始\n開催日当日\n定員\n参加 4人 / 定員 32人\nデッキリスト\n必須\nレギュレーション\n名称\nスタンダード\nメイン\n50枚\nサイド\n10枚\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 1135,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal",
+          "href": "/",
+          "type": "",
+          "w": 142.859375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "メニューを開く",
+          "href": null,
+          "type": "button",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "tag": "A",
+          "text": "大会一覧へ",
+          "href": "/tournaments",
+          "type": "",
+          "w": 77.0625,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "href": null,
+          "type": "button",
+          "w": 82,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "概要",
+          "href": null,
+          "type": "button",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "参加者",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "ペアリング",
+          "href": null,
+          "type": "button",
+          "w": 81.21875,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "順位表",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "A",
+          "text": "ローカル主催者",
+          "href": "/users/organizer-1",
+          "type": "",
+          "w": 94.84375,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "共同運営者",
+          "href": "/users/co-organizer-1",
+          "type": "",
+          "w": 80,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "completed",
+      "device": "desktop",
+      "file": "final-completed-desktop.jpg",
+      "url": "http://127.0.0.1:3100/tournaments/mock-tournament-3",
+      "text": "Gundam War Portal\nガンダムウォー非公式ポータル\nホーム\nカード検索\nデッキ構築\n公開デッキ\n大会\n検\n検証プレイヤー\n大会一覧へ\n完了済みスタンダード杯\n\n開催地 東京・秋葉原カードショップ○○ / 開始 2026/09/01 14:28\n\n公開大会デッキと最終順位を確認できる完了済みのモック大会です。\n\n完了\n\nアナウンス\n\n全3回戦が終了しました。\n\nマイステータス\n\n受付が終了しました。\n概要\n参加者\nペアリング\nリザルト\n順位表\n大会情報\n主催者\nローカル主催者\n共同運営者\nなし\n形式\nスイス\nスイス回戦数\n全3回戦\n終了条件\n規定回戦数で終了\n開催地\n東京・秋葉原カードショップ○○\n開始\n2026/09/01 14:28\n受付締切\n2026/08/31 14:28\nチェックイン開始\n8月31日 14:28\n定員\n参加 4人 / 定員 16人\nデッキリスト\n必須\nレギュレーション\n名称\nスタンダード\nメイン\n50枚\nサイド\n10枚\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1167,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal\nガンダムウォー非公式ポータル",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 57
+        },
+        {
+          "tag": "A",
+          "text": "ホーム",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "カード検索",
+          "href": "/search",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "デッキ構築",
+          "href": "/deck",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "公開デッキ",
+          "href": "/decks",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会",
+          "href": "/tournaments",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検\n検証プレイヤー",
+          "href": null,
+          "type": "button",
+          "w": 175,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "大会一覧へ",
+          "href": "/tournaments",
+          "type": "",
+          "w": 77.0625,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "概要",
+          "href": null,
+          "type": "button",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "参加者",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "ペアリング",
+          "href": null,
+          "type": "button",
+          "w": 81.21875,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "リザルト",
+          "href": null,
+          "type": "button",
+          "w": 69.203125,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "順位表",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "A",
+          "text": "ローカル主催者",
+          "href": "/users/organizer-1",
+          "type": "",
+          "w": 94.84375,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "completed",
+      "device": "mobile",
+      "file": "final-completed-mobile.jpg",
+      "url": "http://127.0.0.1:3100/tournaments/mock-tournament-3",
+      "text": "Gundam War Portal\n大会一覧へ\n完了済みスタンダード杯\n\n開催地 東京・秋葉原カードショップ○○ / 開始 2026/09/01 14:28\n\n公開大会デッキと最終順位を確認できる完了済みのモック大会です。\n\n完了\nアナウンス\n\nアナウンス\n\n全3回戦が終了しました。\n\nマイステータス — 参加状況を確認\n概要\n参加者\nペアリング\nリザルト\n順位表\n大会情報\n主催者\nローカル主催者\n共同運営者\nなし\n形式\nスイス\nスイス回戦数\n全3回戦\n終了条件\n規定回戦数で終了\n開催地\n東京・秋葉原カードショップ○○\n開始\n2026/09/01 14:28\n受付締切\n2026/08/31 14:28\nチェックイン開始\n8月31日 14:28\n定員\n参加 4人 / 定員 16人\nデッキリスト\n必須\nレギュレーション\n名称\nスタンダード\nメイン\n50枚\nサイド\n10枚\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 1358,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal",
+          "href": "/",
+          "type": "",
+          "w": 142.859375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "メニューを開く",
+          "href": null,
+          "type": "button",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "tag": "A",
+          "text": "大会一覧へ",
+          "href": "/tournaments",
+          "type": "",
+          "w": 77.0625,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "概要",
+          "href": null,
+          "type": "button",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "参加者",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "ペアリング",
+          "href": null,
+          "type": "button",
+          "w": 81.21875,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "リザルト",
+          "href": null,
+          "type": "button",
+          "w": 69.203125,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "順位表",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "A",
+          "text": "ローカル主催者",
+          "href": "/users/organizer-1",
+          "type": "",
+          "w": 94.84375,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "display",
+      "device": "desktop",
+      "file": "final-display-desktop.jpg",
+      "url": "http://127.0.0.1:3100/tournaments/mock-tournament-1/display",
+      "text": "ローカルスイス杯\n\n現在ラウンド: 第1回戦 / 全3回戦\n\nペアリング\n順位表\n\nこの画面は5秒ごとに自動更新されます。\n\n卓\tプレイヤー1\tプレイヤー2\t結果\n1\tプレイヤー1\tプレイヤー2\tP1 勝ち\n2\tプレイヤー3\t不戦勝\t不戦勝",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1088,
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "text": "ペアリング",
+          "href": null,
+          "type": "button",
+          "w": 87.21875,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "順位表",
+          "href": null,
+          "type": "button",
+          "w": 74,
+          "h": 38
+        }
+      ]
+    },
+    {
+      "name": "display",
+      "device": "mobile",
+      "file": "final-display-mobile.jpg",
+      "url": "http://127.0.0.1:3100/tournaments/mock-tournament-1/display",
+      "text": "ローカルスイス杯\n\n現在ラウンド: 第1回戦 / 全3回戦\n\nペアリング\n順位表\n\nこの画面は5秒ごとに自動更新されます。\n\n1\nプレイヤー1\nプレイヤー2\nP1 勝ち\n2\nプレイヤー3\n不戦勝\n不戦勝",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 892,
+      "controls": [
+        {
+          "tag": "BUTTON",
+          "text": "ペアリング",
+          "href": null,
+          "type": "button",
+          "w": 176,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "順位表",
+          "href": null,
+          "type": "button",
+          "w": 176,
+          "h": 38
+        }
+      ]
+    },
+    {
+      "name": "profile",
+      "device": "desktop",
+      "file": "final-profile-desktop.jpg",
+      "url": "http://127.0.0.1:3100/profile",
+      "text": "Gundam War Portal\nガンダムウォー非公式ポータル\nホーム\nカード検索\nデッキ構築\n公開デッキ\n大会\n検\n検証プレイヤー\n検証\n検証プレイヤー\n\nGoogle アカウント名:\n検証ユーザー\n\n公開ページを見る\nニックネーム変更\n保存\n参加大会数\n0\n優勝数\n0\n通算\n0勝0敗0分\n公開デッキ数\n0\n公開しているデッキはありません。\nあなたの大会\n参加・運営している大会はありません。\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1187,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal\nガンダムウォー非公式ポータル",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 57
+        },
+        {
+          "tag": "A",
+          "text": "ホーム",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "カード検索",
+          "href": "/search",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "デッキ構築",
+          "href": "/deck",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "公開デッキ",
+          "href": "/decks",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会",
+          "href": "/tournaments",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検\n検証プレイヤー",
+          "href": null,
+          "type": "button",
+          "w": 175,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "公開ページを見る",
+          "href": "/users/local-demo-user",
+          "type": "",
+          "w": 546,
+          "h": 19
+        },
+        {
+          "tag": "INPUT",
+          "text": "2〜20文字",
+          "href": null,
+          "type": "text",
+          "w": 290,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "保存",
+          "href": null,
+          "type": "submit",
+          "w": 58,
+          "h": 39
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "profile",
+      "device": "mobile",
+      "file": "final-profile-mobile.jpg",
+      "url": "http://127.0.0.1:3100/profile",
+      "text": "Gundam War Portal\n検証\n検証プレイヤー\n\nGoogle アカウント名:\n検証ユーザー\n\n公開ページを見る\nニックネーム変更\n保存\n参加大会数\n0\n優勝数\n0\n通算\n0勝0敗0分\n公開デッキ数\n0\n公開しているデッキはありません。\nあなたの大会\n参加・運営している大会はありません。\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 974,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal",
+          "href": "/",
+          "type": "",
+          "w": 142.859375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "メニューを開く",
+          "href": null,
+          "type": "button",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "tag": "A",
+          "text": "公開ページを見る",
+          "href": "/users/local-demo-user",
+          "type": "",
+          "w": 258,
+          "h": 19
+        },
+        {
+          "tag": "INPUT",
+          "text": "2〜20文字",
+          "href": null,
+          "type": "text",
+          "w": 332,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "保存",
+          "href": null,
+          "type": "submit",
+          "w": 332,
+          "h": 39
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "user-profile",
+      "device": "desktop",
+      "file": "final-user-profile-desktop.jpg",
+      "url": "http://127.0.0.1:3100/users/mock-finalist-1",
+      "text": "Gundam War Portal\nガンダムウォー非公式ポータル\nホーム\nカード検索\nデッキ構築\n公開デッキ\n大会\n検\n検証プレイヤー\n決勝\n決勝参加者1\n\n参加1大会・優勝1回・通算 3勝0敗0分\n\n公開デッキ\n色不明決勝参加者1の大会デッキ\n公開日: 2026/09/01\nスタンダード\n詳細を見る →\n大会成績\n完了済みスタンダード杯\n3勝0敗0分\n優勝\n詳細を見る →\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1187,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal\nガンダムウォー非公式ポータル",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 57
+        },
+        {
+          "tag": "A",
+          "text": "ホーム",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "カード検索",
+          "href": "/search",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "デッキ構築",
+          "href": "/deck",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "公開デッキ",
+          "href": "/decks",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会",
+          "href": "/tournaments",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検\n検証プレイヤー",
+          "href": null,
+          "type": "button",
+          "w": 175,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "色不明決勝参加者1の大会デッキ\n公開日: 2026/09/01\nスタンダード\n詳細を見る →",
+          "href": "/decks/entry:completed-entry-1",
+          "type": "",
+          "w": 998,
+          "h": 67
+        },
+        {
+          "tag": "A",
+          "text": "完了済みスタンダード杯\n3勝0敗0分\n優勝\n詳細を見る →",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 998,
+          "h": 67
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "user-profile",
+      "device": "mobile",
+      "file": "final-user-profile-mobile.jpg",
+      "url": "http://127.0.0.1:3100/users/mock-finalist-1",
+      "text": "Gundam War Portal\n決勝\n決勝参加者1\n\n参加1大会・優勝1回・通算 3勝0敗0分\n\n公開デッキ\n色不明決勝参加者1の大会デッキ\n公開日: 2026/09/01\nスタンダード\n詳細を見る →\n大会成績\n完了済みスタンダード杯\n3勝0敗0分\n優勝\n詳細を見る →\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 974,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal",
+          "href": "/",
+          "type": "",
+          "w": 142.859375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "メニューを開く",
+          "href": null,
+          "type": "button",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "tag": "A",
+          "text": "色不明決勝参加者1の大会デッキ\n公開日: 2026/09/01\nスタンダード\n詳細を見る →",
+          "href": "/decks/entry:completed-entry-1",
+          "type": "",
+          "w": 332,
+          "h": 108
+        },
+        {
+          "tag": "A",
+          "text": "完了済みスタンダード杯\n3勝0敗0分\n優勝\n詳細を見る →",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 332,
+          "h": 108
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "terms",
+      "device": "desktop",
+      "file": "final-terms-desktop.jpg",
+      "url": "http://127.0.0.1:3100/terms",
+      "text": "Gundam War Portal\nガンダムウォー非公式ポータル\nホーム\nカード検索\nデッキ構築\n公開デッキ\n大会\n検\n検証プレイヤー\n利用規約\n\nこの利用規約は、個人が非商用で運営する「Gundam War Portal」 の利用条件を定めるものです。本サイトはガンダムウォーを楽しむファンのための情報整理を目的とした、非公式ファンサイトです。\n\n利用目的\n\n利用者は、カード検索、デッキ作成、公開デッキの閲覧、大会情報の確認など、本サイトが提供する機能を個人利用の範囲で利用できます。 営利目的での無断転載、システムへの過度な負荷、他の利用者や第三者の権利を侵害する行為は禁止します。\n\nログインとアカウント情報\n\nGoogleログインを利用する場合、本サイトはメールアドレス、表示名、アバター画像を取得します。 これらの情報は、ログイン状態の維持、本人識別、保存デッキや公開デッキの管理、必要な連絡のために利用します。\n\n公開コンテンツ\n\n利用者が公開したデッキ、ニックネーム、大会成績などは、サイト上で他の利用者に表示される場合があります。 公開する内容には、第三者の個人情報や権利を侵害する情報を含めないでください。\n\nCookie・セッション・アクセス解析\n\n本サイトは、ログイン状態や表示設定の維持のためにCookie、ローカルストレージ、セッション情報を利用する場合があります。 また、サイト改善のためにアクセス解析を利用する場合があります。\n\n削除依頼\n\nアカウント情報、公開デッキ、ニックネーム、大会成績などの削除依頼窓口は準備中です。 正式な窓口を公開するまで、個別対応の方法は別途案内します。\n\n免責事項\n\n本サイトの情報は正確性や完全性を保証するものではありません。本サイトの利用により発生した損害について、 運営者は法令上認められる範囲で責任を負いません。\n\n権利表記\n\nガンダムは創通・サンライズの登録商標です。本サイトは非公式ファンサイトであり、 創通、サンライズ、その他権利者とは関係ありません。\n\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1182,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal\nガンダムウォー非公式ポータル",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 57
+        },
+        {
+          "tag": "A",
+          "text": "ホーム",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "カード検索",
+          "href": "/search",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "デッキ構築",
+          "href": "/deck",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "公開デッキ",
+          "href": "/decks",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会",
+          "href": "/tournaments",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検\n検証プレイヤー",
+          "href": null,
+          "type": "button",
+          "w": 175,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "terms",
+      "device": "mobile",
+      "file": "final-terms-mobile.jpg",
+      "url": "http://127.0.0.1:3100/terms",
+      "text": "Gundam War Portal\n利用規約\n\nこの利用規約は、個人が非商用で運営する「Gundam War Portal」 の利用条件を定めるものです。本サイトはガンダムウォーを楽しむファンのための情報整理を目的とした、非公式ファンサイトです。\n\n利用目的\n\n利用者は、カード検索、デッキ作成、公開デッキの閲覧、大会情報の確認など、本サイトが提供する機能を個人利用の範囲で利用できます。 営利目的での無断転載、システムへの過度な負荷、他の利用者や第三者の権利を侵害する行為は禁止します。\n\nログインとアカウント情報\n\nGoogleログインを利用する場合、本サイトはメールアドレス、表示名、アバター画像を取得します。 これらの情報は、ログイン状態の維持、本人識別、保存デッキや公開デッキの管理、必要な連絡のために利用します。\n\n公開コンテンツ\n\n利用者が公開したデッキ、ニックネーム、大会成績などは、サイト上で他の利用者に表示される場合があります。 公開する内容には、第三者の個人情報や権利を侵害する情報を含めないでください。\n\nCookie・セッション・アクセス解析\n\n本サイトは、ログイン状態や表示設定の維持のためにCookie、ローカルストレージ、セッション情報を利用する場合があります。 また、サイト改善のためにアクセス解析を利用する場合があります。\n\n削除依頼\n\nアカウント情報、公開デッキ、ニックネーム、大会成績などの削除依頼窓口は準備中です。 正式な窓口を公開するまで、個別対応の方法は別途案内します。\n\n免責事項\n\n本サイトの情報は正確性や完全性を保証するものではありません。本サイトの利用により発生した損害について、 運営者は法令上認められる範囲で責任を負いません。\n\n権利表記\n\nガンダムは創通・サンライズの登録商標です。本サイトは非公式ファンサイトであり、 創通、サンライズ、その他権利者とは関係ありません。\n\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 1627,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal",
+          "href": "/",
+          "type": "",
+          "w": 142.859375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "メニューを開く",
+          "href": null,
+          "type": "button",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "privacy",
+      "device": "desktop",
+      "file": "final-privacy-desktop.jpg",
+      "url": "http://127.0.0.1:3100/privacy",
+      "text": "Gundam War Portal\nガンダムウォー非公式ポータル\nホーム\nカード検索\nデッキ構築\n公開デッキ\n大会\n検\n検証プレイヤー\nプライバシーポリシー\n\nこのプライバシーポリシーは、個人が非商用で運営する「Gundam War Portal」 における情報の取り扱いを説明するものです。本サイトは非公式ファンサイトです。\n\n取得する情報\n\nGoogleログインを利用する場合、本サイトはGoogleアカウントからメールアドレス、名前、アバター画像を取得します。 また、利用状況に応じて、保存デッキ、公開デッキ、ニックネーム、大会成績などの利用者が登録または公開した情報を扱います。\n\n利用目的\n\n取得した情報は、ログイン状態の確認、本人識別、デッキ保存、公開デッキ表示、大会成績表示、不正利用の防止、 サイト運営上必要な連絡、機能改善のために利用します。\n\nCookie・セッション\n\n本サイトは、認証状態の維持、画面表示の調整、利用者設定の保存のためにCookie、ローカルストレージ、 セッション情報を利用する場合があります。\n\nアクセス解析\n\n本サイトは、利用状況の把握と改善のためにアクセス解析を利用する場合があります。 解析により得られた情報は、個人を直接特定する目的では利用しません。\n\n公開される情報\n\n利用者が公開したデッキ、ニックネーム、大会成績は、他の利用者や閲覧者に表示される場合があります。 公開範囲を理解したうえで、公開してよい内容のみ登録してください。\n\n削除依頼\n\n登録情報、公開コンテンツ、アカウントに関する削除依頼窓口は準備中です。 窓口公開後、本人確認を行ったうえで合理的な範囲で対応します。\n\n免責事項と権利表記\n\n本サイトは情報の正確性、継続性、完全性を保証しません。ガンダムは創通・サンライズの登録商標です。 本サイトは創通、サンライズ、その他権利者とは関係のない非公式ファンサイトです。\n\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1182,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal\nガンダムウォー非公式ポータル",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 57
+        },
+        {
+          "tag": "A",
+          "text": "ホーム",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "カード検索",
+          "href": "/search",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "デッキ構築",
+          "href": "/deck",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "公開デッキ",
+          "href": "/decks",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会",
+          "href": "/tournaments",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検\n検証プレイヤー",
+          "href": null,
+          "type": "button",
+          "w": 175,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "privacy",
+      "device": "mobile",
+      "file": "final-privacy-mobile.jpg",
+      "url": "http://127.0.0.1:3100/privacy",
+      "text": "Gundam War Portal\nプライバシーポリシー\n\nこのプライバシーポリシーは、個人が非商用で運営する「Gundam War Portal」 における情報の取り扱いを説明するものです。本サイトは非公式ファンサイトです。\n\n取得する情報\n\nGoogleログインを利用する場合、本サイトはGoogleアカウントからメールアドレス、名前、アバター画像を取得します。 また、利用状況に応じて、保存デッキ、公開デッキ、ニックネーム、大会成績などの利用者が登録または公開した情報を扱います。\n\n利用目的\n\n取得した情報は、ログイン状態の確認、本人識別、デッキ保存、公開デッキ表示、大会成績表示、不正利用の防止、 サイト運営上必要な連絡、機能改善のために利用します。\n\nCookie・セッション\n\n本サイトは、認証状態の維持、画面表示の調整、利用者設定の保存のためにCookie、ローカルストレージ、 セッション情報を利用する場合があります。\n\nアクセス解析\n\n本サイトは、利用状況の把握と改善のためにアクセス解析を利用する場合があります。 解析により得られた情報は、個人を直接特定する目的では利用しません。\n\n公開される情報\n\n利用者が公開したデッキ、ニックネーム、大会成績は、他の利用者や閲覧者に表示される場合があります。 公開範囲を理解したうえで、公開してよい内容のみ登録してください。\n\n削除依頼\n\n登録情報、公開コンテンツ、アカウントに関する削除依頼窓口は準備中です。 窓口公開後、本人確認を行ったうえで合理的な範囲で対応します。\n\n免責事項と権利表記\n\n本サイトは情報の正確性、継続性、完全性を保証しません。ガンダムは創通・サンライズの登録商標です。 本サイトは創通、サンライズ、その他権利者とは関係のない非公式ファンサイトです。\n\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 1598,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal",
+          "href": "/",
+          "type": "",
+          "w": 142.859375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "メニューを開く",
+          "href": null,
+          "type": "button",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "not-found",
+      "device": "desktop",
+      "file": "final-not-found-desktop.jpg",
+      "url": "http://127.0.0.1:3100/not-a-real-page",
+      "text": "Gundam War Portal\nガンダムウォー非公式ポータル\nホーム\nカード検索\nデッキ構築\n公開デッキ\n大会\n検\n検証プレイヤー\n\n404\n\nページが見つかりません\n\n指定されたページは削除されたか、URL が間違っている可能性があります。\n\nトップへ\nカード検索へ\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1199,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal\nガンダムウォー非公式ポータル",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 57
+        },
+        {
+          "tag": "A",
+          "text": "ホーム",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "カード検索",
+          "href": "/search",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "デッキ構築",
+          "href": "/deck",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "公開デッキ",
+          "href": "/decks",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会",
+          "href": "/tournaments",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検\n検証プレイヤー",
+          "href": null,
+          "type": "button",
+          "w": 175,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "トップへ",
+          "href": "/",
+          "type": "",
+          "w": 80.9375,
+          "h": 39
+        },
+        {
+          "tag": "A",
+          "text": "カード検索へ",
+          "href": "/search",
+          "type": "",
+          "w": 112.390625,
+          "h": 39
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "not-found",
+      "device": "mobile",
+      "file": "final-not-found-mobile.jpg",
+      "url": "http://127.0.0.1:3100/not-a-real-page",
+      "text": "Gundam War Portal\n\n404\n\nページが見つかりません\n\n指定されたページは削除されたか、URL が間違っている可能性があります。\n\nトップへ\nカード検索へ\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 974,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal",
+          "href": "/",
+          "type": "",
+          "w": 142.859375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "メニューを開く",
+          "href": null,
+          "type": "button",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "tag": "A",
+          "text": "トップへ",
+          "href": "/",
+          "type": "",
+          "w": 80.9375,
+          "h": 39
+        },
+        {
+          "tag": "A",
+          "text": "カード検索へ",
+          "href": "/search",
+          "type": "",
+          "w": 112.390625,
+          "h": 39
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "new-tournament",
+      "device": "desktop",
+      "file": "final-new-tournament-desktop.jpg",
+      "url": "http://127.0.0.1:3100/tournaments/new",
+      "text": "Gundam War Portal\nガンダムウォー非公式ポータル\nホーム\nカード検索\nデッキ構築\n公開デッキ\n大会\n運営メニュー\n大会を作成\n検\n検証主催者\n大会一覧へ\n\n大会管理\n\n大会を作成\n基本情報\nタイトル\n定員（人）\n説明\n大会一覧に掲載する\n\nオフにするとURL限定公開(一覧に非掲載)になり、大会一覧とホームの新着には表示されません。大会URLを知っている人だけが詳細を開き、通常どおり参加登録できます。開催方式(オンライン/会場)とは別の設定です。\n\n日時と会場\n開始日時\n受付締切\nチェックイン開始\n開催地\nオンライン大会\nセルフチェックインを許可\n進行方式\n形式\nスイス\nシングルエリミネーション\nスイス回戦数（回戦）\n未入力の場合、参加人数から初戦生成時に確定します。\n終了条件\n規定回戦数で終了\n全勝者が1人以下になったら終了\nトップカット（人）\nラウンド制限時間（分）\nデッキとレギュレーション\nデッキリスト必須\n終了後にデッキリストを公開\n途中参加を許可\nフォーマットプリセット\nスタンダード\n関西クラシック\n関西リバイバル\n関西ライジング\n関西スタンダード\n関西グロリアス\n添削杯 第9回(23弾)\n添削杯 第8回(22弾)\n添削杯 第7回(21弾)\n添削杯 第6回(20弾)\n添削杯 第5回(19弾)\n添削杯 第4回(18弾)\n添削杯 第3回(17弾)\nプリミティブ\nエンシェント\nクラシック\nリバイバル\nβスタンダード\nαスタンダード\nスタンダード(カードランド)\nその他\n詳細を編集\n作成\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1763,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal\nガンダムウォー非公式ポータル",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 57
+        },
+        {
+          "tag": "A",
+          "text": "ホーム",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "カード検索",
+          "href": "/search",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "デッキ構築",
+          "href": "/deck",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "公開デッキ",
+          "href": "/decks",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会",
+          "href": "/tournaments",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会を作成",
+          "href": "/tournaments/new",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検\n検証主催者",
+          "href": null,
+          "type": "button",
+          "w": 175,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "大会一覧へ",
+          "href": "/tournaments",
+          "type": "",
+          "w": 77.0625,
+          "h": 21
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 537,
+          "h": 46
+        },
+        {
+          "tag": "INPUT",
+          "text": "制限なし",
+          "href": null,
+          "type": "number",
+          "w": 537,
+          "h": 46
+        },
+        {
+          "tag": "TEXTAREA",
+          "text": "",
+          "href": null,
+          "type": "textarea",
+          "w": 1086,
+          "h": 94
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "datetime-local",
+          "w": 537,
+          "h": 46
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "datetime-local",
+          "w": 537,
+          "h": 46
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "datetime-local",
+          "w": 537,
+          "h": 46
+        },
+        {
+          "tag": "INPUT",
+          "text": "オンラインの場合は空で可",
+          "href": null,
+          "type": "text",
+          "w": 537,
+          "h": 46
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 36
+        },
+        {
+          "tag": "SELECT",
+          "text": "スイス\nシングルエリミネーション",
+          "href": null,
+          "type": "select-one",
+          "w": 537,
+          "h": 52.5
+        },
+        {
+          "tag": "INPUT",
+          "text": "スイス回戦数",
+          "href": null,
+          "type": "number",
+          "w": 537,
+          "h": 46
+        },
+        {
+          "tag": "SELECT",
+          "text": "規定回戦数で終了\n全勝者が1人以下になったら終了",
+          "href": null,
+          "type": "select-one",
+          "w": 537,
+          "h": 41
+        },
+        {
+          "tag": "INPUT",
+          "text": "なし",
+          "href": null,
+          "type": "number",
+          "w": 537,
+          "h": 46
+        },
+        {
+          "tag": "INPUT",
+          "text": "なし",
+          "href": null,
+          "type": "number",
+          "w": 537,
+          "h": 46
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 13,
+          "h": 36
+        },
+        {
+          "tag": "SELECT",
+          "text": "スタンダード\n関西クラシック\n関西リバイバル\n関西ライジング\n関西スタンダード\n関西グロリアス\n添削杯 第9回(23弾)\n添削杯 第8回(22弾)\n添削杯 第7回(21弾)\n添削杯 第6回(20弾)\n添削杯 第5回(19弾)\n添削杯 第4回(18弾)\n添削杯 第3回(17弾)\nプリミティブ\nエンシェント\nクラシック\nリバイバル\nβスタンダード\nαスタンダード\nスタンダード(カードランド)\nその他",
+          "href": null,
+          "type": "select-one",
+          "w": 537,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 537,
+          "h": 46
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "number",
+          "w": 537,
+          "h": 46
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "number",
+          "w": 537,
+          "h": 46
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "number",
+          "w": 537,
+          "h": 46
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "number",
+          "w": 537,
+          "h": 46
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "radio",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "radio",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "radio",
+          "w": 13,
+          "h": 13
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 900.859375,
+          "h": 46
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "href": null,
+          "type": "button",
+          "w": 151.140625,
+          "h": 36
+        },
+        {
+          "tag": "TEXTAREA",
+          "text": "カード名を1行に1件ずつ貼り付け",
+          "href": null,
+          "type": "textarea",
+          "w": 1060,
+          "h": 94
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "href": null,
+          "type": "button",
+          "w": 139.734375,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 900.859375,
+          "h": 46
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "href": null,
+          "type": "button",
+          "w": 151.140625,
+          "h": 36
+        },
+        {
+          "tag": "TEXTAREA",
+          "text": "カード名を1行に1件ずつ貼り付け",
+          "href": null,
+          "type": "textarea",
+          "w": 1060,
+          "h": 94
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "href": null,
+          "type": "button",
+          "w": 139.734375,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "作成",
+          "href": null,
+          "type": "submit",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "new-tournament",
+      "device": "mobile",
+      "file": "final-new-tournament-mobile.jpg",
+      "url": "http://127.0.0.1:3100/tournaments/new",
+      "text": "Gundam War Portal\n大会一覧へ\n\n大会管理\n\n大会を作成\n基本情報\nタイトル\n定員（人）\n説明\n大会一覧に掲載する\n\nオフにするとURL限定公開(一覧に非掲載)になり、大会一覧とホームの新着には表示されません。大会URLを知っている人だけが詳細を開き、通常どおり参加登録できます。開催方式(オンライン/会場)とは別の設定です。\n\n日時と会場\n開始日時\n受付締切\nチェックイン開始\n開催地\nオンライン大会\nセルフチェックインを許可\n進行方式\n形式\nスイス\nシングルエリミネーション\nスイス回戦数（回戦）\n未入力の場合、参加人数から初戦生成時に確定します。\n終了条件\n規定回戦数で終了\n全勝者が1人以下になったら終了\nトップカット（人）\nラウンド制限時間（分）\nデッキとレギュレーション\nデッキリスト必須\n終了後にデッキリストを公開\n途中参加を許可\nフォーマットプリセット\nスタンダード\n関西クラシック\n関西リバイバル\n関西ライジング\n関西スタンダード\n関西グロリアス\n添削杯 第9回(23弾)\n添削杯 第8回(22弾)\n添削杯 第7回(21弾)\n添削杯 第6回(20弾)\n添削杯 第5回(19弾)\n添削杯 第4回(18弾)\n添削杯 第3回(17弾)\nプリミティブ\nエンシェント\nクラシック\nリバイバル\nβスタンダード\nαスタンダード\nスタンダード(カードランド)\nその他\n詳細を編集\n作成\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 2098,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal",
+          "href": "/",
+          "type": "",
+          "w": 142.859375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "メニューを開く",
+          "href": null,
+          "type": "button",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "tag": "A",
+          "text": "大会一覧へ",
+          "href": "/tournaments",
+          "type": "",
+          "w": 77.0625,
+          "h": 21
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "制限なし",
+          "href": null,
+          "type": "number",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "TEXTAREA",
+          "text": "",
+          "href": null,
+          "type": "textarea",
+          "w": 332,
+          "h": 84
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "datetime-local",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "datetime-local",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "datetime-local",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "オンラインの場合は空で可",
+          "href": null,
+          "type": "text",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 36
+        },
+        {
+          "tag": "SELECT",
+          "text": "スイス\nシングルエリミネーション",
+          "href": null,
+          "type": "select-one",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "スイス回戦数",
+          "href": null,
+          "type": "number",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "SELECT",
+          "text": "規定回戦数で終了\n全勝者が1人以下になったら終了",
+          "href": null,
+          "type": "select-one",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "なし",
+          "href": null,
+          "type": "number",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "なし",
+          "href": null,
+          "type": "number",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "checkbox",
+          "w": 16,
+          "h": 36
+        },
+        {
+          "tag": "SELECT",
+          "text": "スタンダード\n関西クラシック\n関西リバイバル\n関西ライジング\n関西スタンダード\n関西グロリアス\n添削杯 第9回(23弾)\n添削杯 第8回(22弾)\n添削杯 第7回(21弾)\n添削杯 第6回(20弾)\n添削杯 第5回(19弾)\n添削杯 第4回(18弾)\n添削杯 第3回(17弾)\nプリミティブ\nエンシェント\nクラシック\nリバイバル\nβスタンダード\nαスタンダード\nスタンダード(カードランド)\nその他",
+          "href": null,
+          "type": "select-one",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "number",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "number",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "number",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "number",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "radio",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "radio",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "radio",
+          "w": 16,
+          "h": 16
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 306,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "href": null,
+          "type": "button",
+          "w": 151.140625,
+          "h": 36
+        },
+        {
+          "tag": "TEXTAREA",
+          "text": "カード名を1行に1件ずつ貼り付け",
+          "href": null,
+          "type": "textarea",
+          "w": 306,
+          "h": 84
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "href": null,
+          "type": "button",
+          "w": 139.734375,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "text",
+          "w": 306,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "href": null,
+          "type": "button",
+          "w": 151.140625,
+          "h": 36
+        },
+        {
+          "tag": "TEXTAREA",
+          "text": "カード名を1行に1件ずつ貼り付け",
+          "href": null,
+          "type": "textarea",
+          "w": 306,
+          "h": 84
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "href": null,
+          "type": "button",
+          "w": 139.734375,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "作成",
+          "href": null,
+          "type": "submit",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "manage",
+      "device": "desktop",
+      "file": "final-manage-desktop.jpg",
+      "url": "http://127.0.0.1:3100/tournaments/mock-tournament-1/manage",
+      "text": "Gundam War Portal\nガンダムウォー非公式ポータル\nホーム\nカード検索\nデッキ構築\n公開デッキ\n大会\n運営メニュー\n大会を作成\n検\n検証主催者\n大会一覧へ\n\n大会管理\n\nローカルスイス杯\n進行中\nURLコピー\n掲示用に開く\n次にやること:\n次のラウンドを生成してください。\n受付開始\n進行開始\n完了\n中止\nラウンド運営\n参加者\n大会情報\n順位表\nラウンド運営\n次ラウンド生成\n\n未チェックインが1人います。チェックインせずに次ラウンドを生成すると、その1人はペアリング対象から除外されます。\n\n大会情報タブでラウンド制限時間を設定すると、残り時間タイマーを表示できます。\n\n第1回戦\n第1回戦 / 全3回戦\n完了\n卓\tプレイヤー1\tプレイヤー2\t結果\t入力\n1\tプレイヤー1\tプレイヤー2\t2-0\t\n完了\n\n2\tプレイヤー3\tBye\t不戦勝\t\n自動\nペアリング編集\n結果を修正\nアナウンス\n掲示する\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1167,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal\nガンダムウォー非公式ポータル",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 57
+        },
+        {
+          "tag": "A",
+          "text": "ホーム",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "カード検索",
+          "href": "/search",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "デッキ構築",
+          "href": "/deck",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "公開デッキ",
+          "href": "/decks",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会",
+          "href": "/tournaments",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会を作成",
+          "href": "/tournaments/new",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検\n検証主催者",
+          "href": null,
+          "type": "button",
+          "w": 175,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "大会一覧へ",
+          "href": "/tournaments",
+          "type": "",
+          "w": 77.0625,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "URLコピー",
+          "href": null,
+          "type": "button",
+          "w": 80.828125,
+          "h": 37
+        },
+        {
+          "tag": "A",
+          "text": "掲示用に開く",
+          "href": "/tournaments/mock-tournament-1/display",
+          "type": "",
+          "w": 112.625,
+          "h": 54
+        },
+        {
+          "tag": "BUTTON",
+          "text": "受付開始",
+          "href": null,
+          "type": "button",
+          "w": 82,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "進行開始",
+          "href": null,
+          "type": "button",
+          "w": 82,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "完了",
+          "href": null,
+          "type": "button",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "中止",
+          "href": null,
+          "type": "button",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "ラウンド運営",
+          "href": null,
+          "type": "button",
+          "w": 95.40625,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "参加者",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "大会情報",
+          "href": null,
+          "type": "button",
+          "w": 82,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "順位表",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "次ラウンド生成",
+          "href": null,
+          "type": "button",
+          "w": 109.40625,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "第1回戦",
+          "href": null,
+          "type": "button",
+          "w": 73.640625,
+          "h": 37
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "number",
+          "w": 171,
+          "h": 46
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 485,
+          "h": 41
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 485,
+          "h": 41
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "number",
+          "w": 171,
+          "h": 46
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 485,
+          "h": 41
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 485,
+          "h": 41
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "href": null,
+          "type": "button",
+          "w": 120.046875,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "href": null,
+          "type": "button",
+          "w": 127.171875,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "結果を修正",
+          "href": null,
+          "type": "button",
+          "w": 92.828125,
+          "h": 37
+        },
+        {
+          "tag": "TEXTAREA",
+          "text": "",
+          "href": null,
+          "type": "textarea",
+          "w": 1086,
+          "h": 48
+        },
+        {
+          "tag": "BUTTON",
+          "text": "掲示する",
+          "href": null,
+          "type": "button",
+          "w": 1086,
+          "h": 37
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "manage",
+      "device": "mobile",
+      "file": "final-manage-mobile.jpg",
+      "url": "http://127.0.0.1:3100/tournaments/mock-tournament-1/manage",
+      "text": "Gundam War Portal\n大会一覧へ\n\n大会管理\n\nローカルスイス杯\n進行中\nURLコピー\n掲示用に開く\n次にやること:\n次のラウンドを生成してください。\n受付開始\n進行開始\n完了\n中止\nラウンド運営\n参加者\n大会情報\n順位表\nラウンド運営\n次ラウンド生成\n\n未チェックインが1人います。チェックインせずに次ラウンドを生成すると、その1人はペアリング対象から除外されます。\n\n大会情報タブでラウンド制限時間を設定すると、残り時間タイマーを表示できます。\n\n第1回戦\n第1回戦 / 全3回戦\n完了\n1\nプレイヤー1\nプレイヤー2\n2-0\n完了\n2\nプレイヤー3\nBye\n不戦勝\n自動\nペアリング編集\n結果を修正\nアナウンス\n掲示する\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 1615,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal",
+          "href": "/",
+          "type": "",
+          "w": 142.859375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "メニューを開く",
+          "href": null,
+          "type": "button",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "tag": "A",
+          "text": "大会一覧へ",
+          "href": "/tournaments",
+          "type": "",
+          "w": 77.0625,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "URLコピー",
+          "href": null,
+          "type": "button",
+          "w": 80.828125,
+          "h": 37
+        },
+        {
+          "tag": "A",
+          "text": "掲示用に開く",
+          "href": "/tournaments/mock-tournament-1/display",
+          "type": "",
+          "w": 112.625,
+          "h": 39
+        },
+        {
+          "tag": "BUTTON",
+          "text": "受付開始",
+          "href": null,
+          "type": "button",
+          "w": 82,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "進行開始",
+          "href": null,
+          "type": "button",
+          "w": 82,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "完了",
+          "href": null,
+          "type": "button",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "中止",
+          "href": null,
+          "type": "button",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "ラウンド運営",
+          "href": null,
+          "type": "button",
+          "w": 95.40625,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "参加者",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "大会情報",
+          "href": null,
+          "type": "button",
+          "w": 82,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "順位表",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "次ラウンド生成",
+          "href": null,
+          "type": "button",
+          "w": 109.40625,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "第1回戦",
+          "href": null,
+          "type": "button",
+          "w": 73.640625,
+          "h": 37
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "number",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "INPUT",
+          "text": "",
+          "href": null,
+          "type": "number",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "SELECT",
+          "text": "",
+          "href": null,
+          "type": "select-one",
+          "w": 332,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "href": null,
+          "type": "button",
+          "w": 120.046875,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "href": null,
+          "type": "button",
+          "w": 127.171875,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "結果を修正",
+          "href": null,
+          "type": "button",
+          "w": 92.828125,
+          "h": 37
+        },
+        {
+          "tag": "TEXTAREA",
+          "text": "",
+          "href": null,
+          "type": "textarea",
+          "w": 332,
+          "h": 48
+        },
+        {
+          "tag": "BUTTON",
+          "text": "掲示する",
+          "href": null,
+          "type": "button",
+          "w": 332,
+          "h": 37
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "admin",
+      "device": "desktop",
+      "file": "final-admin-desktop.jpg",
+      "url": "http://127.0.0.1:3100/admin/users",
+      "text": "Gundam War Portal\nガンダムウォー非公式ポータル\nホーム\nカード検索\nデッキ構築\n公開デッキ\n大会\n運営メニュー\n大会を作成\n権限管理\n検\n検証管理者\n権限管理\nユーザーを検索してロールを変更します。\nユーザー検索\n検索\nローカル確認ユーザー\nメール: local-demo@gundamwar.test\nニックネーム: 未設定\n権限\n一般ユーザー\n主催者(大会を作成・運営できる)\n管理者(権限管理ができる)\nニックネームをリセット\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1167,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal\nガンダムウォー非公式ポータル",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 57
+        },
+        {
+          "tag": "A",
+          "text": "ホーム",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "カード検索",
+          "href": "/search",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "デッキ構築",
+          "href": "/deck",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "公開デッキ",
+          "href": "/decks",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会",
+          "href": "/tournaments",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会を作成",
+          "href": "/tournaments/new",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "権限管理",
+          "href": "/admin/users",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検\n検証管理者",
+          "href": null,
+          "type": "button",
+          "w": 175,
+          "h": 40
+        },
+        {
+          "tag": "INPUT",
+          "text": "名前・メール・ID・権限で検索",
+          "href": null,
+          "type": "text",
+          "w": 1090,
+          "h": 44
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検索",
+          "href": null,
+          "type": "submit",
+          "w": 66,
+          "h": 39
+        },
+        {
+          "tag": "SELECT",
+          "text": "一般ユーザー\n主催者(大会を作成・運営できる)\n管理者(権限管理ができる)",
+          "href": null,
+          "type": "select-one",
+          "w": 445,
+          "h": 44
+        },
+        {
+          "tag": "BUTTON",
+          "text": "ニックネームをリセット",
+          "href": null,
+          "type": "button",
+          "w": 162.5625,
+          "h": 44
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "admin",
+      "device": "mobile",
+      "file": "final-admin-mobile.jpg",
+      "url": "http://127.0.0.1:3100/admin/users",
+      "text": "Gundam War Portal\n権限管理\nユーザーを検索してロールを変更します。\nユーザー検索\n検索\nローカル確認ユーザー\nメール: local-demo@gundamwar.test\nニックネーム: 未設定\n権限\n一般ユーザー\n主催者(大会を作成・運営できる)\n管理者(権限管理ができる)\nニックネームをリセット\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 974,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal",
+          "href": "/",
+          "type": "",
+          "w": 142.859375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "メニューを開く",
+          "href": null,
+          "type": "button",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "tag": "INPUT",
+          "text": "名前・メール・ID・権限で検索",
+          "href": null,
+          "type": "text",
+          "w": 374,
+          "h": 44
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検索",
+          "href": null,
+          "type": "submit",
+          "w": 374,
+          "h": 39
+        },
+        {
+          "tag": "SELECT",
+          "text": "一般ユーザー\n主催者(大会を作成・運営できる)\n管理者(権限管理ができる)",
+          "href": null,
+          "type": "select-one",
+          "w": 348,
+          "h": 44
+        },
+        {
+          "tag": "BUTTON",
+          "text": "ニックネームをリセット",
+          "href": null,
+          "type": "button",
+          "w": 348,
+          "h": 44
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

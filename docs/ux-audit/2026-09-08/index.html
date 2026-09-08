@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>全ページ UX 検証 — Gundam War Portal</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f6f3;color:#26302a;font:16px/1.7 system-ui,sans-serif}header,main{max-width:1320px;margin:auto;padding:24px}header{border-bottom:1px solid #c5cec5}h1{font-size:28px;margin:0}h2{font-size:20px;margin:0 0 8px}p{margin:8px 0}a{color:#2e463a}nav{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}button{padding:10px 18px;border:1px solid #3f5c4b;border-radius:8px;background:white;color:#26302a;font:inherit;cursor:pointer}button[aria-pressed=true]{background:#3f5c4b;color:white}button:focus-visible,a:focus-visible{outline:3px solid #c23a5e;outline-offset:3px}.note{color:#67716a;font-size:14px}.page{padding:24px 0;border-bottom:1px solid #c5cec5}.compare{display:grid;grid-template-columns:1fr 1fr;gap:20px}figure{margin:0;background:white;border:1px solid #dfe5dd;border-radius:8px;padding:12px}figcaption{font-weight:700;margin-bottom:10px}.shot{display:block;max-width:100%;height:auto;max-height:650px;margin:auto;object-fit:contain;object-position:top}.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}.flow img{max-height:600px}summary{cursor:pointer;padding:16px 0;font-weight:700}footer{padding:32px 24px;text-align:center;color:#67716a}@media(max-width:600px){header,main{padding:16px}.compare{gap:8px}figure{padding:6px}h1{font-size:24px}}
+</style>
+<header>
+<p class="note">2026年9月8日 / 実画面・操作検証</p>
+<h1>全ページのレイアウトと使いやすさ</h1>
+<p>一般ユーザーとして検索・デッキ保存・大会参加を検証。主催者・管理者ページは別の検証ロールで確認しました。</p>
+<p class="note">実装済み画面のスクリーンショットです。デザインの生成画像ではありません。画像を選ぶと原寸表示できます。</p>
+<p><a href="README.md">検証レポートを読む</a></p>
+<nav aria-label="表示サイズ"><button type="button" data-device="mobile" aria-pressed="true">スマートフォン 390px</button><button type="button" data-device="desktop" aria-pressed="false">PC 1440px</button></nav>
+</header>
+<main>
+<div id="pages"></div>
+<section class="page"><h2>実操作の確認</h2><p class="note">カードは実検索APIの応答。認証・保存・大会参加はローカルの検証データです。</p><div class="flow" id="flow"></div></section>
+</main>
+<footer>本番への書き込み・公開・デプロイは行っていません。Google本番ログイン、実端末、スクリーンリーダーでの検証は別途必要です。</footer>
+<script>
+const pages=[
+ ['home','01 ホーム','検索入口を維持。「一覧へ」を見出し横に整理し、メニューを44pxに拡大。'],
+ ['search','02 カード検索','入力欄25px→44px。カードタイプは2列、ラベルは左揃え。検索条件の復元も確認。'],
+ ['builder','03 デッキ構築','実カードの検索・追加・保存・再読み込み、基本G追加を確認。'],
+ ['public-decks','04 公開デッキ一覧','ページ見出しを明確化。プレイヤー絞り込みと結果への復帰を確認。'],
+ ['public-detail','05 公開デッキ詳細','見出しを拡大。コピーで50枚のデッキを構築画面へ取り込めることを確認。'],
+ ['tournaments','06 大会一覧','開催状態の絞り込みと詳細への入口を確認。'],
+ ['registration','07 受付中の大会','未完成デッキを残したまま、任意大会で「デッキなし参加」が可能に。'],
+ ['in-progress','08 進行中の大会','概要・参加状況・対戦情報の画面構成を確認。'],
+ ['completed','09 完了した大会','参加者・ペアリング・リザルト・順位表を確認。順位カードの勝敗を横並びに整理。'],
+ ['display','10 掲示用表示','サイドバーのない掲示用画面。PC・スマホで表示を確認。'],
+ ['profile','11 マイページ','登録と大会参加の反映を確認。任意提出を必須と誤解させない案内に整理。'],
+ ['user-profile','12 公開プロフィール','戦績・公開デッキ・大会詳細へのリンクを確認。'],
+ ['terms','13 利用規約','見出しと本文の読みやすさを確認。法的内容の妥当性は監査対象外。'],
+ ['privacy','14 プライバシー','読みやすさとログイン前のアクセスを確認。削除依頼窓口は運営者の確定が必要。'],
+ ['not-found','15 見つからないページ','トップ・カード検索への復帰導線を確認。'],
+ ['new-tournament','16 大会作成','主催者ロールでフォーム構成を確認。実大会は作成していません。'],
+ ['manage','17 大会運営','主催者ロールで管理画面を確認。順位表の改善は運営側にも適用。'],
+ ['admin','18 権限管理','狭い画像列への誤配置を解消。PCは比較しやすい行、スマホは全幅カードに。']
+];
+function render(device){document.querySelector('#pages').innerHTML=pages.map(([key,title,note])=>`<section class="page"><h2>${title}</h2><p>${note}</p><div class="compare">${[['before','改善前'],['final','改善後']].map(([phase,label])=>`<figure><figcaption>${label}</figcaption><a href="${phase}-${key}-${device}.jpg"><img class="shot" loading="lazy" src="${phase}-${key}-${device}.jpg" alt="${title} ${label} ${device}"></a></figure>`).join('')}</div></section>`).join('');document.querySelectorAll('[data-device]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.device===device)))}
+document.querySelectorAll('[data-device]').forEach(b=>b.addEventListener('click',()=>render(b.dataset.device)));
+const flows=[['features-02-builder-search-results-viewport.jpg','実カード検索'],['features-03-card-added-viewport.jpg','メインデッキに追加'],['features-05-public-deck-filtered-viewport.jpg','公開デッキの絞り込み'],['features-08-completed-順位表.jpg','整理した順位カード'],['journey-final-journey-16-deck-source.jpg','デッキなし参加を選択'],['journey-final-journey-13-registration-complete.jpg','参加完了'],['journey-final-journey-15-profile-entered.jpg','マイページに反映']];
+document.querySelector('#flow').innerHTML=flows.map(([src,label])=>`<figure><figcaption>${label}</figcaption><a href="${src}"><img class="shot" loading="lazy" src="${src}" alt="${label}"></a></figure>`).join('');render('mobile');
+</script>
+</html>

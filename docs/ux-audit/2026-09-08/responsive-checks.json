@@ -1,0 +1,206 @@
+[
+  {
+    "route": "/",
+    "width": 320,
+    "scroll": 320,
+    "menuWidth": 44
+  },
+  {
+    "route": "/search",
+    "width": 320,
+    "scroll": 320,
+    "heading": "カード検索",
+    "inputHeight": 44,
+    "menuWidth": 44
+  },
+  {
+    "route": "/deck",
+    "width": 320,
+    "scroll": 320,
+    "menuWidth": 44
+  },
+  {
+    "route": "/decks",
+    "width": 320,
+    "scroll": 320,
+    "heading": "公開デッキ",
+    "menuWidth": 44
+  },
+  {
+    "route": "/tournaments/mock-tournament-3",
+    "width": 320,
+    "scroll": 320,
+    "heading": "完了済みスタンダード杯",
+    "menuWidth": 44,
+    "standingCardHeight": 161
+  },
+  {
+    "route": "/admin/users",
+    "width": 320,
+    "scroll": 320,
+    "heading": "権限管理",
+    "menuWidth": 44
+  },
+  {
+    "route": "/",
+    "width": 375,
+    "scroll": 375,
+    "menuWidth": 44
+  },
+  {
+    "route": "/search",
+    "width": 375,
+    "scroll": 375,
+    "heading": "カード検索",
+    "inputHeight": 44,
+    "menuWidth": 44
+  },
+  {
+    "route": "/deck",
+    "width": 375,
+    "scroll": 375,
+    "menuWidth": 44
+  },
+  {
+    "route": "/decks",
+    "width": 375,
+    "scroll": 375,
+    "heading": "公開デッキ",
+    "menuWidth": 44
+  },
+  {
+    "route": "/tournaments/mock-tournament-3",
+    "width": 375,
+    "scroll": 375,
+    "heading": "完了済みスタンダード杯",
+    "menuWidth": 44,
+    "standingCardHeight": 161
+  },
+  {
+    "route": "/admin/users",
+    "width": 375,
+    "scroll": 375,
+    "heading": "権限管理",
+    "menuWidth": 44
+  },
+  {
+    "route": "/",
+    "width": 768,
+    "scroll": 768,
+    "menuWidth": 44
+  },
+  {
+    "route": "/search",
+    "width": 768,
+    "scroll": 768,
+    "heading": "カード検索",
+    "inputHeight": 44,
+    "menuWidth": 44
+  },
+  {
+    "route": "/deck",
+    "width": 768,
+    "scroll": 768,
+    "menuWidth": 44
+  },
+  {
+    "route": "/decks",
+    "width": 768,
+    "scroll": 768,
+    "heading": "公開デッキ",
+    "menuWidth": 44
+  },
+  {
+    "route": "/tournaments/mock-tournament-3",
+    "width": 768,
+    "scroll": 768,
+    "heading": "完了済みスタンダード杯",
+    "menuWidth": 44,
+    "standingCardHeight": 38
+  },
+  {
+    "route": "/admin/users",
+    "width": 768,
+    "scroll": 768,
+    "heading": "権限管理",
+    "menuWidth": 44
+  },
+  {
+    "route": "/",
+    "width": 1100,
+    "scroll": 1100,
+    "menuWidth": 44
+  },
+  {
+    "route": "/search",
+    "width": 1100,
+    "scroll": 1100,
+    "heading": "カード検索",
+    "inputHeight": 44,
+    "menuWidth": 44
+  },
+  {
+    "route": "/deck",
+    "width": 1100,
+    "scroll": 1100,
+    "menuWidth": 44
+  },
+  {
+    "route": "/decks",
+    "width": 1100,
+    "scroll": 1100,
+    "heading": "公開デッキ",
+    "menuWidth": 44
+  },
+  {
+    "route": "/tournaments/mock-tournament-3",
+    "width": 1100,
+    "scroll": 1100,
+    "heading": "完了済みスタンダード杯",
+    "menuWidth": 44,
+    "standingCardHeight": 38
+  },
+  {
+    "route": "/admin/users",
+    "width": 1100,
+    "scroll": 1100,
+    "heading": "権限管理",
+    "menuWidth": 44
+  },
+  {
+    "route": "/",
+    "width": 1280,
+    "scroll": 1280
+  },
+  {
+    "route": "/search",
+    "width": 1280,
+    "scroll": 1280,
+    "heading": "カード検索",
+    "inputHeight": 25
+  },
+  {
+    "route": "/deck",
+    "width": 1280,
+    "scroll": 1280
+  },
+  {
+    "route": "/decks",
+    "width": 1280,
+    "scroll": 1280,
+    "heading": "公開デッキ"
+  },
+  {
+    "route": "/tournaments/mock-tournament-3",
+    "width": 1280,
+    "scroll": 1280,
+    "heading": "完了済みスタンダード杯",
+    "standingCardHeight": 38
+  },
+  {
+    "route": "/admin/users",
+    "width": 1280,
+    "scroll": 1280,
+    "heading": "権限管理"
+  }
+]
