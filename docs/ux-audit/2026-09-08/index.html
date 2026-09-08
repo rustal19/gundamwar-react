@@ -14,9 +14,11 @@
 <p class="note">追加修正：PC「01 ホーム」のボタンサイズと、スマホ「06 大会一覧」の日付サイズを統一。該当する改善後画像を更新しています。</p>
 <p class="note">9月9日追記：「02 カード検索」の白い見出し帯を周囲の薄緑に揃え、最下部の二重罫線を1本に整理。PC・スマホの画像を更新しました。</p>
 <p><a href="README.md">検証レポートを読む</a></p>
+<p class="note">9月9日追記：デッキ構築は保存前からフォーマットを選択可能に。禁止・制限をカード名で表示し、確認欄を折りたたんでも選択値と違反件数が残ります。</p>
 <nav aria-label="表示サイズ"><button type="button" data-device="mobile" aria-pressed="true">スマートフォン 390px</button><button type="button" data-device="desktop" aria-pressed="false">PC 1440px</button></nav>
 </header>
 <main>
+<section class="page"><h2>今回の調整：保存前のフォーマット・禁止制限</h2><p>展開時は登録ルールと現在の違反を確認。折りたたむとカード編集のスペースを確保できます。以下は実カードを使ったローカル検証画面のデッキ側を拡大しています。</p><div class="compare" id="format-flow"></div></section>
 <div id="pages"></div>
 <section class="page"><h2>実操作の確認</h2><p class="note">カードは実検索APIの応答。認証・保存・大会参加はローカルの検証データです。</p><div class="flow" id="flow"></div></section>
 </main>
@@ -25,7 +27,7 @@
 const pages=[
  ['home','01 ホーム','PCの「一覧へ・詳細・観戦・検索」を72×40px、文字14pxに統一。スマホは見出し横の一覧リンクを維持。'],
  ['search','02 カード検索','見出し背景を薄緑に統一し、下部の二重罫線を1本に。スマホ入力欄44px・2列配置・追従する検索ボタンは維持。'],
- ['builder','03 デッキ構築','実カードの検索・追加・保存・再読み込み、基本G追加を確認。'],
+ ['builder','03 デッキ構築','保存前のフォーマット選択と禁止・制限の確認欄を追加。折りたたみ、検索条件との同期、枚数変更による違反更新、保存・再読み込みを確認。'],
  ['public-decks','04 公開デッキ一覧','ページ見出しを明確化。プレイヤー絞り込みと結果への復帰を確認。'],
  ['public-detail','05 公開デッキ詳細','見出しを拡大。コピーで50枚のデッキを構築画面へ取り込めることを確認。'],
  ['tournaments','06 大会一覧','スマホの月・日・曜日を14pxに揃え、日だけ大きくなる表示を修正。PCの縦積み日付は維持。'],
@@ -45,6 +47,8 @@ const pages=[
 function render(device){document.querySelector('#pages').innerHTML=pages.map(([key,title,note])=>`<section class="page"><h2>${title}</h2><p>${note}</p><div class="compare">${[['before','改善前'],['final','改善後']].map(([phase,label])=>`<figure><figcaption>${label}</figcaption><a href="${phase}-${key}-${device}.jpg"><img class="shot" loading="lazy" src="${phase}-${key}-${device}.jpg" alt="${title} ${label} ${device}"></a></figure>`).join('')}</div></section>`).join('');document.querySelectorAll('[data-device]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.device===device)))}
 document.querySelectorAll('[data-device]').forEach(b=>b.addEventListener('click',()=>render(b.dataset.device)));
 const flows=[['features-02-builder-search-results-viewport.jpg','実カード検索'],['features-03-card-added-viewport.jpg','メインデッキに追加'],['features-05-public-deck-filtered-viewport.jpg','公開デッキの絞り込み'],['features-08-completed-順位表.jpg','整理した順位カード'],['journey-final-journey-16-deck-source.jpg','デッキなし参加を選択'],['journey-final-journey-13-registration-complete.jpg','参加完了'],['journey-final-journey-15-profile-entered.jpg','マイページに反映']];
+function renderFormatShots(device){const width=device==='mobile'?390:1440;document.querySelector('#format-flow').innerHTML=[['02-rules-open','展開：禁止・制限と違反を確認'],['03-collapsed','折りたたみ：選択値と違反件数を保持']].map(([stage,label])=>{const src='format-'+width+'-draft-with-rules-'+stage+'-deck.jpg';return '<figure><figcaption>'+label+'</figcaption><a href="'+src+'"><img class="shot" loading="lazy" src="'+src+'" alt="'+label+' '+device+'"></a></figure>'}).join('')}
+document.querySelectorAll('[data-device]').forEach(b=>b.addEventListener('click',()=>renderFormatShots(b.dataset.device)));renderFormatShots('mobile');
 document.querySelector('#flow').innerHTML=flows.map(([src,label])=>`<figure><figcaption>${label}</figcaption><a href="${src}"><img class="shot" loading="lazy" src="${src}" alt="${label}"></a></figure>`).join('');render('mobile');
 </script>
 </html>

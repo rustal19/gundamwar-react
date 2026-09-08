@@ -1,0 +1,56 @@
+[
+  {
+    "width": 320,
+    "toggleHeight": 59,
+    "selectHeight": 44,
+    "selectFontSize": "16px",
+    "toggleFitsPanel": true,
+    "selectFitsPanel": true,
+    "pageOverflow": false
+  },
+  {
+    "width": 390,
+    "toggleHeight": 59,
+    "selectHeight": 44,
+    "selectFontSize": "16px",
+    "toggleFitsPanel": true,
+    "selectFitsPanel": true,
+    "pageOverflow": false
+  },
+  {
+    "width": 768,
+    "toggleHeight": 44,
+    "selectHeight": 44,
+    "selectFontSize": "16px",
+    "toggleFitsPanel": true,
+    "selectFitsPanel": true,
+    "pageOverflow": false
+  },
+  {
+    "width": 1100,
+    "toggleHeight": 44,
+    "selectHeight": 44,
+    "selectFontSize": "16px",
+    "toggleFitsPanel": true,
+    "selectFitsPanel": true,
+    "pageOverflow": false
+  },
+  {
+    "width": 1101,
+    "toggleHeight": 37.840003967285156,
+    "selectHeight": 37.84001159667969,
+    "selectFontSize": "12px",
+    "toggleFitsPanel": true,
+    "selectFitsPanel": true,
+    "pageOverflow": false
+  },
+  {
+    "width": 1440,
+    "toggleHeight": 42.68000030517578,
+    "selectHeight": 42.68000793457031,
+    "selectFontSize": "12px",
+    "toggleFitsPanel": true,
+    "selectFitsPanel": true,
+    "pageOverflow": false
+  }
+]
