@@ -1491,6 +1491,17 @@
     padding: 0 0 var(--gw-space-xs);
   }
 
+  /* 横並びの日付では、月・日・曜日を同じ文字サイズと基準線で読む。 */
+  .tournament-page .tournament-list .tournament-card-date {
+    align-items: baseline;
+    font-size: var(--gw-font-size-sm);
+    line-height: 1.5;
+  }
+
+  .tournament-page .tournament-list .tournament-card-date strong {
+    font-size: inherit;
+  }
+
   .tournament-card-action {
     width: 100%;
   }

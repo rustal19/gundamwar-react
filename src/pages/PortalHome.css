@@ -458,6 +458,23 @@
   padding: var(--gw-space-2) var(--gw-space-3);
 }
 
+/* PCの入口ボタンは共通の実寸に揃え、長い案内文だけ横へ広げる。 */
+.portal-home:not(.compact) .portal-more-link,
+.portal-home:not(.compact) .portal-card-search button,
+.portal-home:not(.compact) .tournament-card-action,
+.portal-home:not(.compact) .portal-featured-tournament-list .tournament-card-action {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  min-height: 40px;
+  padding: var(--gw-space-2) var(--gw-space-3);
+  font-size: var(--gw-font-size-sm);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
 .portal-deck-list {
   border: 1px solid var(--gw-border);
   border-radius: var(--gw-radius);

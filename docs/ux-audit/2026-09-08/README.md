@@ -86,3 +86,10 @@ Product Design の監査手順に沿い、現在の画面を撮影・目視確�
 - `final-pages.json` / `responsive-checks.json` / `features-checks.json`：表示寸法・操作確認結果。
 
 アプリ変更はT84〜T88とスマホCSSの改善として取り込み済みです。
+
+## 追加調整：スマホ06の日付・PC01のボタン
+
+- スマホ大会一覧：月・日・曜日を14pxへ統一し、基準線を揃えました。PCの縦積み日付のサイズは維持しています。
+- PCホーム：「一覧へ」「詳細」「観戦」「検索」は文字14px、高さ40px、最小幅72pxへ統一。文字が長い参加者向けボタンは横に広がるため切れません。スマホのボタン寸法は変更していません。
+- 390／760／761／1100／1101／1440pxの2画面、計12条件でサイズと横はみ出しを検証。42 suites／506 testsも全件成功。
+- 比較ページの `final-home-desktop.jpg` と `final-tournaments-mobile.jpg` を更新しました。`final-pages.json` は初回監査の記録を保持しており、この追加修正後の実寸は `size-after-checks.json` を参照してください。
