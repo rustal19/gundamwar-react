@@ -134,7 +134,7 @@ function DeckCountPreview({ items }) {
   );
 }
 
-function DecklistStatusNotice({ entry, canUpdateDeck }) {
+function DecklistStatusNotice({ entry, canUpdateDeck, decklistRequired }) {
   if (!entry?.decklistState) return null;
 
   const state = entry.decklistState;
@@ -144,6 +144,10 @@ function DecklistStatusNotice({ entry, canUpdateDeck }) {
   if (state === "none") {
     message = isUnsubmittedAndLocked
       ? "チェックイン済みのためデッキリストは変更できません(修正が必要な場合は主催者へ)"
+      : decklistRequired === false
+        ? canUpdateDeck
+          ? "デッキリストは未提出です。提出は任意です。提出する場合は完成したデッキを選択できます。"
+          : "デッキリストは未提出です。提出は任意です。現在は提出できません。"
       : canUpdateDeck
         ? "デッキリストが未提出です。デッキを選んで提出してください。"
         : "デッキリストは未提出です。現在は提出できません。";
@@ -301,6 +305,16 @@ function EntryForm({
   const selectedSavedDeck = (savedDecks || []).find((deck) => deck.id === selectedDeckId);
   const hasSubmittedItems = Array.isArray(submittedItems) && submittedItems.length > 0;
   const canSelectNoDeck = !myEntry && !tournament?.decklistRequired;
+  const hasSelectedSavedDeck = Boolean(selectedSavedDeck);
+  const hasNoDeckSelected =
+    deckSource === "none" ||
+    (deckSource === "current" && !hasSubmittedItems) ||
+    (deckSource === "saved" && !hasSelectedSavedDeck);
+  const isOptionalUnsubmittedWithoutDeck = Boolean(
+    myEntry?.decklistState === "none" &&
+      tournament?.decklistRequired === false &&
+      hasNoDeckSelected
+  );
   const canEnterWithoutDeck =
     canSelectNoDeck &&
     (deckSource === "none" || (deckSource === "current" && !hasSubmittedItems));
@@ -438,10 +452,15 @@ function EntryForm({
           </label>
         )
       ) : null}
-      {!hasSubmittedItems && myEntry ? (
+      {!hasSubmittedItems && myEntry && !isOptionalUnsubmittedWithoutDeck ? (
         <div className="tournament-validation-alert">
           <strong>提出するデッキがありません。完成したデッキを選択してください。</strong>
         </div>
+      ) : null}
+      {isOptionalUnsubmittedWithoutDeck ? (
+        <p className="tournament-muted">
+          デッキリストの提出は任意です。提出する場合は完成したデッキを選択してください。
+        </p>
       ) : null}
       {!hasSubmittedItems && !myEntry && tournament?.decklistRequired ? (
         <div className="tournament-validation-alert">
@@ -451,7 +470,7 @@ function EntryForm({
       {canEnterWithoutDeck ? (
         <p className="tournament-muted">デッキリストを添付せずにエントリーします。</p>
       ) : null}
-      {deckViolations.length > 0 && !canEnterWithoutDeck ? (
+      {deckViolations.length > 0 && !canEnterWithoutDeck && !isOptionalUnsubmittedWithoutDeck ? (
         <div className="tournament-validation-alert">
           <strong>デッキリストを提出できません。</strong>
           <ul>
@@ -686,7 +705,11 @@ export default function TournamentMyStatus({
             承認されると
             {getRoundLabelForNumber(myEntry.joinedAtRound || 1, rounds, tournament)}まで不戦敗として追加されます。
           </p>
-          <DecklistStatusNotice entry={myEntry} canUpdateDeck={canEditDecklist} />
+          <DecklistStatusNotice
+            entry={myEntry}
+            canUpdateDeck={canEditDecklist}
+            decklistRequired={tournament?.decklistRequired}
+          />
           <MatchHistory
             rounds={rounds}
             entries={entries}
@@ -713,7 +736,11 @@ export default function TournamentMyStatus({
           ) : (
             <p>チェックイン前は繰り上げ対象になりません。</p>
           )}
-          <DecklistStatusNotice entry={myEntry} canUpdateDeck={canEditDecklist} />
+          <DecklistStatusNotice
+            entry={myEntry}
+            canUpdateDeck={canEditDecklist}
+            decklistRequired={tournament?.decklistRequired}
+          />
         </div>
         {decklistEntryForm || (canCancel ? (
           <div className="tournament-entry-actions">
@@ -756,7 +783,11 @@ export default function TournamentMyStatus({
           <p className="tournament-eyebrow">マイステータス</p>
           <h2>{checkedIn ? "チェックイン済み" : "チェックイン待ち"}</h2>
           <p>{checkedIn ? "ペアリング発表までお待ちください。" : "会場受付でチェックインしてください。"}</p>
-          <DecklistStatusNotice entry={myEntry} canUpdateDeck={canEditDecklist} />
+          <DecklistStatusNotice
+            entry={myEntry}
+            canUpdateDeck={canEditDecklist}
+            decklistRequired={tournament?.decklistRequired}
+          />
         </div>
         {decklistEntryForm}
         {!checkedIn && tournament?.selfCheckin ? (
@@ -806,7 +837,11 @@ export default function TournamentMyStatus({
               {countdown ? <p className="tournament-round-timer">{countdown.label}</p> : null}
             </>
           )}
-          <DecklistStatusNotice entry={myEntry} canUpdateDeck={canEditDecklist} />
+          <DecklistStatusNotice
+            entry={myEntry}
+            canUpdateDeck={canEditDecklist}
+            decklistRequired={tournament?.decklistRequired}
+          />
         </div>
         {decklistEntryForm}
         <div className="tournament-my-status-result">
@@ -833,7 +868,11 @@ export default function TournamentMyStatus({
       <div>
         <p className="tournament-eyebrow">マイステータス</p>
         <h2>エントリー済み</h2>
-        <DecklistStatusNotice entry={myEntry} canUpdateDeck={canEditDecklist} />
+        <DecklistStatusNotice
+          entry={myEntry}
+          canUpdateDeck={canEditDecklist}
+          decklistRequired={tournament?.decklistRequired}
+        />
         {needsDeckWarning ? <p className="tournament-my-warning">提出状況を確認してください。</p> : null}
         {!checkedIn && tournament?.selfCheckin ? (
           <>

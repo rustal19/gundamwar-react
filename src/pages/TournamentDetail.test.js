@@ -1081,9 +1081,9 @@ test("完成デッキを添えてエントリーすると提出成功を表示�
   ).toBeInTheDocument();
 });
 
-test("未提出は提出を促し提出UIを表示する", async () => {
+test("必須大会の未提出は提出を促し提出UIを表示する", async () => {
   mockDeckItems = validDeck();
-  setMyDecklistState("none");
+  setMyDecklistState("none", { tournament: { decklistRequired: true } });
 
   renderDetail();
 

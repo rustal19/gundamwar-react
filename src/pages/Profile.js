@@ -94,7 +94,9 @@ function TournamentGroup({ title, items, emptyText }) {
                     <span className={`profile-badge deck-${decklistState}`}>
                       {decklistState === "none" && entry?.deckLockedAt
                         ? DECKLIST_STATE_LABELS.none
-                        : PROFILE_DECKLIST_STATE_LABELS[decklistState] || decklistState}
+                        : decklistState === "none" && tournament.decklistRequired === false
+                          ? "未提出・提出は任意"
+                          : PROFILE_DECKLIST_STATE_LABELS[decklistState] || decklistState}
                     </span>
                   ) : null}
                   {decklistState === "none" && entry?.deckLockedAt ? (
