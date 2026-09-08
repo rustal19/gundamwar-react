@@ -9,6 +9,11 @@
 }
 
 .admin-users-page .admin-user-search-field input {
+  min-height: var(--gw-touch-target, 44px);
+  padding: var(--gw-space-xs) var(--gw-space-sm);
+  border: 1px solid var(--gw-border-strong);
+  border-radius: var(--gw-radius-xs);
+  font-size: var(--gw-font-size-md);
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
@@ -52,12 +57,15 @@
 }
 
 .admin-users-page .admin-user-role-field select {
+  min-height: var(--gw-touch-target, 44px);
+  font-size: var(--gw-font-size-md);
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
 }
 
 .admin-users-page .admin-user-reset-button {
+  min-height: var(--gw-touch-target, 44px);
   justify-self: end;
   white-space: nowrap;
 }

@@ -1557,6 +1557,17 @@
     line-height: 1;
   }
 
+  /* Keep the record comparable without stacking seven fields per player. */
+  .tournament-page .tournament-card-table.tournament-standings-table tr {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--gw-space-sm);
+  }
+
+  .tournament-page .tournament-standings-table td:nth-child(2),
+  .tournament-page .tournament-standings-table td:last-child {
+    grid-column: span 2;
+  }
+
   .tournament-page .tournament-card-table .tournament-card-title-cell {
     color: var(--gw-text-strong);
     font-size: var(--gw-font-size-md);

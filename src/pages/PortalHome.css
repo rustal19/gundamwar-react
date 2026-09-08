@@ -608,7 +608,6 @@ a.portal-deck-owner:hover {
 }
 
 @media (max-width: 760px) {
-  .portal-section-header,
   .tournament-card,
   .portal-my-tournament-item,
   .portal-deck-row {
@@ -616,7 +615,23 @@ a.portal-deck-owner:hover {
   }
 
   .portal-section-header {
-    display: grid;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gw-space-2);
+  }
+
+  .portal-more-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--gw-touch-target);
+    margin-left: auto;
+  }
+
+  .portal-card-search input,
+  .portal-card-search button,
+  .tournament-card-action {
+    min-height: var(--gw-touch-target);
   }
 
   .tournament-card {

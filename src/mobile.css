@@ -49,6 +49,7 @@
 }
 
 .app-shell-mobile .search-form-primary-actions button {
+  min-height: var(--gw-touch-target);
   padding: var(--gw-space-xs) var(--gw-space-sm);
 }
 
@@ -80,6 +81,7 @@
 }
 
 .app-shell-mobile .search-accordion-summary {
+  min-height: var(--gw-touch-target);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -403,6 +405,50 @@
   .app-shell-mobile .color-cell {
     font-size: var(--gw-font-size-sm);
   }
+}
+
+/* The full search form is also a touch interface, not a scaled desktop table. */
+.app-shell-mobile .grid-form .ntext,
+.app-shell-mobile .grid-form .nselect {
+  min-height: var(--gw-touch-target);
+  border: 1px solid var(--gw-border-strong);
+  border-radius: var(--gw-radius-xs);
+  padding: var(--gw-space-xs) var(--gw-space-sm);
+  background: var(--gw-surface);
+  color: var(--gw-text);
+  font-size: var(--gw-font-size-md);
+}
+
+.app-shell-mobile .grid-form .form-th {
+  text-align: left;
+  font-size: var(--gw-font-size-sm);
+}
+
+.app-shell-mobile .grid-form .checkbox-group:has(input[name="cardType"]) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.app-shell-mobile .grid-form .checkbox-group label,
+.app-shell-mobile .grid-form .checkbox-grid6 label,
+.app-shell-mobile .grid-form .color-cell {
+  min-height: 36px;
+  align-items: center;
+  padding: var(--gw-space-2xs);
+  border-radius: var(--gw-radius-xs);
+  cursor: pointer;
+}
+
+.app-shell-mobile .grid-form .checkbox-group label:has(:checked),
+.app-shell-mobile .grid-form .color-cell:has(:checked) {
+  background: var(--gw-primary-soft);
+  color: var(--gw-primary-strong);
+}
+
+.app-shell-mobile .grid-form .checkbox-inline > label {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--gw-touch-target);
+  cursor: pointer;
 }
 
 /* AppHeader mobile structure rules */
@@ -1237,4 +1283,18 @@
   .app-shell-mobile .deck-card-list-detail {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* Page titles should remain distinct from the dense card-result controls. */
+.app-shell-mobile .public-decks .search-results-toolbar h1,
+.app-shell-mobile .admin-users-page .search-results-toolbar h1,
+.app-shell-mobile .public-deck-detail .search-results-toolbar h1 {
+  font-size: var(--gw-font-size-2xl);
+  line-height: 1.35;
+  text-align: left;
+}
+
+.app-shell-mobile .public-decks .search-results-toolbar,
+.app-shell-mobile .public-deck-detail .search-results-toolbar {
+  align-items: flex-start;
 }
