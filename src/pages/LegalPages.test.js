@@ -76,3 +76,18 @@ test("URLを設定すると規約にも窓口が出る", () => {
   );
   expect(screen.queryByText(/削除依頼窓口は準備中です/)).not.toBeInTheDocument();
 });
+
+test("利用規約に規約変更の条項がある", () => {
+  renderPage(Terms);
+
+  const heading = screen.getByRole("heading", { name: "規約の変更" });
+  expect(heading).toBeInTheDocument();
+  expect(screen.getByText(/このページに掲載した時点から適用します/)).toBeInTheDocument();
+});
+
+test("プライバシーポリシーにも変更の条項がある", () => {
+  renderPage(Privacy);
+
+  expect(screen.getByRole("heading", { name: "本ポリシーの変更" })).toBeInTheDocument();
+  expect(screen.getByText(/このページに掲載した時点から適用します/)).toBeInTheDocument();
+});
