@@ -1,9 +1,16 @@
 import React from "react";
+import {
+  GA_DATA_USE_URL,
+  GA_OPT_OUT_URL,
+  getDeletionRequestFormUrl,
+} from "../data/siteContact";
 
 // ⚠ この本文はサイト運営者の最終確認を受けていない。公開前に必ず内容を確認すること。
 // 利用者に見える場所へ「ドラフト」と書くとポリシーとしての効力に疑義が生じるため、
 // 注記は利用者向けには出さず、このコメントで管理する。
 const Privacy = () => {
+  const deletionFormUrl = getDeletionRequestFormUrl();
+
   return (
     <main className="legal-page" aria-labelledby="privacy-title">
       <h1 id="privacy-title">プライバシーポリシー</h1>
@@ -39,8 +46,21 @@ const Privacy = () => {
       <section>
         <h2>アクセス解析</h2>
         <p>
-          本サイトは、利用状況の把握と改善のためにアクセス解析を利用する場合があります。
-          解析により得られた情報は、個人を直接特定する目的では利用しません。
+          本サイトは、利用状況の把握と改善のために、Googleが提供するアクセス解析ツール
+          「Googleアナリティクス」(GA4)を利用しています。Googleアナリティクスは
+          Cookieを利用して閲覧状況の情報を収集しますが、この情報に氏名やメールアドレスは含まれず、
+          個人を直接特定する目的では利用しません。
+        </p>
+        <p>
+          収集される情報とGoogleにおける取り扱いについては
+          <a href={GA_DATA_USE_URL} target="_blank" rel="noreferrer">
+            Googleのポリシーと規約
+          </a>
+          をご覧ください。収集を望まない場合は
+          <a href={GA_OPT_OUT_URL} target="_blank" rel="noreferrer">
+            Googleアナリティクス オプトアウト アドオン
+          </a>
+          で無効にできます。
         </p>
       </section>
 
@@ -54,10 +74,21 @@ const Privacy = () => {
 
       <section>
         <h2>削除依頼</h2>
-        <p>
-          登録情報、公開コンテンツ、アカウントに関する削除依頼窓口は準備中です。
-          窓口公開後、本人確認を行ったうえで合理的な範囲で対応します。
-        </p>
+        {deletionFormUrl ? (
+          <p>
+            登録情報、公開コンテンツ、アカウントの削除は、
+            <a href={deletionFormUrl} target="_blank" rel="noreferrer">
+              削除依頼フォーム
+            </a>
+            からご依頼ください。本サイトには利用者ご自身でアカウントを削除する機能がないため、
+            削除はこの依頼により対応します。本人確認を行ったうえで、合理的な範囲で対応します。
+          </p>
+        ) : (
+          <p>
+            登録情報、公開コンテンツ、アカウントに関する削除依頼窓口は準備中です。
+            窓口公開後、本人確認を行ったうえで合理的な範囲で対応します。
+          </p>
+        )}
       </section>
 
       <section>

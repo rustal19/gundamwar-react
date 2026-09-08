@@ -1,0 +1,16 @@
+// 削除依頼フォーム(Googleフォーム)のURL。
+//
+// ここが空のあいだ、規約とプライバシーポリシーは「窓口は準備中」の文面を出す。
+// 未確定のURLでリンクを公開してしまう事故を防ぐためのフォールバック。
+// フォームを作ったら、この定数にURLを入れるだけで両ページの窓口が有効になる。
+const DELETION_REQUEST_FORM_URL = "";
+
+// 画面側はこの関数だけを見る。空文字なら窓口なしとして扱う。
+export function getDeletionRequestFormUrl() {
+  return DELETION_REQUEST_FORM_URL.trim();
+}
+
+// Google アナリティクスの参照先。GA を使っていることの開示は Google の
+// 利用規約で求められているため、仕組みの説明とオプトアウト手段を示す。
+export const GA_DATA_USE_URL = "https://policies.google.com/technologies/partner-sites";
+export const GA_OPT_OUT_URL = "https://tools.google.com/dlpage/gaoptout";

@@ -1,9 +1,13 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import { getDeletionRequestFormUrl } from "../data/siteContact";
 
 // ⚠ この本文はサイト運営者の最終確認を受けていない。公開前に必ず内容を確認すること。
 // 利用者に見える場所へ「ドラフト」と書くと規約としての効力に疑義が生じるため、
 // 注記は利用者向けには出さず、このコメントで管理する。
 const Terms = () => {
+  const deletionFormUrl = getDeletionRequestFormUrl();
+
   return (
     <main className="legal-page" aria-labelledby="terms-title">
       <h1 id="terms-title">利用規約</h1>
@@ -40,16 +44,28 @@ const Terms = () => {
         <h2>Cookie・セッション・アクセス解析</h2>
         <p>
           本サイトは、ログイン状態や表示設定の維持のためにCookie、ローカルストレージ、セッション情報を利用する場合があります。
-          また、サイト改善のためにアクセス解析を利用する場合があります。
+          また、サイト改善のためにGoogleアナリティクスによるアクセス解析を利用しています。
+          詳細と収集を無効にする方法は<Link to="/privacy">プライバシーポリシー</Link>に記載しています。
         </p>
       </section>
 
       <section>
         <h2>削除依頼</h2>
-        <p>
-          アカウント情報、公開デッキ、ニックネーム、大会成績などの削除依頼窓口は準備中です。
-          正式な窓口を公開するまで、個別対応の方法は別途案内します。
-        </p>
+        {deletionFormUrl ? (
+          <p>
+            アカウント情報、公開デッキ、ニックネーム、大会成績などの削除は、
+            <a href={deletionFormUrl} target="_blank" rel="noreferrer">
+              削除依頼フォーム
+            </a>
+            からご依頼ください。利用者ご自身でアカウントを削除する機能はないため、
+            削除はこの依頼により対応します。
+          </p>
+        ) : (
+          <p>
+            アカウント情報、公開デッキ、ニックネーム、大会成績などの削除依頼窓口は準備中です。
+            正式な窓口を公開するまで、個別対応の方法は別途案内します。
+          </p>
+        )}
       </section>
 
       <section>
