@@ -300,7 +300,10 @@ function EntryForm({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const selectedSavedDeck = (savedDecks || []).find((deck) => deck.id === selectedDeckId);
   const hasSubmittedItems = Array.isArray(submittedItems) && submittedItems.length > 0;
-  const canEnterWithoutDeck = !myEntry && !tournament?.decklistRequired && !hasSubmittedItems;
+  const canSelectNoDeck = !myEntry && !tournament?.decklistRequired;
+  const canEnterWithoutDeck =
+    canSelectNoDeck &&
+    (deckSource === "none" || (deckSource === "current" && !hasSubmittedItems));
   const resolvedSavedDecksStatus =
     savedDecksStatus || (savedDecks.length > 0 ? ASYNC_STATUS.SUCCESS : ASYNC_STATUS.EMPTY);
   const savedDeckState = (children) => (
@@ -327,9 +330,13 @@ function EntryForm({
     <div className="tournament-entry-controls">
       <div className="tournament-selected-deck">
         <span>
-          提出デッキ: {deckSource === "saved" ? selectedSavedDeck?.title || "保存デッキ未選択" : "現在のデッキビルダー"}
+          提出デッキ: {deckSource === "none"
+            ? "添付しない"
+            : deckSource === "saved"
+              ? selectedSavedDeck?.title || "保存デッキ未選択"
+              : "現在のデッキビルダー"}
         </span>
-        <DeckCountPreview items={submittedItems} />
+        {deckSource !== "none" ? <DeckCountPreview items={submittedItems} /> : null}
         <button type="button" className="tournament-secondary-button" onClick={() => setIsDialogOpen(true)}>
           デッキを選ぶ
         </button>
@@ -382,6 +389,21 @@ function EntryForm({
                 現在のデッキを使う <DeckCountPreview items={currentDeckItems} />
               </button>
             </section>
+            {canSelectNoDeck ? (
+              <section className="tournament-submit-choice">
+                <h4>デッキを提出しない</h4>
+                <button
+                  type="button"
+                  className={deckSource === "none" ? "tournament-choice-button active" : "tournament-choice-button"}
+                  onClick={() => onDeckSourceChange("none")}
+                >
+                  デッキを添付せずに参加する
+                </button>
+                <p className="tournament-muted">
+                  現在のデッキや保存済みデッキは削除されません。
+                </p>
+              </section>
+            ) : null}
             <section className="tournament-submit-choice">
               <h4>デッキ構築へ</h4>
               <a className="tournament-choice-link" href="/deck">
@@ -398,6 +420,7 @@ function EntryForm({
           <option value="saved" disabled={resolvedSavedDecksStatus !== ASYNC_STATUS.SUCCESS}>
             保存デッキ
           </option>
+          {canSelectNoDeck ? <option value="none">デッキを添付しない</option> : null}
         </select>
       </label>
       {deckSource === "saved" ? (

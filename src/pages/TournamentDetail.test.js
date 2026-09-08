@@ -826,6 +826,70 @@ test("任意大会ではデッキなしでエントリーし未提出として�
   expect(screen.queryByText("デッキリストを提出しました。")).not.toBeInTheDocument();
 });
 
+test.each([
+  ["デスクトップ", false],
+  ["モバイル", true],
+])("%sで未完成の現在・保存デッキを残したままデッキなし参加できる", async (_label, compact) => {
+  mockAuthState = {
+    authMode: "mock",
+    isAuthenticated: true,
+    user: { id: "player-1", name: "テストユーザー" },
+  };
+  const oneCardDeck = [{ cardId: "basic-g", count: 1, zone: "main", card: { id: "basic-g", name: "基本G" } }];
+  const savedOneCardDeck = {
+    id: "saved-one-card",
+    title: "保存した基本Gデッキ",
+    items: oneCardDeck.map((item) => ({ ...item })),
+  };
+  mockDeckItems = oneCardDeck;
+  mockTournament = registrationTournament();
+  fetchSavedDecks.mockResolvedValueOnce([savedOneCardDeck]);
+
+  renderDetail({ compact });
+
+  const entryButton = await screen.findByRole("button", { name: "エントリー" });
+  expect(entryButton).toBeDisabled();
+  expect(screen.getByText("デッキリストを提出できません。")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "デッキを選ぶ" }));
+  expect(await screen.findByText("保存した基本Gデッキ")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "デッキを添付せずに参加する" }));
+
+  expect(screen.getByText("提出デッキ: 添付しない")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "エントリー" })).toBeEnabled();
+  fireEvent.click(screen.getByRole("button", { name: "エントリー" }));
+
+  expect(createEntry).toHaveBeenCalledWith(
+    expect.objectContaining({ tournamentId: "t-detail", deckItems: null })
+  );
+  expect(await screen.findByText("エントリーしました。")).toBeInTheDocument();
+  expect(mockDeckItems).toEqual(oneCardDeck);
+  expect(savedOneCardDeck.items).toHaveLength(1);
+});
+
+test("任意大会でも保存デッキ未選択ではエントリーできない", async () => {
+  mockAuthState = {
+    authMode: "mock",
+    isAuthenticated: true,
+    user: { id: "player-1", name: "テストユーザー" },
+  };
+  mockTournament = registrationTournament();
+  fetchSavedDecks.mockResolvedValueOnce([
+    { id: "saved-deck", title: "保存デッキ", items: validDeck() },
+  ]);
+
+  renderDetail();
+  await waitFor(() =>
+    expect(screen.getByRole("option", { name: "保存デッキ" })).toBeEnabled()
+  );
+  fireEvent.change(screen.getByRole("combobox", { name: "提出元" }), {
+    target: { value: "saved" },
+  });
+
+  expect(screen.getByRole("button", { name: "エントリー" })).toBeDisabled();
+  expect(screen.getByText("デッキリストを提出できません。")).toBeInTheDocument();
+  expect(createEntry).not.toHaveBeenCalled();
+});
+
 test("エントリー成功後の再取得失敗では成功表示と二重操作を止めて再試行できる", async () => {
   mockAuthState = {
     authMode: "mock",

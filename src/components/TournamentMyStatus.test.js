@@ -353,16 +353,13 @@ test("エントリー済みで提出デッキが空なら更新を無効化し�
   ).toBeInTheDocument();
 });
 
-test("任意大会の未エントリー状態ではデッキなしエントリーを案内する", () => {
+test("任意大会の未エントリー状態では初期currentが空ならそのまま参加できる", () => {
   render(
     <TournamentMyStatus
       {...statusProps({
-        tournament: {
-          status: "registration",
-          startsAt: new Date(2099, 0, 1, 10, 0).toISOString(),
-          decklistRequired: false,
-        },
+        tournament: { ...statusProps().tournament, decklistRequired: false },
         myEntry: null,
+        currentDeckItems: [],
         submittedItems: [],
         deckViolations: [{ code: "main_count", message: "メインデッキが不足しています。" }],
       })}
@@ -372,6 +369,89 @@ test("任意大会の未エントリー状態ではデッキなしエントリ�
   expect(screen.getByRole("button", { name: "エントリー" })).toBeEnabled();
   expect(screen.getByText("デッキリストを添付せずにエントリーします。")).toBeInTheDocument();
   expect(screen.queryByText("デッキリストを提出できません。")).not.toBeInTheDocument();
+});
+
+test("任意大会の未エントリー状態では明示的にデッキなしを選択できる", () => {
+  const onDeckSourceChange = jest.fn();
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        tournament: {
+          status: "registration",
+          startsAt: new Date(2099, 0, 1, 10, 0).toISOString(),
+          decklistRequired: false,
+        },
+        myEntry: null,
+        deckSource: "none",
+        onDeckSourceChange,
+        submittedItems: [],
+        currentDeckItems: [{ id: "basic-g", zone: "main", count: 1 }],
+        deckViolations: [{ code: "main_count", message: "メインデッキが不足しています。" }],
+      })}
+    />
+  );
+
+  expect(screen.getByRole("button", { name: "エントリー" })).toBeEnabled();
+  expect(screen.getByText("デッキリストを添付せずにエントリーします。")).toBeInTheDocument();
+  expect(screen.queryByText("デッキリストを提出できません。")).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "デッキを選ぶ" }));
+  expect(screen.getByRole("button", { name: "デッキを添付せずに参加する" })).toBeInTheDocument();
+  expect(screen.getByText("現在のデッキや保存済みデッキは削除されません。")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: /現在のデッキを使う/ }));
+  expect(onDeckSourceChange).toHaveBeenCalledWith("current");
+});
+
+test("任意大会でも未完成デッキ選択中はデッキなし参加として扱わない", () => {
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        tournament: { ...statusProps().tournament, decklistRequired: false },
+        myEntry: null,
+        currentDeckItems: [{ id: "basic-g", zone: "main", count: 1 }],
+        submittedItems: [{ id: "basic-g", zone: "main", count: 1 }],
+        deckViolations: [{ code: "main_count", message: "メインデッキが不足しています。" }],
+        submitDisabled: true,
+      })}
+    />
+  );
+
+  expect(screen.getByRole("button", { name: "エントリー" })).toBeDisabled();
+  expect(screen.getByText("デッキリストを提出できません。")).toBeInTheDocument();
+  expect(screen.queryByText("デッキリストを添付せずにエントリーします。")).not.toBeInTheDocument();
+});
+
+test("任意大会でも保存デッキ未選択はデッキなし参加として扱わない", () => {
+  render(
+    <TournamentMyStatus
+      {...statusProps({
+        tournament: { ...statusProps().tournament, decklistRequired: false },
+        myEntry: null,
+        deckSource: "saved",
+        selectedDeckId: "",
+        submittedItems: [],
+        deckViolations: [{ code: "main_count", message: "メインデッキが不足しています。" }],
+        submitDisabled: true,
+      })}
+    />
+  );
+
+  expect(screen.getByRole("button", { name: "エントリー" })).toBeDisabled();
+  expect(screen.getByText("デッキリストを提出できません。")).toBeInTheDocument();
+  expect(screen.queryByText("デッキリストを添付せずにエントリーします。")).not.toBeInTheDocument();
+});
+
+test("デッキなし選択肢は必須大会と既存参加者には表示しない", () => {
+  const { rerender } = render(<TournamentMyStatus {...statusProps({ myEntry: null })} />);
+  fireEvent.click(screen.getByRole("button", { name: "デッキを選ぶ" }));
+  expect(screen.queryByRole("button", { name: "デッキを添付せずに参加する" })).not.toBeInTheDocument();
+
+  rerender(
+    <TournamentMyStatus
+      {...statusProps({ tournament: { ...statusProps().tournament, decklistRequired: false } })}
+    />
+  );
+  expect(screen.queryByRole("button", { name: "デッキを添付せずに参加する" })).not.toBeInTheDocument();
 });
 
 test("受付中の未エントリー状態ではエントリーフォームを表示する", () => {
