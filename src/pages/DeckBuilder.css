@@ -251,10 +251,16 @@
 
 .deck-current-summary-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--gw-space-sm);
   margin-bottom: var(--gw-space-sm);
+}
+
+.deck-current-summary-row > .deck-zone-count {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .deck-panel-header > div {

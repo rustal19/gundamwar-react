@@ -1,0 +1,218 @@
+[
+  {
+    "width": 320,
+    "scenario": "empty",
+    "text": "メイン 0/50 ・ サイド 0/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": false
+  },
+  {
+    "width": 320,
+    "scenario": "normal",
+    "text": "メイン 24/50 ・ サイド 2/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": false
+  },
+  {
+    "width": 320,
+    "scenario": "over-limit",
+    "text": "メイン 594/50 ・ サイド 111/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": true
+  },
+  {
+    "width": 390,
+    "scenario": "empty",
+    "text": "メイン 0/50 ・ サイド 0/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": false
+  },
+  {
+    "width": 390,
+    "scenario": "normal",
+    "text": "メイン 24/50 ・ サイド 2/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": false
+  },
+  {
+    "width": 390,
+    "scenario": "over-limit",
+    "text": "メイン 594/50 ・ サイド 111/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": true
+  },
+  {
+    "width": 768,
+    "scenario": "empty",
+    "text": "メイン 0/50 ・ サイド 0/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": false
+  },
+  {
+    "width": 768,
+    "scenario": "normal",
+    "text": "メイン 24/50 ・ サイド 2/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": false
+  },
+  {
+    "width": 768,
+    "scenario": "over-limit",
+    "text": "メイン 594/50 ・ サイド 111/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": true
+  },
+  {
+    "width": 1100,
+    "scenario": "empty",
+    "text": "メイン 0/50 ・ サイド 0/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": false
+  },
+  {
+    "width": 1100,
+    "scenario": "normal",
+    "text": "メイン 24/50 ・ サイド 2/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": false
+  },
+  {
+    "width": 1100,
+    "scenario": "over-limit",
+    "text": "メイン 594/50 ・ サイド 111/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": true
+  },
+  {
+    "width": 1101,
+    "scenario": "empty",
+    "text": "メイン 0/50 ・ サイド 0/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": false
+  },
+  {
+    "width": 1101,
+    "scenario": "normal",
+    "text": "メイン 24/50 ・ サイド 2/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": false
+  },
+  {
+    "width": 1101,
+    "scenario": "over-limit",
+    "text": "メイン 594/50 ・ サイド 111/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": true
+  },
+  {
+    "width": 1280,
+    "scenario": "empty",
+    "text": "メイン 0/50 ・ サイド 0/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": false
+  },
+  {
+    "width": 1280,
+    "scenario": "normal",
+    "text": "メイン 24/50 ・ サイド 2/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": false
+  },
+  {
+    "width": 1280,
+    "scenario": "over-limit",
+    "text": "メイン 594/50 ・ サイド 111/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": true
+  },
+  {
+    "width": 1440,
+    "scenario": "empty",
+    "text": "メイン 0/50 ・ サイド 0/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": false
+  },
+  {
+    "width": 1440,
+    "scenario": "normal",
+    "text": "メイン 24/50 ・ サイド 2/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": false
+  },
+  {
+    "width": 1440,
+    "scenario": "over-limit",
+    "text": "メイン 594/50 ・ サイド 111/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": true
+  },
+  {
+    "width": 1920,
+    "scenario": "empty",
+    "text": "メイン 0/50 ・ サイド 0/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": false
+  },
+  {
+    "width": 1920,
+    "scenario": "normal",
+    "text": "メイン 24/50 ・ サイド 2/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": false
+  },
+  {
+    "width": 1920,
+    "scenario": "over-limit",
+    "text": "メイン 594/50 ・ サイド 111/10",
+    "lineCount": 1,
+    "textFits": true,
+    "pageOverflow": false,
+    "overLimit": true
+  }
+]
