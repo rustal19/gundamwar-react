@@ -4,6 +4,7 @@ import AsyncState from "../components/AsyncState";
 import { useAuth } from "../context/AuthContext";
 import { ASYNC_STATUS, useAsyncResource } from "../hooks/useAsyncResource";
 import { fetchUsers, resetUserNickname, updateUserRole } from "../services/users";
+import "./AdminUsers.css";
 
 // 内部値をそのまま出すと、何ができる権限なのか読み取れない。
 const ROLES = [
@@ -22,6 +23,7 @@ export default function AdminUsers({ compact = false }) {
   const [pendingRoleUserId, setPendingRoleUserId] = useState("");
   const [pendingNicknameUserId, setPendingNicknameUserId] = useState("");
   const [doneMessageByUserId, setDoneMessageByUserId] = useState({});
+  const pageClassName = `admin-users-page${compact ? " admin-users-page--compact" : ""}`;
   const usersRequestIdRef = useRef(0);
   const {
     status: usersStatus,
@@ -136,7 +138,7 @@ export default function AdminUsers({ compact = false }) {
 
   if (isReady === false) {
     return (
-      <main id="search-results-container">
+      <main id="search-results-container" className={pageClassName}>
         <div className="search-results-toolbar">
           <div>
             <h1>権限管理</h1>
@@ -155,7 +157,7 @@ export default function AdminUsers({ compact = false }) {
   // 前者はログインすれば解決するのに手詰まりに見える。導線を分ける。
   if (!isAdmin) {
     return (
-      <main id="search-results-container">
+      <main id="search-results-container" className={pageClassName}>
         <div className="search-results-toolbar">
           <div>
             <h1>権限管理</h1>
@@ -179,7 +181,7 @@ export default function AdminUsers({ compact = false }) {
   }
 
   return (
-    <main id="search-results-container">
+    <main id="search-results-container" className={pageClassName}>
       <div className="search-results-toolbar">
         <div className={compact ? "search-results-heading-row" : undefined}>
           <h1>権限管理</h1>
@@ -187,7 +189,7 @@ export default function AdminUsers({ compact = false }) {
         </div>
       </div>
 
-      <form className="search-results-toolbar-actions" onSubmit={handleSubmit}>
+      <form className="search-results-toolbar-actions admin-user-search" onSubmit={handleSubmit}>
         {/* プレースホルダーだけだと入力を始めた時点で目的が消える */}
         <label className="admin-user-search-field" htmlFor="admin-user-search">
           <span>ユーザー検索</span>
@@ -225,12 +227,11 @@ export default function AdminUsers({ compact = false }) {
         }
         onRetry={() => loadUsers(submittedQuery)}
       >
-        <div className="results-list">
+        <div className="results-list admin-users-list">
           {users.map((user) => (
-            <div className="card-item result-card" key={user.id}>
-              <div className="result-card-content">
-                <div className="result-card-header">
-                  <div>
+            <article className="card-item result-card admin-user-card" key={user.id}>
+              <div className="result-card-content admin-user-card-layout">
+                  <div className="admin-user-identity">
                     <strong className="card-model-name">{user.name}</strong>
                     {/* メールが無いとIDが同じ位置に裸で出て、何の文字列か分からない */}
                     <div className="card-text">
@@ -238,7 +239,7 @@ export default function AdminUsers({ compact = false }) {
                     </div>
                     <div className="card-text">ニックネーム: {user.nickname || "未設定"}</div>
                   </div>
-                  <label className="card-actions">
+                  <label className="card-actions admin-user-role-field">
                     <span className="search-results-summary">権限</span>
                     <select
                       value={user.role}
@@ -254,7 +255,7 @@ export default function AdminUsers({ compact = false }) {
                   </label>
                   <button
                     type="button"
-                    className="results-link-button"
+                    className="results-link-button admin-user-reset-button"
                     disabled={pendingNicknameUserId === user.id}
                     onClick={() => handleNicknameReset(user.id)}
                   >
@@ -265,9 +266,8 @@ export default function AdminUsers({ compact = false }) {
                       ? "変更を反映中..."
                       : doneMessageByUserId[user.id] || ""}
                   </span>
-                </div>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </AsyncState>

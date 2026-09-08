@@ -1,0 +1,115 @@
+/* 権限管理固有の一覧。画像付き検索カードの列指定をこの画面では使わない。 */
+.admin-users-page .admin-user-search {
+  align-items: end;
+  margin-bottom: var(--gw-space-md);
+}
+
+.admin-users-page .admin-user-search-field {
+  flex: 1 1 24rem;
+}
+
+.admin-users-page .admin-user-search-field input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.admin-users-page .result-card.admin-user-card {
+  display: block;
+  grid-template-columns: minmax(0, 1fr);
+  padding: var(--gw-space-md);
+}
+
+.admin-users-page .admin-user-card-layout {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) minmax(16rem, 0.9fr) auto;
+  grid-template-rows: auto auto;
+  gap: var(--gw-space-xs) var(--gw-space-md);
+  align-items: center;
+}
+
+.admin-users-page .admin-user-identity {
+  min-width: 0;
+}
+
+.admin-users-page .admin-user-identity .card-model-name {
+  display: block;
+  margin-bottom: var(--gw-space-3xs);
+}
+
+.admin-users-page .admin-user-identity .card-text {
+  overflow-wrap: anywhere;
+}
+
+.admin-users-page .admin-user-role-field {
+  min-width: 0;
+  gap: var(--gw-space-3xs);
+}
+
+.admin-users-page .admin-user-role-field .search-results-summary {
+  margin-top: 0;
+  white-space: nowrap;
+}
+
+.admin-users-page .admin-user-role-field select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.admin-users-page .admin-user-reset-button {
+  justify-self: end;
+  white-space: nowrap;
+}
+
+.admin-users-page .admin-user-row-status {
+  grid-column: 2 / -1;
+  min-height: 1.35em;
+}
+
+/* compact は画面幅に関係なくモバイル向け構造にする。狭い通常表示も同じ。 */
+.admin-users-page--compact .admin-user-search,
+.admin-users-page--compact .admin-user-card-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-users-page--compact .admin-user-search-field,
+.admin-users-page--compact .admin-user-role-field,
+.admin-users-page--compact .admin-user-reset-button {
+  width: 100%;
+}
+
+.admin-users-page--compact .admin-user-reset-button {
+  justify-self: stretch;
+}
+
+.admin-users-page--compact .admin-user-row-status {
+  grid-column: 1;
+}
+
+@media (max-width: 760px) {
+  .admin-users-page .admin-user-search,
+  .admin-users-page .admin-user-card-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-users-page .admin-user-search-field,
+  .admin-users-page .admin-user-role-field,
+  .admin-users-page .admin-user-reset-button {
+    width: 100%;
+  }
+
+  .admin-users-page .result-card.admin-user-card {
+    padding: var(--gw-space-sm);
+  }
+
+  .admin-users-page .admin-user-reset-button {
+    justify-self: stretch;
+  }
+
+  .admin-users-page .admin-user-row-status {
+    grid-column: 1;
+  }
+}
