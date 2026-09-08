@@ -22,7 +22,7 @@ const alice = {
   role: "user",
 };
 
-function renderAdmin(authValue = {}) {
+function renderAdmin(authValue = {}, props = {}) {
   useAuth.mockReturnValue({
     authMode: "mock",
     isAdmin: true,
@@ -32,7 +32,7 @@ function renderAdmin(authValue = {}) {
   });
   return render(
     <MemoryRouter>
-      <AdminUsers />
+      <AdminUsers {...props} />
     </MemoryRouter>
   );
 }
@@ -117,6 +117,31 @@ test("管理者でなければ既存の権限制御を維持する", () => {
   ).toBeInTheDocument();
   expect(screen.queryByRole("link", { name: "ログイン画面へ" })).not.toBeInTheDocument();
   expect(fetchUsers).not.toHaveBeenCalled();
+});
+
+test("compact表示ではユーザー情報と操作を全幅カード用の構造で表示する", async () => {
+  const { container } = renderAdmin({}, { compact: true });
+
+  expect(await screen.findByText("Alice")).toBeInTheDocument();
+  expect(container.querySelector("main")).toHaveClass("admin-users-page--compact");
+  expect(screen.getByText("メール: alice@example.test")).toBeInTheDocument();
+  expect(screen.getByRole("combobox", { name: "権限" })).toHaveTextContent(
+    "主催者(大会を作成・運営できる)"
+  );
+  expect(screen.getByRole("button", { name: "ニックネームをリセット" })).toBeInTheDocument();
+});
+
+test("ニックネームリセットを確認で取り消した場合はAPIを呼ばない", async () => {
+  window.confirm.mockReturnValue(false);
+  renderAdmin();
+  expect(await screen.findByText("Alice")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "ニックネームをリセット" }));
+
+  expect(window.confirm).toHaveBeenCalledWith(
+    "このユーザーのニックネームをリセットしますか？"
+  );
+  expect(resetUserNickname).not.toHaveBeenCalled();
 });
 
 test("ロール更新エラーは取得済み一覧を消さずに日本語で表示する", async () => {
