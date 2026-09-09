@@ -69,8 +69,16 @@ const AppContent = () => {
     .filter(Boolean)
     .join(" ");
 
+  const frameClassName = [
+    "app-frame",
+    isDeckRoute && !isMobileOs ? "app-frame-deck-desktop" : "",
+    isDeckRoute && isCompactDesktop ? "app-frame-deck-compact" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <>
+    <div className={frameClassName}>
       <div className={shellClassName}>
         <RouteAnalyticsTracker />
         {isCompactLayout ? <MobileAppHeader /> : <Sidebar collapsed={isNarrowSidebarRoute} />}
@@ -103,7 +111,7 @@ const AppContent = () => {
         </main>
       </div>
       <AppFooter />
-    </>
+    </div>
   );
 };
 

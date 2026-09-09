@@ -42,6 +42,23 @@
   margin: 0;
 }
 
+/* デッキ画面では作業領域とフッターを同じviewport内に収める。 */
+.app-frame-deck-desktop > .app-footer {
+  flex: 0 0 auto;
+  margin-left: var(--gw-sidebar-collapsed-width);
+  margin-top: 0;
+  padding-bottom: var(--gw-space-xs);
+  padding-top: var(--gw-space-xs);
+}
+
+.app-frame-deck-desktop > .app-footer .app-footer-row {
+  margin-bottom: var(--gw-space-2xs);
+}
+
+.app-frame-deck-compact > .app-footer {
+  margin-left: 0;
+}
+
 .legal-page {
   box-sizing: border-box;
   color: var(--gw-text);

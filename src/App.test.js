@@ -256,6 +256,9 @@ test("/deck collapses the sidebar after navigation without blocking a later manu
 
 test("only the deck builder route uses the viewport-locked app shell", () => {
   const deckBuilderView = renderApp("/deck");
+  expect(deckBuilderView.container.querySelector(".app-frame")).toHaveClass(
+    "app-frame-deck-desktop"
+  );
   expect(deckBuilderView.container.querySelector(".app-shell")).toHaveClass("app-shell-deck");
   expect(deckBuilderView.container.querySelector(".app-shell")).toHaveClass(
     "app-shell-sidebar-collapsed"
@@ -269,6 +272,9 @@ test("only the deck builder route uses the viewport-locked app shell", () => {
   deckBuilderView.unmount();
 
   const publicDeckListView = renderApp("/decks");
+  expect(publicDeckListView.container.querySelector(".app-frame")).not.toHaveClass(
+    "app-frame-deck-desktop"
+  );
   expect(publicDeckListView.container.querySelector(".app-shell")).not.toHaveClass(
     "app-shell-deck"
   );
@@ -287,6 +293,28 @@ test("footer renders the portal name and legal links", () => {
   expect(within(footer).getByText("Gundam War Portal")).toBeInTheDocument();
   expect(footer.querySelector('a[href="/terms"]')).toBeInTheDocument();
   expect(footer.querySelector('a[href="/privacy"]')).toBeInTheDocument();
+});
+
+test("PC deck keeps the footer in the viewport frame across the 1101px boundary", () => {
+  const desktopView = renderApp("/deck");
+  const desktopFrame = desktopView.container.querySelector(".app-frame-deck-desktop");
+  expect(desktopFrame).toContainElement(desktopView.container.querySelector(".app-shell-deck"));
+  expect(desktopFrame).toContainElement(desktopView.container.querySelector(".app-footer"));
+  desktopView.unmount();
+
+  setViewportWidth(1100);
+  const compactView = renderApp("/deck");
+  expect(compactView.container.querySelector(".app-shell")).toHaveClass("app-shell-mobile");
+  expect(compactView.container.querySelector(".app-frame")).toHaveClass(
+    "app-frame-deck-desktop",
+    "app-frame-deck-compact"
+  );
+  compactView.unmount();
+
+  const mobileView = renderApp("/deck?mobileLayout=ios");
+  expect(mobileView.container.querySelector(".app-frame")).not.toHaveClass(
+    "app-frame-deck-desktop"
+  );
 });
 
 test("anonymous and user roles do not see organizer menu links", () => {
