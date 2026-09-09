@@ -155,7 +155,7 @@ export default function DeckFormatPanel({ formatName, onFormatChange, items = []
                 <span>{`メイン ${rule.mainMin}〜${rule.mainMax}枚`}</span>
                 <span>{`サイド 0枚または${rule.sideSize}枚`}</span>
                 <span>{`同名 ${rule.maxCopies}枚まで`}</span>
-                <span>{`特殊G ${SPECIAL_G_MAX}枚まで`}</span>
+                <span>{`特殊G 合計${SPECIAL_G_MAX}枚まで`}</span>
               </div>
               {selectedFormat.note ? <p className="deck-format-note">{selectedFormat.note}</p> : null}
               <div className="deck-format-rule-lists">

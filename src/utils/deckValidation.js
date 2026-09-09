@@ -1,3 +1,4 @@
+import DECK_COPY_LIMITS from "../data/deckCopyLimits.json";
 import GENERATION_CARDS from "../data/generationCards.json";
 
 // 特殊Gはメイン・サイド合計でこの枚数まで。基本Gと「基本Gとして扱う」カードは数えない。
@@ -74,6 +75,23 @@ function isSpecialG(item) {
   return !isBasicGEquivalent(item) && isGenerationCard(item);
 }
 
+// 「(自動B)：このカードはデッキにN枚以上入れられる」のように、そのカード自身の
+// 枚数だけを上書きするテキスト。同名の別バージョンには及ばない。
+// max が null なら上限なし。該当しなければ null を返す。
+function getCardScopedLimit(item) {
+  const limit = DECK_COPY_LIMITS.cards[getCardId(item)];
+  return limit && limit.scope === "card" ? limit : null;
+}
+
+// 同名グループの上限枚数。
+// 「この名称のカードは…」テキスト(月面民間企業など) > 特殊G(6枚) > レギュレーションの既定値。
+function resolveNameLimit(item, rule) {
+  const named = DECK_COPY_LIMITS.byName[getCardName(item)];
+  if (named != null) return named;
+  if (isSpecialG(item)) return SPECIAL_G_MAX;
+  return rule.maxCopies;
+}
+
 export function defaultRegulation(regulation = {}) {
   const merged = { ...DEFAULT_REGULATION, ...(regulation || {}) };
   return {
@@ -132,7 +150,9 @@ export function validateDeck(items, regulation) {
     });
   }
 
+  // 同名で数えるグループと、カード単位で数えるグループ(テキストで上限が変わるカード)。
   const countsByName = new Map();
+  const countsByLimitedCard = new Map();
   const countsByCardKey = new Map();
   let specialGCount = 0;
   deckItems.forEach((item) => {
@@ -140,10 +160,27 @@ export function validateDeck(items, regulation) {
     if (count === 0) return;
 
     const name = getCardName(item);
-    // 基本Gと「基本Gとして扱う」カードは枚数をカウントしない。
-    if (!isBasicGEquivalent(item)) {
-      countsByName.set(name, (countsByName.get(name) || 0) + count);
+    const cardScopedLimit = getCardScopedLimit(item);
+    if (isBasicGEquivalent(item)) {
+      // 基本Gと「基本Gとして扱う」カードは枚数を数えない。
+    } else if (!cardScopedLimit) {
+      const current = countsByName.get(name);
+      const limit = resolveNameLimit(item, rule);
+      countsByName.set(name, {
+        count: (current?.count || 0) + count,
+        limit: current ? Math.min(current.limit, limit) : limit,
+      });
+    } else if (cardScopedLimit.max !== null) {
+      // 「このカードはデッキに50枚まで入れられる」のように、そのカードだけ上限が変わる。
+      const key = getCardId(item);
+      const current = countsByLimitedCard.get(key);
+      countsByLimitedCard.set(key, {
+        count: (current?.count || 0) + count,
+        limit: cardScopedLimit.max,
+        cardName: name,
+      });
     }
+    // cardScopedLimit.max === null は上限なしなので数えない。
     if (isSpecialG(item)) specialGCount += count;
 
     const cardId = getCardId(item);
@@ -152,11 +189,21 @@ export function validateDeck(items, regulation) {
     countsByCardKey.set(key, { ...current, count: current.count + count });
   });
 
-  countsByName.forEach((count, cardName) => {
-    if (count > rule.maxCopies) {
+  countsByName.forEach(({ count, limit }, cardName) => {
+    if (count > limit) {
       violations.push({
         code: "max_copies",
-        message: `${cardName}は合計${rule.maxCopies}枚までです。現在は${count}枚です。`,
+        message: `${cardName}は合計${limit}枚までです。現在は${count}枚です。`,
+        cardName,
+      });
+    }
+  });
+
+  countsByLimitedCard.forEach(({ count, limit, cardName }) => {
+    if (count > limit) {
+      violations.push({
+        code: "max_copies",
+        message: `${cardName}は合計${limit}枚までです。現在は${count}枚です。`,
         cardName,
       });
     }

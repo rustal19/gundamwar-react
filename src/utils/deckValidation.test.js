@@ -238,3 +238,120 @@ describe("deckValidation - Gカードの構築ルール", () => {
     expect(codesOf(violations)).toContain("special_g_count");
   });
 });
+
+// カードテキストで同名の上限が変わるカード。
+// src/data/deckCopyLimits.json は csv/card_text.csv から生成している。
+describe("deckValidation - テキストによる枚数上限の上書き", () => {
+  function item({ id, name, count, zone = "main", cardType }) {
+    return {
+      cardId: id,
+      count,
+      zone,
+      card: { cardId: id, name, ...(cardType ? { cardType } : {}) },
+    };
+  }
+
+  function codesOf(violations) {
+    return violations.map((violation) => violation.code);
+  }
+
+  it("特殊Gは同名6枚まで入れられる", () => {
+    const violations = validateDeck([
+      item({ id: "101050012", name: "エゥーゴ支持者", count: 6, cardType: 10 }),
+    ]);
+
+    expect(codesOf(violations)).not.toContain("max_copies");
+    expect(codesOf(violations)).not.toContain("special_g_count");
+  });
+
+  it("特殊Gが同名7枚なら同名上限と合計上限の両方に違反する", () => {
+    const violations = validateDeck([
+      item({ id: "101050012", name: "エゥーゴ支持者", count: 7, cardType: 10 }),
+    ]);
+
+    expect(violations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "max_copies",
+          message: "エゥーゴ支持者は合計6枚までです。現在は7枚です。",
+        }),
+        expect.objectContaining({ code: "special_g_count" }),
+      ])
+    );
+  });
+
+  it("月面民間企業はカード効果で3枚までに縛られる", () => {
+    expect(
+      codesOf(validateDeck([item({ id: "107050001", name: "月面民間企業", count: 3, cardType: 10 })]))
+    ).not.toContain("max_copies");
+
+    expect(
+      validateDeck([item({ id: "107050001", name: "月面民間企業", count: 4, cardType: 10 })])
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "max_copies",
+          message: "月面民間企業は合計3枚までです。現在は4枚です。",
+        }),
+      ])
+    );
+  });
+
+  it("「デッキに3枚以上入れられる」カードは何枚でも入れられる", () => {
+    const violations = validateDeck([
+      item({ id: "101010107", name: "ガンイージ", count: 8 }),
+      item({ id: "102010308", name: "オッゴ", count: 12 }),
+    ]);
+
+    expect(codesOf(violations)).not.toContain("max_copies");
+  });
+
+  it("同名でもテキストを持たない版は3枚までに数える", () => {
+    // 104010104 だけが「デッキに3枚以上入れられる」を持つ。
+    const violations = validateDeck([
+      item({ id: "104010104", name: "量産型キュベレイ", count: 5 }),
+      item({ id: "104010046", name: "量産型キュベレイ", count: 4 }),
+    ]);
+
+    expect(violations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "max_copies",
+          message: "量産型キュベレイは合計3枚までです。現在は4枚です。",
+        }),
+      ])
+    );
+  });
+
+  it("「この名称のカードは1枚しか入れられない」を反映する", () => {
+    const violations = validateDeck([
+      item({ id: "102110008", name: "ザクII(黒い三連星 マッシュ機)", count: 2 }),
+    ]);
+
+    expect(violations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "max_copies",
+          message: "ザクII(黒い三連星 マッシュ機)は合計1枚までです。現在は2枚です。",
+        }),
+      ])
+    );
+  });
+
+  it("サクは50枚まで入れられる", () => {
+    expect(codesOf(validateDeck([item({ id: "102990007", name: "サク", count: 50 })]))).not.toContain(
+      "max_copies"
+    );
+
+    expect(
+      validateDeck([item({ id: "102990007", name: "サク", count: 51 })])
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "max_copies",
+          message: "サクは合計50枚までです。現在は51枚です。",
+        }),
+      ])
+    );
+  });
+});

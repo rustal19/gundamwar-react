@@ -111,7 +111,7 @@ test("ルール概要に特殊Gの上限を表示し、超過分を違反とし�
   const panel = screen.getByRole("region", { name: "フォーマット・禁止制限" });
   fireEvent.click(within(panel).getByRole("button", { name: /フォーマット・禁止制限/ }));
 
-  expect(within(panel).getByText("特殊G 6枚まで")).toBeInTheDocument();
+  expect(within(panel).getByText("特殊G 合計6枚まで")).toBeInTheDocument();
   expect(
     within(panel).getByText("特殊Gはメイン・サイド合計6枚までです。現在は7枚です。")
   ).toBeInTheDocument();
