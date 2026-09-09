@@ -139,9 +139,9 @@ export function validateDeck(items, regulation) {
     const count = normalizeCount(item?.count);
     if (count === 0) return;
 
+    const name = getCardName(item);
     // 基本Gと「基本Gとして扱う」カードは枚数をカウントしない。
     if (!isBasicGEquivalent(item)) {
-      const name = getCardName(item);
       countsByName.set(name, (countsByName.get(name) || 0) + count);
     }
     if (isSpecialG(item)) specialGCount += count;

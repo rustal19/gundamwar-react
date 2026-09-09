@@ -108,6 +108,20 @@ describe("deckValidation", () => {
     expect(violations.filter((violation) => violation.code === "limited")).toHaveLength(2);
   });
 
+  it("cardIdがない項目同士を取り違えない", () => {
+    const violations = validateDeck(
+      [
+        { count: 1, zone: "main", card: { name: "普通のカード" } },
+        { count: 1, zone: "main", card: { name: "禁止カード" } },
+      ],
+      { bannedCards: ["禁止カード"] }
+    );
+
+    expect(violations.filter((violation) => violation.code === "banned")).toEqual([
+      expect.objectContaining({ cardName: "禁止カード" }),
+    ]);
+  });
+
   it("detects allowed_sets violations", () => {
     const deck = validDeck({
       "card-1": { card: { sets: ["S2"] } },
