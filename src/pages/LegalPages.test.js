@@ -91,3 +91,41 @@ test("プライバシーポリシーにも変更の条項がある", () => {
   expect(screen.getByRole("heading", { name: "本ポリシーの変更" })).toBeInTheDocument();
   expect(screen.getByText(/このページに掲載した時点から適用します/)).toBeInTheDocument();
 });
+
+// 実装と食い違う案内を出さないための固定。デッキとニックネームは自分で操作でき、
+// 大会の記録は残り、アカウントだけが依頼になる。
+test("削除の案内が、自分でできること・できないこと・依頼が要ることを区別する", () => {
+  renderPage(Privacy);
+
+  expect(
+    screen.getByText(/デッキ構築画面の「読み込み」からご自身で削除できます/)
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(/ニックネームはマイページでいつでも変更でき/)
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(/大会の記録として残るため削除できません/)
+  ).toBeInTheDocument();
+  expect(screen.getByText(/削除依頼窓口は準備中です/)).toBeInTheDocument();
+});
+
+test("規約側も同じ区別をしている", () => {
+  renderPage(Terms);
+
+  expect(
+    screen.getByText(/デッキ構築画面の「読み込み」からご自身で削除できます/)
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(/大会の記録として残るため削除できません/)
+  ).toBeInTheDocument();
+});
+
+test("フォームURLを設定しても、自分でできる案内は残る", () => {
+  mockDeletionFormUrl = "https://forms.gle/example";
+
+  renderPage(Privacy);
+  expect(
+    screen.getByText(/デッキ構築画面の「読み込み」からご自身で削除できます/)
+  ).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "削除依頼フォーム" })).toBeInTheDocument();
+});
