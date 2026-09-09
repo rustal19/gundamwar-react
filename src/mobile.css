@@ -1256,6 +1256,10 @@
 }
 
 @media (max-width: 420px) {
+  .app-shell-mobile .deck-search-results-panel .results-image-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .app-shell-mobile .deck-page {
     --deck-ui-scale: 0.84;
     --deck-image-grid-column: 88px;

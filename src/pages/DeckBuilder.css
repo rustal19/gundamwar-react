@@ -169,6 +169,38 @@
   padding-right: 0;
 }
 
+/* 画像だけの列でも、枚数や追加ボタンの最小内容幅で隣のカードを押し広げない。 */
+.deck-search-results-panel .results-image-grid {
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+}
+
+.deck-search-results-panel .result-card-image-only,
+.deck-search-results-panel .result-card-image-stack {
+  min-width: 0;
+}
+
+.deck-search-results-panel .result-card-image-stack {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.deck-search-results-panel .result-card-image-only .card-image-frame {
+  box-sizing: border-box;
+}
+
+.deck-search-results-panel .result-card-image-zone-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.deck-search-results-panel .result-card-image-zone-actions .deck-action-button {
+  min-width: 0;
+  padding-inline: var(--gw-space-2xs);
+}
+
+.deck-search-results-panel .result-card-image-meta {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .deck-search-results-viewport {
   flex: 1;
   min-height: 0;

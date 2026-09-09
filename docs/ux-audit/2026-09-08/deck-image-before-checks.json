@@ -1,0 +1,527 @@
+[
+  {
+    "width": 1920,
+    "height": 900,
+    "os": null,
+    "stage": "empty",
+    "columns": "124.328px 124.328px 124.344px 124.328px 124.328px 124.344px 124.328px 124.328px 124.344px",
+    "cardWidth": 124.328125,
+    "buttonWidth": 76.359375,
+    "buttonFont": "12px",
+    "overflow": false,
+    "viewportOverflow": 29,
+    "bad": [
+      {
+        "i": 0,
+        "class": "result-card-image-stack",
+        "width": 124.328125,
+        "cardWidth": 124.328125,
+        "overflow": 34
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-frame",
+        "width": 156.734375,
+        "cardWidth": 124.328125,
+        "overflow": 2
+      },
+      {
+        "i": 0,
+        "class": "card-image-frame",
+        "width": 156.734375,
+        "cardWidth": 124.328125,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-zone-actions",
+        "width": 156.734375,
+        "cardWidth": 124.328125,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "deck-action-button",
+        "width": 76.375,
+        "cardWidth": 124.328125,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-meta",
+        "width": 156.734375,
+        "cardWidth": 124.328125,
+        "overflow": 0
+      },
+      {
+        "i": 1,
+        "class": "result-card-image-stack",
+        "width": 124.328125,
+        "cardWidth": 124.328125,
+        "overflow": 34
+      },
+      {
+        "i": 1,
+        "class": "result-card-image-frame",
+        "width": 156.734375,
+        "cardWidth": 124.328125,
+        "overflow": 2
+      }
+    ],
+    "badCount": 300
+  },
+  {
+    "width": 1440,
+    "height": 500,
+    "os": null,
+    "stage": "empty",
+    "columns": "119.422px 119.422px 119.438px 119.422px 119.422px 119.438px",
+    "cardWidth": 115.8392333984375,
+    "buttonWidth": 74.068603515625,
+    "buttonFont": "12px",
+    "overflow": false,
+    "viewportOverflow": 34,
+    "bad": [
+      {
+        "i": 0,
+        "class": "result-card-image-stack",
+        "width": 115.8392333984375,
+        "cardWidth": 115.8392333984375,
+        "overflow": 39
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-frame",
+        "width": 152.0323486328125,
+        "cardWidth": 115.8392333984375,
+        "overflow": 2
+      },
+      {
+        "i": 0,
+        "class": "card-image-frame",
+        "width": 152.0323486328125,
+        "cardWidth": 115.8392333984375,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-zone-actions",
+        "width": 152.0323486328125,
+        "cardWidth": 115.8392333984375,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "deck-action-button",
+        "width": 74.083740234375,
+        "cardWidth": 115.8392333984375,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-meta",
+        "width": 152.0323486328125,
+        "cardWidth": 115.8392333984375,
+        "overflow": 0
+      },
+      {
+        "i": 1,
+        "class": "result-card-image-stack",
+        "width": 115.8392333984375,
+        "cardWidth": 115.8392333984375,
+        "overflow": 39
+      },
+      {
+        "i": 1,
+        "class": "result-card-image-frame",
+        "width": 152.0323486328125,
+        "cardWidth": 115.8392333984375,
+        "overflow": 2
+      }
+    ],
+    "badCount": 300
+  },
+  {
+    "width": 1280,
+    "height": 650,
+    "os": null,
+    "stage": "empty",
+    "columns": "131.703px 131.703px 131.719px 131.703px 131.719px",
+    "cardWidth": 118.5328369140625,
+    "buttonWidth": 68.72344970703125,
+    "buttonFont": "12px",
+    "overflow": false,
+    "viewportOverflow": 22,
+    "bad": [
+      {
+        "i": 0,
+        "class": "result-card-image-stack",
+        "width": 118.5328369140625,
+        "cardWidth": 118.5328369140625,
+        "overflow": 26
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-frame",
+        "width": 141.0609130859375,
+        "cardWidth": 118.5328369140625,
+        "overflow": 2
+      },
+      {
+        "i": 0,
+        "class": "card-image-frame",
+        "width": 141.0609130859375,
+        "cardWidth": 118.5328369140625,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-zone-actions",
+        "width": 141.0609130859375,
+        "cardWidth": 118.5328369140625,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "deck-action-button",
+        "width": 68.73748779296875,
+        "cardWidth": 118.5328369140625,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-meta",
+        "width": 141.0609130859375,
+        "cardWidth": 118.5328369140625,
+        "overflow": 0
+      },
+      {
+        "i": 1,
+        "class": "result-card-image-stack",
+        "width": 118.53277587890625,
+        "cardWidth": 118.53277587890625,
+        "overflow": 26
+      },
+      {
+        "i": 1,
+        "class": "result-card-image-frame",
+        "width": 141.0609130859375,
+        "cardWidth": 118.53277587890625,
+        "overflow": 2
+      }
+    ],
+    "badCount": 300
+  },
+  {
+    "width": 1101,
+    "height": 500,
+    "os": null,
+    "stage": "empty",
+    "columns": "130.891px 130.906px 130.891px 130.906px",
+    "cardWidth": 112.56597900390625,
+    "buttonWidth": 65.66912841796875,
+    "buttonFont": "12px",
+    "overflow": false,
+    "viewportOverflow": 22,
+    "bad": [
+      {
+        "i": 0,
+        "class": "result-card-image-stack",
+        "width": 112.56597900390625,
+        "cardWidth": 112.56597900390625,
+        "overflow": 27
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-frame",
+        "width": 134.7916259765625,
+        "cardWidth": 112.56597900390625,
+        "overflow": 2
+      },
+      {
+        "i": 0,
+        "class": "card-image-frame",
+        "width": 134.79156494140625,
+        "cardWidth": 112.56597900390625,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-zone-actions",
+        "width": 134.7916259765625,
+        "cardWidth": 112.56597900390625,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "deck-action-button",
+        "width": 65.6824951171875,
+        "cardWidth": 112.56597900390625,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-meta",
+        "width": 134.7916259765625,
+        "cardWidth": 112.56597900390625,
+        "overflow": 0
+      },
+      {
+        "i": 1,
+        "class": "result-card-image-stack",
+        "width": 112.579345703125,
+        "cardWidth": 112.579345703125,
+        "overflow": 27
+      },
+      {
+        "i": 1,
+        "class": "result-card-image-frame",
+        "width": 134.79156494140625,
+        "cardWidth": 112.579345703125,
+        "overflow": 2
+      }
+    ],
+    "badCount": 300
+  },
+  {
+    "width": 1100,
+    "height": 650,
+    "os": null,
+    "stage": "empty",
+    "columns": "345px 345px 345px",
+    "cardWidth": 345,
+    "buttonWidth": 170.5,
+    "buttonFont": "14px",
+    "overflow": false,
+    "viewportOverflow": 0,
+    "bad": [],
+    "badCount": 0
+  },
+  {
+    "width": 768,
+    "height": 650,
+    "os": null,
+    "stage": "empty",
+    "columns": "234.328px 234.328px 234.328px",
+    "cardWidth": 234.328125,
+    "buttonWidth": 115.15625,
+    "buttonFont": "14px",
+    "overflow": false,
+    "viewportOverflow": 0,
+    "bad": [],
+    "badCount": 0
+  },
+  {
+    "width": 390,
+    "height": 600,
+    "os": null,
+    "stage": "empty",
+    "columns": "108.328px 108.328px 108.344px",
+    "cardWidth": 108.328125,
+    "buttonWidth": 63.296875,
+    "buttonFont": "14px",
+    "overflow": false,
+    "viewportOverflow": 22,
+    "bad": [
+      {
+        "i": 0,
+        "class": "result-card-image-stack",
+        "width": 108.328125,
+        "cardWidth": 108.328125,
+        "overflow": 23
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-frame",
+        "width": 130.609375,
+        "cardWidth": 108.328125,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "card-image-frame",
+        "width": 128.609375,
+        "cardWidth": 108.328125,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-zone-actions",
+        "width": 130.609375,
+        "cardWidth": 108.328125,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "deck-action-button",
+        "width": 63.3125,
+        "cardWidth": 108.328125,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-meta",
+        "width": 130.609375,
+        "cardWidth": 108.328125,
+        "overflow": 0
+      },
+      {
+        "i": 1,
+        "class": "result-card-image-stack",
+        "width": 108.328125,
+        "cardWidth": 108.328125,
+        "overflow": 23
+      },
+      {
+        "i": 1,
+        "class": "result-card-image-frame",
+        "width": 130.609375,
+        "cardWidth": 108.328125,
+        "overflow": 0
+      }
+    ],
+    "badCount": 300
+  },
+  {
+    "width": 320,
+    "height": 600,
+    "os": null,
+    "stage": "empty",
+    "columns": "85px 85px 85px",
+    "cardWidth": 85,
+    "buttonWidth": 63.296875,
+    "buttonFont": "14px",
+    "overflow": false,
+    "viewportOverflow": 46,
+    "bad": [
+      {
+        "i": 0,
+        "class": "result-card-image-stack",
+        "width": 85,
+        "cardWidth": 85,
+        "overflow": 46
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-frame",
+        "width": 130.609375,
+        "cardWidth": 85,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "card-image-frame",
+        "width": 128.609375,
+        "cardWidth": 85,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-zone-actions",
+        "width": 130.609375,
+        "cardWidth": 85,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "deck-action-button",
+        "width": 63.3125,
+        "cardWidth": 85,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-meta",
+        "width": 130.609375,
+        "cardWidth": 85,
+        "overflow": 0
+      },
+      {
+        "i": 1,
+        "class": "result-card-image-stack",
+        "width": 85,
+        "cardWidth": 85,
+        "overflow": 46
+      },
+      {
+        "i": 1,
+        "class": "result-card-image-frame",
+        "width": 130.609375,
+        "cardWidth": 85,
+        "overflow": 0
+      }
+    ],
+    "badCount": 300
+  },
+  {
+    "width": 390,
+    "height": 600,
+    "os": "ios",
+    "stage": "empty",
+    "columns": "108.328px 108.328px 108.344px",
+    "cardWidth": 108.328125,
+    "buttonWidth": 63.296875,
+    "buttonFont": "14px",
+    "overflow": false,
+    "viewportOverflow": 22,
+    "bad": [
+      {
+        "i": 0,
+        "class": "result-card-image-stack",
+        "width": 108.328125,
+        "cardWidth": 108.328125,
+        "overflow": 23
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-frame",
+        "width": 130.609375,
+        "cardWidth": 108.328125,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "card-image-frame",
+        "width": 128.609375,
+        "cardWidth": 108.328125,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-zone-actions",
+        "width": 130.609375,
+        "cardWidth": 108.328125,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "deck-action-button",
+        "width": 63.3125,
+        "cardWidth": 108.328125,
+        "overflow": 0
+      },
+      {
+        "i": 0,
+        "class": "result-card-image-meta",
+        "width": 130.609375,
+        "cardWidth": 108.328125,
+        "overflow": 0
+      },
+      {
+        "i": 1,
+        "class": "result-card-image-stack",
+        "width": 108.328125,
+        "cardWidth": 108.328125,
+        "overflow": 23
+      },
+      {
+        "i": 1,
+        "class": "result-card-image-frame",
+        "width": 130.609375,
+        "cardWidth": 108.328125,
+        "overflow": 0
+      }
+    ],
+    "badCount": 300
+  }
+]

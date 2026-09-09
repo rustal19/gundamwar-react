@@ -60,8 +60,17 @@ describe("SearchResultCardの数値ラベル", () => {
 
     expect(container.querySelector(".result-card-image-count")).toHaveTextContent("合計4枚");
     expect(container.querySelector(".result-card-image-meta")).toHaveTextContent(
-      "メイン3枚 / サイド1枚"
+      /^メイン3枚 \/ サイド1枚$/
     );
+    expect(container.querySelector(".result-card-image-meta")).toHaveAttribute("aria-live", "polite");
+  });
+
+  test("画像表示は未追加でも短い枚数表示を残す", () => {
+    const { container } = render(
+      <SearchResultCard card={{ cardId: "empty-card", name: "未追加カード" }} viewMode="image" showDeckActions />
+    );
+    expect(container.querySelector(".result-card-image-meta")).toHaveTextContent(/^メイン0枚 \/ サイド0枚$/);
+    expect(container.querySelector(".result-card-image-count")).toBeNull();
   });
 
   test("国力・戦闘修正・カード番号を既存用語で可視表示する", () => {

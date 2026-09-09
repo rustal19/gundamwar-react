@@ -187,7 +187,7 @@ const SearchResultCard = ({
                 この行が変わることだけが「追加できた」という手応えになる。 */}
             {showDeckActions ? (
               <div className="result-card-image-meta" aria-live="polite">
-                このデッキに {formatDeckCountSummary(mainCount, sideCount)}
+                {formatDeckCountSummary(mainCount, sideCount)}
               </div>
             ) : null}
           </div>
