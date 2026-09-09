@@ -35,7 +35,7 @@ function LocationSearch() {
 test("共通フォーマットプリセットを指定なしとともに表示する", () => {
   renderForm();
 
-  const select = screen.getByLabelText("デッキのフォーマット");
+  const select = screen.getByLabelText("検索するフォーマット");
   const optionValues = Array.from(select.options, (option) => option.value);
 
   expect(optionValues[0]).toBe("");
@@ -53,7 +53,7 @@ test("URLのフォーマットを復元して検索条件へ含める", async ()
   );
 
   await waitFor(() => {
-    expect(screen.getByLabelText("デッキのフォーマット")).toHaveValue(formatName);
+    expect(screen.getByLabelText("検索するフォーマット")).toHaveValue(formatName);
   });
 
   fireEvent.click(screen.getByRole("button", { name: "検索" }));
@@ -89,12 +89,12 @@ test("controlled選択を通知し、未送信の入力を保ったまま検索�
   fireEvent.change(screen.getByLabelText("カード名"), {
     target: { value: "未送信のカード名" },
   });
-  fireEvent.change(screen.getByLabelText("デッキのフォーマット"), {
+  fireEvent.change(screen.getByLabelText("検索するフォーマット"), {
     target: { value: "関西ライジング" },
   });
 
   expect(onFormatChange).toHaveBeenCalledWith("関西ライジング");
-  expect(screen.getByLabelText("デッキのフォーマット")).toHaveValue("関西ライジング");
+  expect(screen.getByLabelText("検索するフォーマット")).toHaveValue("関西ライジング");
   await waitFor(() => {
     expect(
       new URLSearchParams(screen.getByTestId("location-search").textContent).get("formatName")
@@ -122,7 +122,7 @@ test("未知の保存フォーマットを維持し、リセットしてもデ�
     </MemoryRouter>
   );
 
-  expect(screen.getByLabelText("デッキのフォーマット")).toHaveValue("旧大会フォーマット");
+  expect(screen.getByLabelText("検索するフォーマット")).toHaveValue("旧大会フォーマット");
   expect(screen.getByRole("option", { name: "旧大会フォーマット" })).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("button", { name: "リセット" }));
@@ -130,7 +130,7 @@ test("未知の保存フォーマットを維持し、リセットしてもデ�
   // フォーマットは保存・適合判定・公開に使うデッキの属性なので、
   // 検索条件のリセットでは変更しない
   expect(onFormatChange).not.toHaveBeenCalled();
-  expect(screen.getByLabelText("デッキのフォーマット")).toHaveValue("旧大会フォーマット");
+  expect(screen.getByLabelText("検索するフォーマット")).toHaveValue("旧大会フォーマット");
   const payload = onSearch.mock.calls[0][0];
   const query = new URLSearchParams(payload.queryString);
   expect(payload.params.formatName).toBe("旧大会フォーマット");

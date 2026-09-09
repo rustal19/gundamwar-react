@@ -23,6 +23,14 @@ jest.mock("../components/CompactDeckSearchForm", () => (props) => (
 jest.mock("../components/DeckSearchResults", () => (props) => (
   <span data-testid="results-format-name">{props.formatName || "指定なし"}</span>
 ));
+
+// デッキ自身のフォーマットは「フォーマット・禁止制限」パネルで選ぶ。
+// 検索フォームのフォーマットは検索の絞り込みだけで、デッキには影響しない。
+function selectDeckFormat(formatName) {
+  fireEvent.change(screen.getByLabelText("構築するデッキのフォーマット"), {
+    target: { value: formatName },
+  });
+}
 jest.mock("../components/CardImage", () => () => null);
 jest.mock("../components/BasicGAddDialog", () => () => null);
 jest.mock("../components/DeckExportDialog", () => () => null);
@@ -100,6 +108,9 @@ function loadFirstSavedDeck() {
 }
 
 beforeEach(() => {
+  // デッキにカードがある状態でフォーマットを変えると確認が出る。
+  // 既定は「はい」とし、確認そのものは専用テストで検証する。
+  window.confirm = () => true;
   mockAuthState = { isAuthenticated: false };
   mockSavedDecksState = {
     savedDecks: [],
@@ -372,7 +383,7 @@ test("選択したフォーマットを新規保存へ渡す", async () => {
     </MemoryRouter>
   );
 
-  fireEvent.click(screen.getByRole("button", { name: "関西クラシックを選択" }));
+  selectDeckFormat("関西クラシック");
   expect(screen.getByTestId("compact-format-name")).toHaveTextContent("関西クラシック");
   expect(screen.getByTestId("results-format-name")).toHaveTextContent("関西クラシック");
 
@@ -432,7 +443,7 @@ test("上書き保存でも現在選択中のフォーマットを渡す", async
 
   fireEvent.click(screen.getByRole("button", { name: "読み込み" }));
   fireEvent.click(screen.getByRole("button", { name: "テストデッキを読み込む" }));
-  fireEvent.click(screen.getByRole("button", { name: "関西ライジングを選択" }));
+  selectDeckFormat("関西ライジング");
   fireEvent.click(screen.getByRole("button", { name: "保存" }));
   fireEvent.click(screen.getByRole("button", { name: "上書き保存を実行" }));
 
@@ -463,7 +474,7 @@ test("選択フォーマットのレギュレーションで現在のデッキ�
     </MemoryRouter>
   );
 
-  fireEvent.click(screen.getByRole("button", { name: "関西クラシックを選択" }));
+  selectDeckFormat("関西クラシック");
 
   expect(
     screen.getByText("禁止対象カードは禁止カードです。デッキに入れることはできません。")
@@ -528,7 +539,7 @@ test("公開中デッキはフォーマット未選択で上書きしない", ()
 
   fireEvent.click(screen.getByRole("button", { name: "読み込み" }));
   fireEvent.click(screen.getByRole("button", { name: "テストデッキを読み込む" }));
-  fireEvent.click(screen.getByRole("button", { name: "指定なしを選択" }));
+  selectDeckFormat("");
   fireEvent.click(screen.getByRole("button", { name: "保存" }));
   fireEvent.click(screen.getByRole("button", { name: "上書き保存を実行" }));
 
@@ -536,4 +547,86 @@ test("公開中デッキはフォーマット未選択で上書きしない", ()
   expect(
     screen.getByText("公開中のデッキを上書きするにはフォーマットを選択してください。")
   ).toBeInTheDocument();
+});
+
+test("検索欄のフォーマットを変えてもデッキのフォーマットは変わらない", () => {
+  mockAuthState = { isAuthenticated: true };
+  render(
+    <MemoryRouter initialEntries={["/deck"]}>
+      <DeckBuilder />
+    </MemoryRouter>
+  );
+
+  selectDeckFormat("関西クラシック");
+  expect(screen.getByLabelText("構築するデッキのフォーマット")).toHaveValue("関西クラシック");
+
+  // 検索欄だけを別のフォーマットへ動かす
+  fireEvent.click(screen.getByRole("button", { name: "関西ライジングを選択" }));
+
+  expect(screen.getByTestId("compact-format-name")).toHaveTextContent("関西ライジング");
+  expect(screen.getByTestId("results-format-name")).toHaveTextContent("関西ライジング");
+  expect(screen.getByLabelText("構築するデッキのフォーマット")).toHaveValue("関西クラシック");
+});
+
+test("検索欄は初期値としてデッキのフォーマットに追従するが、触ったあとは追従しない", () => {
+  mockAuthState = { isAuthenticated: true };
+  render(
+    <MemoryRouter initialEntries={["/deck"]}>
+      <DeckBuilder />
+    </MemoryRouter>
+  );
+
+  // まだ検索欄を触っていないので追従する
+  selectDeckFormat("関西クラシック");
+  expect(screen.getByTestId("compact-format-name")).toHaveTextContent("関西クラシック");
+
+  // 検索欄を自分で変えたら、それ以降はデッキ側に引きずられない
+  fireEvent.click(screen.getByRole("button", { name: "指定なしを選択" }));
+  selectDeckFormat("関西ライジング");
+
+  expect(screen.getByLabelText("構築するデッキのフォーマット")).toHaveValue("関西ライジング");
+  expect(screen.getByTestId("compact-format-name")).toHaveTextContent("指定なし");
+});
+
+test("カードがあるデッキでフォーマットを変えるときは確認し、取り消せる", () => {
+  mockAuthState = { isAuthenticated: true };
+  const confirmCalls = [];
+  window.confirm = (message) => {
+    confirmCalls.push(message);
+    return false;
+  };
+
+  render(
+    <MemoryRouter initialEntries={["/deck"]}>
+      <DeckBuilder />
+    </MemoryRouter>
+  );
+
+  selectDeckFormat("関西クラシック");
+
+  expect(confirmCalls).toHaveLength(1);
+  expect(confirmCalls[0]).toContain("禁止・制限の判定と公開の条件が変わります");
+  // 取り消したので変わらない
+  expect(screen.getByLabelText("構築するデッキのフォーマット")).toHaveValue("");
+});
+
+test("空のデッキならフォーマット変更で確認しない", () => {
+  mockAuthState = { isAuthenticated: true };
+  mockDeckState.items = [];
+  let confirmCount = 0;
+  window.confirm = () => {
+    confirmCount += 1;
+    return true;
+  };
+
+  render(
+    <MemoryRouter initialEntries={["/deck"]}>
+      <DeckBuilder />
+    </MemoryRouter>
+  );
+
+  selectDeckFormat("関西クラシック");
+
+  expect(confirmCount).toBe(0);
+  expect(screen.getByLabelText("構築するデッキのフォーマット")).toHaveValue("関西クラシック");
 });

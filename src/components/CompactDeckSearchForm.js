@@ -295,12 +295,12 @@ const CompactDeckSearchForm = ({ onSearch, formatName, onFormatChange }) => {
         />
 
         <label className="compact-inline-field compact-search-field-range">
-          {/* この選択はデッキ自身のフォーマットでもある(検索範囲だけでなく
-              保存・適合判定・公開に使われる)ので、名前でそれを示す。 */}
-          <span className="compact-inline-label">デッキのフォーマット</span>
+          {/* ここは検索の絞り込みのみ。デッキ自身のフォーマットは
+              「フォーマット・禁止制限」パネルで設定する。 */}
+          <span className="compact-inline-label">検索するフォーマット</span>
           <select
-            aria-label="デッキのフォーマット"
-            title="検索範囲と、このデッキの適合判定・公開条件の両方に使われます"
+            aria-label="検索するフォーマット"
+            title="検索結果の絞り込みだけに使います。デッキのフォーマットは変わりません"
             value={selectedFormatName}
             onChange={(event) => handleFormatChange(event.target.value)}
           >

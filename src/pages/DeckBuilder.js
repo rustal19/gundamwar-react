@@ -69,9 +69,19 @@ const DeckBuilder = ({ compact = false }) => {
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false);
-  const [selectedFormatName, setSelectedFormatName] = useState(() =>
+  // フォーマットは2つの別の役割を持つ。混ぜると、検索条件を変えたつもりで
+  // 保存・適合判定・公開に使うデッキの属性まで書き換わってしまう。
+  // deckFormatName … デッキ自身の属性(保存・適合判定・公開に使う)
+  // searchFormatName … 検索の絞り込み(デッキには影響しない)
+  const [deckFormatName, setDeckFormatName] = useState(() =>
     getFormatNameFromSearch(location.search)
   );
+  const [searchFormatName, setSearchFormatName] = useState(() =>
+    getFormatNameFromSearch(location.search)
+  );
+  // 検索欄はデッキのフォーマットを初期値にするが、利用者が検索欄を
+  // 自分で変えたあとは追従しない(勝手に絞り込みが変わると混乱するため)。
+  const isSearchFormatCustomRef = useRef(false);
   const [mobileActivePane, setMobileActivePane] = useState(() =>
     location.search ? "search" : "deck"
   );
@@ -115,13 +125,35 @@ const DeckBuilder = ({ compact = false }) => {
     [location.pathname, navigate]
   );
 
-  const handleFormatChange = useCallback(
+  // 保存デッキの読み込みなど、利用者がフォーマットを選ぶ操作ではない変更。確認は出さない。
+  const applyDeckFormat = useCallback((nextFormatName) => {
+    const normalizedFormatName = String(nextFormatName || "").trim();
+    setDeckFormatName(normalizedFormatName);
+    if (!isSearchFormatCustomRef.current) setSearchFormatName(normalizedFormatName);
+  }, []);
+
+  // デッキのフォーマットを利用者が変える操作。カードが入っているときだけ確認する
+  // (空デッキなら判定が変わっても失うものがないため)。
+  const handleDeckFormatChange = useCallback(
     (nextFormatName) => {
       const normalizedFormatName = String(nextFormatName || "").trim();
-      setSelectedFormatName(normalizedFormatName);
+      if (normalizedFormatName === deckFormatName) return;
+      if (items.length > 0) {
+        const message = normalizedFormatName
+          ? `デッキのフォーマットを「${normalizedFormatName}」に変更します。\nカードはそのまま残りますが、禁止・制限の判定と公開の条件が変わります。\nよろしいですか？`
+          : "デッキのフォーマットを未選択に戻します。\nカードはそのまま残りますが、適合の確認と公開ができなくなります。\nよろしいですか？";
+        if (!window.confirm(message)) return;
+      }
+      applyDeckFormat(normalizedFormatName);
     },
-    []
+    [applyDeckFormat, deckFormatName, items.length]
   );
+
+  // 検索の絞り込み。デッキには影響しないので確認しない。
+  const handleSearchFormatChange = useCallback((nextFormatName) => {
+    isSearchFormatCustomRef.current = true;
+    setSearchFormatName(String(nextFormatName || "").trim());
+  }, []);
 
   const handlePublicationError = useCallback((publicationError) => {
     setHandledPublicationErrorMessage(publicationError?.message || "");
@@ -230,7 +262,7 @@ const DeckBuilder = ({ compact = false }) => {
         deckId: "",
         title: nextTitle,
         items,
-        format: selectedFormatName || null,
+        format: deckFormatName || null,
       });
       trackEvent("deck_save", {
         save_mode: "new",
@@ -249,7 +281,7 @@ const DeckBuilder = ({ compact = false }) => {
 
   const handleOverwriteDeck = async () => {
     if (!selectedDeck) return;
-    if (selectedDeck.isPublic && !selectedFormatName) {
+    if (selectedDeck.isPublic && !deckFormatName) {
       setSaveMessage("公開中のデッキを上書きするにはフォーマットを選択してください。");
       setIsSaveDialogOpen(false);
       clearSaveMessageSoon();
@@ -261,7 +293,7 @@ const DeckBuilder = ({ compact = false }) => {
         deckId: selectedDeck.id,
         title: selectedDeck.title,
         items,
-        format: selectedFormatName || null,
+        format: deckFormatName || null,
       });
       trackEvent("deck_save", {
         save_mode: "overwrite",
@@ -290,7 +322,7 @@ const DeckBuilder = ({ compact = false }) => {
     replaceDeck(deck.items);
     setSelectedDeckId(deck.id);
     setDeckTitle(deck.title);
-    handleFormatChange(deck.format || "");
+    applyDeckFormat(deck.format || "");
     setSaveMessage(`「${deck.title}」を読み込みました。`);
     setIsLoadDialogOpen(false);
     clearSaveMessageSoon();
@@ -321,7 +353,7 @@ const DeckBuilder = ({ compact = false }) => {
     try {
       const updatedDeck = await setPublication({ deckId, isPublic, description, format });
       if (String(deckId) === selectedDeckId) {
-        handleFormatChange(updatedDeck.format || "");
+        applyDeckFormat(updatedDeck.format || "");
       }
       return updatedDeck;
     } finally {
@@ -558,14 +590,14 @@ const DeckBuilder = ({ compact = false }) => {
 
               {selectedDeck ? <p className="deck-panel-note">{`保存先: ${selectedDeck.title}`}</p> : null}
               <DeckFormatPanel
-                formatName={selectedFormatName}
-                onFormatChange={handleFormatChange}
+                formatName={deckFormatName}
+                onFormatChange={handleDeckFormatChange}
                 items={items}
               />
               <DeckPublicationPanel
                 deck={selectedDeck}
-                formatValue={selectedFormatName}
-                onFormatChange={handleFormatChange}
+                formatValue={deckFormatName}
+                onFormatChange={handleDeckFormatChange}
                 onPublicationChange={handlePublicationChange}
                 onPublicationError={handlePublicationError}
                 onPublicationFeedbackClear={clearHandledPublicationError}
@@ -655,12 +687,12 @@ const DeckBuilder = ({ compact = false }) => {
               </div>
               <CompactDeckSearchForm
                 onSearch={compact ? handleDeckSearch : undefined}
-                formatName={selectedFormatName}
-                onFormatChange={handleFormatChange}
+                formatName={searchFormatName}
+                onFormatChange={handleSearchFormatChange}
               />
             </section>
 
-            <DeckSearchResults compact={compact} formatName={selectedFormatName} />
+            <DeckSearchResults compact={compact} formatName={searchFormatName} />
           </section>
         </div>
       </div>
