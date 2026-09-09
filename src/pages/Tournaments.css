@@ -1963,3 +1963,16 @@
   margin-left: var(--gw-space-3xs);
   font-size: var(--gw-font-size-xs);
 }
+
+
+/* 参加人数に応じた回戦数の早見表 */
+.tournament-round-plan-table ul {
+  margin: var(--gw-space-2xs) 0 0;
+  padding-left: var(--gw-space-lg);
+  color: var(--gw-text-muted);
+  font-size: var(--gw-font-size-sm);
+}
+
+.tournament-round-plan-table li {
+  margin-bottom: var(--gw-space-3xs);
+}

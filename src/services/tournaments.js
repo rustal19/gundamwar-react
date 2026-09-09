@@ -1,6 +1,7 @@
 import { compareEntryIds, computeStandings } from "../utils/tournament/standings";
 import { getRoundLabel } from "../utils/tournament/roundLabel";
 import { buildBracket, nextRoundPairs } from "../utils/tournament/singleElimination";
+import { resolveRoundPlan } from "../utils/tournament/roundPlan";
 import {
   getSwissEndCondition,
   SWISS_END_CONDITION_UNDEFEATED,
@@ -566,6 +567,7 @@ function normalizeTournament(tournament, entries = []) {
     format: tournament.format || "swiss",
     swissRounds: tournament.swissRounds ?? null,
     swissEndCondition: getSwissEndCondition(tournament),
+    roundPlan: tournament.roundPlan === "by_entry_count" ? "by_entry_count" : "manual",
     topCutSize: tournament.topCutSize ?? null,
     status: tournament.status || "draft",
     checkinOpensAt: tournament.checkinOpensAt || null,
@@ -1149,6 +1151,26 @@ function buildNextRound(store, tournamentId) {
   const allEntries = getEntries(store, tournamentId);
   const entries = activeEntriesForRound(allEntries, nextNumber);
   const activeEntryIds = new Set(entries.map((entry) => String(entry.id)));
+
+  // 「参加人数に応じて自動」の大会は、初回ラウンドを組む時点の
+  // チェックイン済み人数で回戦数とトップカットを確定させて保存する。
+  // 以降は実際の値が画面に出て、途中で変わらない。
+  if (tournament.roundPlan === "by_entry_count" && rounds.length === 0) {
+    const resolved = resolveRoundPlan(entries.length);
+    tournament.swissRounds = resolved.swissRounds;
+    tournament.topCutSize = resolved.topCutSize;
+    store.tournaments = store.tournaments.map((item) =>
+      String(item.id) === String(tournamentId)
+        ? {
+            ...item,
+            swissRounds: resolved.swissRounds,
+            topCutSize: resolved.topCutSize,
+            updatedAt: nowIso(),
+          }
+        : item
+    );
+  }
+
   if (entries.length < 2) {
     throw new Error(
       `次ラウンド生成にはチェックイン済みの参加者が2人以上必要です（現在${entries.length}人）。`
@@ -1491,6 +1513,7 @@ export async function deleteMyEntry(tournamentId, { authMode, user } = {}) {
 export async function createTournament(data = {}) {
   const { authMode, user, ...payload } = data;
   const swissEndCondition = getSwissEndCondition(payload);
+  const roundPlan = payload.roundPlan === "by_entry_count" ? "by_entry_count" : "manual";
   if (authMode === "mock") {
     const currentUser = getCurrentUser(user);
     const store = readStore();
@@ -1506,6 +1529,7 @@ export async function createTournament(data = {}) {
         format: payload.format || "swiss",
         swissRounds: payload.swissRounds ?? null,
         swissEndCondition,
+        roundPlan,
         topCutSize: payload.topCutSize ?? null,
         status: payload.status || "draft",
         startsAt: payload.startsAt || "",
@@ -1541,7 +1565,7 @@ export async function createTournament(data = {}) {
 
   return requestJson("/api/tournaments", {
     method: "POST",
-    body: JSON.stringify({ ...payload, swissEndCondition }),
+    body: JSON.stringify({ ...payload, swissEndCondition, roundPlan }),
   });
 }
 
@@ -1573,7 +1597,7 @@ export async function updateTournament({ id, authMode, user, ...data }) {
     const entries = getEntries(store, id);
     const rounds = getRounds(store, id);
     if (rounds.length > 0) {
-      ["format", "swissRounds", "swissEndCondition", "topCutSize"].forEach((field) => {
+      ["format", "swissRounds", "swissEndCondition", "roundPlan", "topCutSize"].forEach((field) => {
         const nextValue =
           field === "swissEndCondition"
             ? getSwissEndCondition({ swissEndCondition: data[field] })

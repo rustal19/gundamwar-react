@@ -758,7 +758,8 @@ test("ラウンド取得だけ失敗しても管理画面を残し、依存操�
   expect(screen.getByLabelText(/形式/)).toBeDisabled();
   expect(
     screen.getAllByTitle("ラウンド情報を確認できないため変更できません")
-  ).toHaveLength(4);
+    // 形式 / 回戦数の決め方 / スイス回戦数 / 終了条件 / トップカット
+  ).toHaveLength(5);
 
   fireEvent.click(screen.getByRole("button", { name: "再試行" }));
   await waitFor(() => expect(fetchRoundsSpy).toHaveBeenCalledTimes(2));
@@ -2203,4 +2204,26 @@ test("対戦表に登場済みの参加者はキック後も記録用のドロ�
   expect(store.bans["t-ui"]).toEqual([
     expect.objectContaining({ user: expect.objectContaining({ id: "player-1" }) }),
   ]);
+});
+
+test("参加人数に応じて自動を選ぶと早見表が出る", async () => {
+  seedStore();
+  renderManage();
+
+  await screen.findByText("UI大会");
+  fireEvent.click(screen.getByRole("button", { name: "大会情報" }));
+
+  const planSelect = screen.getByLabelText("回戦数の決め方");
+  expect(planSelect).toHaveValue("manual");
+  expect(screen.queryByText(/9〜16人/)).not.toBeInTheDocument();
+
+  fireEvent.change(planSelect, { target: { value: "by_entry_count" } });
+
+  // 主催者が示した運用表の区間がそのまま出る
+  expect(screen.getByText("1〜4人")).toBeInTheDocument();
+  expect(screen.getByText("9〜16人")).toBeInTheDocument();
+  expect(screen.getByText("32人以上")).toBeInTheDocument();
+  expect(
+    screen.getByText(/初回ラウンドを生成した時点のチェックイン済み人数/)
+  ).toBeInTheDocument();
 });

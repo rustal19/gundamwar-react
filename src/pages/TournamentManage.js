@@ -55,6 +55,7 @@ import { buildDeckExport, groupDeckItemsByType } from "../utils/deckExport";
 import { formatDeckCountSummary, getDeckCounts } from "../utils/deckCounts";
 import { FORMAT_PRESETS, OTHER_FORMAT_NAME } from "../data/formats";
 import { createTournamentParticipantNameFormatter } from "../utils/tournament/participantDisplayName";
+import { describeRoundPlanTable } from "../utils/tournament/roundPlan";
 import {
   getRoundLabel,
   getRoundLabelForNumber,
@@ -76,6 +77,7 @@ const DEFAULT_FORM = {
   format: "swiss",
   swissRounds: "",
   swissEndCondition: SWISS_END_CONDITION_FIXED_ROUNDS,
+  roundPlan: "manual",
   topCutSize: "",
   status: "draft",
   startsAt: "",
@@ -190,6 +192,7 @@ function formFromTournament(tournament, knownRegulation = null) {
     ...tournament,
     swissRounds: tournament.swissRounds ?? "",
     swissEndCondition: getSwissEndCondition(tournament),
+    roundPlan: tournament?.roundPlan === "by_entry_count" ? "by_entry_count" : "manual",
     topCutSize: tournament.topCutSize ?? "",
     startsAt: toDateTimeLocal(tournament.startsAt),
     registrationClosesAt: toDateTimeLocal(tournament.registrationClosesAt),
@@ -242,6 +245,7 @@ function payloadFromForm(form) {
     format: form.format,
     swissRounds: numberOrNull(form.swissRounds),
     swissEndCondition: normalizeSwissEndCondition(form.swissEndCondition),
+    roundPlan: form.roundPlan === "by_entry_count" ? "by_entry_count" : "manual",
     topCutSize: numberOrNull(form.topCutSize),
     status: form.status,
     startsAt: fromDateTimeLocal(form.startsAt),
@@ -1870,6 +1874,33 @@ function InfoPanel({
               分からなくなるので、形式に応じて出し分ける。 */}
           {form.format === "swiss" ? (
             <>
+              <label title={roundSettingsLockMessage}>
+                回戦数の決め方 {hasRounds ? "🔒" : ""}
+                <select
+                  aria-label="回戦数の決め方"
+                  value={form.roundPlan}
+                  disabled={hasRounds}
+                  onChange={(event) => setField("roundPlan", event.target.value)}
+                >
+                  <option value="manual">自分で指定する</option>
+                  <option value="by_entry_count">参加人数に応じて自動</option>
+                </select>
+              </label>
+              {form.roundPlan === "by_entry_count" ? (
+                <div className="tournament-form-wide tournament-round-plan-table">
+                  <p className="tournament-muted">
+                    初回ラウンドを生成した時点のチェックイン済み人数で、回戦数とトップカットが決まります。
+                    決まった値はこの画面に反映され、以降は変わりません。
+                  </p>
+                  <ul>
+                    {describeRoundPlanTable().map(({ range, label }) => (
+                      <li key={range}>
+                        <strong>{range}</strong> {label}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
               <label title={roundSettingsLockMessage}>
                 スイス回戦数（回戦） {hasRounds ? "🔒" : ""}
                 <input
