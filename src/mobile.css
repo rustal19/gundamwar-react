@@ -1088,7 +1088,7 @@
   padding: var(--gw-space-xs) var(--gw-space-xs) var(--gw-space-sm);
   width: 100%;
   max-width: 100%;
-  height: calc(100dvh - var(--deck-page-top-offset, 0px));
+  height: calc(100dvh - var(--gw-mobile-app-bar-height));
   overflow: hidden;
   overflow-x: hidden;
 }
