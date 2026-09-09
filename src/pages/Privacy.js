@@ -2,6 +2,7 @@ import React from "react";
 import {
   GA_DATA_USE_URL,
   GA_OPT_OUT_URL,
+  LEGAL_ESTABLISHED_DATE,
   getDeletionRequestFormUrl,
 } from "../data/siteContact";
 
@@ -115,6 +116,8 @@ const Privacy = () => {
           本サイトは創通、サンライズ、その他権利者とは関係のない非公式ファンサイトです。
         </p>
       </section>
+
+      <p className="legal-page-date">制定日: {LEGAL_ESTABLISHED_DATE}</p>
     </main>
   );
 };

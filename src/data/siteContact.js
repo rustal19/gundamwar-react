@@ -11,6 +11,10 @@ export function getDeletionRequestFormUrl() {
   return DELETION_REQUEST_FORM_URL.trim();
 }
 
+// 規約・プライバシーポリシーの制定日。本番へ公開した日(JST)。
+// 内容を改定したときは、この下に LEGAL_REVISED_DATE を足して併記する。
+export const LEGAL_ESTABLISHED_DATE = "2026年9月10日";
+
 // Google アナリティクスの参照先。GA を使っていることの開示は Google の
 // 利用規約で求められているため、仕組みの説明とオプトアウト手段を示す。
 export const GA_DATA_USE_URL = "https://policies.google.com/technologies/partner-sites";

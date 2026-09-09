@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { getDeletionRequestFormUrl } from "../data/siteContact";
+import { LEGAL_ESTABLISHED_DATE, getDeletionRequestFormUrl } from "../data/siteContact";
 
 // ⚠ この本文はサイト運営者の最終確認を受けていない。公開前に必ず内容を確認すること。
 // 利用者に見える場所へ「ドラフト」と書くと規約としての効力に疑義が生じるため、
@@ -102,6 +102,8 @@ const Terms = () => {
           創通、サンライズ、その他権利者とは関係ありません。
         </p>
       </section>
+
+      <p className="legal-page-date">制定日: {LEGAL_ESTABLISHED_DATE}</p>
     </main>
   );
 };

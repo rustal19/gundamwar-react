@@ -7,6 +7,7 @@ import Privacy from "./Privacy";
 let mockDeletionFormUrl = "";
 jest.mock("../data/siteContact", () => ({
   getDeletionRequestFormUrl: () => mockDeletionFormUrl,
+  LEGAL_ESTABLISHED_DATE: "2026年9月10日",
   GA_DATA_USE_URL: "https://policies.google.com/technologies/partner-sites",
   GA_OPT_OUT_URL: "https://tools.google.com/dlpage/gaoptout",
 }));
@@ -128,4 +129,14 @@ test("フォームURLを設定しても、自分でできる案内は残る", ()
     screen.getByText(/デッキ構築画面の「読み込み」からご自身で削除できます/)
   ).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "削除依頼フォーム" })).toBeInTheDocument();
+});
+
+test("規約とプライバシーポリシーに制定日が入っている", () => {
+  renderPage(Terms);
+  expect(screen.getByText(/制定日: 2026年9月10日/)).toBeInTheDocument();
+});
+
+test("プライバシーポリシーにも制定日が入っている", () => {
+  renderPage(Privacy);
+  expect(screen.getByText(/制定日: 2026年9月10日/)).toBeInTheDocument();
 });

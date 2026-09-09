@@ -65,3 +65,12 @@
   margin: var(--gw-space-xs) 0 0;
 }
 
+
+
+/* 規約・ポリシーの制定日。本文の一部ではないので控えめに置く */
+.legal-page-date {
+  margin: var(--gw-space-2xl) 0 0;
+  color: var(--gw-text-muted);
+  font-size: var(--gw-font-size-sm);
+  text-align: right;
+}
