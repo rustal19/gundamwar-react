@@ -1,0 +1,66 @@
+[
+  {
+    "width": 390,
+    "link": {
+      "height": 39,
+      "width": 324,
+      "fontSize": "16px",
+      "fontWeight": "800",
+      "boxSizing": "border-box",
+      "padding": "8px 12px",
+      "lineHeight": "normal"
+    },
+    "current": {
+      "height": 37,
+      "width": 324,
+      "fontSize": "14px",
+      "fontWeight": "800",
+      "boxSizing": "border-box",
+      "padding": "8px 12px",
+      "lineHeight": "normal"
+    },
+    "close": {
+      "height": 37,
+      "width": 61.125,
+      "fontSize": "14px",
+      "fontWeight": "800",
+      "boxSizing": "border-box",
+      "padding": "8px 12px",
+      "lineHeight": "normal"
+    },
+    "overflow": false,
+    "dialogOverflow": false
+  },
+  {
+    "width": 1440,
+    "link": {
+      "height": 54,
+      "width": 720,
+      "fontSize": "16px",
+      "fontWeight": "800",
+      "boxSizing": "content-box",
+      "padding": "8px 12px",
+      "lineHeight": "normal"
+    },
+    "current": {
+      "height": 37,
+      "width": 720,
+      "fontSize": "14px",
+      "fontWeight": "800",
+      "boxSizing": "border-box",
+      "padding": "8px 12px",
+      "lineHeight": "normal"
+    },
+    "close": {
+      "height": 37,
+      "width": 61.125,
+      "fontSize": "14px",
+      "fontWeight": "800",
+      "boxSizing": "border-box",
+      "padding": "8px 12px",
+      "lineHeight": "normal"
+    },
+    "overflow": false,
+    "dialogOverflow": false
+  }
+]

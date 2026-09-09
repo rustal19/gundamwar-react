@@ -679,6 +679,13 @@
   background: var(--gw-primary-soft);
 }
 
+.tournament-choice-link {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  font-size: var(--gw-font-size-sm);
+}
+
 .tournament-dialog-backdrop {
   position: fixed;
   inset: 0;
