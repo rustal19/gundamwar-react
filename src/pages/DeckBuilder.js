@@ -38,7 +38,6 @@ function getFormatNameFromSearch(search) {
 }
 
 const DeckBuilder = ({ compact = false }) => {
-  const deckPageRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -181,29 +180,6 @@ const DeckBuilder = ({ compact = false }) => {
     }
   }, [error]);
 
-  useEffect(() => {
-    const updateViewportOffset = () => {
-      if (!deckPageRef.current) return;
-      const topOffset = Math.max(deckPageRef.current.getBoundingClientRect().top, 0);
-      deckPageRef.current.style.setProperty("--deck-page-top-offset", `${topOffset}px`);
-    };
-
-    updateViewportOffset();
-
-    const resizeObserver =
-      typeof ResizeObserver !== "undefined" ? new ResizeObserver(updateViewportOffset) : null;
-
-    if (resizeObserver) {
-      resizeObserver.observe(document.body);
-    }
-
-    window.addEventListener("resize", updateViewportOffset);
-    return () => {
-      window.removeEventListener("resize", updateViewportOffset);
-      resizeObserver?.disconnect();
-    };
-  }, []);
-
   // デスクトップ表示（幅1101px以上）ではページ全体のスクロールをロックする
   useEffect(() => {
     const htmlStyle = document.documentElement.style;
@@ -222,13 +198,21 @@ const DeckBuilder = ({ compact = false }) => {
 
     const mediaQuery = window.matchMedia("(min-width: 1101px)");
 
+    let isScrollLocked = false;
     const syncScrollLock = () => {
       if (mediaQuery.matches) {
         htmlStyle.overflow = "hidden";
         bodyStyle.overflow = "hidden";
+        // 前画面のスクロール位置を引き継ぐと、固定シェル全体がviewport上へ
+        // 押し出されたままになる。固定化を開始するときに一度だけ解消する。
+        if (!isScrollLocked) {
+          window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        }
+        isScrollLocked = true;
       } else {
         htmlStyle.overflow = previousHtmlOverflow;
         bodyStyle.overflow = previousBodyOverflow;
+        isScrollLocked = false;
       }
     };
 
@@ -517,7 +501,7 @@ const DeckBuilder = ({ compact = false }) => {
   };
 
   return (
-    <div className="deck-page" ref={deckPageRef}>
+    <div className="deck-page">
       {compact ? (
         <div className="deck-mobile-tabs" aria-label="モバイル表示切替">
           <button

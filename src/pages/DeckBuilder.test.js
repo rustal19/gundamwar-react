@@ -102,6 +102,24 @@ function renderDeckBuilder(props = {}) {
   );
 }
 
+function mockDesktopMediaQuery(matches = true) {
+  const listeners = new Set();
+  const mediaQuery = {
+    matches,
+    media: "(min-width: 1101px)",
+    addEventListener: jest.fn((eventName, listener) => listeners.add(listener)),
+    removeEventListener: jest.fn((eventName, listener) => listeners.delete(listener)),
+  };
+  window.matchMedia = jest.fn(() => mediaQuery);
+  return {
+    mediaQuery,
+    setMatches(nextMatches) {
+      mediaQuery.matches = nextMatches;
+      listeners.forEach((listener) => listener({ matches: nextMatches }));
+    },
+  };
+}
+
 function loadFirstSavedDeck() {
   fireEvent.click(screen.getByRole("button", { name: "読み込み" }));
   fireEvent.click(screen.getByRole("button", { name: "テストデッキを読み込む" }));
@@ -146,6 +164,38 @@ beforeEach(() => {
     clearDeck: jest.fn(),
     replaceDeck: jest.fn(),
   };
+});
+
+test("デスクトップ固定化時だけ残留スクロールを解消し、離脱時にoverflowを復元する", () => {
+  const originalMatchMedia = window.matchMedia;
+  const originalScrollTo = window.scrollTo;
+  const htmlOverflow = document.documentElement.style.overflow;
+  const bodyOverflow = document.body.style.overflow;
+  const media = mockDesktopMediaQuery();
+  window.scrollTo = jest.fn();
+
+  const view = renderDeckBuilder();
+
+  expect(window.scrollTo).toHaveBeenCalledTimes(1);
+  expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, left: 0, behavior: "auto" });
+  expect(document.documentElement.style.overflow).toBe("hidden");
+  expect(document.body.style.overflow).toBe("hidden");
+
+  media.setMatches(true);
+  expect(window.scrollTo).toHaveBeenCalledTimes(1);
+
+  media.setMatches(false);
+  expect(document.documentElement.style.overflow).toBe(htmlOverflow);
+  expect(document.body.style.overflow).toBe(bodyOverflow);
+
+  media.setMatches(true);
+  expect(window.scrollTo).toHaveBeenCalledTimes(2);
+  view.unmount();
+  expect(document.documentElement.style.overflow).toBe(htmlOverflow);
+  expect(document.body.style.overflow).toBe(bodyOverflow);
+
+  window.matchMedia = originalMatchMedia;
+  window.scrollTo = originalScrollTo;
 });
 
 test("デッキ構築の枚数サマリにメインとサイドを表示する", () => {

@@ -21,14 +21,15 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - var(--deck-page-top-offset, 0px));
+  height: 100%;
   overflow: hidden;
 }
 
 .deck-layout-shell {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  /* transform前の拡大寸法を、隠れたスクロール領域にしない。 */
+  overflow: clip;
 }
 
 .deck-page-header {
@@ -119,7 +120,7 @@
 .deck-workbench {
   display: grid;
   gap: var(--gw-space-md);
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(96px, 1fr);
   overflow: hidden;
 }
 

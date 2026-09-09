@@ -14,9 +14,35 @@
 }
 
 .app-shell-deck {
-  height: 100dvh;
+  height: 100%;
   overflow: hidden;
   padding-bottom: 0;
+}
+
+.app-frame-deck-desktop {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: clip;
+}
+
+.app-frame-deck-desktop .app-shell-deck {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.app-frame-deck-desktop .app-shell-deck .app-main {
+  height: 100%;
+}
+
+/* compact desktopにもモバイル用UIを使うが、高さはPC用viewportフレームへ従わせる。 */
+.app-frame-deck-desktop .app-shell-mobile.app-shell-deck {
+  height: auto;
+  min-height: 0;
+}
+
+.app-frame-deck-desktop .app-shell-mobile .deck-page {
+  height: 100%;
 }
 
 .app-shell-mobile {
