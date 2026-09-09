@@ -67,6 +67,10 @@
   gap: var(--gw-space-3xs);
 }
 
+.tournament-header-actions > .tournament-filter-group {
+  align-self: flex-start;
+}
+
 .tournament-filter-label {
   color: var(--gw-text-muted);
   font-size: var(--gw-font-size-xs);

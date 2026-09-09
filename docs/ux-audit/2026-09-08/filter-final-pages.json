@@ -1,0 +1,341 @@
+{
+  "report": [
+    {
+      "name": "tournaments",
+      "device": "desktop",
+      "file": "filter-final-tournaments-desktop.jpg",
+      "url": "http://127.0.0.1:3100/tournaments",
+      "text": "Gundam War Portal\nガンダムウォー非公式ポータル\nホーム\nカード検索\nデッキ構築\n公開デッキ\n大会\n検\n検証プレイヤー\n\n大会一覧\n\n大会\n表示範囲\nすべて\n自分の大会\nステータス\nすべて\n受付中\n進行中\n完了\n中止\n9月\n17日\n(木)\n週末エントリー受付大会\n受付中\n02:07\nオンライン\nスイスドロー・スタンダード\n参加 0人 / 定員 16人\n詳細\n9月\n9日\n(水)\nローカルスイス杯\n進行中\n02:07\n東京・秋葉原カードショップ○○\nスイスドロー・スタンダード\n参加 4人 / 定員 32人\n観戦\n9月\n3日\n(木)\n完了済みスタンダード杯\n完了\n02:07\n東京・秋葉原カードショップ○○\nスイスドロー・スタンダード\n参加 4人 / 定員 16人\n詳細\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 1167,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal\nガンダムウォー非公式ポータル",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 57
+        },
+        {
+          "tag": "A",
+          "text": "ホーム",
+          "href": "/",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "カード検索",
+          "href": "/search",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "デッキ構築",
+          "href": "/deck",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "公開デッキ",
+          "href": "/decks",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "A",
+          "text": "大会",
+          "href": "/tournaments",
+          "type": "",
+          "w": 175,
+          "h": 38
+        },
+        {
+          "tag": "BUTTON",
+          "text": "検\n検証プレイヤー",
+          "href": null,
+          "type": "button",
+          "w": 175,
+          "h": 40
+        },
+        {
+          "tag": "BUTTON",
+          "text": "すべて",
+          "href": null,
+          "type": "button",
+          "w": 60.125,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "自分の大会",
+          "href": null,
+          "type": "button",
+          "w": 93.703125,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "すべて",
+          "href": null,
+          "type": "button",
+          "w": 60.125,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "受付中",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "進行中",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "完了",
+          "href": null,
+          "type": "button",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "中止",
+          "href": null,
+          "type": "button",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "A",
+          "text": "週末エントリー受付大会",
+          "href": "/tournaments/mock-tournament-2",
+          "type": "",
+          "w": 153.890625,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "詳細",
+          "href": "/tournaments/mock-tournament-2",
+          "type": "",
+          "w": 98,
+          "h": 58
+        },
+        {
+          "tag": "A",
+          "text": "ローカルスイス杯",
+          "href": "/tournaments/mock-tournament-1?tab=rounds",
+          "type": "",
+          "w": 100.578125,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "観戦",
+          "href": "/tournaments/mock-tournament-1?tab=rounds",
+          "type": "",
+          "w": 98,
+          "h": 58
+        },
+        {
+          "tag": "A",
+          "text": "完了済みスタンダード杯",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 150.90625,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "詳細",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 98,
+          "h": 58
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    },
+    {
+      "name": "tournaments",
+      "device": "mobile",
+      "file": "filter-final-tournaments-mobile.jpg",
+      "url": "http://127.0.0.1:3100/tournaments",
+      "text": "Gundam War Portal\n\n大会一覧\n\n大会\n表示範囲\nすべて\n自分の大会\nステータス\nすべて\n受付中\n進行中\n完了\n中止\n9月\n17日\n(木)\n週末エントリー受付大会\n受付中\n02:07\nオンライン\nスイスドロー・スタンダード\n参加 0人 / 定員 16人\n詳細\n9月\n9日\n(水)\nローカルスイス杯\n進行中\n02:07\n東京・秋葉原カードショップ○○\nスイスドロー・スタンダード\n参加 4人 / 定員 32人\n観戦\n9月\n3日\n(木)\n完了済みスタンダード杯\n完了\n02:07\n東京・秋葉原カードショップ○○\nスイスドロー・スタンダード\n参加 4人 / 定員 16人\n詳細\nGundam War Portal\n利用規約\nプライバシーポリシー\n\n本サイトは非公式ファンサイトです。ガンダムは創通・サンライズの登録商標です。",
+      "width": 390,
+      "scrollWidth": 390,
+      "height": 1087,
+      "controls": [
+        {
+          "tag": "A",
+          "text": "Gundam War Portal",
+          "href": "/",
+          "type": "",
+          "w": 142.859375,
+          "h": 21
+        },
+        {
+          "tag": "BUTTON",
+          "text": "メニューを開く",
+          "href": null,
+          "type": "button",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "tag": "BUTTON",
+          "text": "すべて",
+          "href": null,
+          "type": "button",
+          "w": 60.125,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "自分の大会",
+          "href": null,
+          "type": "button",
+          "w": 93.703125,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "すべて",
+          "href": null,
+          "type": "button",
+          "w": 60.125,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "受付中",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "進行中",
+          "href": null,
+          "type": "button",
+          "w": 68,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "完了",
+          "href": null,
+          "type": "button",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "BUTTON",
+          "text": "中止",
+          "href": null,
+          "type": "button",
+          "w": 54,
+          "h": 37
+        },
+        {
+          "tag": "A",
+          "text": "週末エントリー受付大会",
+          "href": "/tournaments/mock-tournament-2",
+          "type": "",
+          "w": 153.890625,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "詳細",
+          "href": "/tournaments/mock-tournament-2",
+          "type": "",
+          "w": 340,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "ローカルスイス杯",
+          "href": "/tournaments/mock-tournament-1?tab=rounds",
+          "type": "",
+          "w": 100.578125,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "観戦",
+          "href": "/tournaments/mock-tournament-1?tab=rounds",
+          "type": "",
+          "w": 340,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "完了済みスタンダード杯",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 150.90625,
+          "h": 21
+        },
+        {
+          "tag": "A",
+          "text": "詳細",
+          "href": "/tournaments/mock-tournament-3",
+          "type": "",
+          "w": 340,
+          "h": 40
+        },
+        {
+          "tag": "A",
+          "text": "利用規約",
+          "href": "/terms",
+          "type": "",
+          "w": 56,
+          "h": 19
+        },
+        {
+          "tag": "A",
+          "text": "プライバシーポリシー",
+          "href": "/privacy",
+          "type": "",
+          "w": 103.640625,
+          "h": 19
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

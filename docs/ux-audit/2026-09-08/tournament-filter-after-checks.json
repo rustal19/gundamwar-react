@@ -1,0 +1,242 @@
+[
+  {
+    "role": "anonymous",
+    "width": 320,
+    "row": false,
+    "labelDelta": 107,
+    "boxDelta": 107,
+    "buttonDelta": 107,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "anonymous",
+    "width": 390,
+    "row": false,
+    "labelDelta": 107,
+    "boxDelta": 107,
+    "buttonDelta": 107,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "anonymous",
+    "width": 760,
+    "row": true,
+    "labelDelta": 0,
+    "boxDelta": 0,
+    "buttonDelta": 0,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "anonymous",
+    "width": 761,
+    "row": true,
+    "labelDelta": 0,
+    "boxDelta": 0,
+    "buttonDelta": 0,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "anonymous",
+    "width": 1100,
+    "row": true,
+    "labelDelta": 0,
+    "boxDelta": 0,
+    "buttonDelta": 0,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "anonymous",
+    "width": 1101,
+    "row": true,
+    "labelDelta": 0,
+    "boxDelta": 0,
+    "buttonDelta": 0,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "anonymous",
+    "width": 1440,
+    "row": true,
+    "labelDelta": 0,
+    "boxDelta": 0,
+    "buttonDelta": 0,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "anonymous",
+    "width": 1920,
+    "row": true,
+    "labelDelta": 0,
+    "boxDelta": 0,
+    "buttonDelta": 0,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "user",
+    "width": 320,
+    "row": false,
+    "labelDelta": 89,
+    "boxDelta": 89,
+    "buttonDelta": 89,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "user",
+    "width": 390,
+    "row": false,
+    "labelDelta": 89,
+    "boxDelta": 89,
+    "buttonDelta": 89,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "user",
+    "width": 760,
+    "row": true,
+    "labelDelta": 0,
+    "boxDelta": 0,
+    "buttonDelta": 0,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "user",
+    "width": 761,
+    "row": true,
+    "labelDelta": 0,
+    "boxDelta": 0,
+    "buttonDelta": 0,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "user",
+    "width": 1100,
+    "row": true,
+    "labelDelta": 0,
+    "boxDelta": 0,
+    "buttonDelta": 0,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "user",
+    "width": 1101,
+    "row": true,
+    "labelDelta": 0,
+    "boxDelta": 0,
+    "buttonDelta": 0,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "user",
+    "width": 1440,
+    "row": true,
+    "labelDelta": 0,
+    "boxDelta": 0,
+    "buttonDelta": 0,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "user",
+    "width": 1920,
+    "row": true,
+    "labelDelta": 0,
+    "boxDelta": 0,
+    "buttonDelta": 0,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "organizer",
+    "width": 320,
+    "row": false,
+    "labelDelta": 89,
+    "boxDelta": 89,
+    "buttonDelta": 89,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "organizer",
+    "width": 390,
+    "row": false,
+    "labelDelta": 89,
+    "boxDelta": 89,
+    "buttonDelta": 89,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "organizer",
+    "width": 760,
+    "row": true,
+    "labelDelta": 0,
+    "boxDelta": 0,
+    "buttonDelta": 0,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "organizer",
+    "width": 761,
+    "row": false,
+    "labelDelta": 89,
+    "boxDelta": 89,
+    "buttonDelta": 89,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "organizer",
+    "width": 1100,
+    "row": true,
+    "labelDelta": 0,
+    "boxDelta": 0,
+    "buttonDelta": 0,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "organizer",
+    "width": 1101,
+    "row": true,
+    "labelDelta": 0,
+    "boxDelta": 0,
+    "buttonDelta": 0,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "organizer",
+    "width": 1440,
+    "row": true,
+    "labelDelta": 0,
+    "boxDelta": 0,
+    "buttonDelta": 0,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "organizer",
+    "width": 1920,
+    "row": true,
+    "labelDelta": 0,
+    "boxDelta": 0,
+    "buttonDelta": 0,
+    "overlap": false,
+    "overflow": false
+  }
+]

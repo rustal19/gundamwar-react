@@ -1,0 +1,22 @@
+[
+  {
+    "role": "anonymous",
+    "width": 390,
+    "row": false,
+    "labelDelta": 107,
+    "boxDelta": 107,
+    "buttonDelta": 107,
+    "overlap": false,
+    "overflow": false
+  },
+  {
+    "role": "anonymous",
+    "width": 1440,
+    "row": true,
+    "labelDelta": 9,
+    "boxDelta": 9,
+    "buttonDelta": 9,
+    "overlap": false,
+    "overflow": false
+  }
+]
