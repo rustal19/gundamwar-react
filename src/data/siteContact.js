@@ -3,7 +3,8 @@
 // ここが空のあいだ、規約とプライバシーポリシーは「窓口は準備中」の文面を出す。
 // 未確定のURLでリンクを公開してしまう事故を防ぐためのフォールバック。
 // フォームを作ったら、この定数にURLを入れるだけで両ページの窓口が有効になる。
-const DELETION_REQUEST_FORM_URL = "";
+const DELETION_REQUEST_FORM_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLSe3_n2mxqLM5swY54ePceLitK1sD-X5jZgHhcdmA6G_UtUcNg/viewform";
 
 // 画面側はこの関数だけを見る。空文字なら窓口なしとして扱う。
 export function getDeletionRequestFormUrl() {
