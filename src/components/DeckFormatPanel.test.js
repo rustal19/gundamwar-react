@@ -89,3 +89,33 @@ test("その他と未知形式は適合済み扱いしない", () => {
   expect(within(panel).getByText("ルール未登録・適合未確認")).toBeInTheDocument();
   expect(within(panel).getByRole("option", { name: "旧大会フォーマット" })).toBeInTheDocument();
 });
+
+test("ルール概要に特殊Gの上限を表示し、超過分を違反として出す", () => {
+  const gItem = (id, name, count) => ({
+    cardId: id,
+    count,
+    zone: "main",
+    card: { cardId: id, name, cardType: 10, card_type_name: "Generation" },
+  });
+
+  renderPanel({
+    formatName: "関西クラシック",
+    items: [
+      gItem("101050012", "エゥーゴ支持者", 3),
+      gItem("101050019", "サイド6住民", 3),
+      gItem("101050020", "地球連邦軍女性兵士", 1),
+      gItem("basic-g-blue-0001", "基本G", 10),
+      gItem("101050075", "地球連邦軍", 6),
+    ],
+  });
+  const panel = screen.getByRole("region", { name: "フォーマット・禁止制限" });
+  fireEvent.click(within(panel).getByRole("button", { name: /フォーマット・禁止制限/ }));
+
+  expect(within(panel).getByText("特殊G 6枚まで")).toBeInTheDocument();
+  expect(
+    within(panel).getByText("特殊Gはメイン・サイド合計6枚までです。現在は7枚です。")
+  ).toBeInTheDocument();
+  // 基本Gと「基本Gとして扱う」カードは同名3枚制限に数えない。
+  expect(within(panel).queryByText(/基本Gは合計3枚まで/)).not.toBeInTheDocument();
+  expect(within(panel).queryByText(/地球連邦軍は合計3枚まで/)).not.toBeInTheDocument();
+});

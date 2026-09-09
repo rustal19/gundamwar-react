@@ -1,3 +1,8 @@
+import GENERATION_CARDS from "../data/generationCards.json";
+
+// 特殊Gはメイン・サイド合計でこの枚数まで。基本Gと「基本Gとして扱う」カードは数えない。
+export const SPECIAL_G_MAX = 6;
+
 const DEFAULT_REGULATION = {
   name: "スタンダード",
   mainMin: 50,
@@ -42,6 +47,31 @@ function matchesCardRef(item, refs) {
   const cardId = getCardId(item);
   const cardName = getCardName(item);
   return refs.some((ref) => ref === cardId || ref === cardName);
+}
+
+// 基本G(擬似カード)と、「(自動B)：このカードは基本Gとして扱う。(注：デッキ構築時を含む)」を
+// 持つカード。どちらも同名3枚制限にも特殊Gの枚数にも数えない。
+function isBasicGEquivalent(item) {
+  const cardId = getCardId(item);
+  if (cardId.startsWith("basic-g-")) return true;
+  if (Object.prototype.hasOwnProperty.call(GENERATION_CARDS.basicEquivalent, cardId)) return true;
+  return getCardName(item) === "基本G";
+}
+
+// Gカードかどうか。収録済みカードはIDで判定し、IDが未知の場合だけカード種別を見る。
+function isGenerationCard(item) {
+  const cardId = getCardId(item);
+  if (Object.prototype.hasOwnProperty.call(GENERATION_CARDS.special, cardId)) return true;
+  const card = getCard(item);
+  return (
+    normalizeString(card.cardType) === "10" ||
+    normalizeString(card.card_type_name) === "Generation"
+  );
+}
+
+// 特殊G。基本G扱いのカードを除いたGカード。
+function isSpecialG(item) {
+  return !isBasicGEquivalent(item) && isGenerationCard(item);
 }
 
 export function defaultRegulation(regulation = {}) {
@@ -104,12 +134,17 @@ export function validateDeck(items, regulation) {
 
   const countsByName = new Map();
   const countsByCardKey = new Map();
+  let specialGCount = 0;
   deckItems.forEach((item) => {
     const count = normalizeCount(item?.count);
     if (count === 0) return;
 
-    const name = getCardName(item);
-    countsByName.set(name, (countsByName.get(name) || 0) + count);
+    // 基本Gと「基本Gとして扱う」カードは枚数をカウントしない。
+    if (!isBasicGEquivalent(item)) {
+      const name = getCardName(item);
+      countsByName.set(name, (countsByName.get(name) || 0) + count);
+    }
+    if (isSpecialG(item)) specialGCount += count;
 
     const cardId = getCardId(item);
     const key = cardId || name;
@@ -126,6 +161,13 @@ export function validateDeck(items, regulation) {
       });
     }
   });
+
+  if (specialGCount > SPECIAL_G_MAX) {
+    violations.push({
+      code: "special_g_count",
+      message: `特殊Gはメイン・サイド合計${SPECIAL_G_MAX}枚までです。現在は${specialGCount}枚です。`,
+    });
+  }
 
   countsByCardKey.forEach(({ count, item }) => {
     const cardName = getCardName(item);

@@ -131,3 +131,96 @@ describe("deckValidation", () => {
     expect(getCardSets({ setName: "BB1 / ST1" })).toEqual(["BB1", "ST1"]);
   });
 });
+
+// Gカード(ジェネレーション)の構築ルール。
+// - 基本Gと「(自動B)：このカードは基本Gとして扱う。(注：デッキ構築時を含む)」を持つカードは
+//   同名3枚制限にも特殊Gの枚数にも数えない。
+// - 特殊Gはメイン・サイド合計6枚まで。
+describe("deckValidation - Gカードの構築ルール", () => {
+  function gItem({ id, name, count = 1, zone = "main", cardType = 10 }) {
+    return {
+      cardId: id,
+      count,
+      zone,
+      card: { cardId: id, name, cardType, card_type_name: "Generation" },
+    };
+  }
+
+  function codesOf(violations) {
+    return violations.map((violation) => violation.code);
+  }
+
+  it("基本Gは何枚入れても同名3枚制限に数えない", () => {
+    const violations = validateDeck([
+      gItem({ id: "basic-g-blue-0001", name: "基本G", count: 10 }),
+    ]);
+
+    expect(codesOf(violations)).not.toContain("max_copies");
+    expect(codesOf(violations)).not.toContain("special_g_count");
+  });
+
+  it("「基本Gとして扱う」カードは同名3枚制限にも特殊Gの枚数にも数えない", () => {
+    const violations = validateDeck([
+      gItem({ id: "101050075", name: "地球連邦軍", count: 6 }),
+      gItem({ id: "102050065", name: "ジオン公国", count: 6 }),
+    ]);
+
+    expect(codesOf(violations)).not.toContain("max_copies");
+    expect(codesOf(violations)).not.toContain("special_g_count");
+  });
+
+  it("特殊Gが合計6枚までなら違反にならない", () => {
+    const violations = validateDeck([
+      gItem({ id: "101050012", name: "エゥーゴ支持者", count: 3 }),
+      gItem({ id: "101050019", name: "サイド6住民", count: 3 }),
+    ]);
+
+    expect(codesOf(violations)).not.toContain("special_g_count");
+  });
+
+  it("特殊Gが7枚以上なら special_g_count 違反になる", () => {
+    const violations = validateDeck([
+      gItem({ id: "101050012", name: "エゥーゴ支持者", count: 3 }),
+      gItem({ id: "101050019", name: "サイド6住民", count: 3 }),
+      gItem({ id: "101050020", name: "地球連邦軍女性兵士", count: 1 }),
+    ]);
+
+    expect(violations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "special_g_count",
+          message: "特殊Gはメイン・サイド合計6枚までです。現在は7枚です。",
+        }),
+      ])
+    );
+  });
+
+  it("特殊Gの枚数はメインとサイドを合算する", () => {
+    const violations = validateDeck([
+      gItem({ id: "101050012", name: "エゥーゴ支持者", count: 3 }),
+      gItem({ id: "101050019", name: "サイド6住民", count: 3 }),
+      gItem({ id: "101050020", name: "地球連邦軍女性兵士", count: 1, zone: "side" }),
+    ]);
+
+    expect(codesOf(violations)).toContain("special_g_count");
+  });
+
+  it("基本G扱いのカードは特殊Gの枚数を圧迫しない", () => {
+    const violations = validateDeck([
+      gItem({ id: "101050012", name: "エゥーゴ支持者", count: 3 }),
+      gItem({ id: "101050019", name: "サイド6住民", count: 3 }),
+      gItem({ id: "101050075", name: "地球連邦軍", count: 10 }),
+      gItem({ id: "basic-g-red-0001", name: "基本G", count: 10 }),
+    ]);
+
+    expect(codesOf(violations)).not.toContain("special_g_count");
+  });
+
+  it("カードIDが未知でもカード種別で特殊Gと判定する", () => {
+    const violations = validateDeck([
+      gItem({ id: "999999999", name: "新しい特殊G", count: 7 }),
+    ]);
+
+    expect(codesOf(violations)).toContain("special_g_count");
+  });
+});
